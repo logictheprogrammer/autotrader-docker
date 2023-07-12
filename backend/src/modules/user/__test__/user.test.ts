@@ -9,6 +9,7 @@ import { adminA, adminB, editedUser, userA, userB } from './user.payload'
 import { sendMailMock } from '../../mail/__test__/mail.mock'
 import renderFile from '../../../utils/renderFile'
 import ParseString from '../../../utils/parsers/parseString'
+import { SiteConstants } from '../../config/constants'
 
 describe('users', () => {
   const baseUrl = '/api/users'
@@ -860,6 +861,7 @@ describe('users', () => {
         const emailContent = await renderFile('email/custom', {
           heading: payload.heading,
           content: payload.content,
+          config: SiteConstants,
         })
 
         expect(sendMailMock).toHaveBeenCalledTimes(1)

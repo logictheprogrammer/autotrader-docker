@@ -26,6 +26,7 @@ describe('authentication', () => {
         verifyLink,
         username: existingUser.username,
         subject,
+        config: SiteConstants,
       })
 
       expect(sendMailMock).toHaveBeenCalledTimes(1)
@@ -81,6 +82,7 @@ describe('authentication', () => {
         btnLink,
         name,
         siteName,
+        config: SiteConstants,
       })
 
       expect(sendMailMock).toHaveBeenCalledTimes(1)

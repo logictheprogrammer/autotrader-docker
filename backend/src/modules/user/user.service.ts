@@ -27,6 +27,7 @@ import renderFile from '@/utils/renderFile'
 import { MailOptionName } from '@/modules/mailOption/mailOption.enum'
 import { INotification } from '../notification/notification.interface'
 import notificationModel from '../notification/notification.model'
+import { SiteConstants } from '../config/constants'
 
 @Service()
 class UserService implements IUserService {
@@ -270,8 +271,7 @@ class UserService implements IUserService {
     status: UserStatus
   ): THttpResponse<{ user: IUser }> => {
     try {
-      if (!Types.ObjectId.isValid(userId))
-        throw new HttpException(404, 'User not found')
+      if (!userId) throw new HttpException(404, 'User not found')
 
       const user = await this.find(userId)
 
@@ -368,6 +368,7 @@ class UserService implements IUserService {
       const emailContent = await renderFile('email/custom', {
         heading,
         content,
+        config: SiteConstants,
       })
 
       this.mailService.sendMail({

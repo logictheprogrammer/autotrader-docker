@@ -7,6 +7,7 @@ import { HttpResponseStatus } from '../../http/http.enum'
 import { sendMailMock, setSenderMock } from '../../mail/__test__/mail.mock'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
+import { SiteConstants } from '../../config/constants'
 
 describe('send mail', () => {
   const baseUrl = '/api/send-email'
@@ -81,6 +82,7 @@ describe('send mail', () => {
         const emailContent = await renderFile('email/custom', {
           heading: payload.heading,
           content: payload.content,
+          config: SiteConstants,
         })
 
         expect(sendMailMock.mock.calls[0][0]).toEqual({
