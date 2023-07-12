@@ -1,0 +1,28 @@
+﻿@font-face {
+  font-family: 'Mulish';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url(s/mulish/v12/1Ptwg83HX_SGhgqk2hAjQlW_mEuZ0FsSKeOvHg.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Mulish';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(s/mulish/v12/1Ptyg83HX_SGhgqO0yLcmjzUAuWexZNRwaA.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Mulish';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(s/mulish/v12/1Ptyg83HX_SGhgqO0yLcmjzUAuWexU1WwaA.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Mulish';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(s/mulish/v12/1Ptyg83HX_SGhgqO0yLcmjzUAuWexXRWwaA.ttf) format('truetype');
+}

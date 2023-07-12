@@ -1,0 +1,524 @@
+Uri: https://aurora.volkovdesign.com/
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\index.htm
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/404.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\404.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/about.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\about.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/add.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\add.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/aggregator.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\aggregator.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/article.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\article.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/blog.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\blog.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/blog2.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\blog2.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/contacts.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\contacts.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/css/blueimp-gallery.min.css
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\css\blueimp-gallery.min.css
+Content Type: text/css
+
+Uri: https://aurora.volkovdesign.com/css/bootstrap-grid.min.css
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\css\bootstrap-grid.min.css
+Content Type: text/css
+
+Uri: https://aurora.volkovdesign.com/css/bootstrap-reboot.min.css
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\css\bootstrap-reboot.min.css
+Content Type: text/css
+
+Uri: https://aurora.volkovdesign.com/css/magnific-popup.css
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\css\magnific-popup.css
+Content Type: text/css
+
+Uri: https://aurora.volkovdesign.com/css/main.css
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\css\main.css
+Content Type: text/css
+
+Uri: https://aurora.volkovdesign.com/css/select2.min.css
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\css\select2.min.css
+Content Type: text/css
+
+Uri: https://aurora.volkovdesign.com/css/splide.min.css
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\css\splide.min.css
+Content Type: text/css
+
+Uri: https://aurora.volkovdesign.com/faq.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\faq.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/forgot.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\forgot.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/gallery.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\gallery.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/game.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\game.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/icon/favicon-32x32.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\icon\favicon-32x32.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/arrow.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\arrow.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/avatars/avatar.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\avatars\avatar.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/avatars/avatar2.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\avatars\avatar2.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/avatars/avatar3.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\avatars\avatar3.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/avatars/avatar4.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\avatars\avatar4.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/avatars/avatar5.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\avatars\avatar5.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/blockchain/1.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\blockchain\1.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/blockchain/2.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\blockchain\2.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/blockchain/3.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\blockchain\3.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/blockchain/4.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\blockchain\4.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/blockchain/5.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\blockchain\5.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/blockchain/6.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\blockchain\6.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/blockchain/7.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\blockchain\7.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/breadcrumb.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\breadcrumb.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/close.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\close.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/error.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\error.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/flags/china.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\flags\china.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/flags/france.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\flags\france.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/flags/spain.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\flags\spain.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/flags/uk.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\flags\uk.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/form/img.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\form\img.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/form/link.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\form\link.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/gallery/1.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\gallery\1.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/gallery/2.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\gallery\2.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/gallery/3.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\gallery\3.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/gallery/4.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\gallery\4.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/gallery/5.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\gallery\5.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/gallery/6.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\gallery\6.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/gallery/7.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\gallery\7.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/gallery/8.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\gallery\8.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/games/1-1-big.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\1-1-big.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/1-1.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\1-1.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/1-2-big.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\1-2-big.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/1-2.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\1-2.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/1-3-big.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\1-3-big.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/1-3.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\1-3.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/1-4-big.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\1-4-big.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/1-4.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\1-4.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/1.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\1.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/10.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\10.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/11.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\11.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/12.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\12.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/2.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\2.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/3.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\3.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/4.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\4.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/5.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\5.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/6.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\6.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/7.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\7.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/8.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\8.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/games/9.png
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\games\9.png
+Content Type: image/png
+
+Uri: https://aurora.volkovdesign.com/img/loading.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\loading.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/logo.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\logo.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/next.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\next.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/pause.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\pause.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/play.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\play.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/posts/1.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\posts\1.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/posts/2.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\posts\2.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/posts/3.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\posts\3.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/posts/4.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\posts\4.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/posts/5.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\posts\5.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/posts/6.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\posts\6.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/posts/article.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\posts\article.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/prev.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\prev.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/select.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\select.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/sponsors/logo1.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\sponsors\logo1.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/sponsors/logo2.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\sponsors\logo2.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/sponsors/logo3.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\sponsors\logo3.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/sponsors/logo4.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\sponsors\logo4.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/sponsors/logo5.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\sponsors\logo5.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/sponsors/logo6.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\sponsors\logo6.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/sponsors/logo7.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\sponsors\logo7.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/sponsors/logo8.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\sponsors\logo8.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/team/1.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\team\1.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/team/2.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\team\2.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/team/3.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\team\3.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/team/4.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\team\4.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/team/5.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\team\5.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/team/6.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\team\6.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/team/7.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\team\7.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/team/8.jpg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\team\8.jpg
+Content Type: image/jpeg
+
+Uri: https://aurora.volkovdesign.com/img/video-play.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\video-play.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/wallet/coinbase.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\wallet\coinbase.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/wallet/fortmatic.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\wallet\fortmatic.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/wallet/metamask.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\wallet\metamask.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/wallet/myetherwallet.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\wallet\myetherwallet.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/img/wallet/walletconnect.svg
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\img\wallet\walletconnect.svg
+Content Type: image/svg+xml
+
+Uri: https://aurora.volkovdesign.com/index.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\index.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/index2.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\index2.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/js/blueimp-gallery.min.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\blueimp-gallery.min.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/bootstrap.bundle.min.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\bootstrap.bundle.min.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/chart.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\chart.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/jquery-3.6.0.min.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\jquery-3.6.0.min.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/jquery.magnific-popup.min.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\jquery.magnific-popup.min.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/main.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\main.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/select2.min.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\select2.min.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/smooth-scrollbar.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\smooth-scrollbar.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/splide.min.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\splide.min.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/three.min.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\three.min.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/js/vanta.cells.min.js
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\js\vanta.cells.min.js
+Content Type: application/javascript
+
+Uri: https://aurora.volkovdesign.com/leaderboard.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\leaderboard.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/privacy.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\privacy.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/ranking.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\ranking.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/signin.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\signin.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/signup.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\signup.html
+Content Type: text/html
+
+Uri: https://aurora.volkovdesign.com/staking.html
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\staking.html
+Content Type: text/html
+
+Uri: https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,600;0,700;1,400&display=swap
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\css2
+Content Type: text/css
+
+Uri: https://fonts.gstatic.com/s/mulish/v12/1Ptwg83HX_SGhgqk2hAjQlW_mEuZ0FsSKeOvHg.ttf
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\s\mulish\v12\1Ptwg83HX_SGhgqk2hAjQlW_mEuZ0FsSKeOvHg.ttf
+Content Type: font/ttf
+
+Uri: https://fonts.gstatic.com/s/mulish/v12/1Ptyg83HX_SGhgqO0yLcmjzUAuWexU1WwaA.ttf
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\s\mulish\v12\1Ptyg83HX_SGhgqO0yLcmjzUAuWexU1WwaA.ttf
+Content Type: font/ttf
+
+Uri: https://fonts.gstatic.com/s/mulish/v12/1Ptyg83HX_SGhgqO0yLcmjzUAuWexXRWwaA.ttf
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\s\mulish\v12\1Ptyg83HX_SGhgqO0yLcmjzUAuWexXRWwaA.ttf
+Content Type: font/ttf
+
+Uri: https://fonts.gstatic.com/s/mulish/v12/1Ptyg83HX_SGhgqO0yLcmjzUAuWexZNRwaA.ttf
+File Name: C:\Downloaded Web Sites\aurora.volkovdesign.com\s\mulish\v12\1Ptyg83HX_SGhgqO0yLcmjzUAuWexZNRwaA.ttf
+Content Type: font/ttf
+
