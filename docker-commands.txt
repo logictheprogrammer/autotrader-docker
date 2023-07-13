@@ -1,0 +1,27 @@
+---------------------
+Build Node API Image
+---------------------
+
+docker build -t autotrader-backend ./backend
+
+---------------------
+Run Node API Container
+---------------------
+
+docker run --name autotrader-backend \
+  --env-file ./backend/.env \
+  --rm \
+  -it \
+  --network host \
+  -v "$(pwd)/backend/src":/app/src \
+  autotrader-backend
+
+---------------------
+Stop all Containers
+---------------------
+
+docker stop autotrader-backend
+
+
+
+# docker rmi $(docker images -f "dangling=true" -q)

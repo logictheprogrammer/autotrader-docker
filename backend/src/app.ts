@@ -9,6 +9,7 @@ import { IServiceController } from '@/modules/service/service.interface'
 import path from 'path'
 import cookieParser from 'cookie-parser'
 import { doubleCsrfProtection } from '@/utils/csrf'
+import { error } from 'console'
 
 class App {
   public express: Application
@@ -44,7 +45,6 @@ class App {
     this.express.use(doubleCsrfProtection)
     this.express.get('/token', (req, res, next) => {
       res.json({ token: req.csrfToken && req.csrfToken() })
-      next()
     })
   }
 
@@ -56,14 +56,6 @@ class App {
 
   private initialiseStatic(): void {
     this.express.use('/images', express.static(path.join(__dirname, 'images')))
-
-    this.express.use((req, res, next) => {
-      express.static(path.join(__dirname, 'frontend', 'admin'))(req, res, next)
-    })
-
-    this.express.get(/.*/, (req, res) => {
-      res.sendFile(path.join(__dirname, 'frontend', 'admin', 'index.html'))
-    })
   }
 
   private initialiseErrorHandling(): void {
@@ -74,7 +66,15 @@ class App {
   }
 
   private async initialiseDatabaseConnection(): Promise<void> {
-    if (this.mongoUri) mongoose.connect(`${this.mongoUri}`)
+    if (this.mongoUri)
+      mongoose
+        .connect(`${this.mongoUri}`)
+        .then(() => {
+          console.log('DB CONNECTED')
+        })
+        .catch((error) => {
+          throw error
+        })
   }
 
   public listen(): void {

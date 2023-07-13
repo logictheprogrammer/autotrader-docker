@@ -28,5 +28,3 @@
 **/*.njsproj
 **/*.sln
 **/*.sw?
-
-backend/src/frontend
