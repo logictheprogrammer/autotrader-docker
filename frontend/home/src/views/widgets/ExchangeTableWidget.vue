@@ -23,7 +23,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/1.png" alt="" />
+                      <img src="/img/games/1.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">Tank Metaverse</a>
                   </div>
@@ -46,7 +46,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/2.png" alt="" />
+                      <img src="/img/games/2.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">SynergyLand</a>
                   </div>
@@ -69,7 +69,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/3.png" alt="" />
+                      <img src="/img/games/3.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">SpaceFalcon</a>
                   </div>
@@ -92,7 +92,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/4.png" alt="" />
+                      <img src="/img/games/4.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">BattleArena</a>
                   </div>
@@ -115,7 +115,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/5.png" alt="" />
+                      <img src="/img/games/5.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">OpenEra</a>
                   </div>
@@ -138,7 +138,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/6.png" alt="" />
+                      <img src="/img/games/6.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">ImmortalArena</a>
                   </div>
@@ -161,7 +161,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/7.png" alt="" />
+                      <img src="/img/games/7.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">MonsterNFT</a>
                   </div>
@@ -184,7 +184,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/8.png" alt="" />
+                      <img src="/img/games/8.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">XWorldGames</a>
                   </div>
@@ -207,7 +207,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/9.png" alt="" />
+                      <img src="/img/games/9.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">GunstarMetaverse</a>
                   </div>
@@ -230,7 +230,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/10.png" alt="" />
+                      <img src="/img/games/10.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">TitanHunters</a>
                   </div>
@@ -253,7 +253,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/11.png" alt="" />
+                      <img src="/img/games/11.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">MetaSoccer</a>
                   </div>
@@ -276,7 +276,7 @@
                 <td>
                   <div class="ranking__head">
                     <a href="#" class="ranking__cover">
-                      <img src="img/games/12.png" alt="" />
+                      <img src="/img/games/12.png" alt="" />
                     </a>
                     <a class="ranking__name" href="#">RealmsOfEthernity</a>
                   </div>

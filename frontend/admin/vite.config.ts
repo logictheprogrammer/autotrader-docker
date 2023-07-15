@@ -25,6 +25,6 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: "../../backend/src/frontend/admin",
+    outDir: "../server/build/admin",
   },
 });

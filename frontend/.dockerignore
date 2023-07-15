@@ -1,0 +1,11 @@
+dist
+.dockerignore
+.env
+.env.example
+.eslintrc.js
+.prettierrc.js
+Dockerfile
+jest.config.js
+
+**/__static
+**/README.md

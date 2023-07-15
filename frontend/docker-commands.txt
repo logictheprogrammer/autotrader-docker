@@ -1,0 +1,21 @@
+---------------------
+Build Nginx Server Image
+---------------------
+
+docker build -t autotrader-nginx-server .
+
+---------------------
+Run Nginx Server Container
+---------------------
+
+docker run --name autotrader-nginx-server \
+  --rm \
+  -v ./server/nginx.conf:/etc/nginx/conf.d/default.conf \
+  -p 80:80 \
+  autotrader-nginx-server
+
+---------------------
+Inspect Nginx Server Container
+---------------------
+
+docker exec -it autotrader-nginx-server /bin/bash
