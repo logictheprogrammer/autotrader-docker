@@ -1,7 +1,13 @@
-dist
 .dockerignore
+Dockerfile
+docker-commands.txt
+
+dist
+.vscode
+.gitignore
 .env
 .env.example
-Dockerfile
+.eslintrc.js
+.eslintrc.cjs
+.prettierrc.js
 jest.config.js
-docker-commands.txt

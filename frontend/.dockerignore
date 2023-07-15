@@ -1,11 +1,31 @@
-dist
-.dockerignore
-.env
-.env.example
-.eslintrc.js
-.prettierrc.js
 Dockerfile
-jest.config.js
+docker-commands.txt
+.dockerignore
 
+**/.vscode
+**/.gitignore
+**/jest.config.js
+**/dist
+**/.env
+**/.env.example
+**/.eslintrc.js
+**/.eslintrc.cjs
+**/.prettierrc.js
 **/__static
 **/README.md
+
+# drwxr-xr-x   1 node node   4096 Jul 15 04:57 .
+# drwxr-xr-x   1 root root   4096 Jul 15 04:57 ..
+# -rwxr-xr-x   1 node node   8355 Jul 14 01:12 auto-imports.d.ts
+# -rwxr-xr-x   1 node node   5176 Jul 14 01:12 components.d.ts
+# -rwxr-xr-x   1 node node     38 Jul 11 23:49 env.d.ts
+# -rwxr-xr-x   1 node node   3406 Jul 11 23:49 index.html
+# drwxr-xr-x 268 node node  12288 Jul 15 04:50 node_modules
+# -rw-rw-r--   1 node node 165974 Jul 15 03:52 package-lock.json
+# -rwxr-xr-x   1 node node   1210 Jul 13 16:53 package.json
+# drwxr-xr-x   7 node node   4096 Jul 11 23:49 public
+# drwxr-xr-x   7 node node   4096 Jul 11 23:49 src
+# -rwxr-xr-x   1 node node    272 Jul 11 23:49 tsconfig.config.json
+# -rwxr-xr-x   1 node node    421 Jul 11 23:49 tsconfig.json
+# -rwxr-xr-x   1 node node    328 Jul 11 23:49 types.d.ts
+# -rwxr-xr-x   1 node node   1317 Jul 13 16:04 vite.config.ts
