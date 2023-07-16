@@ -222,14 +222,6 @@ RUN npm run build && rm -rf src && rm -f tsconfig.json \
 
 FROM nginx:1.25.1 as server
 
-ARG UID=1000
-ARG GID=1000
-
-# RUN groupmod -g "${GID}" nginx && usermod -u "${UID}" -g "${GID}" nginx \
-#     && chown nginx:nginx -R /usr/share/nginx/html
-
-# USER nginx
-
 WORKDIR /etc/nginx/conf.d
 
 COPY ./nginx.conf ./default.conf
