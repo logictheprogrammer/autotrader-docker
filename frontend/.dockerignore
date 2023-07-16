@@ -5,7 +5,7 @@ docker-commands.txt
 **/.vscode
 **/.gitignore
 **/jest.config.js
-**/dist
+# **/dist
 **/.env
 **/.env.example
 **/.eslintrc.js

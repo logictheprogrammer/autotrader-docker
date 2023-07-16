@@ -1,0 +1,156 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;900&display=swap");
+@import url("https://fonts.cdnfonts.com/css/digital-7-mono");
+
+:root {
+  --skin: #1d263b;
+  --primary: #aa72ce;
+  --primary-rgb: 170, 114, 206;
+  --background-rgb: 20, 26, 42;
+  --background: #141a2a;
+  --secondary: #709fba;
+  --primary-hover: #a565cd;
+  --primary-dark: #a565cd;
+  --rgba-primary-1: rgba(170, 114, 206, 0.1);
+  --rgba-primary-2: rgba(170, 114, 206, 0.2);
+  --rgba-primary-3: rgba(170, 114, 206, 0.3);
+  --rgba-primary-4: rgba(170, 114, 206, 0.4);
+  --rgba-primary-5: rgba(170, 114, 206, 0.5);
+  --rgba-primary-6: rgba(170, 114, 206, 0.6);
+  --rgba-primary-7: rgba(170, 114, 206, 0.7);
+  --rgba-primary-8: rgba(170, 114, 206, 0.8);
+  --rgba-primary-9: rgba(170, 114, 206, 0.9);
+  --font-family-base: Roboto, sans-serif;
+  --font-family-title: Roboto, sans-serif;
+  --title: #000;
+  --tlt-br-cnt: 50;
+  --i: 0;
+}
+
+.btn-success-2 {
+  background-color: #4ec04c;
+  border-color: #4ec04c;
+}
+
+.btn-success-2:hover {
+  background-color: #68e365;
+  border-color: #68e365;
+}
+
+.digital-7 {
+  font-family: "Digital-7", sans-serif;
+}
+
+.digital-7-i {
+  font-family: "Digital-7 Italic", sans-serif;
+}
+
+.digital-7-m {
+  font-family: "Digital-7 Mono", sans-serif;
+}
+
+.bg-skin {
+  background-color: #1d263b;
+}
+
+.bg-background {
+  background-color: #141a2a !important;
+}
+
+.bg-gradient-mine {
+  background: #1d263b;
+  background: linear-gradient(0deg, #141a2a 0%, #1d263b 100%);
+}
+
+.bg-gradient-mine-sm {
+  background: #1d263b;
+  background: linear-gradient(0deg, #181f31 0%, #1d263b 100%);
+}
+
+.rounded-profile {
+  border-radius: 12px;
+}
+
+.rounded-4 {
+  border-radius: 1.125rem;
+}
+
+.rounded-5 {
+  border-radius: 1.5rem;
+}
+
+.text-sharp {
+  color: #969ba0 !important;
+}
+
+.overflow-hidden-modal {
+  overflow: hidden !important;
+}
+
+.overflow-hidden-loading {
+  overflow: hidden !important;
+}
+
+[data-theme-version="dark"] .header-right .dropdown-menu {
+  box-shadow: none;
+  border: 1px solid #141a2a;
+}
+
+@media only screen and (max-width: 767px) {
+  .header .header-content {
+    padding-left: 0rem;
+  }
+}
+
+@media only screen and (max-width: 575px) {
+  .nav-control {
+    right: -2rem;
+  }
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  float: left;
+  padding-right: 0;
+  color: #6c757d;
+  content: "";
+}
+
+[data-theme-version="dark"] .border-2 {
+  border-width: 2px !important;
+}
+
+[data-theme-version="dark"] .border-3 {
+  border-width: 3px !important;
+}
+
+[data-theme-version="dark"] .border-dark {
+  border-color: #141a2a !important;
+}
+
+[data-theme-version="dark"] .border-primary {
+  border-color: #5bcfc5 !important;
+}
+
+[data-theme-version="dark"] .border-secondary {
+  border-color: #709fba !important;
+}
+
+[data-theme-version="dark"] .border-success {
+  border-color: #68e365 !important;
+}
+
+[data-theme-version="dark"] .border-info {
+  border-color: #b48dd3 !important;
+}
+
+[data-theme-version="dark"] .border-warning {
+  border-color: #ffa755 !important;
+}
+
+[data-theme-version="dark"] .border-danger {
+  border-color: #f72b50 !important;
+}
+
+[data-theme-version="dark"] .form-control {
+  background-color: #141a2a;
+  border: none;
+}
