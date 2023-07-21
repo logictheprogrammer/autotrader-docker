@@ -1,5 +1,5 @@
 <template>
-  <NavHeader @toggle-menu="toggleMenu"></NavHeader>
+  <NavHeaderComponent @toggle-menu="toggleMenu" />
 
   <!--**********************************
           Header start
@@ -188,20 +188,20 @@
           Header end ti-comment-alt
       ***********************************-->
 
-  <Sidebar @hide-menu="hideMenu"></Sidebar>
+  <SidebarComponent @hide-menu="hideMenu" />
 </template>
 
 <script setup lang="ts">
-const page = computed(() => useRoute().meta.page);
+const page = computed(() => useRoute().meta.page)
 
 const toggleMenu = () => {
-  window.$("#main-wrapper").toggleClass("menu-toggle");
-  window.$(".hamburger").toggleClass("is-active");
-};
+  window.$('#main-wrapper').toggleClass('menu-toggle')
+  window.$('.hamburger').toggleClass('is-active')
+}
 const hideMenu = () => {
-  window.$("#main-wrapper").removeClass("menu-toggle");
-  window.$(".hamburger").removeClass("is-active");
-};
+  window.$('#main-wrapper').removeClass('menu-toggle')
+  window.$('.hamburger').removeClass('is-active')
+}
 </script>
 
 <style scoped>

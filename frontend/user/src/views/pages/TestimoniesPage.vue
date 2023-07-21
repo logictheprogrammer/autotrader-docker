@@ -1,14 +1,11 @@
 <template>
   <div class="row">
-    <TestimonyCard></TestimonyCard>
-    <TestimonyCard></TestimonyCard>
-    <TestimonyCard></TestimonyCard>
-    <TestimonyCard></TestimonyCard>
-    <TestimonyCard></TestimonyCard>
-    <TestimonyCard></TestimonyCard>
-    <TestimonyCard></TestimonyCard>
-    <TestimonyCard></TestimonyCard>
-    <TestimonyCard></TestimonyCard>
+    <TestimonyCardComponent />
+    <TestimonyCardComponent />
+    <TestimonyCardComponent />
+    <TestimonyCardComponent />
+    <TestimonyCardComponent />
+    <TestimonyCardComponent />
   </div>
 </template>
 

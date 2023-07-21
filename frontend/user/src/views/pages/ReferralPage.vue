@@ -1,31 +1,17 @@
 <template>
-  <div class="card overflow-hidden">
-    <div class="card-body bg-gradient-mine-sm p-2">
-      <div
-        class="coinmarketcap-currency-widget"
-        data-currencyid="1"
-        data-base="USD"
-        data-secondary="USD"
-        data-ticker="true"
-        data-rank="true"
-        data-marketcap="true"
-        data-volume="true"
-        data-statsticker="true"
-        data-stats="USD"
-      >
-        <CoinMarketSkeleton></CoinMarketSkeleton>
-      </div>
+  <div class="row">
+    <div class="col-xl-4">
+      <ReferralDetailsWidget />
     </div>
-  </div>
-  <PackageInfo></PackageInfo>
-  <div class="row mt-4">
-    <div class="col-12">
+    <div class="col-xl-8">
       <div class="card">
-        <div class="card-header d-flex justify-content-center">
-          <h4 class="card-title text-center">Trade History</h4>
+        <div class="card-header d-block d-sm-flex">
+          <div>
+            <h4 class="card-title mb-2">Referral Details</h4>
+          </div>
         </div>
         <div class="card-body pt-0 px-0">
-          <MyDataTable>
+          <MyDataTableComponent :ordering="true">
             <thead class="bg-background">
               <tr>
                 <th class="text-sharp">Roll No</th>
@@ -358,13 +344,13 @@
                 <td><strong>120$</strong></td>
               </tr>
             </tbody>
-          </MyDataTable>
+          </MyDataTableComponent>
         </div>
       </div>
     </div>
   </div>
 </template>
-<script setup>
-onMounted(() => setTimeout(initCoinMarket, 500));
-</script>
+
+<script setup lang="ts"></script>
+
 <style scoped></style>

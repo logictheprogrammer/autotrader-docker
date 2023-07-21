@@ -21,15 +21,15 @@
       <div class="card">
         <div class="card-body">
           <div class="settings-form">
-            <form>
+            <Form>
               <div class="row mt-4">
                 <div class="mb-3 col-12">
                   <label class="form-label">Withdraw From</label>
-                  <AccountType></AccountType>
+                  <AccountTypeComponent />
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Currency</label>
-                  <PaymentMethod></PaymentMethod>
+                  <PaymentMethodComponent />
                 </div>
                 <div class="mb-3 col-12">
                   <label class="form-label">Wallet Address</label>
@@ -53,7 +53,7 @@
                   </button>
                 </div>
               </div>
-            </form>
+            </Form>
           </div>
         </div>
       </div>

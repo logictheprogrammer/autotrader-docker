@@ -17,8 +17,8 @@
       <div class="card">
         <div class="card-body py-4">
           <div class="settings-form">
-            <form>
-              <PaymentMethod></PaymentMethod>
+            <Form>
+              <PaymentMethodComponent></PaymentMethodComponent>
               <div class="row mt-4">
                 <div class="mb-3 col-12">
                   <label class="form-label">Amount</label>
@@ -32,7 +32,7 @@
                   <button class="btn btn-primary" type="button">Pay Now</button>
                 </div>
               </div>
-            </form>
+            </Form>
           </div>
         </div>
       </div>
@@ -54,7 +54,7 @@
           >
             <div class="bg-background p-4 rounded">
               <div class="p-2 bg-skin rounded-2">
-                <MyQRCode></MyQRCode>
+                <MyQRCodeComponent />
               </div>
             </div>
           </div>
@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-const page = ref(1);
+const page = ref(1)
 </script>
 
 <style scoped></style>

@@ -97,7 +97,7 @@ input:checked + label.payment-cards {
 }
 
 .form input:checked + label:after {
-  content: "";
+  content: '';
   width: 20px;
   height: 20px;
   line-height: 17px;
@@ -111,7 +111,7 @@ input:checked + label.payment-cards {
 }
 
 .form input:checked + label:after {
-  content: "";
+  content: '';
   width: 20px;
   height: 20px;
   line-height: 17px;
@@ -125,7 +125,7 @@ input:checked + label.payment-cards {
 }
 
 .form input:checked + label:before {
-  content: "\2713";
+  content: '\2713';
   z-index: 999;
   position: absolute;
   top: -11px;

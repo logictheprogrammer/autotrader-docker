@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-shape-divider-top-1677261415 d-md-none">
+  <div class="custom-shape-divider-top-1677261415 d-xl-none">
     <svg
       data-name="Layer 1"
       xmlns="http://www.w3.org/2000/svg"

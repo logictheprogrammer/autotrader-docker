@@ -1,5 +1,5 @@
 <template>
-  <div class="dlabnav bg-gradient-mine-sm">
+  <div class="dlabnav bg-gradient-mine-sm position-fixed">
     <div class="dlabnav-scroll">
       <ul class="metismenu mb-3" id="menu">
         <li class="dropdown header-profile">
@@ -78,73 +78,73 @@
             </a>
           </div>
         </li>
-        <NavItem
+        <NavItemComponent
           v-for="item in navItems"
           :key="item.to"
           @hide-menu="$emit('hideMenu')"
           :name="item.name"
           :to="item.to"
           :parent="item.parent"
-        ></NavItem>
+        />
       </ul>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineEmits(["hideMenu"]);
+defineEmits(['hideMenu'])
 
 const navItems = [
   {
-    name: "Home",
-    to: "home",
+    name: 'Home',
+    to: 'home',
     parent: false,
   },
   {
-    name: "My Wallet",
-    to: "wallet",
+    name: 'My Wallet',
+    to: 'wallet',
     parent: true,
   },
   {
-    name: "Active Trade",
-    to: "active-trade",
+    name: 'Active Trade',
+    to: 'active-trade',
     parent: false,
   },
   {
-    name: "Packages",
-    to: "plans",
+    name: 'Package Plans',
+    to: 'packagePlans',
     parent: false,
   },
   {
-    name: "Support",
-    to: "support",
+    name: 'Support',
+    to: 'support',
     parent: false,
   },
   {
-    name: "Testimonies",
-    to: "testimonies",
+    name: 'Testimonies',
+    to: 'testimonies',
     parent: false,
   },
   {
-    name: "Affiliate",
-    to: "affiliate",
+    name: 'Referral',
+    to: 'referral',
     parent: false,
   },
   {
-    name: "Settings",
-    to: "settings",
+    name: 'Settings',
+    to: 'settings',
     parent: false,
   },
-];
+]
 
-let scrollBar: any;
+let scrollBar: any
 onMounted(() => {
-  scrollBar = new window.PerfectScrollbar(".dlabnav-scroll");
-});
+  scrollBar = new window.PerfectScrollbar('.dlabnav-scroll')
+})
 
 onBeforeUnmount(() => {
-  scrollBar.destroy();
-});
+  scrollBar.destroy()
+})
 </script>
 
 <style scoped></style>

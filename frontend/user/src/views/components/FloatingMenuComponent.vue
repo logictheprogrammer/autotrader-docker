@@ -7,7 +7,7 @@
       :key="item.to"
       :to="{ name: item.to }"
       custom
-      v-slot="{ isExactActive, href, isActive }"
+      v-slot="{ isExactActive, href }"
     >
       <RouterLink
         :to="href"
@@ -30,26 +30,26 @@
 <script setup lang="ts">
 const navItems = [
   {
-    name: "Home",
-    to: "home",
+    name: 'Home',
+    to: 'home',
     parent: false,
   },
   {
-    name: "Trade",
-    to: "active-trade",
+    name: 'Trade',
+    to: 'active-trade',
     parent: false,
   },
   {
-    name: "Wallet",
-    to: "wallet",
+    name: 'Wallet',
+    to: 'wallet',
     parent: true,
   },
   {
-    name: "Settings",
-    to: "settings",
+    name: 'Settings',
+    to: 'settings',
     parent: false,
   },
-];
+]
 </script>
 
 <style scoped>
@@ -63,6 +63,6 @@ const navItems = [
 
 .icon-text {
   color: #828690;
-  font-family: "Cairo", sans-serif;
+  font-family: 'Cairo', sans-serif;
 }
 </style>

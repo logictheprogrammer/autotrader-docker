@@ -1,6 +1,6 @@
 <template>
   <a
-    :href="whatsApp"
+    :href="'xssdsd'"
     class="float hover:tw-w-[70px] hover:tw-h-[70px]"
     target="_blank"
   >
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-const whatsApp = useSettingsStore().data.whatsApp;
+// const whatsApp = useConfigStore()
 </script>
 
 <style scoped>

@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeLayout from '@/views/layouts/HomeLayout.vue'
 import HomePage from '@/views/pages/HomePage.vue'
-const PlansPage = () => import('@/views/pages/PlansPage.vue')
-const ActivePackagePage = () => import('@/views/pages/ActivePackagePage.vue')
-const AffiliatePage = () => import('@/views/pages/AffiliatePage.vue')
+const PackagePlansPage = () => import('@/views/pages/PackagePlansPage.vue')
+const ActiveTradePage = () => import('@/views/pages/ActiveTradePage.vue')
+const ReferralPage = () => import('@/views/pages/ReferralPage.vue')
 const TestimoniesPage = () => import('@/views/pages/TestimoniesPage.vue')
 const SupportPage = () => import('@/views/pages/SupportPage.vue')
 const SettingsPage = () => import('@/views/pages/SettingsPage.vue')
@@ -31,17 +31,17 @@ const routes = [
       {
         path: '/active-trade',
         name: 'active-trade',
-        component: ActivePackagePage,
+        component: ActiveTradePage,
         meta: {
           page: 'Active Trade',
         },
       },
       {
-        path: '/plans',
-        name: 'plans',
-        component: PlansPage,
+        path: '/packagePlans',
+        name: 'packagePlans',
+        component: PackagePlansPage,
         meta: {
-          page: 'Packages',
+          page: 'Package Plans',
         },
       },
       {
@@ -50,15 +50,15 @@ const routes = [
         component: SupportPage,
         meta: {
           page: 'Support',
-          hideBreadcrumb: true,
+          // hideBreadcrumb: true,
         },
       },
       {
-        path: '/affiliate',
-        name: 'affiliate',
-        component: AffiliatePage,
+        path: '/referral',
+        name: 'referral',
+        component: ReferralPage,
         meta: {
-          page: 'Affiliate Program',
+          page: 'Referral Program',
         },
       },
       {

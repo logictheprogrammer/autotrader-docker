@@ -28,5 +28,6 @@ declare global {
     googleTranslateElementInit: any
     PerfectScrollbar: any
     QRCode: any
+    initCoinMarket: any
   }
 }

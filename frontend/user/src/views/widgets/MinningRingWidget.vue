@@ -1,16 +1,14 @@
 <template>
   <div class="minning-wrapper">
-    <MinningProgress></MinningProgress>
+    <MinningRingProgress />
     <div class="mining-container">
-      <MinningSpinner></MinningSpinner>
-      <MinningInfo></MinningInfo>
+      <MinningRingSpinner />
+      <MinningRingInfo />
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-const percent = ref(80);
-</script>
+<script setup lang="ts"></script>
 
 <style scoped>
 .minning-wrapper {

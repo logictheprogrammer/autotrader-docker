@@ -23,7 +23,7 @@
           <li class="text-white mb-2">
             Devices
             <span class="ms-3 fs-5">{{
-              plan.coins.map((str) => str.name.capitalize()).join(", ")
+              plan.coins.map((str) => str.name.capitalize()).join(', ')
             }}</span>
           </li>
           <li class="text-white mb-2">
@@ -68,11 +68,10 @@
 </template>
 
 <script setup lang="ts">
-import type { Plan } from "@/types/plan";
-defineEmits(["show"]);
+defineEmits(['show'])
 defineProps<{
-  plan: Plan;
-}>();
+  plan: any
+}>()
 </script>
 
 <style scoped></style>

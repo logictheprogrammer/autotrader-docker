@@ -36,8 +36,8 @@
 }
 
 .btn-success-2:hover {
-  background-color: #68e365;
-  border-color: #68e365;
+  background-color: #5bd559;
+  border-color: #5bd559;
 }
 
 .digital-7 {
@@ -157,4 +157,75 @@
 [data-theme-version='dark'] .form-control {
   background-color: #141a2a;
   border: none;
+}
+
+#goog-gt-tt,
+.goog-te-spinner-pos {
+  display: none !important;
+}
+
+.dataTables_info {
+  color: #969ba0a8 !important;
+  padding-left: 1rem;
+}
+
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+}
+
+*::-webkit-scrollbar {
+  background-color: rgb(23, 30, 48);
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: rgb(23, 30, 48);
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  background-color: var(--primary);
+}
+
+.dataTables_wrapper .dataTables_paginate {
+  justify-content: center;
+}
+
+#main-wrapper {
+  opacity: 1;
+  /* overflow: visible;
+  overflow-x: clip; */
+}
+
+.mnh-100v {
+  min-height: 100vh !important;
+}
+
+.mnh-100 {
+  min-height: 100% !important;
+}
+
+@media only screen and (max-width: 1199px) {
+  .dlabnav {
+    top: 6.2rem;
+    height: calc(100vh - 115px);
+  }
+}
+@media only screen and (max-width: 1400px) {
+  .dlabnav {
+    top: 6.2rem;
+    height: calc(100vh - 125px);
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  [data-sidebar-style='mini'][data-layout='vertical'] .dlabnav {
+    position: fixed !important;
+  }
 }
