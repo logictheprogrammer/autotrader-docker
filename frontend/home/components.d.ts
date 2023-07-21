@@ -62,6 +62,8 @@ declare module '@vue/runtime-core' {
     TestimoniesWidget: typeof import('./src/views/widgets/TestimoniesWidget.vue')['default']
     TokenomicsWidget: typeof import('./src/views/widgets/TokenomicsWidget.vue')['default']
     TradersPage: typeof import('./src/views/pages/TradersPage.vue')['default']
+    VerifieldPage: typeof import('./src/views/pages/verifieldPage.vue')['default']
+    VerifyEmailPage: typeof import('./src/views/pages/auth/VerifyEmailPage.vue')['default']
     WarningAlertIcon: typeof import('./src/views/components/alerts/WarningAlertIcon.vue')['default']
     WhatsAppWidget: typeof import('./src/views/widgets/WhatsAppWidget.vue')['default']
   }

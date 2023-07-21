@@ -87,7 +87,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  mySelect.value.select2('destroy')
+  mySelect.value?.select2('destroy')
   clearTimeout(onLoadScript.value)
 })
 </script>

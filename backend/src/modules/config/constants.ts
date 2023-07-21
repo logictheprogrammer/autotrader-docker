@@ -2,6 +2,7 @@ export class SiteConstants {
   static siteName: string = 'Abito Trade'
   // static siteLink: string = 'localhost:3000'
   // static siteLink: string = '192.168.43.54:5173'
+  static frontendLink: string = 'http://192.168.43.54:5173/'
   static siteLink: string = '192.168.43.54:3000'
   static siteUrl: string = 'http://' + this.siteLink + '/'
   static siteApi: string = this.siteUrl + 'api/'

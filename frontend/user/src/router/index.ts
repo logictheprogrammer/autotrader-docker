@@ -1,120 +1,119 @@
-import { useGeneralStore } from "@/stores/generalStore";
-import { createRouter, createWebHistory } from "vue-router";
-import HomeLayout from "@/HomeLayout.vue";
-import HomeView from "@/views/HomeView.vue";
-const PlansView = () => import("@/views/PlansView.vue");
-const ActivePackageView = () => import("@/views/ActivePackageView.vue");
-const AffiliateView = () => import("@/views/AffiliateView.vue");
-const TestimoniesView = () => import("@/views/TestimoniesView.vue");
-const SupportView = () => import("@/views/SupportView.vue");
-const SettingsView = () => import("@/views/SettingsView.vue");
-const WalletLayout = () => import("@/views/WalletLayout.vue");
-const WalletView = () => import("@/views/WalletView.vue");
-const DepositView = () => import("@/views/DepositView.vue");
-const TransferView = () => import("@/views/TransferView.vue");
-const WithdrawView = () => import("@/views/WithdrawView.vue");
-const ErrorLayout = () => import("@/ErrorLayout.vue");
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeLayout from '@/views/layouts/HomeLayout.vue'
+import HomePage from '@/views/pages/HomePage.vue'
+const PlansPage = () => import('@/views/pages/PlansPage.vue')
+const ActivePackagePage = () => import('@/views/pages/ActivePackagePage.vue')
+const AffiliatePage = () => import('@/views/pages/AffiliatePage.vue')
+const TestimoniesPage = () => import('@/views/pages/TestimoniesPage.vue')
+const SupportPage = () => import('@/views/pages/SupportPage.vue')
+const SettingsPage = () => import('@/views/pages/SettingsPage.vue')
+const WalletLayout = () => import('@/views/layouts/WalletLayout.vue')
+const WalletPage = () => import('@/views/pages/WalletPage.vue')
+const DepositPage = () => import('@/views/pages/DepositPage.vue')
+const TransferPage = () => import('@/views/pages/TransferPage.vue')
+const WithdrawPage = () => import('@/views/pages/WithdrawPage.vue')
+const ErrorLayout = () => import('@/views/layouts/ErrorLayout.vue')
 
 const routes = [
   {
-    path: "/",
+    path: '/',
     component: HomeLayout,
     children: [
       {
-        path: "/",
-        name: "home",
-        component: HomeView,
+        path: '/',
+        name: 'home',
+        component: HomePage,
         meta: {
-          page: "Dashboard",
+          page: 'Dashboard',
           hideBreadcrumb: true,
         },
       },
       {
-        path: "/active-trade",
-        name: "active-trade",
-        component: ActivePackageView,
+        path: '/active-trade',
+        name: 'active-trade',
+        component: ActivePackagePage,
         meta: {
-          page: "Active Trade",
+          page: 'Active Trade',
         },
       },
       {
-        path: "/plans",
-        name: "plans",
-        component: PlansView,
+        path: '/plans',
+        name: 'plans',
+        component: PlansPage,
         meta: {
-          page: "Packages",
+          page: 'Packages',
         },
       },
       {
-        path: "/support",
-        name: "support",
-        component: SupportView,
+        path: '/support',
+        name: 'support',
+        component: SupportPage,
         meta: {
-          page: "Support",
+          page: 'Support',
           hideBreadcrumb: true,
         },
       },
       {
-        path: "/affiliate",
-        name: "affiliate",
-        component: AffiliateView,
+        path: '/affiliate',
+        name: 'affiliate',
+        component: AffiliatePage,
         meta: {
-          page: "Affiliate Program",
+          page: 'Affiliate Program',
         },
       },
       {
-        path: "/testimonies",
-        name: "testimonies",
-        component: TestimoniesView,
+        path: '/testimonies',
+        name: 'testimonies',
+        component: TestimoniesPage,
         meta: {
-          page: "Testimonies",
+          page: 'Testimonies',
         },
       },
       {
-        path: "/settings",
-        name: "settings",
-        component: SettingsView,
+        path: '/settings',
+        name: 'settings',
+        component: SettingsPage,
         meta: {
-          page: "Profile Settings",
+          page: 'Profile Settings',
         },
       },
       {
-        path: "/wallet",
+        path: '/wallet',
         component: WalletLayout,
         children: [
           {
-            path: "",
-            name: "wallet",
-            component: WalletView,
+            path: '',
+            name: 'wallet',
+            component: WalletPage,
             meta: {
-              page: "My Wallet",
+              page: 'My Wallet',
             },
           },
           {
-            path: "deposit",
-            name: "deposit",
-            component: DepositView,
+            path: 'deposit',
+            name: 'deposit',
+            component: DepositPage,
             meta: {
-              page: "Deposit",
-              breadcrumb: [{ name: "Wallet", to: "wallet" }],
+              page: 'Deposit',
+              breadcrumb: [{ name: 'Wallet', to: 'wallet' }],
             },
           },
           {
-            path: "withdraw",
-            name: "withdraw",
-            component: WithdrawView,
+            path: 'withdraw',
+            name: 'withdraw',
+            component: WithdrawPage,
             meta: {
-              page: "Withdraw",
-              breadcrumb: [{ name: "Wallet", to: "wallet" }],
+              page: 'Withdraw',
+              breadcrumb: [{ name: 'Wallet', to: 'wallet' }],
             },
           },
           {
-            path: "transfer",
-            name: "transfer",
-            component: TransferView,
+            path: 'transfer',
+            name: 'transfer',
+            component: TransferPage,
             meta: {
-              page: "Transfer",
-              breadcrumb: [{ name: "Wallet", to: "wallet" }],
+              page: 'Transfer',
+              breadcrumb: [{ name: 'Wallet', to: 'wallet' }],
             },
           },
         ],
@@ -122,34 +121,36 @@ const routes = [
     ],
   },
   {
-    path: "/:NotFound(.*)*",
+    path: '/:NotFound(.*)*',
     component: ErrorLayout,
   },
-];
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior(to) {
     if (to.hash) {
       return {
         el: to.hash,
-        behavior: "smooth",
+        behavior: 'smooth',
         top: 100,
-      };
+      }
     }
-    return { top: 0 };
+    return { top: 0 }
   },
-});
+})
 
 router.beforeEach(async (to, from, next) => {
-  useGeneralStore().requesting(true);
-  next();
-});
+  useHttpStore().setNavigating(true)
+  next()
+})
 
 router.beforeResolve(async (to, from, next) => {
-  useGeneralStore().requesting(false);
-  next();
-});
+  setTimeout(() => {
+    useHttpStore().setNavigating(false)
+  }, 500)
+  next()
+})
 
-export default router;
+export default router

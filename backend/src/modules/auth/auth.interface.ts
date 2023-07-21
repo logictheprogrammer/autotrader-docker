@@ -22,7 +22,9 @@ export interface IAuthService {
   login(
     account: string,
     password: string
-  ): THttpResponse<{ email: string } | { accessToken: string }>
+  ): THttpResponse<
+    { email: string } | { accessToken: string; expiresIn: number }
+  >
 
   updatePassword(
     userId: Types.ObjectId,

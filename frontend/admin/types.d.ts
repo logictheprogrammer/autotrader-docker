@@ -29,8 +29,4 @@ declare global {
     PerfectScrollbar: any;
     QRCode: any;
   }
-
-  interface String {
-    capitalize(): string;
-  }
 }

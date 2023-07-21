@@ -15,6 +15,7 @@ const ForgetPasswordPage = () =>
   import('@/views/pages/auth/ForgetPasswordPage.vue')
 const ResetPasswordPage = () =>
   import('@/views/pages/auth/ResetPasswordPage.vue')
+const VerifyEmailPage = () => import('@/views/pages/auth/VerifyEmailPage.vue')
 const ErrorLayout = () => import('@/views/layouts/ErrorLayout.vue')
 const Error404Page = () => import('@/views/pages/error/Error404Page.vue')
 const Error500Page = () => import('@/views/pages/error/Error500Page.vue')
@@ -81,9 +82,14 @@ const routes = [
         component: ForgetPasswordPage,
       },
       {
-        path: '/reset-password',
+        path: '/reset-password/:key/:token',
         name: 'reset-password',
         component: ResetPasswordPage,
+      },
+      {
+        path: '/verify-email/:key/:token',
+        name: 'verify-email',
+        component: VerifyEmailPage,
       },
     ],
   },

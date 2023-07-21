@@ -1,5 +1,4 @@
 <template>
-  <PostLoading v-if="isLoading"></PostLoading>
   <div id="main-wrapper">
     <Header></Header>
     <!--**********************************
@@ -25,9 +24,8 @@
 </template>
 
 <script setup lang="ts">
-const isLoading = computed(() => useGeneralStore().isLoading);
-const meta = computed(() => useRoute().meta);
-console.log(meta.value);
+const meta = computed(() => useRoute().meta)
+console.log(meta.value)
 </script>
 
 <style scoped></style>

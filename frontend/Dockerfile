@@ -1,6 +1,6 @@
 FROM node:20.4.0-slim as home-copy
 
-RUN npm install -g npm@9.8.0
+# RUN npm install -g npm@9.8.0
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ RUN rm -rf ./node_modules && mv -f ./temp_modules ./node_modules
 
 FROM node:20.4.0 as home-dev
 
-RUN npm install -g npm@9.8.0
+# RUN npm install -g npm@9.8.0
 
 WORKDIR /app
 
@@ -48,7 +48,7 @@ CMD [ "npm","run","dev" ]
 
 FROM node:20.4.0-slim as home-prod
 
-RUN npm install -g npm@9.8.0
+# RUN npm install -g npm@9.8.0
 
 WORKDIR /app
 
@@ -74,7 +74,7 @@ RUN npm run build && rm -rf src && rm -f tsconfig.json \
 
 FROM node:20.4.0-slim as user-copy
 
-RUN npm install -g npm@9.8.0
+# RUN npm install -g npm@9.8.0
 
 WORKDIR /app
 
@@ -100,7 +100,7 @@ RUN rm -rf ./node_modules && mv -f ./temp_modules ./node_modules
 
 FROM node:20.4.0 as user-dev
 
-RUN npm install -g npm@9.8.0
+# RUN npm install -g npm@9.8.0
 
 WORKDIR /app
 
@@ -122,7 +122,7 @@ CMD [ "npm","run","dev" ]
 
 FROM node:20.4.0-slim as user-prod
 
-RUN npm install -g npm@9.8.0
+# RUN npm install -g npm@9.8.0
 
 WORKDIR /app
 
@@ -148,7 +148,7 @@ RUN npm run build && rm -rf src && rm -f tsconfig.json \
 
 FROM node:20.4.0-slim as admin-copy
 
-RUN npm install -g npm@9.8.0
+# RUN npm install -g npm@9.8.0
 
 WORKDIR /app
 
@@ -174,7 +174,7 @@ RUN rm -rf ./node_modules && mv -f ./temp_modules ./node_modules
 
 FROM node:20.4.0 as admin-dev
 
-RUN npm install -g npm@9.8.0
+# RUN npm install -g npm@9.8.0
 
 WORKDIR /app
 
@@ -196,7 +196,7 @@ CMD [ "npm","run","dev" ]
 
 FROM node:20.4.0-slim as admin-prod
 
-RUN npm install -g npm@9.8.0
+# RUN npm install -g npm@9.8.0
 
 WORKDIR /app
 

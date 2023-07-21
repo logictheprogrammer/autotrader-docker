@@ -128,7 +128,9 @@ class AuthService implements IAuthService {
   public async login(
     account: string,
     password: string
-  ): THttpResponse<{ email: string } | { accessToken: string }> {
+  ): THttpResponse<
+    { email: string } | { accessToken: string; expiresIn: number }
+  > {
     try {
       const user = await this.userModel.findOne({
         $or: [{ email: account }, { username: account }],
@@ -159,10 +161,11 @@ class AuthService implements IAuthService {
           'you logged in to your account'
         )
         const accessToken = Encryption.createToken(user)
+        const expiresIn = 1000 * 60 * 60 * 24 + new Date().getTime()
         return {
           status: HttpResponseStatus.SUCCESS,
           message: 'Login successful',
-          data: { accessToken },
+          data: { accessToken, expiresIn },
         }
       }
 
@@ -293,7 +296,6 @@ class AuthService implements IAuthService {
 
       await user.save()
 
-      const accessToken = Encryption.createToken(user)
       this.sendWelcomeMail(user.toObject())
 
       this.activityService.set(
@@ -306,7 +308,6 @@ class AuthService implements IAuthService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Email successfully verifield',
-        data: { accessToken },
       }
     } catch (err: any) {
       throw new ServiceException(

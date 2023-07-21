@@ -21,7 +21,7 @@ class EmailVerificationService implements IEmailVerificationService {
     const key = user.key
     const token = crypto.randomBytes(32).toString('hex')
     const expires = new Date().getTime() + AppConstants.verifyEmailExpiresTime
-    const verifyLink = `${SiteConstants.siteApi}authentication/verify-email/${key}/${token}`
+    const verifyLink = `${SiteConstants.frontendLink}verify-email/${key}/${token}`
     await this.emailVerificationModel.self.deleteMany({ key })
 
     await this.emailVerificationModel.self.create({

@@ -4,7 +4,7 @@
     class="form form--content"
     :validation-schema="schema"
     v-slot="{ errors }"
-    @submit="forgetPassword"
+    @submit="useAuthStore().forgetPassword"
   >
     <div class="form__logo-wrap">
       <RouterLink :to="{ name: 'home' }"
@@ -39,10 +39,6 @@
 const schema = yup.object({
   account: yup.string().required().label('username or email'),
 })
-
-const forgetPassword = (form: any) => {
-  console.log(form)
-}
 </script>
 
 <style scoped></style>

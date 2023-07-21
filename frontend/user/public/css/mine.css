@@ -1,5 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;900&display=swap");
-@import url("https://fonts.cdnfonts.com/css/digital-7-mono");
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;900&display=swap');
+@import url('https://fonts.cdnfonts.com/css/digital-7-mono');
 
 :root {
   --skin: #1d263b;
@@ -26,6 +26,10 @@
   --i: 0;
 }
 
+.modal-overflow {
+  overflow: hidden;
+}
+
 .btn-success-2 {
   background-color: #4ec04c;
   border-color: #4ec04c;
@@ -37,15 +41,15 @@
 }
 
 .digital-7 {
-  font-family: "Digital-7", sans-serif;
+  font-family: 'Digital-7', sans-serif;
 }
 
 .digital-7-i {
-  font-family: "Digital-7 Italic", sans-serif;
+  font-family: 'Digital-7 Italic', sans-serif;
 }
 
 .digital-7-m {
-  font-family: "Digital-7 Mono", sans-serif;
+  font-family: 'Digital-7 Mono', sans-serif;
 }
 
 .bg-skin {
@@ -90,7 +94,7 @@
   overflow: hidden !important;
 }
 
-[data-theme-version="dark"] .header-right .dropdown-menu {
+[data-theme-version='dark'] .header-right .dropdown-menu {
   box-shadow: none;
   border: 1px solid #141a2a;
 }
@@ -111,46 +115,46 @@
   float: left;
   padding-right: 0;
   color: #6c757d;
-  content: "";
+  content: '';
 }
 
-[data-theme-version="dark"] .border-2 {
+[data-theme-version='dark'] .border-2 {
   border-width: 2px !important;
 }
 
-[data-theme-version="dark"] .border-3 {
+[data-theme-version='dark'] .border-3 {
   border-width: 3px !important;
 }
 
-[data-theme-version="dark"] .border-dark {
+[data-theme-version='dark'] .border-dark {
   border-color: #141a2a !important;
 }
 
-[data-theme-version="dark"] .border-primary {
+[data-theme-version='dark'] .border-primary {
   border-color: #5bcfc5 !important;
 }
 
-[data-theme-version="dark"] .border-secondary {
+[data-theme-version='dark'] .border-secondary {
   border-color: #709fba !important;
 }
 
-[data-theme-version="dark"] .border-success {
+[data-theme-version='dark'] .border-success {
   border-color: #68e365 !important;
 }
 
-[data-theme-version="dark"] .border-info {
+[data-theme-version='dark'] .border-info {
   border-color: #b48dd3 !important;
 }
 
-[data-theme-version="dark"] .border-warning {
+[data-theme-version='dark'] .border-warning {
   border-color: #ffa755 !important;
 }
 
-[data-theme-version="dark"] .border-danger {
+[data-theme-version='dark'] .border-danger {
   border-color: #f72b50 !important;
 }
 
-[data-theme-version="dark"] .form-control {
+[data-theme-version='dark'] .form-control {
   background-color: #141a2a;
   border: none;
 }

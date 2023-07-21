@@ -40,6 +40,7 @@ export default defineConfig({
       vueTemplate: true,
       imports: [
         'vue',
+        'vue-router',
         {
           '@/modules/config/config.store': [['default', 'CONFIG']],
           yup: [['*', 'yup']],

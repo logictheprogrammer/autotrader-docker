@@ -2,7 +2,7 @@
   <Form
     action="#"
     class="form form--content"
-    @submit="resetPassword"
+    @submit="useAuthStore().resetPassword"
     :validation-schema="schema"
     v-slot="{ errors }"
   >
@@ -38,7 +38,8 @@
       />
       <span class="error-message">{{ errors.confirmPassword }}</span>
     </div>
-
+    <Field type="hidden" name="key" :value="key" />
+    <Field type="hidden" name="verifyToken" :value="token" />
     <button class="form__btn" type="submit">Save</button>
 
     <span class="form__text form__text--center"
@@ -58,9 +59,9 @@ const schema = yup.object({
     .oneOf([yup.ref('password')], 'Password should match'),
 })
 
-const resetPassword = (form: any) => {
-  console.log(form)
-}
+const params = useRoute().params
+const key = params.key as string
+const token = params.token as string
 </script>
 
 <style scoped></style>

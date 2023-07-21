@@ -21,7 +21,7 @@ class resetPasswordService implements IResetPasswordService {
     const key = user.key
     const token = crypto.randomBytes(32).toString('hex')
     const expires = new Date().getTime() + AppConstants.resetPasswordExpiresTime
-    const resetLink = `${SiteConstants.siteApi}authentication/reset-password/${key}/${token}`
+    const resetLink = `${SiteConstants.frontendLink}reset-password/${key}/${token}`
 
     await this.resetPasswordModel.self.deleteMany({ key })
     await this.resetPasswordModel.self.create({

@@ -2,16 +2,18 @@
   "extends": "@vue/tsconfig/tsconfig.web.json",
   "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
   "compilerOptions": {
+    "ignoreDeprecations": "5.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
     "allowJs": true
   },
+  "noUnusedLocals": true,
   "references": [
     {
       "path": "./tsconfig.config.json"
     }
   ],
-  "files": ["auto-imports.d.ts", "components.d.ts", "types.d.ts", "protos.d.ts"]
+  "files": ["auto-imports.d.ts", "components.d.ts", "types.d.ts"]
 }
