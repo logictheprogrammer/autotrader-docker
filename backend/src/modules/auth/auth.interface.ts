@@ -23,7 +23,7 @@ export interface IAuthService {
     account: string,
     password: string
   ): THttpResponse<
-    { email: string } | { accessToken: string; expiresIn: number }
+    { email: string } | { accessToken: string; expiresIn: number; user: IUser }
   >
 
   updatePassword(

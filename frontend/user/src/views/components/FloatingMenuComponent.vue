@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-skin rounded-2 floating-menu shadow d-flex justify-content-around border border-dark d-md-none"
+    class="bg-skin floating-menu shadow d-flex justify-content-around border border-dark d-md-none"
   >
     <RouterLink
       v-for="item in navItems"
@@ -16,7 +16,7 @@
         }`"
         aria-expanded="false"
       >
-        <i class="flaticon-025-dashboard"></i>
+        <i :class="item.icon"></i>
         <span
           :class="`icon-text ${isExactActive ? 'text-info' : 'text-sharp'}`"
         >
@@ -33,21 +33,25 @@ const navItems = [
     name: 'Home',
     to: 'home',
     parent: false,
+    icon: 'fa-solid fa-house',
   },
   {
     name: 'Trade',
     to: 'active-trade',
     parent: false,
+    icon: 'fa-solid fa-bolt',
   },
   {
     name: 'Wallet',
     to: 'wallet',
     parent: true,
+    icon: 'fa-solid fa-wallet',
   },
   {
     name: 'Settings',
     to: 'settings',
     parent: false,
+    icon: 'fa-solid fa-gear',
   },
 ]
 </script>
@@ -58,11 +62,20 @@ const navItems = [
   bottom: 1rem;
   left: 1rem;
   right: 1rem;
+  border-radius: 0.75rem;
   z-index: 5;
+  transition: all 0.2s ease-out;
 }
 
 .icon-text {
   color: #828690;
   font-family: 'Cairo', sans-serif;
+}
+
+.no-float {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0;
 }
 </style>

@@ -223,24 +223,24 @@
 .msg_card_body {
   position: static;
   overflow-y: auto;
-  height: calc(100vh - 240px);
+  height: calc(100vh - 260px);
 }
 
 @media only screen and (min-width: 768px) {
   .msg_card_body {
-    height: calc(100vh - 280px);
+    height: calc(100vh - 300px);
   }
 }
 
 @media only screen and (min-width: 1200px) {
   .msg_card_body {
-    height: calc(100vh - 295px);
+    height: calc(100vh - 315px);
   }
 }
 
 @media only screen and (min-width: 1400px) {
   .msg_card_body {
-    height: calc(100vh - 310px);
+    height: calc(100vh - 330px);
   }
 }
 

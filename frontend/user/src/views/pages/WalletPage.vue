@@ -11,7 +11,7 @@
       >Transfer</RouterLink
     >
   </div>
-  <div class="card mt-4 mb-5">
+  <div class="card mt-4">
     <div class="card-header">
       <h4 class="card-title">Transaction History</h4>
     </div>

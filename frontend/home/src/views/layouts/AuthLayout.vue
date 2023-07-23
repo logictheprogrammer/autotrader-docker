@@ -1,7 +1,7 @@
 <template>
   <!-- page wrap -->
   <div class="d-flex justify-content-center auth-translate">
-    <GoogleTranslateWidget></GoogleTranslateWidget>
+    <GoogleTranslateWidget />
   </div>
   <div class="section section--content">
     <div class="section__content">

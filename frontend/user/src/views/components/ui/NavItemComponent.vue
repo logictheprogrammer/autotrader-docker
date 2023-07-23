@@ -19,17 +19,34 @@
         aria-expanded="false"
         @click="$emit('hideMenu')"
       >
-        <i class="flaticon-025-dashboard"></i>
+        <i :class="icon"></i>
         <span class="nav-text">{{ name }}</span>
+        <MyBadgeComponent
+          v-if="notice"
+          class="text-white bg-danger notice-badge"
+          >{{ notice }}
+        </MyBadgeComponent>
       </RouterLink>
     </li>
   </RouterLink>
 </template>
 
 <script setup lang="ts">
-defineProps(["name", "to", "parent"]);
+defineProps<{
+  name: string
+  parent: boolean
+  to: string
+  icon: string
+  notice?: number
+}>()
 
-defineEmits(["hideMenu"]);
+defineEmits(['hideMenu'])
 </script>
 
-<style scoped></style>
+<style scoped>
+.notice-badge {
+  right: 0;
+  margin-right: 1rem;
+  border: 2px solid #1d263b;
+}
+</style>

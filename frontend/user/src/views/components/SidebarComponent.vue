@@ -2,81 +2,23 @@
   <div class="dlabnav bg-gradient-mine-sm position-fixed">
     <div class="dlabnav-scroll">
       <ul class="metismenu mb-3" id="menu">
-        <li class="dropdown header-profile">
-          <a
-            class="nav-link"
+        <li class="dropdown header-profile d-flex">
+          <RouterLink
+            :to="{ name: 'settings' }"
+            class="nav-link border"
             href="javascript:void(0);"
-            role="button"
-            data-bs-toggle="dropdown"
+            @click="$emit('hideMenu')"
           >
             <img src="/images/profile/pic1.jpg" width="20" alt="" />
-            <div class="header-info ms-3">
-              <span class="font-w600">Hi,<b>William</b></span>
-              <small class="text-end font-w400">william@gmail.com</small>
+            <div class="header-info ms-3 ellipsis-container">
+              <span class="font-w600"
+                >Hi, <b>{{ user?.username }} </b></span
+              >
+              <small class="text-end font-w400 ellipsis-container ellipsis-text"
+                >{{ user?.email }}
+              </small>
             </div>
-          </a>
-          <div class="dropdown-menu dropdown-menu-end">
-            <a href="app-profile.html" class="dropdown-item ai-icon">
-              <svg
-                id="icon-user1"
-                xmlns="http://www.w3.org/2000/svg"
-                class="text-primary"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              <span class="ms-2">Profile </span>
-            </a>
-            <a href="email-inbox.html" class="dropdown-item ai-icon">
-              <svg
-                id="icon-inbox"
-                xmlns="http://www.w3.org/2000/svg"
-                class="text-success"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                ></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-              </svg>
-              <span class="ms-2">Inbox </span>
-            </a>
-            <a href="page-error-404.html" class="dropdown-item ai-icon">
-              <svg
-                id="icon-logout"
-                xmlns="http://www.w3.org/2000/svg"
-                class="text-danger"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-              <span class="ms-2">Logout </span>
-            </a>
-          </div>
+          </RouterLink>
         </li>
         <NavItemComponent
           v-for="item in navItems"
@@ -85,7 +27,33 @@
           :name="item.name"
           :to="item.to"
           :parent="item.parent"
+          :icon="item.icon"
+          :notice="item.notice"
         />
+        <li class="nav-item d-flex mt-3">
+          <a
+            href="javascript:void(0);"
+            class="btn btn-outline-secondary"
+            @click="useAuthStore().logout"
+            ><span class="logout-span">Logout </span
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              fill="currentColor"
+              class="bi bi-box-arrow-in-right"
+              viewBox="0 0 16 16"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"
+              ></path>
+              <path
+                fill-rule="evenodd"
+                d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"
+              ></path></svg
+          ></a>
+        </li>
       </ul>
     </div>
   </div>
@@ -93,47 +61,56 @@
 
 <script setup lang="ts">
 defineEmits(['hideMenu'])
-
+const user = useAuthStore().user
 const navItems = [
   {
     name: 'Home',
     to: 'home',
     parent: false,
+    icon: 'fa-solid fa-house',
+  },
+  {
+    name: 'Notifications',
+    to: 'testimonies',
+    parent: false,
+    icon: 'fa-solid fa-bell',
+    notice: 5,
   },
   {
     name: 'My Wallet',
     to: 'wallet',
     parent: true,
+    icon: 'fa-solid fa-wallet',
   },
   {
     name: 'Active Trade',
     to: 'active-trade',
     parent: false,
+    icon: 'fa-solid fa-bolt',
   },
   {
     name: 'Package Plans',
     to: 'packagePlans',
     parent: false,
+    icon: 'fa-solid fa-cube',
   },
   {
     name: 'Support',
     to: 'support',
     parent: false,
-  },
-  {
-    name: 'Testimonies',
-    to: 'testimonies',
-    parent: false,
+    icon: 'fa-solid fa-headset',
   },
   {
     name: 'Referral',
     to: 'referral',
     parent: false,
+    icon: 'fa-solid fa-users',
   },
   {
     name: 'Settings',
     to: 'settings',
     parent: false,
+    icon: 'fa-solid fa-gear',
   },
 ]
 
@@ -148,3 +125,22 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped></style>
+
+<style>
+@media only screen and (min-width: 768px) {
+  #main-wrapper.menu-toggle .logout-span {
+    display: none;
+  }
+}
+
+body[data-sidebar-style='mini'] .logout-span {
+  display: none;
+}
+
+@media only screen and (max-width: 1199px) {
+  .dlabnav {
+    top: 5rem;
+    height: calc(100vh - 95px);
+  }
+}
+</style>

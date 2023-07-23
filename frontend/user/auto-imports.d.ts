@@ -5,6 +5,10 @@ declare global {
   const DUMMY_PLANS: typeof import('./src/data/dummyPlans')['DUMMY_PLANS']
   const EffectScope: typeof import('vue')['EffectScope']
   const ResponseStatus: typeof import('./src/modules/http/http.enum')['ResponseStatus']
+  const UserAccount: typeof import('./src/modules/user/user.enum')['UserAccount']
+  const UserEnvironment: typeof import('./src/modules/user/user.enum')['UserEnvironment']
+  const UserRole: typeof import('./src/modules/user/user.enum')['UserRole']
+  const UserStatus: typeof import('./src/modules/user/user.enum')['UserStatus']
   const axios: typeof import('axios')['default']
   const computed: typeof import('vue')['computed']
   const config: typeof import('./src/data/config')['default']
@@ -77,6 +81,10 @@ declare module 'vue' {
     readonly DUMMY_PLANS: UnwrapRef<typeof import('./src/data/dummyPlans')['DUMMY_PLANS']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly ResponseStatus: UnwrapRef<typeof import('./src/modules/http/http.enum')['ResponseStatus']>
+    readonly UserAccount: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserAccount']>
+    readonly UserEnvironment: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserEnvironment']>
+    readonly UserRole: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserRole']>
+    readonly UserStatus: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserStatus']>
     readonly axios: UnwrapRef<typeof import('axios')['default']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly config: UnwrapRef<typeof import('./src/data/config')['default']>

@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-5">
+  <div class="card">
     <div class="card-body">
       <div class="profile-tab">
         <div class="custom-tab-1">
@@ -25,7 +25,7 @@
             <div id="my-profile" class="tab-pane fade active show">
               <div class="pt-3">
                 <div class="settings-form">
-                  <form>
+                  <Form>
                     <div class="row">
                       <div class="mb-3 col-md-6">
                         <label class="form-label">Name</label>
@@ -33,6 +33,7 @@
                           type="text"
                           placeholder="Name"
                           class="form-control"
+                          :value="user?.name"
                         />
                       </div>
                       <div class="mb-3 col-md-6">
@@ -41,6 +42,7 @@
                           type="text"
                           placeholder="Username"
                           class="form-control"
+                          :value="user?.username"
                         />
                       </div>
                     </div>
@@ -51,20 +53,19 @@
                           type="email"
                           placeholder="Email"
                           class="form-control"
+                          :value="user?.email"
                           disabled
                         />
                       </div>
                       <div class="mb-3 col-md-6">
-                        <label class="form-label">State</label>
-                        <select
-                          class="form-control default-select wide"
-                          id="inputState"
-                        >
-                          <option selected>Choose...</option>
-                          <option>Option 1</option>
-                          <option>Option 2</option>
-                          <option>Option 3</option>
-                        </select>
+                        <label class="form-label">Country</label>
+                        <input
+                          type="text"
+                          placeholder="Country"
+                          class="form-control"
+                          :value="user?.country"
+                          disabled
+                        />
                       </div>
                     </div>
                     <div class="text-center mt-2">
@@ -72,14 +73,14 @@
                         Update
                       </button>
                     </div>
-                  </form>
+                  </Form>
                 </div>
               </div>
             </div>
             <div id="update-password" class="tab-pane fade">
               <div class="pt-3">
                 <div class="settings-form">
-                  <form>
+                  <Form>
                     <div class="row">
                       <div class="mb-3 col-md-6">
                         <label class="form-label">Current Password</label>
@@ -97,7 +98,7 @@
                           class="form-control"
                         />
                       </div>
-                      <div class="mb-3 col-md-6">
+                      <div class="mb-3 col-md-6 offset-md-6">
                         <label class="form-label">Confirm Password</label>
                         <input
                           type="password"
@@ -111,7 +112,7 @@
                         Update
                       </button>
                     </div>
-                  </form>
+                  </Form>
                 </div>
               </div>
             </div>
@@ -152,6 +153,8 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const user = useAuthStore().user
+</script>
 
 <style scoped></style>

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 export const useConfigStore = defineStore('config', () => {
+  const onProduction = import.meta.env.PROD
   const appName = 'Aurora'
   const appSlogan = 'Invest Smarter'
   const appUrl = ''
@@ -21,6 +22,7 @@ export const useConfigStore = defineStore('config', () => {
   const activeTestimonies = false
 
   return {
+    onProduction,
     appName,
     appSlogan,
     appUrl,

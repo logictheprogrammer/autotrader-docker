@@ -12,21 +12,22 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@vueup/vue-quill": "^1.1.0",
     "axios": "^1.4.0",
     "floating-vue": "^2.0.0-beta.20",
     "js-cookie": "^3.0.5",
     "lightvue": "^1.5.1",
     "pinia": "^2.1.4",
+    "quill-blot-formatter": "^1.0.5",
     "vee-validate": "^4.10.5",
     "vue": "^3.3.4",
     "vue-router": "^4.2.4",
     "vue3-carousel": "^0.3.1",
-    "yup": "^1.2.0",
-    "@vueup/vue-quill": "^1.1.0",
-    "quill-blot-formatter": "^1.0.5"
+    "yup": "^1.2.0"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",
+    "@types/js-cookie": "^3.0.3",
     "@types/node": "^18.11.12",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@vitejs/plugin-vue": "^4.0.0",

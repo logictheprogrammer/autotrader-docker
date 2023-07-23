@@ -24,7 +24,7 @@ const routes = [
         name: 'home',
         component: HomePage,
         meta: {
-          page: 'Dashboard',
+          page: `Welcome Back Friend!`,
           hideBreadcrumb: true,
         },
       },
@@ -50,7 +50,6 @@ const routes = [
         component: SupportPage,
         meta: {
           page: 'Support',
-          // hideBreadcrumb: true,
         },
       },
       {

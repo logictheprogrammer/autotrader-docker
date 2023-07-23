@@ -32,7 +32,11 @@ class App {
     this.express.use(helmet())
     this.express.use(
       cors({
-        origin: ['http://localhost:5173', 'http://192.168.43.54:5173'],
+        origin: [
+          'http://localhost:5173',
+          'http://localhost:5174',
+          'http://localhost:5175',
+        ],
         credentials: true,
       })
     )

@@ -9,7 +9,7 @@
 const httpStore = useHttpStore()
 const authStore = useAuthStore()
 
-authStore.getToken()
+authStore.setAuth()
 const isLoading = computed(() => httpStore.get.active)
 
 watch(isLoading, (currentValue) => {

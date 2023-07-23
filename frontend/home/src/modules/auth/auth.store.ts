@@ -1,29 +1,46 @@
 import { defineStore } from 'pinia'
 import type { SubmissionContext } from 'vee-validate'
 import type { ILogin, IRegister } from './auth.interface'
+import Cookies from 'js-cookie'
 
 export const useAuthStore = defineStore('auth', () => {
   const basePath = 'authentication'
   const httpStore = useHttpStore()
   const router = useRouter()
   const csrfToken = ref('')
+  const CONFIG = useConfigStore()
+  const userPath = CONFIG.onProduction ? '/' : 'http://localhost:5174/'
 
-  function writeUserDataToLocalStorage(accessToken: string, expiresIn: number) {
-    localStorage.setItem(
-      'userData',
-      JSON.stringify({
-        accessToken,
-        expiresIn,
-      })
-    )
+  function setAuth() {
+    const isAuth = readUserDataFromLocalStorage()
+    if (isAuth) Cookies.set('request_code', '100', { expires: 365 })
+    else getToken()
   }
 
-  function readUserDataFromLocalStorage() {
-    const userDataString = localStorage.getItem('userData')
+  function writeUserDataToLocalStorage(
+    accessToken: string,
+    expiresIn: number,
+    user: any
+  ) {
+    const userData = JSON.stringify({
+      accessToken,
+      expiresIn,
+      user,
+    })
+    if (CONFIG.onProduction) localStorage.setItem('userData', userData)
+    else Cookies.set('userData', userData, { expires: 365 })
+  }
+
+  function readUserDataFromLocalStorage(): boolean {
+    httpStore.setGet(true)
+    const userDataString = CONFIG.onProduction
+      ? localStorage.getItem('userData')
+      : Cookies.get('userData')
     if (userDataString) {
-      const userData = JSON.parse(userDataString)
-      // set cookies
-      window.location.href = '/'
+      window.location.href = userPath
+      return true
+    } else {
+      return false
     }
   }
 
@@ -34,10 +51,11 @@ export const useAuthStore = defineStore('auth', () => {
       contex.resetForm()
       if (result.data.status !== ResponseStatus.SUCCESS)
         return httpStore.handlePost(result)
+      httpStore.setGet(true)
       const data = result.data.data
-      writeUserDataToLocalStorage(data.accessToken, data.expiresIn)
-      // set cookies
-      window.location.href = '/'
+      writeUserDataToLocalStorage(data.accessToken, data.expiresIn, data.user)
+      Cookies.set('request_code', '100')
+      window.location.href = userPath
     } catch (error: any) {
       console.error(error)
       httpStore.handlePost(error.response)
@@ -115,10 +133,9 @@ export const useAuthStore = defineStore('auth', () => {
     csrfToken,
     login,
     register,
-    getToken,
     verifyEmail,
     forgetPassword,
     resetPassword,
-    readUserDataFromLocalStorage,
+    setAuth,
   }
 })
