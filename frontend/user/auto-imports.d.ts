@@ -4,6 +4,7 @@ declare global {
   const CONFIG: typeof import('@/modules/config/config.store')['default']
   const DUMMY_PLANS: typeof import('./src/data/dummyPlans')['DUMMY_PLANS']
   const EffectScope: typeof import('vue')['EffectScope']
+  const Helpers: typeof import('@/util/helpers')['default']
   const ResponseStatus: typeof import('./src/modules/http/http.enum')['ResponseStatus']
   const UserAccount: typeof import('./src/modules/user/user.enum')['UserAccount']
   const UserEnvironment: typeof import('./src/modules/user/user.enum')['UserEnvironment']
@@ -67,6 +68,7 @@ declare global {
   const useRoute: typeof import('vue-router')['useRoute']
   const useRouter: typeof import('vue-router')['useRouter']
   const useSlots: typeof import('vue')['useSlots']
+  const useUserStore: typeof import('./src/modules/user/user.store')['useUserStore']
   const watch: typeof import('vue')['watch']
   const watchEffect: typeof import('vue')['watchEffect']
   const watchPostEffect: typeof import('vue')['watchPostEffect']
@@ -80,6 +82,7 @@ declare module 'vue' {
     readonly CONFIG: UnwrapRef<typeof import('@/modules/config/config.store')['default']>
     readonly DUMMY_PLANS: UnwrapRef<typeof import('./src/data/dummyPlans')['DUMMY_PLANS']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly Helpers: UnwrapRef<typeof import('@/util/helpers')['default']>
     readonly ResponseStatus: UnwrapRef<typeof import('./src/modules/http/http.enum')['ResponseStatus']>
     readonly UserAccount: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserAccount']>
     readonly UserEnvironment: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserEnvironment']>
@@ -143,6 +146,7 @@ declare module 'vue' {
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useUserStore: UnwrapRef<typeof import('./src/modules/user/user.store')['useUserStore']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>

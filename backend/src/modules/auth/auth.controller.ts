@@ -8,6 +8,7 @@ import { IAuthService } from '@/modules/auth/auth.interface'
 import { IServiceController } from '@/modules/service/service.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import HttpException from '@/modules/http/http.exception'
+import { HttpResponseStatus } from '../http/http.enum'
 
 @Service()
 class AuthController implements IServiceController {
@@ -33,6 +34,13 @@ class AuthController implements IServiceController {
       `${this.path}/login`,
       HttpMiddleware.validate(validate.login),
       this.login
+    )
+
+    // user
+    this.router.get(
+      `${this.path}/user`,
+      HttpMiddleware.authenticate(UserRole.USER),
+      this.user
     )
 
     // Update Password
@@ -110,6 +118,22 @@ class AuthController implements IServiceController {
 
       const responce = await this.authService.login(account, password)
       res.status(200).json(responce)
+    } catch (err: any) {
+      next(new HttpException(err.status, err.message, err.statusStrength))
+    }
+  }
+
+  private user = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> => {
+    try {
+      res.status(200).json({
+        status: HttpResponseStatus.SUCCESS,
+        message: 'profile fetched',
+        data: { user: req.user },
+      })
     } catch (err: any) {
       next(new HttpException(err.status, err.message, err.statusStrength))
     }

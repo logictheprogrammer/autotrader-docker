@@ -137,7 +137,7 @@ class UserController implements IServiceController {
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
         let userId
-        const { name, username, country } = req.body
+        const { name, username } = req.body
         if (isAdmin) {
           userId = req.params.userId
           if (!userId) throw new HttpException(404, 'User not found')
@@ -148,8 +148,7 @@ class UserController implements IServiceController {
         const responce = await this.userService.updateProfile(
           userId,
           name,
-          username,
-          country
+          username
         )
         res.status(200).json(responce)
       } catch (err: any) {

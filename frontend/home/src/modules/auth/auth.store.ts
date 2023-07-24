@@ -17,15 +17,10 @@ export const useAuthStore = defineStore('auth', () => {
     else getToken()
   }
 
-  function writeUserDataToLocalStorage(
-    accessToken: string,
-    expiresIn: number,
-    user: any
-  ) {
+  function writeUserDataToLocalStorage(accessToken: string, expiresIn: number) {
     const userData = JSON.stringify({
       accessToken,
       expiresIn,
-      user,
     })
     if (CONFIG.onProduction) localStorage.setItem('userData', userData)
     else Cookies.set('userData', userData, { expires: 365 })
@@ -53,7 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
         return httpStore.handlePost(result)
       httpStore.setGet(true)
       const data = result.data.data
-      writeUserDataToLocalStorage(data.accessToken, data.expiresIn, data.user)
+      writeUserDataToLocalStorage(data.accessToken, data.expiresIn)
       Cookies.set('request_code', '100')
       window.location.href = userPath
     } catch (error: any) {

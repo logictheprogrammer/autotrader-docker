@@ -189,8 +189,7 @@ class UserService implements IUserService {
   public updateProfile = async (
     userId: Types.ObjectId,
     name: string,
-    username: string,
-    country: string
+    username: string
   ): THttpResponse<{ user: IUser }> => {
     try {
       await this.userModel.ifExist(
@@ -205,7 +204,6 @@ class UserService implements IUserService {
 
       user.name = name
       user.username = username
-      user.country = country
       await user.save()
 
       this.activityService.set(

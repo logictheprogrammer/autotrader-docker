@@ -60,8 +60,7 @@ export interface IUserService {
   updateProfile(
     userId: Types.ObjectId,
     name: string,
-    username: string,
-    country: string
+    username: string
   ): THttpResponse<{ user: IUser }>
 
   updateEmail(

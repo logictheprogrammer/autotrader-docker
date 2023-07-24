@@ -1,182 +1,184 @@
-import { useGeneralStore } from "@/stores/generalStore";
-import { createRouter, createWebHistory } from "vue-router";
-import HomeLayout from "@/HomeLayout.vue";
-import HomeView from "@/views/HomeView.vue";
-const PlansView = () => import("@/views/PlansView.vue");
-const UsersView = () => import("@/views/UsersView.vue");
-const PurchasedPackagesView = () => import("@/views/PurchasedPackagesView.vue");
-const AffiliateView = () => import("@/views/AffiliateView.vue");
-const TestimoniesView = () => import("@/views/TestimoniesView.vue");
-const SupportLayout = () => import("@/views/SupportLayout.vue");
-const SupportView = () => import("@/views/SupportView.vue");
-const ChatView = () => import("@/views/ChatView.vue");
-const SettingsLayout = () => import("@/views/SettingsLayout.vue");
-const ReferralSettingsView = () => import("@/views/ReferralSettingsView.vue");
-const DepositMethodsView = () => import("@/views/DepositMethodsView.vue");
-const WithdrawalMethodsView = () => import("@/views/WithdrawalMethodsView.vue");
-const SiteConfigurationsView = () =>
-  import("@/views/SiteConfigurationsView.vue");
-const WalletLayout = () => import("@/views/WalletLayout.vue");
-const WalletView = () => import("@/views/WalletView.vue");
-const DepositView = () => import("@/views/DepositView.vue");
-const TransferView = () => import("@/views/TransferView.vue");
-const WithdrawView = () => import("@/views/WithdrawView.vue");
-const ErrorLayout = () => import("@/ErrorLayout.vue");
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeLayout from '@/views/layouts/HomeLayout.vue'
+import HomePage from '@/views/pages/HomePage.vue'
+const PlansPage = () => import('@/views/pages/PlansPage.vue')
+const UsersPage = () => import('@/views/pages/UsersPage.vue')
+const PurchasedPackagesPage = () =>
+  import('@/views/pages/PurchasedPackagesPage.vue')
+const ReferralPage = () => import('@/views/pages/ReferralPage.vue')
+const TestimoniesPage = () => import('@/views/pages/TestimoniesPage.vue')
+const SupportLayout = () => import('@/views/layouts/SupportLayout.vue')
+const SupportPage = () => import('@/views/pages/SupportPage.vue')
+const ChatPage = () => import('@/views/pages/ChatPage.vue')
+const SettingsLayout = () => import('@/views/layouts/SettingsLayout.vue')
+const ReferralSettingsPage = () =>
+  import('@/views/pages/ReferralSettingsPage.vue')
+const DepositMethodsPage = () => import('@/views/pages/DepositMethodsPage.vue')
+const WithdrawalMethodsPage = () =>
+  import('@/views/pages/WithdrawalMethodsPage.vue')
+const SiteConfigurationsPage = () =>
+  import('@/views/pages/SiteConfigurationsPage.vue')
+const WalletLayout = () => import('@/views/layouts/WalletLayout.vue')
+const WalletPage = () => import('@/views/pages/WalletPage.vue')
+const DepositPage = () => import('@/views/pages/DepositPage.vue')
+const TransferPage = () => import('@/views/pages/TransferPage.vue')
+const WithdrawPage = () => import('@/views/pages/WithdrawPage.vue')
+const ErrorLayout = () => import('@/views/layouts/ErrorLayout.vue')
 
 const routes = [
   {
-    path: "/",
+    path: '/',
     component: HomeLayout,
     children: [
       {
-        path: "/",
-        name: "home",
-        component: HomeView,
+        path: '/',
+        name: 'home',
+        component: HomePage,
         meta: {
-          page: "Dashboard",
+          page: 'Dashboard',
           hideBreadcrumb: true,
         },
       },
       {
-        path: "/users",
-        name: "users",
-        component: UsersView,
+        path: '/users',
+        name: 'users',
+        component: UsersPage,
         meta: {
-          page: "Users Management",
+          page: 'Users Management',
         },
       },
       {
-        path: "/purchased-packages",
-        name: "purchased-packages",
-        component: PurchasedPackagesView,
+        path: '/purchased-packages',
+        name: 'purchased-packages',
+        component: PurchasedPackagesPage,
         meta: {
-          page: "Purchased Packages",
+          page: 'Purchased Packages',
         },
       },
       {
-        path: "/plans",
-        name: "plans",
-        component: PlansView,
+        path: '/plans',
+        name: 'plans',
+        component: PlansPage,
         meta: {
-          page: "Packages",
+          page: 'Packages',
         },
       },
       {
-        path: "/support",
+        path: '/support',
         component: SupportLayout,
         children: [
           {
-            path: "",
-            name: "support",
-            component: SupportView,
+            path: '',
+            name: 'support',
+            component: SupportPage,
             meta: {
-              page: "Support",
+              page: 'Support',
               hideBreadcrumb: true,
             },
           },
           {
-            path: ":userId",
-            name: "chat",
-            component: ChatView,
+            path: ':userId',
+            name: 'chat',
+            component: ChatPage,
             meta: {
-              page: "Support",
+              page: 'Support',
               hideBreadcrumb: true,
             },
           },
         ],
       },
       {
-        path: "/affiliate",
-        name: "affiliate",
-        component: AffiliateView,
+        path: '/referral',
+        name: 'referral',
+        component: ReferralPage,
         meta: {
-          page: "Affiliate Program",
+          page: 'Referral Program',
         },
       },
       {
-        path: "/testimonies",
-        name: "testimonies",
-        component: TestimoniesView,
+        path: '/testimonies',
+        name: 'testimonies',
+        component: TestimoniesPage,
         meta: {
-          page: "Testimonies",
+          page: 'Testimonies',
         },
       },
       {
-        path: "/settings",
-        name: "settings",
+        path: '/settings',
+        name: 'settings',
         component: SettingsLayout,
         children: [
           {
-            path: "referral-settings",
-            name: "referral-settings",
-            component: ReferralSettingsView,
+            path: 'referral-settings',
+            name: 'referral-settings',
+            component: ReferralSettingsPage,
             meta: {
-              page: "Referral Settings",
+              page: 'Referral Settings',
             },
           },
           {
-            path: "deposit-methods",
-            name: "deposit-methods",
-            component: DepositMethodsView,
+            path: 'deposit-methods',
+            name: 'deposit-methods',
+            component: DepositMethodsPage,
             meta: {
-              page: "Deposit Methods",
+              page: 'Deposit Methods',
             },
           },
           {
-            path: "withdrawal-methods",
-            name: "withdrawal-methods",
-            component: WithdrawalMethodsView,
+            path: 'withdrawal-methods',
+            name: 'withdrawal-methods',
+            component: WithdrawalMethodsPage,
             meta: {
-              page: "Withdrawal Methods",
+              page: 'Withdrawal Methods',
             },
           },
           {
-            path: "site-configurations",
-            name: "site-configurations",
-            component: SiteConfigurationsView,
+            path: 'site-configurations',
+            name: 'site-configurations',
+            component: SiteConfigurationsPage,
             meta: {
-              page: "Site Configurations",
+              page: 'Site Configurations',
             },
           },
         ],
       },
       {
-        path: "/wallet",
+        path: '/wallet',
         component: WalletLayout,
         children: [
           {
-            path: "",
-            name: "wallet",
-            component: WalletView,
+            path: '',
+            name: 'wallet',
+            component: WalletPage,
             meta: {
-              page: "My Wallet",
+              page: 'My Wallet',
             },
           },
           {
-            path: "deposit",
-            name: "deposit",
-            component: DepositView,
+            path: 'deposit',
+            name: 'deposit',
+            component: DepositPage,
             meta: {
-              page: "Deposit",
-              breadcrumb: [{ name: "Wallet", to: "wallet" }],
+              page: 'Deposit',
+              breadcrumb: [{ name: 'Wallet', to: 'wallet' }],
             },
           },
           {
-            path: "withdraw",
-            name: "withdraw",
-            component: WithdrawView,
+            path: 'withdraw',
+            name: 'withdraw',
+            component: WithdrawPage,
             meta: {
-              page: "Withdraw",
-              breadcrumb: [{ name: "Wallet", to: "wallet" }],
+              page: 'Withdraw',
+              breadcrumb: [{ name: 'Wallet', to: 'wallet' }],
             },
           },
           {
-            path: "transfer",
-            name: "transfer",
-            component: TransferView,
+            path: 'transfer',
+            name: 'transfer',
+            component: TransferPage,
             meta: {
-              page: "Transfer",
-              breadcrumb: [{ name: "Wallet", to: "wallet" }],
+              page: 'Transfer',
+              breadcrumb: [{ name: 'Wallet', to: 'wallet' }],
             },
           },
         ],
@@ -184,34 +186,36 @@ const routes = [
     ],
   },
   {
-    path: "/:NotFound(.*)*",
+    path: '/:NotFound(.*)*',
     component: ErrorLayout,
   },
-];
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior(to) {
     if (to.hash) {
       return {
         el: to.hash,
-        behavior: "smooth",
+        behavior: 'smooth',
         top: 100,
-      };
+      }
     }
-    return { top: 0 };
+    return { top: 0 }
   },
-});
+})
 
 router.beforeEach(async (to, from, next) => {
-  useGeneralStore().requesting(true);
-  next();
-});
+  useHttpStore().setNavigating(true)
+  next()
+})
 
 router.beforeResolve(async (to, from, next) => {
-  useGeneralStore().requesting(false);
-  next();
-});
+  setTimeout(() => {
+    useHttpStore().setNavigating(false)
+  }, 500)
+  next()
+})
 
-export default router;
+export default router

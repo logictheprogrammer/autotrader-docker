@@ -129,7 +129,7 @@ class AuthService implements IAuthService {
     account: string,
     password: string
   ): THttpResponse<
-    { email: string } | { accessToken: string; expiresIn: number; user: IUser }
+    { email: string } | { accessToken: string; expiresIn: number }
   > {
     try {
       const user = await this.userModel.findOne({
@@ -165,7 +165,7 @@ class AuthService implements IAuthService {
         return {
           status: HttpResponseStatus.SUCCESS,
           message: 'Login successful',
-          data: { accessToken, expiresIn, user },
+          data: { accessToken, expiresIn },
         }
       }
 

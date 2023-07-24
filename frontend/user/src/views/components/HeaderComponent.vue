@@ -28,7 +28,9 @@
                       width="16"
                     />USDT
                   </span>
-                  <h4 class="text-white mb-0">$ 3000.00</h4></RouterLink
+                  <h4 class="text-white mb-0">
+                    {{ Helpers.toDollar(balance || 0) }}
+                  </h4></RouterLink
                 >
                 <RouterLink :to="{ name: 'wallet' }" class="btn btn-primary"
                   ><svg
@@ -158,7 +160,15 @@
 </template>
 
 <script setup lang="ts">
-const page = computed(() => useRoute().meta.page)
+const httpStore = useHttpStore()
+const authStore = useAuthStore()
+const route = useRoute()
+
+const page = computed(() => route.meta.page)
+const onDemo = computed(() => httpStore.onDemo)
+const balance = computed(() =>
+  !onDemo.value ? authStore.user?.mainBalance : authStore.user?.demoBalance
+)
 
 const toggleMenu = () => {
   window.$('#main-wrapper').toggleClass('menu-toggle')

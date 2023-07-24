@@ -25,25 +25,35 @@
             <div id="my-profile" class="tab-pane fade active show">
               <div class="pt-3">
                 <div class="settings-form">
-                  <Form>
+                  <Form
+                    :validation-schema="updateProfileSchema"
+                    v-slot="{ errors }"
+                    @submit="useUserStore().updateProfile"
+                  >
                     <div class="row">
                       <div class="mb-3 col-md-6">
                         <label class="form-label">Name</label>
-                        <input
+                        <Field
                           type="text"
                           placeholder="Name"
                           class="form-control"
+                          name="name"
                           :value="user?.name"
+                          :validate-on-input="true"
                         />
+                        <span class="error-message">{{ errors.name }}</span>
                       </div>
                       <div class="mb-3 col-md-6">
                         <label class="form-label">Username</label>
-                        <input
+                        <Field
                           type="text"
                           placeholder="Username"
                           class="form-control"
+                          name="username"
                           :value="user?.username"
+                          :validate-on-input="true"
                         />
+                        <span class="error-message">{{ errors.username }}</span>
                       </div>
                     </div>
                     <div class="row">
@@ -69,7 +79,7 @@
                       </div>
                     </div>
                     <div class="text-center mt-2">
-                      <button class="btn btn-primary" type="button">
+                      <button class="btn btn-primary" type="submit">
                         Update
                       </button>
                     </div>
@@ -80,70 +90,57 @@
             <div id="update-password" class="tab-pane fade">
               <div class="pt-3">
                 <div class="settings-form">
-                  <Form>
+                  <Form
+                    :validation-schema="updatePasswordSchema"
+                    v-slot="{ errors }"
+                    @submit="useAuthStore().updatePassword"
+                  >
                     <div class="row">
                       <div class="mb-3 col-md-6">
                         <label class="form-label">Current Password</label>
-                        <input
+                        <Field
                           type="password"
                           placeholder="Current Password"
                           class="form-control"
+                          name="oldPassword"
+                          :validate-on-input="true"
                         />
+                        <span class="error-message">{{
+                          errors.oldPassword
+                        }}</span>
                       </div>
                       <div class="mb-3 col-md-6">
                         <label class="form-label">New Password</label>
-                        <input
+                        <Field
                           type="password"
                           placeholder="New Password"
                           class="form-control"
+                          name="password"
+                          :validate-on-input="true"
                         />
+                        <span class="error-message">{{ errors.password }}</span>
                       </div>
                       <div class="mb-3 col-md-6 offset-md-6">
                         <label class="form-label">Confirm Password</label>
-                        <input
+                        <Field
                           type="password"
                           placeholder="Confirm Password"
                           class="form-control"
+                          name="confirmPassword"
+                          :validate-on-input="true"
                         />
+                        <span class="error-message">{{
+                          errors.confirmPassword
+                        }}</span>
                       </div>
                     </div>
                     <div class="text-center mt-2">
-                      <button class="btn btn-primary" type="button">
+                      <button class="btn btn-primary" type="submit">
                         Update
                       </button>
                     </div>
                   </Form>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Modal -->
-        <div class="modal fade" id="replyModal">
-          <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Post Reply</h5>
-                <button
-                  type="button"
-                  class="btn-close"
-                  data-bs-dismiss="modal"
-                ></button>
-              </div>
-              <div class="modal-body">
-                <form>
-                  <textarea class="form-control" rows="4">Message</textarea>
-                </form>
-              </div>
-              <div class="modal-footer">
-                <button
-                  type="button"
-                  class="btn btn-danger light"
-                  data-bs-dismiss="modal"
-                >
-                  btn-close
-                </button>
-                <button type="button" class="btn btn-primary">Reply</button>
               </div>
             </div>
           </div>
@@ -155,6 +152,26 @@
 
 <script setup lang="ts">
 const user = useAuthStore().user
+
+const updateProfileSchema = yup.object({
+  name: yup.string().min(3).max(30).required(),
+  username: yup
+    .string()
+    .min(3)
+    .max(30)
+    .required()
+    .matches(/^[a-zA-Z0-9]+$/, 'Username must be alphanumeric'),
+})
+
+const updatePasswordSchema = yup.object({
+  oldPassword: yup.string().required().label('current password'),
+  password: yup.string().min(8).required(),
+  confirmPassword: yup
+    .string()
+    .required()
+    .label('confirm password')
+    .oneOf([yup.ref('password')], 'Password should match'),
+})
 </script>
 
 <style scoped></style>

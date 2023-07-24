@@ -9,12 +9,21 @@
     ***********************************-->
     <div class="content-body">
       <!-- row -->
+      <Transition name="demo">
+        <div v-if="onDemo" class="container-fluid demo-alert">
+          <div class="alert alert-success fade show">
+            <strong>Your account is currently running on demo...</strong>
+          </div>
+        </div>
+      </Transition>
       <div class="container-fluid">
         <div
           id="google-translator"
-          class="translator d-flex justify-content-center"
+          class="translator d-flex align-items-center justify-content-center gap-3"
         >
-          <GoogleTranslateWidget></GoogleTranslateWidget>
+          <div class="border-bottom flex-1 d-md-none"></div>
+          <GoogleTranslateWidget />
+          <div class="border-bottom flex-1 d-md-none"></div>
         </div>
         <BreadcrumbComponent
           :current="meta.page"
@@ -33,8 +42,13 @@
 </template>
 
 <script setup lang="ts">
-const meta = computed(() => useRoute().meta)
-const authNotice = computed(() => useAuthStore().authNotice)
+const route = useRoute()
+const authStore = useAuthStore()
+const httpStore = useHttpStore()
+
+const meta = computed(() => route.meta)
+const authNotice = computed(() => authStore.authNotice)
+const onDemo = computed(() => httpStore.onDemo)
 
 onMounted(() => {
   const observer = new IntersectionObserver((entries) => {
@@ -61,20 +75,34 @@ onMounted(() => {
   opacity: 0;
 }
 
+.demo-enter-active,
+.demo-leave-active {
+  transition: all 0.2s ease-in-out;
+}
+
+.demo-enter-from,
+.demo-leave-to {
+  transform: translateY(30px);
+  opacity: 0;
+}
+
 .translator {
   position: absolute;
   top: 5rem;
   left: 0;
   right: 0;
   z-index: 1;
+  padding: 0 1rem;
+}
+
+.demo-alert {
+  margin-bottom: -2.5rem;
 }
 
 @media only screen and (min-width: 768px) {
   .translator {
     left: auto;
     right: auto;
-    padding-left: 1rem;
-    display: block;
   }
 }
 

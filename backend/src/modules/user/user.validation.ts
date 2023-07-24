@@ -3,7 +3,6 @@ import { UserAccount, UserStatus } from '@/modules/user/user.enum'
 const updateProfile = Joi.object({
   name: Joi.string().lowercase().min(3).max(30).required(),
   username: Joi.string().alphanum().lowercase().min(3).max(30).required(),
-  country: Joi.string().lowercase().required(),
 })
 
 const updateEmail = Joi.object({

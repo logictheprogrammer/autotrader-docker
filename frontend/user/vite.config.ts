@@ -36,12 +36,13 @@ export default defineConfig({
     }),
     AutoImport({
       dts: true,
-      dirs: ['./src/modules/**', './src/util/**', './src/data/**'],
+      dirs: ['./src/modules/**', './src/data/**'],
       vueTemplate: true,
       imports: [
         'vue',
         'vue-router',
         {
+          '@/util/helpers': [['default', 'Helpers']],
           '@/modules/config/config.store': [['default', 'CONFIG']],
           yup: [['*', 'yup']],
           axios: [['default', 'axios']],
