@@ -7,6 +7,7 @@ export const useAuthStore = defineStore('auth', () => {
   const httpStore = useHttpStore()
   const CONFIG = useConfigStore()
   const homePath = CONFIG.onProduction ? '/' : 'http://localhost:5173/'
+  const userPath = CONFIG.onProduction ? '/' : 'http://localhost:5174/'
   const basePath = 'authentication'
   const user = ref<IUser>()
   const csrfToken = ref('')
@@ -19,10 +20,16 @@ export const useAuthStore = defineStore('auth', () => {
   async function setUser() {
     try {
       const result = await axios.get(`${basePath}/user`)
-      user.value = result.data.data.user
+      const loggedInUser: IUser = result.data.data.user
+      if (loggedInUser.role < UserRole.ADMIN) return false
+      else {
+        user.value = loggedInUser
+        return true
+      }
     } catch (error: any) {
       console.error(error)
       httpStore.handleGet(error.response)
+      return false
     }
   }
 
@@ -47,14 +54,19 @@ export const useAuthStore = defineStore('auth', () => {
     noticeTimer.value = time
   }
 
+  function goUser() {
+    Cookies.set('request_code', '100', { expires: 365 })
+    window.location.href = userPath
+  }
+
   async function startAuth() {
+    httpStore.setGet(true)
     const isAuth = autoLogin()
-    if (isAuth) {
-      httpStore.setGet(true)
-      getToken()
-      await setUser()
-      httpStore.setGet(false)
-    } else logout()
+    if (!isAuth) return logout()
+    getToken()
+    const isAdmin = await setUser()
+    if (!isAdmin) return goUser()
+    httpStore.setGet(false)
   }
 
   async function getToken() {
@@ -68,7 +80,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function autoLogin(): boolean {
-    httpStore.setGet(true)
     const userDataString = CONFIG.onProduction
       ? localStorage.getItem('userData')
       : Cookies.get('userData')
@@ -89,7 +100,6 @@ export const useAuthStore = defineStore('auth', () => {
 
       return true
     } catch (error) {
-      logout()
       return false
     }
   }
@@ -129,6 +139,7 @@ export const useAuthStore = defineStore('auth', () => {
     expiresIn,
     user,
     setUser,
+    goUser,
     updatePassword,
     logout,
     startAuth,

@@ -1,22 +1,32 @@
 import { defineStore } from 'pinia'
+import type { IUser } from './user.interface'
 // import type { SubmissionContext } from 'vee-validate'
 
 export const useUserStore = defineStore('user', () => {
   const httpStore = useHttpStore()
-  const authStore = useAuthStore()
   const basePath = 'users'
+  const users = ref<IUser[]>()
+  const loaded = ref(false)
 
-  async function updateProfile(form: any) {
+  function setUsers(usersArr: IUser[]) {
+    users.value = usersArr
+  }
+
+  function setLoaded(hasLoaded: boolean) {
+    loaded.value = hasLoaded
+  }
+
+  async function fetchAll() {
+    setLoaded(false)
     try {
-      httpStore.setPost(true)
-      const result = await axios.put(`${basePath}/update-profile`, form)
-      authStore.setUser()
-      httpStore.handlePost(result)
+      const result = await axios.get(`${basePath}`)
+      setUsers(result.data.data.users)
     } catch (error: any) {
       console.error(error)
       httpStore.handlePost(error.response)
     }
+    setLoaded(true)
   }
 
-  return { updateProfile }
+  return { loaded, fetchAll }
 })

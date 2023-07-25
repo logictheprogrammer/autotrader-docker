@@ -1,9 +1,5 @@
 import { Document, Types } from 'mongoose'
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
-import {
-  ICurrency,
-  ICurrencyObject,
-} from '@/modules/currency/currency.interface'
 import { IServiceObject } from '@/modules/service/service.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 

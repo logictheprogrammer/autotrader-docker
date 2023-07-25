@@ -3,7 +3,7 @@
     <div class="dlabnav-scroll">
       <ul class="metismenu mb-3" id="menu">
         <li
-          class="mb-3"
+          class="mb-3 demo-list"
           :class="{ 'mm-active': onDemo }"
           @click="$emit('hideMenu')"
         >
@@ -12,7 +12,7 @@
             href="javascript:void(0);"
             @click="() => httpStore.setDemo(!onDemo)"
           >
-            {{ onDemo ? 'On Demo' : 'Go Demo' }}
+            <span class="text">{{ onDemo ? 'On Demo' : 'Go Demo' }}</span>
             <MySwitchComponent
               :checked="onDemo"
               @click="() => httpStore.setDemo(!onDemo)"
@@ -81,8 +81,8 @@
               ></path></svg
           ></a>
         </li>
-        <li class="nav-item d-flex">
-          <a href="javascript:void(0);" class="btn" @click="logoutHandler"
+        <li class="nav-item d-flex" v-if="isAdmin">
+          <a href="javascript:void(0);" class="btn" @click="authStore.goAdmin"
             ><span class="logout-span">Go Admin </span
             ><svg
               xmlns="http://www.w3.org/2000/svg"
@@ -122,6 +122,7 @@ defineEmits(['hideMenu'])
 const authStore = useAuthStore()
 const httpStore = useHttpStore()
 
+const isAdmin = computed(() => authStore.isAdmin)
 const onDemo = computed(() => httpStore.onDemo)
 
 const user = computed(() => authStore.user)
@@ -200,6 +201,32 @@ onBeforeUnmount(() => {
   #main-wrapper.menu-toggle .logout-span {
     display: none;
   }
+
+  #main-wrapper.menu-toggle .demo-list {
+    padding: 0;
+  }
+  #main-wrapper.menu-toggle .demo-list a {
+    padding: 20px 0 0;
+    justify-content: center !important;
+    border: none !important;
+    background-color: transparent !important;
+  }
+  #main-wrapper.menu-toggle .demo-list .text {
+    display: none;
+  }
+}
+
+body[data-sidebar-style='mini'] .demo-list {
+  padding: 0;
+}
+body[data-sidebar-style='mini'] .demo-list a {
+  padding: 20px 0 0;
+  justify-content: center !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+body[data-sidebar-style='mini'] .demo-list .text {
+  display: none;
 }
 
 body[data-sidebar-style='mini'] .logout-span {

@@ -1,5 +1,5 @@
 <template>
-  <div class="chatbox active">
+  <div class="chatbox active rounded-4">
     <div class="custom-tab-1">
       <div class="tab-content">
         <div class="tab-pane fade active show" id="chat" role="tabpanel">
@@ -305,11 +305,24 @@
 
 .dlab-chat-history-box {
   position: relative;
+  margin-bottom: 0;
 }
 .msg_card_body {
   position: static;
   overflow-y: auto;
-  height: calc(100vh - 310px);
+  height: calc(100vh - 256px);
+}
+
+@media only screen and (max-width: 1199px) {
+  .msg_card_body {
+    height: calc(100vh - 240px);
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .msg_card_body {
+    height: calc(100vh - 220px);
+  }
 }
 
 .card-footer {

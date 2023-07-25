@@ -7,8 +7,10 @@ export const useAuthStore = defineStore('auth', () => {
   const httpStore = useHttpStore()
   const CONFIG = useConfigStore()
   const homePath = CONFIG.onProduction ? '/' : 'http://localhost:5173/'
+  const adminPath = CONFIG.onProduction ? '/' : 'http://localhost:5175/'
   const basePath = 'authentication'
   const user = ref<IUser>()
+  const isAdmin = ref(false)
   const csrfToken = ref('')
   const accessToken = ref('')
   const expiresIn = ref(0)
@@ -16,10 +18,15 @@ export const useAuthStore = defineStore('auth', () => {
   const timer = ref(0)
   const noticeTimer = ref(0)
 
+  function setIsAdmin(admin: boolean) {
+    isAdmin.value = admin
+  }
+
   async function setUser() {
     try {
       const result = await axios.get(`${basePath}/user`)
       user.value = result.data.data.user
+      if ((user.value?.role || 0) >= UserRole.ADMIN) setIsAdmin(true)
     } catch (error: any) {
       console.error(error)
       httpStore.handleGet(error.response)
@@ -47,14 +54,19 @@ export const useAuthStore = defineStore('auth', () => {
     noticeTimer.value = time
   }
 
+  function goAdmin() {
+    Cookies.set('request_code', '200', { expires: 365 })
+    window.location.href = adminPath
+  }
+
   async function startAuth() {
+    httpStore.setGet(true)
     const isAuth = autoLogin()
-    if (isAuth) {
-      httpStore.setGet(true)
-      getToken()
-      await setUser()
-      httpStore.setGet(false)
-    } else logout()
+    if (!isAuth) return logout()
+
+    getToken()
+    await setUser()
+    httpStore.setGet(false)
   }
 
   async function getToken() {
@@ -68,7 +80,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function autoLogin(): boolean {
-    httpStore.setGet(true)
     const userDataString = CONFIG.onProduction
       ? localStorage.getItem('userData')
       : Cookies.get('userData')
@@ -128,7 +139,9 @@ export const useAuthStore = defineStore('auth', () => {
     authNotice,
     expiresIn,
     user,
+    isAdmin,
     setUser,
+    goAdmin,
     updatePassword,
     logout,
     startAuth,

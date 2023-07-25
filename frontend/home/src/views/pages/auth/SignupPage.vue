@@ -110,6 +110,7 @@
         class="form__input"
         :class="{ 'border-danger': errors.invite }"
         :validate-on-input="true"
+        :value="refer"
         name="invite"
         placeholder="Referral Code (Optional)"
       />
@@ -130,6 +131,9 @@
 </template>
 
 <script setup lang="ts">
+const route = useRoute()
+const refer = route.query.refer
+
 const schema = yup.object({
   name: yup.string().min(3).max(30).required(),
   email: yup.string().required().email(),

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeLayout from '@/views/layouts/HomeLayout.vue'
 import HomePage from '@/views/pages/HomePage.vue'
-const PlansPage = () => import('@/views/pages/PlansPage.vue')
+const PackagePlansPage = () => import('@/views/pages/PackagePlansPage.vue')
 const UsersPage = () => import('@/views/pages/UsersPage.vue')
 const PurchasedPackagesPage = () =>
   import('@/views/pages/PurchasedPackagesPage.vue')
@@ -58,7 +58,7 @@ const routes = [
       {
         path: '/plans',
         name: 'plans',
-        component: PlansPage,
+        component: PackagePlansPage,
         meta: {
           page: 'Packages',
         },

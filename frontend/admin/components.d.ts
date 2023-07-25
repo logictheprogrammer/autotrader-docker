@@ -115,6 +115,7 @@ declare module '@vue/runtime-core' {
     SupportLayout: typeof import('./src/views/layouts/SupportLayout.vue')['default']
     SupportPage: typeof import('./src/views/pages/SupportPage.vue')['default']
     SupportView: typeof import('./src/views/pages/SupportView.vue')['default']
+    TablePreview: typeof import('./src/views/preview/TablePreview.vue')['default']
     TestimoniesPage: typeof import('./src/views/pages/TestimoniesPage.vue')['default']
     TestimoniesView: typeof import('./src/views/pages/TestimoniesView.vue')['default']
     TestimonyCard: typeof import('./src/components/Cards/TestimonyCard.vue')['default']

@@ -4,7 +4,7 @@ export const useConfigStore = defineStore('config', () => {
   const onProduction = import.meta.env.PROD
   const appName = 'Aurora'
   const appSlogan = 'Invest Smarter'
-  const appUrl = ''
+  const appUrl = onProduction ? '' : 'http://localhost:5173'
   const email = 'contact@aurora.com'
   const address = '221B Baker St, Marylebone'
   const phone = '+123 456 7890'

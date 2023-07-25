@@ -73,6 +73,8 @@
                 type="text"
                 placeholder="Referral Link"
                 class="form-control"
+                :value="CONFIG.appUrl + `/signup?refer=${user?.refer}`"
+                readonly
               />
             </div>
             <div class="mb-3 col-12">
@@ -81,6 +83,8 @@
                 type="text"
                 placeholder="Referral Code"
                 class="form-control"
+                :value="user?.refer"
+                readonly
               />
             </div>
           </div>
@@ -90,6 +94,9 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const authStore = useAuthStore()
+const user = computed(() => authStore.user)
+</script>
 
 <style scoped></style>

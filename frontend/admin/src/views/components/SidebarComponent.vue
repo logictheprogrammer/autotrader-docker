@@ -65,8 +65,8 @@
           ></a>
         </li>
         <li class="nav-item d-flex">
-          <a href="javascript:void(0);" class="btn" @click="logoutHandler"
-            ><span class="logout-span">Go Admin </span
+          <a href="javascript:void(0);" class="btn" @click="authStore.goUser"
+            ><span class="logout-span">Go User </span
             ><svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"

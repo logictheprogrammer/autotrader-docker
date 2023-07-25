@@ -6,7 +6,8 @@
           <h4 class="card-title">Users Management</h4>
         </div>
         <div class="card-body pt-0 px-0">
-          <MyDataTableComponent :ordering="true" :searching="true">
+          <TablePreview v-if="!usersLoaded" :rows="8" :cols="10" searching />
+          <MyDataTableComponent v-else ordering searching>
             <thead class="bg-background">
               <tr>
                 <th class="text-sharp">Roll No</th>
@@ -346,6 +347,11 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const userStore = useUserStore()
+const usersLoaded = computed(() => userStore.loaded)
+
+if (!usersLoaded.value) userStore.fetchAll()
+</script>
 
 <style scoped></style>

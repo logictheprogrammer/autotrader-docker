@@ -42,3 +42,18 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped></style>
+
+<style>
+.dataTables_wrapper .dataTables_filter {
+  margin: 0;
+}
+
+.dataTables_wrapper .dataTables_filter {
+  float: none;
+  text-align: unset;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+  margin: 0.5rem 1rem;
+}
+</style>

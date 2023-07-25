@@ -39,8 +39,7 @@ body {
   font-weight: 900;
 }
 
-.form-control:disabled,
-.form-control[readonly] {
+.form-control:disabled {
   color: #b3b3b3 !important;
   opacity: 0.8;
 }
@@ -446,4 +445,8 @@ body * :not(.select2-results__options)::-webkit-scrollbar-thumb {
 [data-sidebar-position='fixed'][data-layout='vertical'] .dlabnav {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
+}
+
+.card-body {
+  overflow-x: hidden;
 }
