@@ -34,7 +34,7 @@ class UserController implements IServiceController {
       `${this.path}/update-profile`,
       HttpMiddleware.authenticate(UserRole.USER),
       HttpMiddleware.validate(userValidation.updateProfile),
-      this.updateProfile()
+      this.updateProfile(false)
     )
 
     // Update User Profile
@@ -148,7 +148,8 @@ class UserController implements IServiceController {
         const responce = await this.userService.updateProfile(
           userId,
           name,
-          username
+          username,
+          isAdmin
         )
         res.status(200).json(responce)
       } catch (err: any) {

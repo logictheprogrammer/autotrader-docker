@@ -455,3 +455,8 @@ body * :not(.select2-results__options)::-webkit-scrollbar-thumb {
 .card-body {
   overflow-x: hidden;
 }
+
+[data-theme-version='dark'] .dropdown-menu {
+  background-color: #1a2238;
+  box-shadow: 0px 0px 0px 1px rgba(255, 255, 255, 0.1);
+}

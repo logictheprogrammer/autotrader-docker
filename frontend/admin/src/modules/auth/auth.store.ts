@@ -28,8 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } catch (error: any) {
       console.error(error)
-      httpStore.handleGet(error.response)
-      return false
+      logout()
     }
   }
 
@@ -55,6 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function goUser() {
+    httpStore.setGet(true)
     Cookies.set('request_code', '100', { expires: 365 })
     window.location.href = userPath
   }
@@ -65,8 +65,10 @@ export const useAuthStore = defineStore('auth', () => {
     if (!isAuth) return logout()
     getToken()
     const isAdmin = await setUser()
-    if (!isAdmin) return goUser()
-    httpStore.setGet(false)
+    if (isAdmin !== undefined) {
+      if (!isAdmin) return goUser()
+      httpStore.setGet(false)
+    }
   }
 
   async function getToken() {
@@ -104,10 +106,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function updatePassword(form: any, contex: SubmissionContext) {
+  async function updateUserPassword(form: any, contex: SubmissionContext) {
     try {
       httpStore.setPost(true)
-      const result = await axios.patch(`${basePath}/update-password`, form)
+      const userId = form.userId
+      const result = await axios.patch(
+        `${basePath}/update-password/${userId}`,
+        form
+      )
       httpStore.handlePost(result)
       contex.resetForm()
     } catch (error: any) {
@@ -140,7 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     setUser,
     goUser,
-    updatePassword,
+    updateUserPassword,
     logout,
     startAuth,
     getToken,

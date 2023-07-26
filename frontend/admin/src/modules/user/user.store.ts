@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { IUser } from './user.interface'
+import type { UserStatus } from './user.enum'
 // import type { SubmissionContext } from 'vee-validate'
 
 export const useUserStore = defineStore('user', () => {
@@ -16,6 +17,19 @@ export const useUserStore = defineStore('user', () => {
     loaded.value = hasLoaded
   }
 
+  function findById(userId: string) {
+    return users.value?.find((user) => user._id === userId)
+  }
+
+  function updateById(userId: string, data: IUser) {
+    const updateUsers = users.value
+    if (!updateUsers) return
+    const userIndex = updateUsers.findIndex((user) => user._id === userId)
+    updateUsers[userIndex] = data
+
+    setUsers(updateUsers)
+  }
+
   async function fetchAll() {
     setLoaded(false)
     try {
@@ -28,5 +42,66 @@ export const useUserStore = defineStore('user', () => {
     setLoaded(true)
   }
 
-  return { loaded, fetchAll }
+  async function updateUserProfile(form: any) {
+    try {
+      httpStore.setPost(true)
+      const userId = form.userId
+      const result = await axios.put(
+        `${basePath}/${userId}/update-user-profile`,
+        form
+      )
+
+      updateById(userId, result.data.data.user)
+      httpStore.handlePost(result)
+    } catch (error: any) {
+      console.error(error)
+      httpStore.handlePost(error.response)
+    }
+  }
+
+  async function updateUserEmail(form: any) {
+    try {
+      httpStore.setPost(true)
+      const userId = form.userId
+      const result = await axios.patch(
+        `${basePath}/${userId}/update-user-email`,
+        form
+      )
+
+      updateById(userId, result.data.data.user)
+      httpStore.handlePost(result)
+    } catch (error: any) {
+      console.error(error)
+      httpStore.handlePost(error.response)
+    }
+  }
+
+  async function updateUserStatus(userId?: string, status?: UserStatus) {
+    try {
+      if (!userId || !status) return
+      httpStore.setPost(true)
+      const result = await axios.patch(
+        `${basePath}/${userId}/update-user-status`,
+        {
+          status,
+        }
+      )
+
+      updateById(userId, result.data.data.user)
+      httpStore.handlePost(result)
+    } catch (error: any) {
+      console.error(error)
+      httpStore.handlePost(error.response)
+    }
+  }
+
+  return {
+    loaded,
+    users,
+    findById,
+    fetchAll,
+    updateUserProfile,
+    updateUserEmail,
+    updateUserStatus,
+  }
 })

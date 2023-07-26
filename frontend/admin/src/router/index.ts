@@ -1,16 +1,23 @@
 import { createRouter, createWebHistory } from 'vue-router'
+
 import HomeLayout from '@/views/layouts/HomeLayout.vue'
+const SettingsLayout = () => import('@/views/layouts/SettingsLayout.vue')
+const ErrorLayout = () => import('@/views/layouts/ErrorLayout.vue')
+const SupportLayout = () => import('@/views/layouts/SupportLayout.vue')
+const UsersLayout = () => import('@/views/layouts/UsersLayout.vue')
+
 import HomePage from '@/views/pages/HomePage.vue'
 const PackagePlansPage = () => import('@/views/pages/PackagePlansPage.vue')
-const UsersPage = () => import('@/views/pages/UsersPage.vue')
+const UsersManagementPage = () =>
+  import('@/views/pages/user/UsersManagementPage.vue')
+const EditUserPageSuspense = () =>
+  import('@/views/pages/user/EditUserPageSuspense.vue')
 const PurchasedPackagesPage = () =>
   import('@/views/pages/PurchasedPackagesPage.vue')
 const ReferralPage = () => import('@/views/pages/ReferralPage.vue')
 const TestimoniesPage = () => import('@/views/pages/TestimoniesPage.vue')
-const SupportLayout = () => import('@/views/layouts/SupportLayout.vue')
 const SupportPage = () => import('@/views/pages/SupportPage.vue')
 const ChatPage = () => import('@/views/pages/ChatPage.vue')
-const SettingsLayout = () => import('@/views/layouts/SettingsLayout.vue')
 const ReferralSettingsPage = () =>
   import('@/views/pages/ReferralSettingsPage.vue')
 const DepositMethodsPage = () => import('@/views/pages/DepositMethodsPage.vue')
@@ -23,7 +30,6 @@ const WalletPage = () => import('@/views/pages/WalletPage.vue')
 const DepositPage = () => import('@/views/pages/DepositPage.vue')
 const TransferPage = () => import('@/views/pages/TransferPage.vue')
 const WithdrawPage = () => import('@/views/pages/WithdrawPage.vue')
-const ErrorLayout = () => import('@/views/layouts/ErrorLayout.vue')
 
 const routes = [
   {
@@ -41,11 +47,26 @@ const routes = [
       },
       {
         path: '/users',
-        name: 'users',
-        component: UsersPage,
-        meta: {
-          page: 'Users Management',
-        },
+        component: UsersLayout,
+        children: [
+          {
+            path: '',
+            name: 'users',
+            component: UsersManagementPage,
+            meta: {
+              page: 'Users Management',
+            },
+          },
+          {
+            path: 'edit/:userId',
+            name: 'edit-user',
+            component: EditUserPageSuspense,
+            meta: {
+              page: 'Edit User',
+              breadcrumb: [{ name: 'Users', to: 'users' }],
+            },
+          },
+        ],
       },
       {
         path: '/purchased-packages',

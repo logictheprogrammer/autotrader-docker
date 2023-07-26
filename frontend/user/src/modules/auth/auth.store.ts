@@ -27,9 +27,10 @@ export const useAuthStore = defineStore('auth', () => {
       const result = await axios.get(`${basePath}/user`)
       user.value = result.data.data.user
       if ((user.value?.role || 0) >= UserRole.ADMIN) setIsAdmin(true)
+      return true
     } catch (error: any) {
       console.error(error)
-      httpStore.handleGet(error.response)
+      logout()
     }
   }
 
@@ -55,6 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function goAdmin() {
+    httpStore.setGet(true)
     Cookies.set('request_code', '200', { expires: 365 })
     window.location.href = adminPath
   }
@@ -63,10 +65,10 @@ export const useAuthStore = defineStore('auth', () => {
     httpStore.setGet(true)
     const isAuth = autoLogin()
     if (!isAuth) return logout()
-
     getToken()
-    await setUser()
-    httpStore.setGet(false)
+    if (await setUser()) {
+      httpStore.setGet(false)
+    }
   }
 
   async function getToken() {

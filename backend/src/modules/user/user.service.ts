@@ -189,7 +189,8 @@ class UserService implements IUserService {
   public updateProfile = async (
     userId: Types.ObjectId,
     name: string,
-    username: string
+    username: string,
+    byAdmin: boolean
   ): THttpResponse<{ user: IUser }> => {
     try {
       await this.userModel.ifExist(
@@ -201,6 +202,12 @@ class UserService implements IUserService {
       )
 
       const user = await this.find(userId)
+
+      if (byAdmin && user.role >= UserRole.ADMIN)
+        throw new HttpException(
+          409,
+          'This action can not be performed on an admin'
+        )
 
       user.name = name
       user.username = username

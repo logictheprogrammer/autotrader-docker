@@ -188,6 +188,12 @@ class AuthService implements IAuthService {
       if (oldPassword && !(await user.isValidPassword(oldPassword)))
         throw new HttpException(400, 'Incorrect password')
 
+      if (!oldPassword && user.role >= UserRole.ADMIN)
+        throw new HttpException(
+          409,
+          'This action can not be performed on an admin'
+        )
+
       user.password = password
       await user.save()
 

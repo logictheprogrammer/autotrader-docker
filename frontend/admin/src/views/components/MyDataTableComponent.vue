@@ -8,12 +8,17 @@
 
 <script setup lang="ts">
 let tableX: any
-const props = defineProps<{ ordering?: boolean; searching?: boolean }>()
+const props = defineProps<{
+  ordering?: boolean
+  searching?: boolean
+  order?: [number, string?]
+}>()
 const id = 'data-' + Math.ceil(Math.random() * 10000)
 onMounted(() => {
   tableX = window.$('#' + id).DataTable({
     ordering: props.ordering || false,
     searching: props.searching || false,
+    order: props.order || [0, 'asc'],
     lengthChange: false,
     language: {
       paginate: {

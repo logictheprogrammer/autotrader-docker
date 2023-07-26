@@ -129,6 +129,14 @@ class AuthController implements IServiceController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
+      console.log(req.user.status)
+      if (req.user.status !== UserStatus.ACTIVE)
+        throw new HttpException(
+          403,
+          'Your account is under review, please check in later',
+          HttpResponseStatus.INFO
+        )
+
       res.status(200).json({
         status: HttpResponseStatus.SUCCESS,
         message: 'profile fetched',
