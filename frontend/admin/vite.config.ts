@@ -56,7 +56,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'user',
+    outDir: 'admin',
   },
   server: {
     port: 5175,

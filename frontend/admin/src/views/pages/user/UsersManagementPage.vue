@@ -49,7 +49,10 @@
                     <a class="dropdown-item border-bottom" href="javascript:;"
                       ><i class="bi bi-envelope me-2"></i> Email</a
                     >
-                    <a class="dropdown-item border-bottom" href="javascript:;"
+                    <a
+                      class="dropdown-item border-bottom"
+                      href="javascript:;"
+                      @click="() => fundUserHandler(user)"
                       ><i class="bi bi-cash me-2"></i> Credit / Debit</a
                     >
                     <a
@@ -107,13 +110,43 @@
   </div>
 
   <AlertConfirmComponent
-    :is-open="openModal"
-    :status="modalInfo.status"
-    :title="modalInfo.title"
-    :message="modalInfo.message"
+    :is-open="openAlertModal"
+    :status="alertModalInfo.status"
+    :title="alertModalInfo.title"
+    :message="alertModalInfo.message"
     @confirm="updateUserStatus"
-    @close="openModal = false"
+    @close="openAlertModal = false"
   />
+
+  <ModalComponent
+    :is-open="openFundUserModel"
+    v-slot="{ errors }"
+    :validation-schema="updateEmailSchema"
+    @confirm="(data:any) => console.log(data)"
+    @close="() => (openFundUserModel = false)"
+  >
+    <div class="w-100">
+      <h2
+        class="text-center text-lower text-sharp mb-4 border-bottom border-2 pb-3"
+      >
+        Credit or debit: {{ selectedUser?.username }}
+      </h2>
+      <div class="mb-3">
+        <AccountTypeComponent />
+      </div>
+      <div class="mb-3">
+        <label class="form-label text-sharp text-center w-100">Amount</label>
+        <Field
+          name="amount"
+          type="number"
+          placeholder="Amount"
+          class="form-control"
+          :validate-on-input="true"
+        />
+        <span class="error-message">{{ errors.amount }}</span>
+      </div>
+    </div>
+  </ModalComponent>
 </template>
 
 <script setup lang="ts">
@@ -124,47 +157,57 @@ import type { IUser } from '@/modules/user/user.interface'
 const userStore = useUserStore()
 const usersLoaded = computed(() => userStore.loaded)
 const users = computed(() => userStore.users)
+const openAlertModal = ref(false)
+const openFundUserModel = ref(false)
 
 if (!usersLoaded.value) userStore.fetchAll()
+const updateEmailSchema = yup.object({
+  amount: yup
+    .number()
+    .typeError('Amount is required')
+    .not([0], 'Amount cannot be 0')
+    .required('Amount is required'),
+})
 
-const selectedUser = reactive<{
-  _id?: string
-  status?: UserStatus
-  username?: string
-}>({})
+const selectedUser = ref<IUser>()
 
-const modalInfo = reactive<{
+const alertModalInfo = reactive<{
   status: ResponseStatus
   title: string
   message: string
 }>({ status: ResponseStatus.INFO, title: '', message: '' })
 
-const openModal = ref(false)
-
 const userStatusHandler = (user: IUser) => {
-  selectedUser._id = user._id
-  selectedUser.status =
+  selectedUser.value = user
+  selectedUser.value._id = user._id
+  selectedUser.value.status =
     user.status !== UserStatus.ACTIVE ? UserStatus.ACTIVE : UserStatus.SUSPENDED
-  selectedUser.username = user.username
+  selectedUser.value.username = user.username
 
-  if (selectedUser.status === UserStatus.ACTIVE) {
-    modalInfo.status = ResponseStatus.INFO
-    modalInfo.title = `Do you really wants to unsuspend ${user.username}?`
-    modalInfo.message =
+  if (selectedUser.value.status === UserStatus.ACTIVE) {
+    alertModalInfo.status = ResponseStatus.INFO
+    alertModalInfo.title = `Do you really wants to unsuspend ${user.username}?`
+    alertModalInfo.message =
       'Unsuspending this user, will permit him to access this platform and perform regular task.'
   } else {
-    modalInfo.status = ResponseStatus.WARNING
-    modalInfo.title = `Do you really wants to suspend ${user.username}?`
-    modalInfo.message =
+    alertModalInfo.status = ResponseStatus.WARNING
+    alertModalInfo.title = `Do you really wants to suspend ${user.username}?`
+    alertModalInfo.message =
       'Suspending this user, will prevent him from accessing this platform until he has been unsuspended.'
   }
 
-  openModal.value = true
+  openAlertModal.value = true
 }
 
 const updateUserStatus = () => {
-  openModal.value = false
-  userStore.updateUserStatus(selectedUser._id, selectedUser.status)
+  if (!selectedUser.value) return
+  openAlertModal.value = false
+  userStore.updateUserStatus(selectedUser.value._id, selectedUser.value.status)
+}
+
+const fundUserHandler = (user: IUser) => {
+  selectedUser.value = user
+  openFundUserModel.value = true
 }
 </script>
 

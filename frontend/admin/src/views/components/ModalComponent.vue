@@ -8,7 +8,12 @@
           :class="{ 'custom-clicked': staticClicked }"
         >
           <div class="custom-modal-container">
-            <Form @submit="$emit('confirm')" class="custom-modal-content">
+            <Form
+              @submit="$emit('confirm', $event)"
+              v-slot="{ errors }"
+              class="custom-modal-content"
+              :validation-schema="validationSchema"
+            >
               <div class="custom-modal-header" v-if="title">
                 <h5 class="custom-modal-title">{{ title }}</h5>
                 <button
@@ -18,7 +23,7 @@
                 ></button>
               </div>
               <div class="custom-modal-body">
-                <slot></slot>
+                <slot :errors="errors"></slot>
               </div>
               <div v-if="onlyOneBtn" class="custom-modal-footer-one-btn">
                 <button class="btn btn-outline-secondary w-100" type="submit">
@@ -55,6 +60,7 @@ const props = defineProps<{
   title?: string
   closeSelf?: boolean
   class?: string
+  validationSchema?: Record<string, any>
 }>()
 
 const isModalOpen = ref(false)
@@ -122,7 +128,7 @@ const showModal = () => {
   border-radius: 30px;
   color: white;
   max-width: 500px;
-  width: auto;
+  width: 100vw;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
   transition: all 0.2s ease-in-out;
   margin: 1.75rem auto;
@@ -131,6 +137,7 @@ const showModal = () => {
   display: flex;
 }
 .custom-modal-content {
+  width: 100%;
   padding: 30px 20px;
   max-height: 100%;
   display: flex;
@@ -138,6 +145,7 @@ const showModal = () => {
   overflow: hidden;
 }
 .custom-modal-body {
+  overflow-x: hidden;
   overflow-y: auto;
   margin-bottom: 20px;
 }

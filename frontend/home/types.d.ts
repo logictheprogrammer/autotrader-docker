@@ -16,5 +16,6 @@ declare global {
     _exportVersion: any
     googleTranslateElementInit: any
     cryptohopper: any
+    initGoogleTranslate: any
   }
 }

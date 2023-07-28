@@ -29,5 +29,6 @@ declare global {
     PerfectScrollbar: any
     QRCode: any
     initCoinMarket: any
+    initGoogleTranslate: any
   }
 }
