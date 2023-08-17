@@ -1,6 +1,6 @@
-import { Document } from 'mongoose'
 import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
+import AppDocument from '../app/app.document'
 
 export interface IMailOptionObject extends IAppObject {
   name: string
@@ -13,7 +13,7 @@ export interface IMailOptionObject extends IAppObject {
   getPassword(): string
 }
 
-export interface IMailOption extends Document {
+export interface IMailOption extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date

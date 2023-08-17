@@ -1,4 +1,3 @@
-import crypto from 'crypto'
 import {
   IEmailVerification,
   IEmailVerificationService,
@@ -21,7 +20,7 @@ class EmailVerificationService implements IEmailVerificationService {
 
   public async create(user: IUser): Promise<string> {
     const key = user.key
-    const token = crypto.randomBytes(32).toString('hex')
+    const token = AppCrypto.randomBytes(32).toString('hex')
     const expires = new Date().getTime() + AppConstants.verifyEmailExpiresTime
     const verifyLink = `${SiteConstants.frontendLink}verify-email/${key}/${token}`
     await this.emailVerificationRepository.deleteMany({ key })

@@ -1,10 +1,11 @@
-import { Document, Types } from 'mongoose'
 import { TransferStatus } from '@/modules/transfer/transfer.enum'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserAccount } from '@/modules/user/user.enum'
+import AppDocument from '../app/app.document'
+import AppObjectId from '../app/app.objectId'
 
 export interface ITransferObject extends IAppObject {
   fromUser: IUser['_id']
@@ -17,7 +18,7 @@ export interface ITransferObject extends IAppObject {
   fee: number
 }
 
-export interface ITransfer extends Document {
+export interface ITransfer extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -42,18 +43,18 @@ export interface ITransferService {
   ): TTransaction<ITransferObject, ITransfer>
 
   _updateStatusTransaction(
-    transferId: Types.ObjectId,
+    transferId: AppObjectId,
     status: TransferStatus
   ): TTransaction<ITransferObject, ITransfer>
 
   get(
-    transferId: Types.ObjectId,
+    transferId: AppObjectId,
     isAdmin: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<ITransferObject>
 
   create(
-    fromUserId: Types.ObjectId,
+    fromUserId: AppObjectId,
     toUserUsername: string,
     account: UserAccount,
     amount: number
@@ -61,19 +62,19 @@ export interface ITransferService {
 
   fetch(
     isAdmin: boolean,
-    transferId: Types.ObjectId,
-    userId?: Types.ObjectId
+    transferId: AppObjectId,
+    userId?: AppObjectId
   ): THttpResponse<{ transfer: ITransfer }>
 
   fetchAll(
     allUsers: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ transfers: ITransfer[] }>
 
-  delete(transferId: Types.ObjectId): THttpResponse<{ transfer: ITransfer }>
+  delete(transferId: AppObjectId): THttpResponse<{ transfer: ITransfer }>
 
   updateStatus(
-    transferId: Types.ObjectId,
+    transferId: AppObjectId,
     status: TransferStatus
   ): THttpResponse<{ transfer: ITransfer }>
 }

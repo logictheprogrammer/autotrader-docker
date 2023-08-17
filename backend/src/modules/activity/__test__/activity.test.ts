@@ -20,8 +20,8 @@ import {
   ActivityForWho,
   ActivityStatus,
 } from '../activity.enum'
-import { Types } from 'mongoose'
 import { IUser } from '../../user/user.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const activityRepository = new AppRepository<IActivity>(activityModel)
 const userRepository = new AppRepository<IUser>(userModel)
@@ -222,7 +222,7 @@ describe('Activity', () => {
     // const url = baseUrl + 'user/:user'
     describe('given current user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const url = baseUrl + 'user/' + new Types.ObjectId().toString()
+        const url = baseUrl + 'user/' + new AppObjectId().toString()
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
@@ -237,7 +237,7 @@ describe('Activity', () => {
     })
     describe('given selected user those not exist', () => {
       it('should return an empty array', async () => {
-        const url = baseUrl + 'user/' + new Types.ObjectId().toString()
+        const url = baseUrl + 'user/' + new AppObjectId().toString()
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
@@ -496,7 +496,7 @@ describe('Activity', () => {
     // const url = baseUrl + 'hide/:activityId'
     describe('given user is not logged in', () => {
       it('should return a 401 Unauthorized', async () => {
-        const url = baseUrl + 'hide/' + new Types.ObjectId().toString()
+        const url = baseUrl + 'hide/' + new AppObjectId().toString()
 
         const { statusCode, body } = await request.patch(url)
 
@@ -520,7 +520,7 @@ describe('Activity', () => {
           })
           .save()
 
-        const url = baseUrl + 'hide/' + new Types.ObjectId().toString()
+        const url = baseUrl + 'hide/' + new AppObjectId().toString()
 
         const { statusCode, body } = await request
           .patch(url)
@@ -702,7 +702,7 @@ describe('Activity', () => {
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
-        const url = baseUrl + 'delete/' + new Types.ObjectId().toString()
+        const url = baseUrl + 'delete/' + new AppObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -728,7 +728,7 @@ describe('Activity', () => {
           })
           .save()
 
-        const url = baseUrl + 'delete/' + new Types.ObjectId().toString()
+        const url = baseUrl + 'delete/' + new AppObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -791,7 +791,7 @@ describe('Activity', () => {
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
-        const url = baseUrl + 'delete/user/' + new Types.ObjectId().toString()
+        const url = baseUrl + 'delete/user/' + new AppObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -807,7 +807,7 @@ describe('Activity', () => {
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const userId = new Types.ObjectId().toString()
+        const userId = new AppObjectId().toString()
 
         const url = baseUrl + 'delete/user/' + userId
 
@@ -1006,7 +1006,7 @@ describe('Activity', () => {
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
-        const url = baseUrl + 'delete/admin/' + new Types.ObjectId().toString()
+        const url = baseUrl + 'delete/admin/' + new AppObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -1032,7 +1032,7 @@ describe('Activity', () => {
           })
           .save()
 
-        const url = baseUrl + 'delete/admin/' + new Types.ObjectId().toString()
+        const url = baseUrl + 'delete/admin/' + new AppObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)

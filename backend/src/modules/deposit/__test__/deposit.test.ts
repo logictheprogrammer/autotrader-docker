@@ -23,7 +23,6 @@ import {
   userBObj,
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
-import { Types } from 'mongoose'
 import { getDepositMethodMock } from '../../depositMethod/__test__/depositMethod.mock'
 
 import { executeTransactionManagerMock } from '../../transactionManager/__test__/transactionManager.mock'
@@ -63,6 +62,7 @@ import referralModel from '../../referral/referral.model'
 import { ITransaction } from '../../transaction/transaction.interface'
 import transactionModel from '../../transaction/transaction.model'
 import { IUser } from '../../user/user.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const depositRepository = new AppRepository<IDeposit>(depositModel)
 const notificationRepository = new AppRepository<INotification>(
@@ -107,7 +107,7 @@ describe('deposit', () => {
     })
     describe('given deposit method those not exits', () => {
       it('should throw a 404 error', async () => {
-        const id = new Types.ObjectId().toString()
+        const id = new AppObjectId().toString()
         const payload = {
           depositMethodId: id,
           amount: 30,
@@ -731,7 +731,7 @@ describe('deposit', () => {
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
+        const url = baseUrl + `delete/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -873,7 +873,7 @@ describe('deposit', () => {
       it('should throw a 404 error', async () => {
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
-        const url = baseUrl + new Types.ObjectId().toString()
+        const url = baseUrl + new AppObjectId().toString()
 
         const { statusCode, body } = await request
           .get(url)
@@ -947,7 +947,7 @@ describe('deposit', () => {
       it('should throw a 401 Unauthorized error', async () => {
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
-        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
+        const url = baseUrl + `master/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -963,7 +963,7 @@ describe('deposit', () => {
       it('should throw a 404 error', async () => {
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
+        const url = baseUrl + `master/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)

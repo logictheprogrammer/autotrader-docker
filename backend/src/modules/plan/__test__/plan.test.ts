@@ -1,6 +1,5 @@
 import { PlanStatus } from './../plan.enum'
 import planModel from '../../../modules/plan/plan.model'
-import { Types } from 'mongoose'
 import { request } from '../../../test'
 import Encryption from '../../../utils/encryption'
 import { getAssetMock } from '../../asset/__test__/asset.mock'
@@ -11,6 +10,7 @@ import { planA, planA_id, planB, planC } from './plan.payload'
 import AppRepository from '../../app/app.repository'
 import { IPlan } from '../plan.interface'
 import { IUser } from '../../user/user.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const planRepository = new AppRepository<IPlan>(planModel)
@@ -60,10 +60,7 @@ describe('plan', () => {
       it('should return a 404', async () => {
         const payload = {
           ...planA,
-          assets: [
-            new Types.ObjectId().toString(),
-            new Types.ObjectId().toString(),
-          ],
+          assets: [new AppObjectId().toString(), new AppObjectId().toString()],
         }
 
         const admin = await userRepository.create(adminA).save()
@@ -168,10 +165,7 @@ describe('plan', () => {
         const payload = {
           planId: planA_id,
           ...planB,
-          assets: [
-            new Types.ObjectId().toString(),
-            new Types.ObjectId().toString(),
-          ],
+          assets: [new AppObjectId().toString(), new AppObjectId().toString()],
         }
 
         const admin = await userRepository.create(adminA).save()

@@ -7,7 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import { Types } from 'mongoose'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class TradeController implements IAppController {
@@ -193,7 +193,7 @@ class TradeController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const tradeId = req.params.tradeId as unknown as Types.ObjectId
+      const tradeId = req.params.tradeId as unknown as AppObjectId
       const response = await this.tradeService.delete(tradeId)
       res.status(200).json(response)
     } catch (err: any) {

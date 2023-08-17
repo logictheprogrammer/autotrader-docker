@@ -3,9 +3,9 @@ import { request } from '../../../test'
 import { assetA } from './asset.payload'
 import { assetService } from '../../../setup'
 import { AssetType } from '../asset.enum'
-import { Types } from 'mongoose'
 import AppRepository from '../../app/app.repository'
 import { IAsset } from '../asset.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const assetRepository = new AppRepository<IAsset>(assetModel)
 
@@ -15,7 +15,7 @@ describe('asset', () => {
     describe('given asset those not exist', () => {
       it('should throw an error', async () => {
         expect(
-          await assetService.get(new Types.ObjectId(), AssetType.CRYPTO)
+          await assetService.get(new AppObjectId(), AssetType.CRYPTO)
         ).toBe(undefined)
       })
     })

@@ -27,7 +27,6 @@ import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import { Types } from 'mongoose'
 import { IInvestmentObject } from '../investment/investment.interface'
 import { IPairObject, IPairService } from '../pair/pair.interface'
 import Helpers from '@/utils/helpers/helpers'
@@ -35,6 +34,7 @@ import { IMathService } from '../math/math.interface'
 import { InvestmentStatus } from '../investment/investment.enum'
 import { TUpdateTradeStatus } from './trade.type'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class TradeService implements ITradeService {
@@ -65,7 +65,7 @@ class TradeService implements ITradeService {
   ) {}
 
   private async find(
-    tradeId: Types.ObjectId,
+    tradeId: AppObjectId,
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<ITrade> {
@@ -124,7 +124,7 @@ class TradeService implements ITradeService {
   }
 
   public async _updateStatusTransaction(
-    tradeId: Types.ObjectId,
+    tradeId: AppObjectId,
     status: TradeStatus,
     price?: number
   ): TTransaction<ITradeObject, ITrade> {
@@ -187,7 +187,7 @@ class TradeService implements ITradeService {
     // const minProfit = investment.minProfit / 24
     // const maxProfit = investment.maxProfit / 24
 
-    // const baseAsset = Helpers.randomPickFromArray<Types.ObjectId>(assets)
+    // const baseAsset = Helpers.randomPickFromArray<AppObjectId>(assets)
 
     // const pairs = await this.pairService.getByBase(baseAsset)
 
@@ -235,8 +235,8 @@ class TradeService implements ITradeService {
   }
 
   public async createManual(
-    investmentId: Types.ObjectId,
-    pairId: Types.ObjectId
+    investmentId: AppObjectId,
+    pairId: AppObjectId
   ): THttpResponse<{ trade: ITrade }> {
     try {
       const investment = await this.investmentService.get(investmentId)
@@ -306,7 +306,7 @@ class TradeService implements ITradeService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Trade created successfully',
-        data: { trade: trade.collectUnsaved() },
+        data: { trade: trade.collectRaw() },
       }
     } catch (err: any) {
       throw new AppException(
@@ -317,8 +317,8 @@ class TradeService implements ITradeService {
   }
 
   public async updateManual(
-    tradeId: Types.ObjectId,
-    pairId: Types.ObjectId,
+    tradeId: AppObjectId,
+    pairId: AppObjectId,
     move: TradeMove,
     stake: number,
     profit: number,
@@ -370,7 +370,7 @@ class TradeService implements ITradeService {
   }
 
   public async updateStatus(
-    tradeId: Types.ObjectId,
+    tradeId: AppObjectId,
     status: TradeStatus,
     price?: number
   ): Promise<{ model: AppRepository<ITrade>; instances: TUpdateTradeStatus }> {
@@ -495,7 +495,7 @@ class TradeService implements ITradeService {
   }
 
   public async forceUpdateStatus(
-    tradeId: Types.ObjectId,
+    tradeId: AppObjectId,
     status: TradeStatus
   ): THttpResponse<{ trade: ITrade }> {
     try {
@@ -535,7 +535,7 @@ class TradeService implements ITradeService {
   }
 
   public async updateAmount(
-    tradeId: Types.ObjectId,
+    tradeId: AppObjectId,
     stake: number,
     profit: number
   ): THttpResponse<{ trade: ITrade }> {
@@ -566,9 +566,7 @@ class TradeService implements ITradeService {
     }
   }
 
-  public async delete(
-    tradeId: Types.ObjectId
-  ): THttpResponse<{ trade: ITrade }> {
+  public async delete(tradeId: AppObjectId): THttpResponse<{ trade: ITrade }> {
     try {
       const trade = await this.find(tradeId)
 

@@ -8,7 +8,6 @@ import transactionModel from '@/modules/transaction/transaction.model'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
 import { IUserObject } from '@/modules/user/user.interface'
 import formatNumber from '@/utils/formats/formatNumber'
-import { Types } from 'mongoose'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
@@ -19,6 +18,7 @@ import { IAppObject } from '@/modules/app/app.interface'
 import { UserEnvironment } from '../user/user.enum'
 import { TransactionStatus } from './transaction.type'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class TransactionService implements ITransactionService {
@@ -27,9 +27,9 @@ class TransactionService implements ITransactionService {
   )
 
   private async find(
-    transactionId: Types.ObjectId,
+    transactionId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<ITransaction> {
     const transaction = await this.transactionRepository
       .findById(transactionId, fromAllAccounts, userId)
@@ -41,7 +41,7 @@ class TransactionService implements ITransactionService {
   }
 
   private setAmount = async (
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus,
     amount: number
   ): Promise<{
@@ -69,7 +69,7 @@ class TransactionService implements ITransactionService {
   }
 
   private setStatus = async (
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus
   ): Promise<{
     transaction: AppRepository<ITransaction>
@@ -128,7 +128,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async _updateAmountTransaction(
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus,
     amount: number
   ): TTransaction<ITransactionObject, ITransaction> {
@@ -156,7 +156,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async _updateStatusTransaction(
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus
   ): TTransaction<ITransactionObject, ITransaction> {
     const { oldStatus, transaction } = await this.setStatus(categoryId, status)
@@ -204,7 +204,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async updateAmount(
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus,
     amount: number
   ): Promise<ITransactionInstance<ITransaction>> {
@@ -225,7 +225,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async forceUpdateAmount(
-    transactionId: Types.ObjectId,
+    transactionId: AppObjectId,
     status: TransactionStatus,
     amount: number
   ): THttpResponse<{ transaction: ITransaction }> {
@@ -251,7 +251,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async updateStatus(
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus
   ): Promise<ITransactionInstance<ITransaction>> {
     try {
@@ -270,7 +270,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async forceUpdateStatus(
-    transactionId: Types.ObjectId,
+    transactionId: AppObjectId,
     status: TransactionStatus
   ): THttpResponse<{ transaction: ITransaction }> {
     try {
@@ -294,16 +294,16 @@ class TransactionService implements ITransactionService {
   }
 
   public async get(
-    transactionId: Types.ObjectId,
+    transactionId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<ITransactionObject> {
     return (await this.find(transactionId, fromAllAccounts, userId)).toObject()
   }
 
   public fetch = async (
-    transactionId: Types.ObjectId,
-    userId: Types.ObjectId
+    transactionId: AppObjectId,
+    userId: AppObjectId
   ): THttpResponse<{ transaction: ITransaction }> => {
     try {
       const transaction = await this.transactionRepository
@@ -331,7 +331,7 @@ class TransactionService implements ITransactionService {
   public fetchAll = async (
     all: boolean,
     environment: UserEnvironment,
-    userId: Types.ObjectId
+    userId: AppObjectId
   ): THttpResponse<{ transactions: ITransaction[] }> => {
     try {
       let transactions = await this.transactionRepository
@@ -362,7 +362,7 @@ class TransactionService implements ITransactionService {
   }
 
   public delete = async (
-    transactionId: Types.ObjectId
+    transactionId: AppObjectId
   ): THttpResponse<{ transaction: ITransaction }> => {
     try {
       const transaction = await this.find(transactionId)

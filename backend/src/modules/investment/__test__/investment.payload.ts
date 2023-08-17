@@ -17,9 +17,9 @@ import {
 } from '../../user/__test__/user.payload'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
 import { IInvestmentObject } from '../investment.interface'
-import { Types } from 'mongoose'
+import AppObjectId from '../../app/app.objectId'
 
-export const investmentA_id = new Types.ObjectId('1235de5d5b1f5b3a5c1b539a')
+export const investmentA_id = new AppObjectId('1235de5d5b1f5b3a5c1b539a')
 // @ts-ignore
 export const investmentA: IInvestmentObject = {
   plan: planA_id,
@@ -44,7 +44,7 @@ export const investmentA: IInvestmentObject = {
   environment: UserEnvironment.LIVE,
 }
 
-export const investmentB_id = new Types.ObjectId('1235de5d5b1f5b3a5c1b539b')
+export const investmentB_id = new AppObjectId('1235de5d5b1f5b3a5c1b539b')
 // @ts-ignore
 export const investmentB: IInvestmentObject = {
   plan: planB_id,
@@ -69,7 +69,7 @@ export const investmentB: IInvestmentObject = {
   environment: UserEnvironment.LIVE,
 }
 
-export const investmentC_id = new Types.ObjectId('1235de5d5b1f5b3a5c1b539c')
+export const investmentC_id = new AppObjectId('1235de5d5b1f5b3a5c1b539c')
 // @ts-ignore
 export const investmentC: IInvestmentObject = {
   plan: planC_id,

@@ -15,8 +15,8 @@ import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import { Types } from 'mongoose'
 import AppRepository from '@/modules/app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class ActivityService implements IActivityService {
@@ -51,7 +51,7 @@ class ActivityService implements IActivityService {
   public fetchAll = async (
     accessBy: UserRole,
     forWho: ActivityForWho,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ activities: IActivity[] }> => {
     try {
       let activities
@@ -101,8 +101,8 @@ class ActivityService implements IActivityService {
   }
 
   public hide = async (
-    userId: Types.ObjectId,
-    activityId: Types.ObjectId,
+    userId: AppObjectId,
+    activityId: AppObjectId,
     forWho: ActivityForWho
   ): THttpResponse<{ activity: IActivity }> => {
     try {
@@ -135,7 +135,7 @@ class ActivityService implements IActivityService {
   }
 
   public hideAll = async (
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     forWho: ActivityForWho
   ): THttpResponse => {
     try {
@@ -168,9 +168,9 @@ class ActivityService implements IActivityService {
   }
 
   public delete = async (
-    activityId: Types.ObjectId,
+    activityId: AppObjectId,
     forWho: ActivityForWho,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ activity: IActivity }> => {
     try {
       let activity
@@ -212,7 +212,7 @@ class ActivityService implements IActivityService {
   public deleteAll = async (
     fromAllAccounts: boolean,
     forWho: ActivityForWho,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse => {
     try {
       let activities

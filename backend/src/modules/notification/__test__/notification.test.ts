@@ -1,6 +1,7 @@
 import notificationModel from '../../../modules/notification/notification.model'
 import { request } from '../../../test'
 import Encryption from '../../../utils/encryption'
+import AppObjectId from '../../app/app.objectId'
 import AppRepository from '../../app/app.repository'
 import { HttpResponseStatus } from '../../http/http.enum'
 import { adminA, userA } from '../../user/__test__/user.payload'
@@ -9,7 +10,6 @@ import { IUser } from '../../user/user.interface'
 import userModel from '../../user/user.model'
 import { INotification } from '../notification.interface'
 import { notificationA } from './notification.payload'
-import { Types } from 'mongoose'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const notificationRepository = new AppRepository<INotification>(
@@ -221,7 +221,7 @@ describe('notification', () => {
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
-        const url = `${baseUrl}/delete/${new Types.ObjectId().toString()}`
+        const url = `${baseUrl}/delete/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)

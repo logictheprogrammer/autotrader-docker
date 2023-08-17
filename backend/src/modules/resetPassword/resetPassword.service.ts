@@ -1,4 +1,3 @@
-import crypto from 'crypto'
 import {
   IResetPassword,
   IResetPasswordService,
@@ -21,7 +20,7 @@ class resetPasswordService implements IResetPasswordService {
 
   public async create(user: IUser): Promise<string> {
     const key = user.key
-    const token = crypto.randomBytes(32).toString('hex')
+    const token = AppCrypto.randomBytes(32).toString('hex')
     const expires = new Date().getTime() + AppConstants.resetPasswordExpiresTime
     const resetLink = `${SiteConstants.frontendLink}reset-password/${key}/${token}`
 

@@ -3,7 +3,6 @@ import depositMethodModel from '../../../modules/depositMethod/depositMethod.mod
 import { request } from '../../../test'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
-import { Types } from 'mongoose'
 import {
   depositMethodA,
   depositMethodB,
@@ -17,6 +16,7 @@ import { HttpResponseStatus } from '../../http/http.enum'
 import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
 import { IDepositMethod } from '../depositMethod.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const depositMethodRepository = new AppRepository<IDepositMethod>(
@@ -70,7 +70,7 @@ describe('deposit method', () => {
     describe('given currency those not exist', () => {
       it('should throw a 404 error', async () => {
         const payload = {
-          currencyId: new Types.ObjectId(),
+          currencyId: new AppObjectId(),
           network: depositMethodA.network,
           fee: depositMethodA.fee,
           minDeposit: depositMethodA.minDeposit,
@@ -154,7 +154,7 @@ describe('deposit method', () => {
     describe('given payload are not valid', () => {
       it('should throw a 400 error', async () => {
         const payload = {
-          depositMethodId: new Types.ObjectId(),
+          depositMethodId: new AppObjectId(),
         }
 
         const admin = await userRepository.create(adminA).save()
@@ -175,7 +175,7 @@ describe('deposit method', () => {
         await depositMethodRepository.create(depositMethodA).save()
 
         const payload = {
-          depositMethodId: new Types.ObjectId(),
+          depositMethodId: new AppObjectId(),
           status: DepositMethodStatus.DISABLED,
         }
 
@@ -277,7 +277,7 @@ describe('deposit method', () => {
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
         const payload = {
-          depositMethodId: new Types.ObjectId().toString(),
+          depositMethodId: new AppObjectId().toString(),
           price: 200,
         }
         const user = await userRepository.create(userA).save()
@@ -296,7 +296,7 @@ describe('deposit method', () => {
     describe('given payload is not valid', () => {
       it('it should throw a 400 error', async () => {
         const payload = {
-          depositMethodId: new Types.ObjectId().toString(),
+          depositMethodId: new AppObjectId().toString(),
           price: '',
         }
         const admin = await userRepository.create(adminA).save()
@@ -316,7 +316,7 @@ describe('deposit method', () => {
       it('should throw a 404 not found', async () => {
         await depositMethodRepository.create(depositMethodA).save()
         const payload = {
-          depositMethodId: new Types.ObjectId().toString(),
+          depositMethodId: new AppObjectId().toString(),
           price: 1000,
         }
         const admin = await userRepository.create(adminA).save()
@@ -412,7 +412,7 @@ describe('deposit method', () => {
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
         const payload = {
-          depositMethodId: new Types.ObjectId().toString(),
+          depositMethodId: new AppObjectId().toString(),
           autoUpdate: true,
         }
         const user = await userRepository.create(userA).save()
@@ -431,7 +431,7 @@ describe('deposit method', () => {
     describe('given payload is not valid', () => {
       it('it should throw a 400 error', async () => {
         const payload = {
-          depositMethodId: new Types.ObjectId().toString(),
+          depositMethodId: new AppObjectId().toString(),
         }
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
@@ -450,7 +450,7 @@ describe('deposit method', () => {
       it('should throw a 404 not found', async () => {
         await depositMethodRepository.create(depositMethodA).save()
         const payload = {
-          depositMethodId: new Types.ObjectId().toString(),
+          depositMethodId: new AppObjectId().toString(),
           autoUpdate: false,
         }
         const admin = await userRepository.create(adminA).save()
@@ -559,7 +559,7 @@ describe('deposit method', () => {
     describe('given payload are not valid', () => {
       it('should throw a 400 error', async () => {
         const payload = {
-          depositMethodId: new Types.ObjectId(),
+          depositMethodId: new AppObjectId(),
           currencyId: currencyA_id,
           network: depositMethodUpdated.network,
           fee: depositMethodUpdated.fee,
@@ -583,7 +583,7 @@ describe('deposit method', () => {
       it('should throw a 404 error', async () => {
         await depositMethodRepository.create(depositMethodA).save()
         const payload = {
-          depositMethodId: new Types.ObjectId(),
+          depositMethodId: new AppObjectId(),
           currencyId: currencyA_id,
           network: depositMethodUpdated.network,
           address: depositMethodUpdated.address,
@@ -610,7 +610,7 @@ describe('deposit method', () => {
         const dm = await depositMethodRepository.create(depositMethodA).save()
         const payload = {
           depositMethodId: dm._id,
-          currencyId: new Types.ObjectId(),
+          currencyId: new AppObjectId(),
           network: depositMethodUpdated.network,
           address: depositMethodUpdated.address,
           fee: depositMethodUpdated.fee,

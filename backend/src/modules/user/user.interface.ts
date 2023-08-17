@@ -1,8 +1,9 @@
-import { Document, Types } from 'mongoose'
 import { UserAccount, UserRole, UserStatus } from '@/modules/user/user.enum'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
+import AppDocument from '../app/app.document'
+import AppObjectId from '../app/app.objectId'
 
 export interface IUserObject extends IAppObject {
   key: string
@@ -14,7 +15,7 @@ export interface IUserObject extends IAppObject {
   role: UserRole
   status: UserStatus
   verifield: Boolean
-  referred: Types.ObjectId
+  referred: AppObjectId
   refer: string
   mainBalance: number
   bonusBalance: number
@@ -23,7 +24,7 @@ export interface IUserObject extends IAppObject {
   isDeleted?: boolean
 }
 
-export interface IUser extends Document {
+export interface IUser extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -36,7 +37,7 @@ export interface IUser extends Document {
   role: UserRole
   status: UserStatus
   verifield: Boolean
-  referred: Types.ObjectId
+  referred: AppObjectId
   refer: string
   mainBalance: number
   bonusBalance: number
@@ -49,55 +50,55 @@ export interface IUser extends Document {
 
 export interface IUserService {
   _fundTransaction(
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     account: UserAccount,
     amount: number
   ): TTransaction<IUserObject, IUser>
 
-  get(userIdOrUsername: Types.ObjectId | string): Promise<IUserObject>
+  get(userIdOrUsername: AppObjectId | string): Promise<IUserObject>
 
-  fetch(userId: Types.ObjectId): THttpResponse<{ user: IUser }>
+  fetch(userId: AppObjectId): THttpResponse<{ user: IUser }>
 
   fetchAll(): THttpResponse<{ users: IUser[] }>
 
   updateProfile(
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     name: string,
     username: string,
     isAdmin: boolean
   ): THttpResponse<{ user: IUser }>
 
   updateEmail(
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     email: string
   ): THttpResponse<{ user: IUser }>
 
   updateStatus(
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     status: UserStatus
   ): THttpResponse<{ user: IUser }>
 
-  delete(userId: Types.ObjectId): THttpResponse<{ user: IUser }>
+  delete(userId: AppObjectId): THttpResponse<{ user: IUser }>
 
   forceFund(
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     account: UserAccount,
     amount: number
   ): THttpResponse<{ user: IUser }>
 
   fund(
-    userIdOrUsername: Types.ObjectId | string,
+    userIdOrUsername: AppObjectId | string,
     account: UserAccount,
     amount: number
   ): TTransaction<IUserObject, IUser>
 
   getReferredUsers(
     getAll: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ users: IUser[] }>
 
   sendEmail(
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     subject: string,
     heading: string,
     content: string

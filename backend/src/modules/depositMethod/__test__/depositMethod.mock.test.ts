@@ -2,9 +2,9 @@ import { IDepositMethod } from './../depositMethod.interface'
 import AppRepository from '../../../modules/app/app.repository'
 import { request } from '../../../test'
 import depositMethodModel from '../../../modules/depositMethod/depositMethod.model'
-import { Types } from 'mongoose'
 import { depositMethodA } from './depositMethod.payload'
 import { depositMethodService } from '../../../setup'
+import AppObjectId from '../../app/app.objectId'
 
 const depositMethodRepository = new AppRepository<IDepositMethod>(
   depositMethodModel
@@ -16,7 +16,7 @@ describe('deposit method', () => {
     describe('given deposit method those not exist', () => {
       it('should throw an error', async () => {
         await expect(
-          depositMethodService.get(new Types.ObjectId())
+          depositMethodService.get(new AppObjectId())
         ).rejects.toThrow('Deposit method not found')
       })
     })

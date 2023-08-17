@@ -1,5 +1,5 @@
-import { Types } from 'mongoose'
 import { DepositMethodStatus } from '../../../modules/depositMethod/depositMethod.enum'
+import AppObjectId from '../../app/app.objectId'
 
 export const depositMethodUpdated = {
   address: '--updated wallet address--',
@@ -8,7 +8,7 @@ export const depositMethodUpdated = {
   minDeposit: 70,
 }
 
-export const depositMethodA_id = new Types.ObjectId('6245de5d5b1f5b3a5c1b539a')
+export const depositMethodA_id = new AppObjectId('6245de5d5b1f5b3a5c1b539a')
 
 export const depositMethodA = {
   name: 'bitcoin',
@@ -23,7 +23,7 @@ export const depositMethodA = {
   autoUpdate: true,
 }
 
-export const depositMethodB_id = new Types.ObjectId('6245de5d5b1f5b3a5c1b539b')
+export const depositMethodB_id = new AppObjectId('6245de5d5b1f5b3a5c1b539b')
 
 export const depositMethodB = {
   name: 'ethereum',
@@ -38,7 +38,7 @@ export const depositMethodB = {
   autoUpdate: true,
 }
 
-export const depositMethodC_id = new Types.ObjectId('6245de5d5b1f5b3a5c1b539c')
+export const depositMethodC_id = new AppObjectId('6245de5d5b1f5b3a5c1b539c')
 
 export const depositMethodC = {
   name: 'litecoin',

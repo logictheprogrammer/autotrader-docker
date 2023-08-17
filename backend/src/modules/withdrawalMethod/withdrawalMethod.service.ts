@@ -1,5 +1,4 @@
 import { IWithdrawalMethodObject } from './withdrawalMethod.interface'
-import { Types } from 'mongoose'
 import { Inject, Service } from 'typedi'
 import {
   IWithdrawalMethod,
@@ -14,6 +13,7 @@ import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class WithdrawalMethodService implements IWithdrawalMethodService {
@@ -27,9 +27,9 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   ) {}
 
   private find = async (
-    withdrawalMethodId: Types.ObjectId,
+    withdrawalMethodId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId | string
+    userId?: AppObjectId | string
   ): Promise<IWithdrawalMethod> => {
     const withdrawalMethod = await this.withdrawalMethodRepository
       .findById(withdrawalMethodId, fromAllAccounts, userId)
@@ -42,7 +42,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   }
 
   public create = async (
-    currencyId: Types.ObjectId,
+    currencyId: AppObjectId,
     network: string,
     fee: number,
     minWithdrawal: number
@@ -75,8 +75,8 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   }
 
   public update = async (
-    withdrawalMethodId: Types.ObjectId,
-    currencyId: Types.ObjectId,
+    withdrawalMethodId: AppObjectId,
+    currencyId: AppObjectId,
     network: string,
     fee: number,
     minWithdrawal: number
@@ -110,13 +110,13 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   }
 
   public async get(
-    withdrawalMethodId: Types.ObjectId
+    withdrawalMethodId: AppObjectId
   ): Promise<IWithdrawalMethodObject> {
     return (await this.find(withdrawalMethodId)).toObject()
   }
 
   public delete = async (
-    withdrawalMethodId: Types.ObjectId
+    withdrawalMethodId: AppObjectId
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }> => {
     try {
       const withdrawalMethod = await this.find(withdrawalMethodId)
@@ -136,7 +136,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   }
 
   public updateStatus = async (
-    withdrawalMethodId: Types.ObjectId,
+    withdrawalMethodId: AppObjectId,
     status: WithdrawalMethodStatus
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }> => {
     try {

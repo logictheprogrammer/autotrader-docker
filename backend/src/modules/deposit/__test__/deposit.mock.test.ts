@@ -8,10 +8,10 @@ import userModel from '../../user/user.model'
 import { depositService } from '../../../setup'
 import depositModel from '../deposit.model'
 import { depositA } from './deposit.payload'
-import { Types } from 'mongoose'
 import AppRepository from '../../app/app.repository'
 import { IDeposit } from '../deposit.interface'
 import { IUser } from '../../user/user.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const depositRepository = new AppRepository<IDeposit>(depositModel)
 const depositMethodRepository = new AppRepository<IDepositMethod>(
@@ -69,7 +69,7 @@ describe('deposit', () => {
 
         await expect(
           depositService._updateStatusTransaction(
-            new Types.ObjectId(),
+            new AppObjectId(),
             DepositStatus.APPROVED
           )
         ).rejects.toThrow('Deposit transaction not found')

@@ -5,7 +5,6 @@ import userModel from '../../user/user.model'
 import { investmentService } from '../../../setup'
 import investmentModel from '../investment.model'
 import { investmentA } from './investment.payload'
-import { Types } from 'mongoose'
 import planModel from '../../plan/plan.model'
 import { planA } from '../../plan/__test__/plan.payload'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
@@ -13,6 +12,7 @@ import AppRepository from '../../app/app.repository'
 import { IInvestment } from '../investment.interface'
 import { IUser } from '../../user/user.interface'
 import { IPlan } from '../../plan/plan.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const planRepository = new AppRepository<IPlan>(planModel)
@@ -59,7 +59,7 @@ describe('investment', () => {
         const amount = 1000
 
         await expect(
-          investmentService._fundTransaction(new Types.ObjectId(), amount)
+          investmentService._fundTransaction(new AppObjectId(), amount)
         ).rejects.toThrow('Investment plan not found')
       })
     })
@@ -94,7 +94,7 @@ describe('investment', () => {
 
         await expect(
           investmentService._updateStatusTransaction(
-            new Types.ObjectId(),
+            new AppObjectId(),
             InvestmentStatus.RUNNING
           )
         ).rejects.toThrow('Investment plan not found')

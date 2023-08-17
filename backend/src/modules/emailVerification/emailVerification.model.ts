@@ -1,5 +1,4 @@
 import { Schema, model } from 'mongoose'
-import bcrypt from 'bcrypt'
 import { IEmailVerification } from '@/modules/emailVerification/emailVerification.interface'
 
 const EmailVerificationSchema = new Schema(

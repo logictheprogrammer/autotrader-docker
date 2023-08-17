@@ -1,27 +1,26 @@
 import {
   Query,
-  Types,
   FilterQuery,
-  Document,
   Model,
   SortOrder,
   IfAny,
   Require_id,
   AnyKeys,
   QueryOptions,
-  ObjectId,
   UpdateWithAggregationPipeline,
   UpdateQuery,
 } from 'mongoose'
 import HttpException from '@/modules/http/http.exception'
+import AppObjectId from './app.objectId'
+import AppDocument from './app.document'
 
-export default class AppRepository<T extends Document> {
+export default class AppRepository<T extends AppDocument> {
   private query: null | Query<T, T> = null
   private queryAll: null | Query<T[], T> = null
   private createNew:
     | null
     | T
-    | IfAny<T, any, Document<unknown, {}, T> & Omit<Require_id<T>, never>> =
+    | IfAny<T, any, AppDocument<unknown, {}, T> & Omit<Require_id<T>, never>> =
     null
 
   public collection = {
@@ -62,11 +61,11 @@ export default class AppRepository<T extends Document> {
   }
 
   public findById = (
-    modelId: Types.ObjectId | string,
+    modelId: AppObjectId | string,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId | string
+    userId?: AppObjectId | string
   ): this => {
-    if (!Types.ObjectId.isValid(modelId)) return this
+    if (!AppObjectId.isValid(modelId)) return this
 
     if (fromAllAccounts) {
       this.query = this.self.findById(modelId) as Query<T, T>
@@ -169,7 +168,12 @@ export default class AppRepository<T extends Document> {
     return this.self.count(filter).exec()
   }
 
-  public collectUnsaved(): T & { _id: ObjectId } {
+  public collectRaw(): T {
+    if (!this.createNew) throw new Error('createNew payload not found')
+    return this.createNew
+  }
+
+  public collectUnsaved(): T & { _id: AppObjectId } {
     if (!this.createNew) throw new Error('createNew payload not found')
     return this.createNew.toObject({
       getters: true,
@@ -187,7 +191,7 @@ export default class AppRepository<T extends Document> {
     return await this.createNew.save()
   }
 
-  public toObject(instance: T): T & { _id: ObjectId } {
+  public toObject(instance: T): T & { _id: AppObjectId } {
     return instance.toObject({ getters: true })
   }
 

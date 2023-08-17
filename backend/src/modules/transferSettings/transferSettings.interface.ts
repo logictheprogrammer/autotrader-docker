@@ -1,7 +1,7 @@
-import { Document } from 'mongoose'
 import { THttpResponse } from '@/modules/http/http.type'
+import AppDocument from '../app/app.document'
 
-export interface ITransferSettings extends Document {
+export interface ITransferSettings extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date

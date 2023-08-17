@@ -1,9 +1,10 @@
-import { Document, Types } from 'mongoose'
 import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { UserRole } from '@/modules/user/user.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
+import AppDocument from '../app/app.document'
+import AppObjectId from '../app/app.objectId'
 
 export interface IPlanObject extends IAppObject {
   icon: string
@@ -22,7 +23,7 @@ export interface IPlanObject extends IAppObject {
   status: PlanStatus
 }
 
-export interface IPlan extends Document {
+export interface IPlan extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -56,11 +57,11 @@ export interface IPlanService {
     gas: number,
     description: string,
     assetType: AssetType,
-    assets: Types.ObjectId[]
+    assets: AppObjectId[]
   ): THttpResponse<{ plan: IPlan }>
 
   update(
-    planId: Types.ObjectId,
+    planId: AppObjectId,
     icon: string,
     name: string,
     engine: string,
@@ -73,17 +74,17 @@ export interface IPlanService {
     gas: number,
     description: string,
     assetType: AssetType,
-    assets: Types.ObjectId[]
+    assets: AppObjectId[]
   ): THttpResponse<{ plan: IPlan }>
 
   updateStatus(
-    planId: Types.ObjectId,
+    planId: AppObjectId,
     status: PlanStatus
   ): THttpResponse<{ plan: IPlan }>
 
-  get(planId: Types.ObjectId): Promise<IPlanObject | null>
+  get(planId: AppObjectId): Promise<IPlanObject | null>
 
-  delete(planId: Types.ObjectId): THttpResponse<{ plan: IPlan }>
+  delete(planId: AppObjectId): THttpResponse<{ plan: IPlan }>
 
   fetchAll(role: UserRole): THttpResponse<{ plans: IPlan[] }>
 }

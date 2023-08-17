@@ -2,7 +2,6 @@ import { AssetType } from '@/modules/asset/asset.enum'
 import { Inject, Service } from 'typedi'
 import planModel from '@/modules/plan/plan.model'
 import { IPlan, IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
-import { Types } from 'mongoose'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { THttpResponse } from '@/modules/http/http.type'
@@ -12,6 +11,7 @@ import { IAssetService } from '@/modules/asset/asset.interface'
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { UserRole } from '@/modules/user/user.enum'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class PlanService implements IPlanService {
@@ -23,9 +23,9 @@ class PlanService implements IPlanService {
   ) {}
 
   private async find(
-    planId: Types.ObjectId,
+    planId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<IPlan> {
     const plan = await this.planRepository
       .findById(planId, fromAllAccounts, userId)
@@ -49,7 +49,7 @@ class PlanService implements IPlanService {
     gas: number,
     description: string,
     assetType: AssetType,
-    assets: Types.ObjectId[]
+    assets: AppObjectId[]
   ): THttpResponse<{ plan: IPlan }> {
     try {
       for (const assetId of assets) {
@@ -103,7 +103,7 @@ class PlanService implements IPlanService {
   }
 
   public async update(
-    planId: Types.ObjectId,
+    planId: AppObjectId,
     icon: string,
     name: string,
     engine: string,
@@ -116,7 +116,7 @@ class PlanService implements IPlanService {
     gas: number,
     description: string,
     assetType: AssetType,
-    assets: Types.ObjectId[]
+    assets: AppObjectId[]
   ): THttpResponse<{ plan: IPlan }> {
     try {
       for (const assetId of assets) {
@@ -170,7 +170,7 @@ class PlanService implements IPlanService {
   }
 
   public async updateStatus(
-    planId: Types.ObjectId,
+    planId: AppObjectId,
     status: PlanStatus
   ): THttpResponse<{ plan: IPlan }> {
     try {
@@ -193,7 +193,7 @@ class PlanService implements IPlanService {
     }
   }
 
-  public async get(planId: Types.ObjectId): Promise<IPlanObject | null> {
+  public async get(planId: AppObjectId): Promise<IPlanObject | null> {
     const plan = await this.planRepository.findById(planId).collect()
 
     if (!plan) return null
@@ -210,7 +210,7 @@ class PlanService implements IPlanService {
     return this.planRepository.toObject(plan)
   }
 
-  public async delete(planId: Types.ObjectId): THttpResponse<{ plan: IPlan }> {
+  public async delete(planId: AppObjectId): THttpResponse<{ plan: IPlan }> {
     try {
       const plan = await this.planRepository.findByIdAndDelete(planId)
       if (!plan) throw new HttpException(404, 'Plan not found')

@@ -41,9 +41,9 @@ import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import FormatNumber from '@/utils/formats/formatNumber'
-import { Types } from 'mongoose'
 import { TUpdateInvestmentStatus } from './investment.type'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class InvestmentService implements IInvestmentService {
@@ -65,7 +65,7 @@ class InvestmentService implements IInvestmentService {
   ) {}
 
   private async find(
-    investmentId: Types.ObjectId,
+    investmentId: AppObjectId,
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<IInvestment> {
@@ -78,12 +78,12 @@ class InvestmentService implements IInvestmentService {
     return investment
   }
 
-  public async get(investmentId: Types.ObjectId): Promise<IInvestmentObject> {
+  public async get(investmentId: AppObjectId): Promise<IInvestmentObject> {
     return this.investmentRepository.toObject(await this.find(investmentId))
   }
 
   public async _fundTransaction(
-    investmentId: Types.ObjectId,
+    investmentId: AppObjectId,
     amount: number
   ): TTransaction<IInvestmentObject, IInvestment> {
     const investment = await this.find(investmentId)
@@ -159,7 +159,7 @@ class InvestmentService implements IInvestmentService {
   }
 
   public async _updateStatusTransaction(
-    investmentId: Types.ObjectId,
+    investmentId: AppObjectId,
     status: InvestmentStatus
   ): TTransaction<IInvestmentObject, IInvestment> {
     const investment = await this.find(investmentId)
@@ -210,8 +210,8 @@ class InvestmentService implements IInvestmentService {
   }
 
   public create = async (
-    planId: Types.ObjectId,
-    userId: Types.ObjectId,
+    planId: AppObjectId,
+    userId: AppObjectId,
     amount: number,
     account: UserAccount,
     environment: UserEnvironment
@@ -300,7 +300,7 @@ class InvestmentService implements IInvestmentService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Investment has been registered successfully',
-        data: { investment: investmentInstance.model.collectUnsaved() },
+        data: { investment: investmentInstance.model.collectRaw() },
       }
     } catch (err: any) {
       throw new AppException(
@@ -311,7 +311,7 @@ class InvestmentService implements IInvestmentService {
   }
 
   public async updateStatus(
-    investmentId: Types.ObjectId,
+    investmentId: AppObjectId,
     status: InvestmentStatus,
     sendNotice: boolean = true
   ): Promise<{
@@ -410,7 +410,7 @@ class InvestmentService implements IInvestmentService {
   }
 
   public forceUpdateStatus = async (
-    investmentId: Types.ObjectId,
+    investmentId: AppObjectId,
     status: InvestmentStatus
   ): THttpResponse<{ investment: IInvestment }> => {
     try {
@@ -421,7 +421,7 @@ class InvestmentService implements IInvestmentService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { investment: result.model.collectUnsaved() },
+        data: { investment: result.model.collectRaw() },
       }
     } catch (err: any) {
       throw new AppException(
@@ -432,14 +432,14 @@ class InvestmentService implements IInvestmentService {
   }
 
   public async fund(
-    investmentId: Types.ObjectId,
+    investmentId: AppObjectId,
     amount: number
   ): TTransaction<IInvestmentObject, IInvestment> {
     return await this._fundTransaction(investmentId, amount)
   }
 
   public async forceFund(
-    investmentId: Types.ObjectId,
+    investmentId: AppObjectId,
     amount: number
   ): THttpResponse<{ investment: IInvestment }> {
     try {
@@ -463,7 +463,7 @@ class InvestmentService implements IInvestmentService {
   }
 
   public async refill(
-    investmentId: Types.ObjectId,
+    investmentId: AppObjectId,
     gass: number
   ): THttpResponse<{ investment: IInvestment }> {
     try {
@@ -487,7 +487,7 @@ class InvestmentService implements IInvestmentService {
   }
 
   public delete = async (
-    investmentId: Types.ObjectId
+    investmentId: AppObjectId
   ): THttpResponse<{ investment: IInvestment }> => {
     try {
       const investment = await this.find(investmentId)
@@ -515,7 +515,7 @@ class InvestmentService implements IInvestmentService {
   public fetchAll = async (
     all: boolean,
     environment: UserEnvironment,
-    userId: Types.ObjectId
+    userId: AppObjectId
   ): THttpResponse<{ investments: IInvestment[] }> => {
     try {
       const investments = await this.investmentRepository

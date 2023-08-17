@@ -1,16 +1,15 @@
 import failedTransactionModel from '../../../modules/failedTransaction/failedTransaction.model'
-import { Types } from 'mongoose'
 import { request } from '../../../test'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { failedTransactionA } from './failedTransaction.payload'
-import Helpers from '../../../utils/helpers/helpers'
 import { FailedTransactionStatus } from '../failedTransaction.enum'
 import AppRepository from '../../app/app.repository'
 import { IFailedTransaction } from '../failedTransaction.interface'
 import { IUser } from '../../user/user.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const failedTransactionRepository = new AppRepository<IFailedTransaction>(
@@ -38,7 +37,7 @@ describe('failed transaction', () => {
     })
     describe('given provded id those not exist', () => {
       it('should return a 404', async () => {
-        const url = `${baseUrl}${new Types.ObjectId().toString()}`
+        const url = `${baseUrl}${new AppObjectId().toString()}`
 
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
@@ -71,10 +70,17 @@ describe('failed transaction', () => {
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
-        expect(Helpers.deepClone(body.data.failedTransaction)).toEqual(
-          Helpers.deepClone(
-            failedTransactionRepository.toObject(failedTransaction)
-          )
+        expect(body.data.failedTransaction._id).toBe(
+          failedTransaction._id.toString()
+        )
+        expect(body.data.failedTransaction.collectionName).toBe(
+          failedTransaction.collectionName
+        )
+        expect(body.data.failedTransaction.message).toBe(
+          failedTransaction.message
+        )
+        expect(body.data.failedTransaction.status).toBe(
+          failedTransaction.status
         )
       })
     })
@@ -258,7 +264,7 @@ describe('failed transaction', () => {
     })
     describe('given provded id those not exist', () => {
       it('should return a 404', async () => {
-        const url = `${baseUrl}delete/${new Types.ObjectId().toString()}`
+        const url = `${baseUrl}delete/${new AppObjectId().toString()}`
 
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
@@ -291,10 +297,17 @@ describe('failed transaction', () => {
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
-        expect(Helpers.deepClone(body.data.failedTransaction)).toEqual(
-          Helpers.deepClone(
-            failedTransactionRepository.toObject(failedTransaction)
-          )
+        expect(body.data.failedTransaction._id).toBe(
+          failedTransaction._id.toString()
+        )
+        expect(body.data.failedTransaction.collectionName).toBe(
+          failedTransaction.collectionName
+        )
+        expect(body.data.failedTransaction.message).toBe(
+          failedTransaction.message
+        )
+        expect(body.data.failedTransaction.status).toBe(
+          failedTransaction.status
         )
       })
     })

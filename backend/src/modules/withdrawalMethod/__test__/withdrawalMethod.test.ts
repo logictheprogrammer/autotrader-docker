@@ -4,7 +4,6 @@ import withdrawalMethodModel from '../../../modules/withdrawalMethod/withdrawalM
 import { request } from '../../../test'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
-import { Types } from 'mongoose'
 import {
   withdrawalMethodA,
   withdrawalMethodB,
@@ -14,13 +13,13 @@ import {
 import {
   currencyA,
   currencyA_id,
-  currencyB_id,
 } from '../../currency/__test__/currency.payload'
 import { getCurrencyMock } from '../../currency/__test__/currency.mock'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
 import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const withdrawalMethodRepository = new AppRepository<IWithdrawalMethod>(
@@ -73,7 +72,7 @@ describe('withdrawal method', () => {
     describe('given currency those not exist', () => {
       it('should throw a 404 error', async () => {
         const payload = {
-          currencyId: new Types.ObjectId().toString(),
+          currencyId: new AppObjectId().toString(),
           network: withdrawalMethodA.network,
           fee: withdrawalMethodA.fee,
           minWithdrawal: withdrawalMethodA.minWithdrawal,
@@ -157,7 +156,7 @@ describe('withdrawal method', () => {
     describe('given payload are not valid', () => {
       it('should throw a 400 error', async () => {
         const payload = {
-          withdrawalMethodId: new Types.ObjectId().toString(),
+          withdrawalMethodId: new AppObjectId().toString(),
         }
 
         const admin = await userRepository.create(adminA).save()
@@ -178,7 +177,7 @@ describe('withdrawal method', () => {
         await withdrawalMethodRepository.create(withdrawalMethodA).save()
 
         const payload = {
-          withdrawalMethodId: new Types.ObjectId().toString(),
+          withdrawalMethodId: new AppObjectId().toString(),
           status: WithdrawalMethodStatus.DISABLED,
         }
 
@@ -307,7 +306,7 @@ describe('withdrawal method', () => {
     describe('given payload are not valid', () => {
       it('should throw a 400 error', async () => {
         const payload = {
-          withdrawalMethodId: new Types.ObjectId().toString(),
+          withdrawalMethodId: new AppObjectId().toString(),
           currencyId: currencyA_id,
           network: withdrawalMethodUpdated.network,
           minWithdrawal: withdrawalMethodUpdated.minWithdrawal,
@@ -330,7 +329,7 @@ describe('withdrawal method', () => {
       it('should throw a 404 error', async () => {
         await withdrawalMethodRepository.create(withdrawalMethodA).save()
         const payload = {
-          withdrawalMethodId: new Types.ObjectId().toString(),
+          withdrawalMethodId: new AppObjectId().toString(),
           currencyId: currencyA_id,
           network: withdrawalMethodUpdated.network,
           fee: withdrawalMethodUpdated.fee,
@@ -358,7 +357,7 @@ describe('withdrawal method', () => {
           .save()
         const payload = {
           withdrawalMethodId: dm._id,
-          currencyId: new Types.ObjectId().toString(),
+          currencyId: new AppObjectId().toString(),
           network: withdrawalMethodUpdated.network,
           fee: withdrawalMethodUpdated.fee,
           minWithdrawal: withdrawalMethodUpdated.minWithdrawal,

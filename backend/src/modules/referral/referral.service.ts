@@ -9,18 +9,14 @@ import {
 import referralModel from '@/modules/referral/referral.model'
 import { ReferralStatus, ReferralTypes } from '@/modules/referral/referral.enum'
 import ServiceToken from '@/utils/enums/serviceToken'
-import {
-  INotification,
-  INotificationService,
-} from '@/modules/notification/notification.interface'
+import { INotificationService } from '@/modules/notification/notification.interface'
 import { IReferralSettingsService } from '@/modules/referralSettings/referralSettings.interface'
 import formatNumber from '@/utils/formats/formatNumber'
-import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
+import { IUserObject, IUserService } from '@/modules/user/user.interface'
 import {
   NotificationCategory,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
-import { Query, Types } from 'mongoose'
 import {
   ITransaction,
   ITransactionService,
@@ -36,6 +32,7 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import FormatString from '@/utils/formats/formatString'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class ReferralService implements IReferralService {
@@ -52,9 +49,9 @@ class ReferralService implements IReferralService {
   ) {}
 
   private async find(
-    referralId: Types.ObjectId,
+    referralId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<IReferral> {
     const referral = await this.referralRepository
       .findById(referralId, fromAllAccounts, userId)
@@ -67,7 +64,7 @@ class ReferralService implements IReferralService {
 
   private findAll(
     fromAllAccounts: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): AppRepository<IReferral> {
     try {
       const referralTransactions = this.referralRepository.find(
@@ -139,7 +136,7 @@ class ReferralService implements IReferralService {
       const userReferrerId = user.referred
       try {
         if (!userReferrerId) throw new HttpException(404, 'Referrer not found')
-        if (!Types.ObjectId.isValid(userReferrerId))
+        if (!AppObjectId.isValid(userReferrerId))
           throw new HttpException(404, 'Referrer not found')
       } catch (error) {
         throw new AllowedException(error)
@@ -235,7 +232,7 @@ class ReferralService implements IReferralService {
 
   public fetchAll = async (
     fromAllAccounts: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ referralTransactions: IReferral[] }> => {
     try {
       const referralTransactions = await this.findAll(fromAllAccounts, userId)
@@ -271,7 +268,7 @@ class ReferralService implements IReferralService {
 
   public earnings = async (
     fromAllAccounts: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ referralEarnings: IReferralEarnings[] }> => {
     try {
       const referralTransactions = await this.findAll(fromAllAccounts, userId)

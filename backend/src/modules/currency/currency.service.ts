@@ -5,21 +5,21 @@ import {
   ICurrencyService,
 } from '@/modules/currency/currency.interface'
 import currencyModel from '@/modules/currency/currency.model'
-import { Types } from 'mongoose'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class CurrencyService implements ICurrencyService {
   private currencyRepository = new AppRepository<ICurrency>(currencyModel)
 
   private find = async (
-    currencyId: Types.ObjectId,
+    currencyId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<ICurrency> => {
     const currency = await this.currencyRepository
       .findById(currencyId, fromAllAccounts, userId)
@@ -64,7 +64,7 @@ class CurrencyService implements ICurrencyService {
     }
   }
 
-  public async get(currencyId: Types.ObjectId): Promise<ICurrencyObject> {
+  public async get(currencyId: AppObjectId): Promise<ICurrencyObject> {
     try {
       const currency = await this.find(currencyId)
 

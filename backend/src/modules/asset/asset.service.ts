@@ -5,20 +5,20 @@ import {
   IAssetService,
 } from '@/modules/asset/asset.interface'
 import assetModel from '@/modules/asset/asset.model'
-import { Types } from 'mongoose'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { AssetType } from '@/modules/asset/asset.enum'
 import AppRepository from '@/modules/app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class AssetService implements IAssetService {
   private assetRepository = new AppRepository<IAsset>(assetModel)
 
   private find = async (
-    assetId: string | Types.ObjectId,
+    assetId: string | AppObjectId,
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<IAsset> => {
@@ -65,7 +65,7 @@ class AssetService implements IAssetService {
   }
 
   public async get(
-    assetId: Types.ObjectId,
+    assetId: AppObjectId,
     assetType: AssetType
   ): Promise<IAssetObject | null | undefined> {
     try {
@@ -85,7 +85,7 @@ class AssetService implements IAssetService {
   }
 
   public update = async (
-    assetId: string | Types.ObjectId,
+    assetId: string | AppObjectId,
     name: string,
     symbol: string,
     logo: string,
@@ -109,7 +109,7 @@ class AssetService implements IAssetService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Asset updated successfully',
-        data: { asset: this.assetRepository.toObject(asset) },
+        data: { asset },
       }
     } catch (err: any) {
       throw new AppException(err, 'Unable to update asset, please try again')

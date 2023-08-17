@@ -6,7 +6,6 @@ import userModel from '../../user/user.model'
 import { tradeService } from '../../../setup'
 import tradeModel from '../trade.model'
 import { tradeA } from './trade.payload'
-import { Types } from 'mongoose'
 import investmentModel from '../../investment/investment.model'
 import { investmentA } from '../../investment/__test__/investment.payload'
 import pairModel from '../../pair/pair.model'
@@ -15,6 +14,7 @@ import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
 import { IPair } from '../../pair/pair.interface'
 import { IInvestment } from '../../investment/investment.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const pairRepository = new AppRepository<IPair>(pairModel)
@@ -67,7 +67,7 @@ describe('trade', () => {
 
         await expect(
           tradeService._updateStatusTransaction(
-            new Types.ObjectId(),
+            new AppObjectId(),
             TradeStatus.RUNNING
           )
         ).rejects.toThrow('Trade not found')

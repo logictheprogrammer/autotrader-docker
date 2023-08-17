@@ -32,8 +32,8 @@ import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import { Types } from 'mongoose'
 import AppRepository from '@/modules/app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class DepositService implements IDepositService {
@@ -54,9 +54,9 @@ class DepositService implements IDepositService {
   ) {}
 
   private async find(
-    depositId: Types.ObjectId,
+    depositId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<IDeposit> {
     const deposit = await this.depositRepository
       .findById(depositId, fromAllAccounts, userId)
@@ -97,7 +97,7 @@ class DepositService implements IDepositService {
   }
 
   public async _updateStatusTransaction(
-    depositId: Types.ObjectId,
+    depositId: AppObjectId,
     status: DepositStatus
   ): TTransaction<IDepositObject, IDeposit> {
     const deposit = await this.find(depositId)
@@ -127,8 +127,8 @@ class DepositService implements IDepositService {
   }
 
   public create = async (
-    depositMethodId: Types.ObjectId,
-    userId: Types.ObjectId,
+    depositMethodId: AppObjectId,
+    userId: AppObjectId,
     amount: number
   ): THttpResponse<{ deposit: IDeposit }> => {
     try {
@@ -180,7 +180,7 @@ class DepositService implements IDepositService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Deposit has been registered successfully',
-        data: { deposit: depositInstance.model.collectUnsaved() },
+        data: { deposit: depositInstance.model.collectRaw() },
       }
     } catch (err: any) {
       throw new AppException(
@@ -191,7 +191,7 @@ class DepositService implements IDepositService {
   }
 
   public delete = async (
-    depositId: Types.ObjectId
+    depositId: AppObjectId
   ): THttpResponse<{ deposit: IDeposit }> => {
     try {
       const deposit = await this.find(depositId)
@@ -214,7 +214,7 @@ class DepositService implements IDepositService {
   }
 
   public updateStatus = async (
-    depositId: Types.ObjectId,
+    depositId: AppObjectId,
     status: DepositStatus
   ): THttpResponse<{ deposit: IDeposit }> => {
     try {
@@ -277,7 +277,7 @@ class DepositService implements IDepositService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { deposit: depositInstance.model.collectUnsaved() },
+        data: { deposit: depositInstance.model.collectRaw() },
       }
     } catch (err: any) {
       throw new AppException(
@@ -289,8 +289,8 @@ class DepositService implements IDepositService {
 
   public fetch = async (
     fromAllAccounts: boolean,
-    depositId: Types.ObjectId,
-    userId?: Types.ObjectId
+    depositId: AppObjectId,
+    userId?: AppObjectId
   ): THttpResponse<{ deposit: IDeposit }> => {
     try {
       const deposit = await this.find(depositId, fromAllAccounts, userId)
@@ -307,7 +307,7 @@ class DepositService implements IDepositService {
 
   public fetchAll = async (
     all: boolean,
-    userId: Types.ObjectId
+    userId: AppObjectId
   ): THttpResponse<{ deposits: IDeposit[] }> => {
     try {
       const deposits = await this.depositRepository

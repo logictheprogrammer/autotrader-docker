@@ -2,13 +2,13 @@ import assetModel from '../../../modules/asset/asset.model'
 import { request } from '../../../test'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
-import { Types } from 'mongoose'
 import { assetA, assetB } from './asset.payload'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
 import AppRepository from '../../app/app.repository'
 import { IAsset } from '../asset.interface'
 import { IUser } from '../../user/user.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const assetRepository = new AppRepository<IAsset>(assetModel)
 const userRepository = new AppRepository<IUser>(userModel)
@@ -106,7 +106,7 @@ describe('asset', () => {
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
         const payload = {
-          assetId: new Types.ObjectId().toString(),
+          assetId: new AppObjectId().toString(),
           ...assetB,
         }
         const user = await userRepository.create(userA).save()
@@ -125,7 +125,7 @@ describe('asset', () => {
     describe('given payload is not valid', () => {
       it('it should throw a 400 error', async () => {
         const payload = {
-          assetId: new Types.ObjectId().toString(),
+          assetId: new AppObjectId().toString(),
           ...assetB,
           name: '',
         }
@@ -146,7 +146,7 @@ describe('asset', () => {
       it('should throw a 404 not found', async () => {
         await assetRepository.create(assetA).save()
         const payload = {
-          assetId: new Types.ObjectId().toString(),
+          assetId: new AppObjectId().toString(),
           ...assetB,
         }
         const admin = await userRepository.create(adminA).save()
@@ -212,6 +212,7 @@ describe('asset', () => {
             ...assetB,
             __v: expect.any(Number),
             _id: expect.any(String),
+            id: undefined,
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
           },
@@ -279,6 +280,7 @@ describe('asset', () => {
               ...assetRepository.toObject(asset),
               __v: expect.any(Number),
               _id: expect.any(String),
+              id: undefined,
               createdAt: expect.any(String),
               updatedAt: expect.any(String),
             },

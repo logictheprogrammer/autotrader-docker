@@ -1,5 +1,4 @@
 import FormatString from '../../../utils/formats/formatString'
-import { Types } from 'mongoose'
 import { request } from '../../../test'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
@@ -12,6 +11,7 @@ import ParseString from '../../../utils/parsers/parseString'
 import { SiteConstants } from '../../config/config.constants'
 import AppRepository from '../../app/app.repository'
 import { IUser } from '../user.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 
@@ -68,7 +68,7 @@ describe('users', () => {
         // const user = await userRepository.create(userA).save()
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/force-fund-user`
+        const url = `${baseUrl}/${new AppObjectId().toString()}/force-fund-user`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -261,7 +261,7 @@ describe('users', () => {
         // const user = await userRepository.create(userA).save()
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/update-user-profile`
+        const url = `${baseUrl}/${new AppObjectId().toString()}/update-user-profile`
 
         const { statusCode, body } = await request
           .put(url)
@@ -373,7 +373,7 @@ describe('users', () => {
         // const user = await userRepository.create(userA).save()
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/update-user-email`
+        const url = `${baseUrl}/${new AppObjectId().toString()}/update-user-email`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -481,7 +481,7 @@ describe('users', () => {
         // const user = await userRepository.create(userA).save()
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/update-user-status`
+        const url = `${baseUrl}/${new AppObjectId().toString()}/update-user-status`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -564,7 +564,7 @@ describe('users', () => {
         // const user = await userRepository.create(userA).save()
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/delete-user`
+        const url = `${baseUrl}/${new AppObjectId().toString()}/delete-user`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -630,7 +630,7 @@ describe('users', () => {
         await userRepository
           .create({
             ...userB,
-            referred: new Types.ObjectId().toString(),
+            referred: new AppObjectId().toString(),
           })
           .save()
 
@@ -676,7 +676,7 @@ describe('users', () => {
         const user2 = await userRepository
           .create({
             ...userB,
-            referred: new Types.ObjectId().toString(),
+            referred: new AppObjectId().toString(),
           })
           .save()
         const admin = await userRepository.create(adminA).save()
@@ -747,7 +747,7 @@ describe('users', () => {
       it('should return a 404 error', async () => {
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}`
+        const url = `${baseUrl}/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -827,7 +827,7 @@ describe('users', () => {
 
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/send-email/${new Types.ObjectId().toString()}`
+        const url = `${baseUrl}/send-email/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .post(url)

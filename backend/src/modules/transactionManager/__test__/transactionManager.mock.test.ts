@@ -8,9 +8,7 @@ import {
   referralModelReturn,
 } from '../../referral/__test__/referral.payoad'
 import {
-  notificationInstance,
   notificationInstanceFailedSave,
-  notificationModelReturn,
   notificationModelReturnFailed,
 } from '../../notification/__test__/notification.payload'
 import {

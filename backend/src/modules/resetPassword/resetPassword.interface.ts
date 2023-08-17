@@ -1,7 +1,7 @@
-import { Document } from 'mongoose'
 import { IUser } from '@/modules/user/user.interface'
+import AppDocument from '../app/app.document'
 
-export interface IResetPassword extends Document {
+export interface IResetPassword extends AppDocument {
   key: string
   token: string
   expires: number

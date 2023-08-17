@@ -1,9 +1,6 @@
-import crypto from 'crypto'
 import { IAuthService } from '@/modules/auth/auth.interface'
 import userModel from '@/modules/user/user.model'
 import { IUser } from '@/modules/user/user.interface'
-import { Types } from 'mongoose'
-import { generate } from 'referral-codes'
 import { Service, Inject } from 'typedi'
 import ServiceToken from '@/utils/enums/serviceToken'
 
@@ -27,6 +24,7 @@ import { SiteConstants } from '@/modules/config/config.constants'
 import FormatString from '@/utils/formats/formatString'
 import AppRepository from '../app/app.repository'
 import AppCrypto from '../app/app.crypto'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class AuthService implements IAuthService {
@@ -89,12 +87,12 @@ class AuthService implements IAuthService {
         if (!referred) throw new HttpException(422, 'Invalid referral code')
       }
 
-      const refer = generate({ length: 10 })[0]
+      const refer = AppCrypto.generateCode({ length: 10 })[0]
 
       await this.userRepository.ifExist({ email }, 'Email already exist')
       await this.userRepository.ifExist({ username }, 'Username already exist')
 
-      const key = crypto.randomBytes(16).toString('hex')
+      const key = AppCrypto.randomBytes(16).toString('hex')
 
       const user = await this.userRepository
         .create({
@@ -184,7 +182,7 @@ class AuthService implements IAuthService {
   }
 
   public async updatePassword(
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     password: string,
     oldPassword?: string
   ): THttpResponse<{ user: IUser }> {

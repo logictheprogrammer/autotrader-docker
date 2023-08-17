@@ -16,11 +16,9 @@ import {
   userC_id,
 } from '../../user/__test__/user.payload'
 import { DepositStatus } from '../deposit.enum'
-import { Types } from 'mongoose'
-import AppRepository from '../../app/app.repository'
-import depositModel from '../deposit.model'
+import AppObjectId from '../../app/app.objectId'
 
-export const depositA_id = new Types.ObjectId('1145de5d5b1f5b3a5c1b539a')
+export const depositA_id = new AppObjectId('1145de5d5b1f5b3a5c1b539a')
 
 export const depositA = {
   depositMethod: depositMethodA_id,
@@ -32,7 +30,7 @@ export const depositA = {
   status: DepositStatus.PENDING,
 }
 
-export const depositB_id = new Types.ObjectId('1145de5d5b1f5b3a5c1b539b')
+export const depositB_id = new AppObjectId('1145de5d5b1f5b3a5c1b539b')
 
 export const depositB = {
   depositMethod: depositMethodB_id,
@@ -44,7 +42,7 @@ export const depositB = {
   status: DepositStatus.PENDING,
 }
 
-export const depositC_id = new Types.ObjectId('1145de5d5b1f5b3a5c1b539c')
+export const depositC_id = new AppObjectId('1145de5d5b1f5b3a5c1b539c')
 
 export const depositC = {
   depositMethod: depositMethodC_id,
@@ -56,7 +54,7 @@ export const depositC = {
   status: DepositStatus.PENDING,
 }
 
-const id1 = new Types.ObjectId()
+const id1 = new AppObjectId()
 
 // @ts-ignore
 export const depositModelReturn: IDeposit = {

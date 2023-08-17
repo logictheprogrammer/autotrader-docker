@@ -1,6 +1,7 @@
-import { Document, Types } from 'mongoose'
 import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
+import AppDocument from '../app/app.document'
+import AppObjectId from '../app/app.objectId'
 
 export interface ICurrencyObject extends IAppObject {
   name: string
@@ -8,7 +9,7 @@ export interface ICurrencyObject extends IAppObject {
   logo: string
 }
 
-export interface ICurrency extends Document {
+export interface ICurrency extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -24,7 +25,7 @@ export interface ICurrencyService {
     logo: string
   ): THttpResponse<{ currency: ICurrency }>
 
-  get(currencyId: Types.ObjectId): Promise<ICurrencyObject>
+  get(currencyId: AppObjectId): Promise<ICurrencyObject>
 
   fetchAll(): THttpResponse<{ currencies: ICurrency[] }>
 }

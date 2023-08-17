@@ -1,6 +1,4 @@
-import { failedTransactionService } from '../../../setup'
 import { request } from '../../../test'
-import Helpers from '../../../utils/helpers/helpers'
 import AppRepository from '../../app/app.repository'
 import { IFailedTransaction } from '../failedTransaction.interface'
 import failedTransactionModel from '../failedTransaction.model'

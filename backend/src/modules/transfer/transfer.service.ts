@@ -33,8 +33,8 @@ import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { ITransferSettingsService } from '@/modules/transferSettings/transferSettings.interface'
-import { Types } from 'mongoose'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class TransferService implements ITransferService {
@@ -53,9 +53,9 @@ class TransferService implements ITransferService {
   ) {}
 
   private find = async (
-    transferId: Types.ObjectId,
+    transferId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<ITransfer> => {
     const transfer = await this.transferRepository
       .findOne({ _id: transferId }, fromAllAccounts, {
@@ -70,7 +70,7 @@ class TransferService implements ITransferService {
   }
 
   public async _updateStatusTransaction(
-    transferId: Types.ObjectId,
+    transferId: AppObjectId,
     status: TransferStatus
   ): TTransaction<ITransferObject, ITransfer> {
     const transfer = await this.find(transferId)
@@ -133,7 +133,7 @@ class TransferService implements ITransferService {
   }
 
   public create = async (
-    fromUserId: Types.ObjectId,
+    fromUserId: AppObjectId,
     toUserUsername: string,
     account: UserAccount,
     amount: number
@@ -306,7 +306,7 @@ class TransferService implements ITransferService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Transfer has been registered successfully',
-        data: { transfer: transferInstance.model.collectUnsaved() },
+        data: { transfer: transferInstance.model.collectRaw() },
       }
     } catch (err: any) {
       throw new AppException(
@@ -317,15 +317,15 @@ class TransferService implements ITransferService {
   }
 
   public async get(
-    transferId: Types.ObjectId,
+    transferId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<ITransferObject> {
     return (await this.find(transferId, fromAllAccounts, userId)).toObject()
   }
 
   public delete = async (
-    transferId: Types.ObjectId
+    transferId: AppObjectId
   ): THttpResponse<{ transfer: ITransfer }> => {
     try {
       const transfer = await this.find(transferId)
@@ -348,7 +348,7 @@ class TransferService implements ITransferService {
   }
 
   public updateStatus = async (
-    transferId: Types.ObjectId,
+    transferId: AppObjectId,
     status: TransferStatus
   ): THttpResponse<{ transfer: ITransfer }> => {
     try {
@@ -453,8 +453,8 @@ class TransferService implements ITransferService {
 
   public fetch = async (
     fromAllAccounts: boolean,
-    transferId: Types.ObjectId,
-    userId?: Types.ObjectId
+    transferId: AppObjectId,
+    userId?: AppObjectId
   ): THttpResponse<{ transfer: ITransfer }> => {
     try {
       const transfer = await this.find(transferId, fromAllAccounts, userId)
@@ -474,7 +474,7 @@ class TransferService implements ITransferService {
 
   public fetchAll = async (
     allUsers: boolean,
-    userId: Types.ObjectId
+    userId: AppObjectId
   ): THttpResponse<{ transfers: ITransfer[] }> => {
     try {
       const transfers = await this.transferRepository

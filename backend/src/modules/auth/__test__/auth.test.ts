@@ -27,8 +27,8 @@ import {
 } from './auth.mock'
 import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
-import { Types } from 'mongoose'
 import AppCrypto from '../../app/app.crypto'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const resetPasswordRepository = new AppRepository<IResetPassword>(
@@ -460,7 +460,7 @@ describe('authentication', () => {
         const admin = await userRepository.create(adminUser).save()
         const token = Encryption.createToken(admin)
         const { statusCode, body } = await request
-          .patch(url + `/${new Types.ObjectId()}`)
+          .patch(url + `/${new AppObjectId()}`)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 

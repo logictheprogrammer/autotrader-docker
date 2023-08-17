@@ -36,8 +36,8 @@ import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import { Types } from 'mongoose'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class WithdrawalService implements IWithdrawalService {
@@ -56,9 +56,9 @@ class WithdrawalService implements IWithdrawalService {
   ) {}
 
   private find = async (
-    withdrawalId: Types.ObjectId,
+    withdrawalId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<IWithdrawal> => {
     const withdrawal = await this.withdrawalRepository
       .findById(withdrawalId, fromAllAccounts, userId)
@@ -71,7 +71,7 @@ class WithdrawalService implements IWithdrawalService {
   }
 
   public async _updateStatusTransaction(
-    withdrawalId: Types.ObjectId,
+    withdrawalId: AppObjectId,
     status: WithdrawalStatus
   ): TTransaction<IWithdrawalObject, IWithdrawal> {
     const withdrawal = await this.find(withdrawalId)
@@ -137,8 +137,8 @@ class WithdrawalService implements IWithdrawalService {
   }
 
   public create = async (
-    withdrawalMethodId: Types.ObjectId,
-    userId: Types.ObjectId,
+    withdrawalMethodId: AppObjectId,
+    userId: AppObjectId,
     account: UserAccount,
     address: string,
     amount: number
@@ -208,7 +208,7 @@ class WithdrawalService implements IWithdrawalService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Withdrawal has been registered successfully',
-        data: { withdrawal: withdrawalInstance.model.collectUnsaved() },
+        data: { withdrawal: withdrawalInstance.model.collectRaw() },
       }
     } catch (err: any) {
       throw new AppException(
@@ -219,15 +219,15 @@ class WithdrawalService implements IWithdrawalService {
   }
 
   public async get(
-    withdrawalId: Types.ObjectId,
+    withdrawalId: AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<IWithdrawalObject> {
     return (await this.find(withdrawalId, fromAllAccounts, userId)).toObject()
   }
 
   public delete = async (
-    withdrawalId: Types.ObjectId
+    withdrawalId: AppObjectId
   ): THttpResponse<{ withdrawal: IWithdrawal }> => {
     try {
       const withdrawal = await this.find(withdrawalId)
@@ -250,7 +250,7 @@ class WithdrawalService implements IWithdrawalService {
   }
 
   public updateStatus = async (
-    withdrawalId: Types.ObjectId,
+    withdrawalId: AppObjectId,
     status: WithdrawalStatus
   ): THttpResponse<{ withdrawal: IWithdrawal }> => {
     try {
@@ -302,7 +302,7 @@ class WithdrawalService implements IWithdrawalService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { withdrawal: withdrawalInstance.model.collectUnsaved() },
+        data: { withdrawal: withdrawalInstance.model.collectRaw() },
       }
     } catch (err: any) {
       throw new AppException(
@@ -314,8 +314,8 @@ class WithdrawalService implements IWithdrawalService {
 
   public fetch = async (
     fromAllAccounts: boolean,
-    withdrawalId: Types.ObjectId,
-    userId?: Types.ObjectId
+    withdrawalId: AppObjectId,
+    userId?: AppObjectId
   ): THttpResponse<{ withdrawal: IWithdrawal }> => {
     try {
       const withdrawal = await this.find(withdrawalId, fromAllAccounts, userId)
@@ -335,7 +335,7 @@ class WithdrawalService implements IWithdrawalService {
 
   public fetchAll = async (
     all: boolean,
-    userId: Types.ObjectId
+    userId: AppObjectId
   ): THttpResponse<{ withdrawals: IWithdrawal[] }> => {
     try {
       const withdrawals = await this.withdrawalRepository

@@ -22,7 +22,6 @@ import {
   userB_id,
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
-import { Types } from 'mongoose'
 
 import { executeTransactionManagerMock } from '../../transactionManager/__test__/transactionManager.mock'
 import {
@@ -53,6 +52,7 @@ import AppRepository from '../../app/app.repository'
 import { IInvestment } from '../investment.interface'
 import { IUser } from '../../user/user.interface'
 import { ITransaction } from '../../transaction/transaction.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const transactionRepository = new AppRepository<ITransaction>(transactionModel)
@@ -93,7 +93,7 @@ describe('investment', () => {
     })
     describe('given plan those not exits', () => {
       it('should throw a 404 error', async () => {
-        const id = new Types.ObjectId().toString()
+        const id = new AppObjectId().toString()
         const payload = {
           planId: id,
           account: UserAccount.MAIN_BALANCE,
@@ -811,7 +811,7 @@ describe('investment', () => {
     describe('given inputs are incorrect', () => {
       it('should return a 400 error', async () => {
         const payload = {
-          investmentId: new Types.ObjectId().toString(),
+          investmentId: new AppObjectId().toString(),
         }
 
         const admin = await userRepository.create(adminA).save()
@@ -830,7 +830,7 @@ describe('investment', () => {
     describe('given investment those not exist', () => {
       it('should return a 404 error', async () => {
         const payload = {
-          investmentId: new Types.ObjectId().toString(),
+          investmentId: new AppObjectId().toString(),
           amount: 100,
         }
 
@@ -901,7 +901,7 @@ describe('investment', () => {
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
+        const url = baseUrl + `delete/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)

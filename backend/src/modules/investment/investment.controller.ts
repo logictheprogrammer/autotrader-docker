@@ -7,7 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import { Types } from 'mongoose'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class InvestmentController implements IAppController {
@@ -164,7 +164,7 @@ class InvestmentController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const investmentId = req.params.investmentId as unknown as Types.ObjectId
+      const investmentId = req.params.investmentId as unknown as AppObjectId
       const response = await this.investmentService.delete(investmentId)
       res.status(200).json(response)
     } catch (err: any) {

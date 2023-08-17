@@ -1,7 +1,6 @@
 import { Inject, Service } from 'typedi'
 import { IPair, IPairObject, IPairService } from '@/modules/pair/pair.interface'
 import pairModel from '@/modules/pair/pair.model'
-import { Types } from 'mongoose'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
@@ -10,6 +9,7 @@ import ServiceToken from '@/utils/enums/serviceToken'
 import { IAssetService } from '../asset/asset.interface'
 import { AssetType } from '../asset/asset.enum'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class PairService implements IPairService {
@@ -21,7 +21,7 @@ class PairService implements IPairService {
   ) {}
 
   private find = async (
-    pairId: Types.ObjectId,
+    pairId: AppObjectId,
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<IPair> => {
@@ -34,7 +34,7 @@ class PairService implements IPairService {
     return pair
   }
 
-  public async get(pairId: Types.ObjectId): Promise<IPairObject | null> {
+  public async get(pairId: AppObjectId): Promise<IPairObject | null> {
     try {
       const pair = await this.pairRepository.findById(pairId).collect()
 
@@ -46,7 +46,7 @@ class PairService implements IPairService {
     }
   }
 
-  public async getByBase(baseId: Types.ObjectId): Promise<IPairObject[]> {
+  public async getByBase(baseId: AppObjectId): Promise<IPairObject[]> {
     try {
       const pairs = await this.pairRepository
         .find({ baseAsset: baseId })
@@ -64,8 +64,8 @@ class PairService implements IPairService {
 
   public create = async (
     assetType: AssetType,
-    baseAssetId: Types.ObjectId,
-    quoteAssetId: Types.ObjectId
+    baseAssetId: AppObjectId,
+    quoteAssetId: AppObjectId
   ): THttpResponse<{ pair: IPair }> => {
     try {
       const baseAsset = await this.assetService.get(baseAssetId, assetType)
@@ -106,10 +106,10 @@ class PairService implements IPairService {
   }
 
   public update = async (
-    pairId: Types.ObjectId,
+    pairId: AppObjectId,
     assetType: AssetType,
-    baseAssetId: Types.ObjectId,
-    quoteAssetId: Types.ObjectId
+    baseAssetId: AppObjectId,
+    quoteAssetId: AppObjectId
   ): THttpResponse<{ pair: IPair }> => {
     try {
       await this.pairRepository.ifExist(

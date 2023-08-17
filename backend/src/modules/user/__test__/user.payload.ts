@@ -1,6 +1,7 @@
-import { Types } from 'mongoose'
 import { IUser, IUserObject } from '../../../modules/user/user.interface'
+import AppObjectId from '../../app/app.objectId'
 import { UserRole, UserStatus } from './../user.enum'
+
 export const existingUser = {
   key: '8f6a4c9d7f4b9c2b8e8a8d6c8a8d6c8a',
   name: 'John Doe',
@@ -73,7 +74,7 @@ export const adminUser = {
   isDeleted: false,
 }
 
-export const userA_id = new Types.ObjectId('6345de5d5b1f5b3a5c1b539a')
+export const userA_id = new AppObjectId('6345de5d5b1f5b3a5c1b539a')
 // @ts-ignore
 export const userA: IUserObject = {
   key: '8f6b4c9d7f4b9c2b8e8a8d6c8a8d6c8a',
@@ -93,7 +94,7 @@ export const userA: IUserObject = {
   isDeleted: false,
 }
 
-export const userB_id = new Types.ObjectId('6345de5d5b1f5b3a5c1b539b')
+export const userB_id = new AppObjectId('6345de5d5b1f5b3a5c1b539b')
 // @ts-ignore
 export const userB: IUserObject = {
   key: '8f6c4c9d7f4b9c2b8e8a8d6c8a8d6c8a',
@@ -113,7 +114,7 @@ export const userB: IUserObject = {
   isDeleted: false,
 }
 
-export const userC_id = new Types.ObjectId('6345de5d5b1f5b3a5c1b539c')
+export const userC_id = new AppObjectId('6345de5d5b1f5b3a5c1b539c')
 // @ts-ignore
 export const userC: IUserObject = {
   key: '8f6d4c9d7f4b9c2b8e8a8d6c8a8d6c8a',

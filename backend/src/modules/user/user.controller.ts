@@ -7,7 +7,7 @@ import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import userValidation from '@/modules/user/user.validation'
 import { IAppController } from '@/modules/app/app.interface'
-import { Types } from 'mongoose'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class UserController implements IAppController {
@@ -124,7 +124,7 @@ class UserController implements IAppController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.params.userId as unknown as Types.ObjectId
+      const userId = req.params.userId as unknown as AppObjectId
       const responce = await this.userService.fetch(userId)
       res.status(200).json(responce)
     } catch (err: any) {
@@ -184,7 +184,7 @@ class UserController implements IAppController {
   ): Promise<void> => {
     try {
       const { status } = req.body
-      const userId = req.params.userId as unknown as Types.ObjectId
+      const userId = req.params.userId as unknown as AppObjectId
       const responce = await this.userService.updateStatus(userId, status)
       res.status(200).json(responce)
     } catch (err: any) {
@@ -198,7 +198,7 @@ class UserController implements IAppController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.params.userId as unknown as Types.ObjectId
+      const userId = req.params.userId as unknown as AppObjectId
       const responce = await this.userService.delete(userId)
       res.status(200).json(responce)
     } catch (err: any) {
@@ -212,7 +212,7 @@ class UserController implements IAppController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.params.userId as unknown as Types.ObjectId
+      const userId = req.params.userId as unknown as AppObjectId
       const { account, amount } = req.body
       const responce = await this.userService.forceFund(userId, account, amount)
       res.status(200).json(responce)
@@ -243,7 +243,7 @@ class UserController implements IAppController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.params.userId as unknown as Types.ObjectId
+      const userId = req.params.userId as unknown as AppObjectId
       const { subject, heading, content } = req.body
 
       const responce = await this.userService.sendEmail(

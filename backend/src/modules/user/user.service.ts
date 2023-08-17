@@ -1,7 +1,6 @@
 import activityModel from '@/modules/activity/activity.model'
 import userModel from '@/modules/user/user.model'
 import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
-import { Types } from 'mongoose'
 import { UserAccount, UserRole, UserStatus } from '@/modules/user/user.enum'
 import { Service, Inject } from 'typedi'
 import ServiceToken from '@/utils/enums/serviceToken'
@@ -28,6 +27,7 @@ import { INotification } from '@/modules/notification/notification.interface'
 import notificationModel from '@/modules/notification/notification.model'
 import { SiteConstants } from '@/modules/config/config.constants'
 import AppRepository from '@/modules/app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class UserService implements IUserService {
@@ -43,9 +43,7 @@ class UserService implements IUserService {
     @Inject(ServiceToken.MAIL_SERVICE) private mailService: IMailService
   ) {}
 
-  private async find(
-    userIdOrUsername: Types.ObjectId | string
-  ): Promise<IUser> {
+  private async find(userIdOrUsername: AppObjectId | string): Promise<IUser> {
     let user
 
     user = await this.userRepository
@@ -88,7 +86,7 @@ class UserService implements IUserService {
   }
 
   public async _fundTransaction(
-    userIdOrUsername: Types.ObjectId | string,
+    userIdOrUsername: AppObjectId | string,
     account: UserAccount,
     amount: number
   ): TTransaction<IUserObject, IUser> {
@@ -122,7 +120,7 @@ class UserService implements IUserService {
   }
 
   public fund = async (
-    userIdOrUsername: Types.ObjectId | string,
+    userIdOrUsername: AppObjectId | string,
     account: UserAccount,
     amount: number
   ): TTransaction<IUserObject, IUser> => {
@@ -130,7 +128,7 @@ class UserService implements IUserService {
   }
 
   public forceFund = async (
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     account: UserAccount,
     amount: number
   ): THttpResponse<{ user: IUser }> => {
@@ -176,13 +174,13 @@ class UserService implements IUserService {
   }
 
   public get = async (
-    userIdOrUsername: Types.ObjectId | string
+    userIdOrUsername: AppObjectId | string
   ): Promise<IUserObject> => {
     return (await this.find(userIdOrUsername)).toObject()
   }
 
   public fetch = async (
-    userId: Types.ObjectId
+    userId: AppObjectId
   ): THttpResponse<{ user: IUser }> => {
     try {
       const user = await this.find(userId)
@@ -198,7 +196,7 @@ class UserService implements IUserService {
   }
 
   public updateProfile = async (
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     name: string,
     username: string,
     byAdmin: boolean
@@ -242,7 +240,7 @@ class UserService implements IUserService {
   }
 
   public updateEmail = async (
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     email: string
   ): THttpResponse<{ user: IUser }> => {
     try {
@@ -277,7 +275,7 @@ class UserService implements IUserService {
   }
 
   public updateStatus = async (
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     status: UserStatus
   ): THttpResponse<{ user: IUser }> => {
     try {
@@ -307,7 +305,7 @@ class UserService implements IUserService {
   }
 
   public delete = async (
-    userId: Types.ObjectId
+    userId: AppObjectId
   ): THttpResponse<{ user: IUser }> => {
     try {
       const user = await this.find(userId)
@@ -333,7 +331,7 @@ class UserService implements IUserService {
 
   public getReferredUsers = async (
     getAll: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ users: IUser[] }> => {
     try {
       let users: IUser[] = []
@@ -368,7 +366,7 @@ class UserService implements IUserService {
   }
 
   public async sendEmail(
-    userId: Types.ObjectId,
+    userId: AppObjectId,
     subject: string,
     heading: string,
     content: string

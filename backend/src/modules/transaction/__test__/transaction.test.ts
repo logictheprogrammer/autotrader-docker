@@ -7,10 +7,10 @@ import { adminA, userA } from '../../user/__test__/user.payload'
 import { UserEnvironment } from '../../user/user.enum'
 import userModel from '../../user/user.model'
 import { transactionA } from './transaction.payload'
-import { Types } from 'mongoose'
 import { IUser } from '../../user/user.interface'
 import { ITransaction } from '../transaction.interface'
 import AppRepository from '../../app/app.repository'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const transactionRepository = new AppRepository<ITransaction>(transactionModel)
@@ -213,7 +213,7 @@ describe('transaction', () => {
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const url = `${baseUrl}/delete/${new Types.ObjectId().toString()}`
+        const url = `${baseUrl}/delete/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -274,7 +274,7 @@ describe('transaction', () => {
     describe('given inputs are not valid', () => {
       it('should return a 400 error', async () => {
         const payload = {
-          transactionId: new Types.ObjectId().toString(),
+          transactionId: new AppObjectId().toString(),
         }
 
         const admin = await userRepository.create(adminA).save()
@@ -293,7 +293,7 @@ describe('transaction', () => {
     describe('given status is not valid', () => {
       it('should return a 400 error', async () => {
         const payload = {
-          transactionId: new Types.ObjectId().toString(),
+          transactionId: new AppObjectId().toString(),
           status: 'invalid status',
         }
 
@@ -315,7 +315,7 @@ describe('transaction', () => {
     describe('given transation those not exist', () => {
       it('should return a 404 error', async () => {
         const payload = {
-          transactionId: new Types.ObjectId().toString(),
+          transactionId: new AppObjectId().toString(),
           status: 'cancelled',
         }
 
@@ -382,7 +382,7 @@ describe('transaction', () => {
     describe('given inputs are not valid', () => {
       it('should return a 400 error', async () => {
         const payload = {
-          transactionId: new Types.ObjectId().toString(),
+          transactionId: new AppObjectId().toString(),
           status: 'success',
         }
 
@@ -402,7 +402,7 @@ describe('transaction', () => {
     describe('given status is not valid', () => {
       it('should return a 400 error', async () => {
         const payload = {
-          transactionId: new Types.ObjectId().toString(),
+          transactionId: new AppObjectId().toString(),
           status: 'invalid status',
           amount: 1000,
         }
@@ -425,7 +425,7 @@ describe('transaction', () => {
     describe('given transation those not exist', () => {
       it('should return a 404 error', async () => {
         const payload = {
-          transactionId: new Types.ObjectId().toString(),
+          transactionId: new AppObjectId().toString(),
           status: 'cancelled',
           amount: 1000,
         }

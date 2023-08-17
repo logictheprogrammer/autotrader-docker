@@ -1,4 +1,3 @@
-import { Document, Types } from 'mongoose'
 import { WithdrawalStatus } from '@/modules/withdrawal/withdrawal.enum'
 import {
   IWithdrawalMethod,
@@ -9,6 +8,8 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserAccount } from '@/modules/user/user.enum'
+import AppDocument from '../app/app.document'
+import AppObjectId from '../app/app.objectId'
 
 export interface IWithdrawalObject extends IAppObject {
   withdrawalMethod: IWithdrawalMethod['_id']
@@ -22,7 +23,7 @@ export interface IWithdrawalObject extends IAppObject {
   fee: number
 }
 
-export interface IWithdrawal extends Document {
+export interface IWithdrawal extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -47,19 +48,19 @@ export interface IWithdrawalService {
   ): TTransaction<IWithdrawalObject, IWithdrawal>
 
   _updateStatusTransaction(
-    withdrawalId: Types.ObjectId,
+    withdrawalId: AppObjectId,
     status: WithdrawalStatus
   ): TTransaction<IWithdrawalObject, IWithdrawal>
 
   get(
-    withdrawalId: Types.ObjectId,
+    withdrawalId: AppObjectId,
     isAdmin: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<IWithdrawalObject>
 
   create(
-    withdrawalMethodId: Types.ObjectId,
-    userId: Types.ObjectId,
+    withdrawalMethodId: AppObjectId,
+    userId: AppObjectId,
     account: UserAccount,
     address: string,
     amount: number
@@ -67,21 +68,19 @@ export interface IWithdrawalService {
 
   fetch(
     isAdmin: boolean,
-    withdrawalId: Types.ObjectId,
-    userId?: Types.ObjectId
+    withdrawalId: AppObjectId,
+    userId?: AppObjectId
   ): THttpResponse<{ withdrawal: IWithdrawal }>
 
   fetchAll(
     all: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ withdrawals: IWithdrawal[] }>
 
-  delete(
-    withdrawalId: Types.ObjectId
-  ): THttpResponse<{ withdrawal: IWithdrawal }>
+  delete(withdrawalId: AppObjectId): THttpResponse<{ withdrawal: IWithdrawal }>
 
   updateStatus(
-    withdrawalId: Types.ObjectId,
+    withdrawalId: AppObjectId,
     status: WithdrawalStatus
   ): THttpResponse<{ withdrawal: IWithdrawal }>
 }

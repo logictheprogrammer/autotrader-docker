@@ -9,7 +9,6 @@ import {
   NotificationForWho,
   NotificationCategory,
 } from '@/modules/notification/notification.enum'
-import { Types } from 'mongoose'
 import { IUserObject } from '@/modules/user/user.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import AppException from '@/modules/app/app.exception'
@@ -21,6 +20,7 @@ import { IAppObject } from '@/modules/app/app.interface'
 import { UserEnvironment } from '@/modules/user/user.enum'
 import { NotificationStatus } from './notification.type'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class NotificationService implements INotificationService {
@@ -29,9 +29,9 @@ class NotificationService implements INotificationService {
   )
 
   private find = async (
-    notificationId: string | Types.ObjectId,
+    notificationId: string | AppObjectId,
     fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<INotification> => {
     const notification = await this.notificationRepository
       .findById(notificationId, fromAllAccounts, userId)
@@ -120,8 +120,8 @@ class NotificationService implements INotificationService {
 
   public delete = async (
     fromAllAccounts: boolean,
-    notificationId: Types.ObjectId,
-    userId?: Types.ObjectId
+    notificationId: AppObjectId,
+    userId?: AppObjectId
   ): THttpResponse<{ notification: INotification }> => {
     try {
       const notification = await this.find(
@@ -146,8 +146,8 @@ class NotificationService implements INotificationService {
   }
 
   public read = async (
-    notificationId: Types.ObjectId,
-    userId: Types.ObjectId
+    notificationId: AppObjectId,
+    userId: AppObjectId
   ): THttpResponse<{ notification: INotification }> => {
     try {
       const notification = await this.find(notificationId, false, userId)
@@ -171,8 +171,8 @@ class NotificationService implements INotificationService {
 
   public fetch = async (
     fromAllAccounts: boolean,
-    notificationId: Types.ObjectId,
-    userId: Types.ObjectId
+    notificationId: AppObjectId,
+    userId: AppObjectId
   ): THttpResponse<{ notification: INotification }> => {
     try {
       const notification = await this.find(
@@ -197,7 +197,7 @@ class NotificationService implements INotificationService {
   public fetchAll = async (
     fromAllAccounts: boolean,
     environment: UserEnvironment,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ notifications: INotification[] }> => {
     try {
       const notifications = await this.notificationRepository

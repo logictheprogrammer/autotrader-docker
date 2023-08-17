@@ -7,7 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import { Types } from 'mongoose'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class DepositController implements IAppController {
@@ -97,7 +97,7 @@ class DepositController implements IAppController {
     ): Promise<Response | void> => {
       try {
         let response
-        const depositId = req.params.depositId as unknown as Types.ObjectId
+        const depositId = req.params.depositId as unknown as AppObjectId
         if (isAdmin) {
           response = await this.depositService.fetch(true, depositId)
         } else {
@@ -149,7 +149,7 @@ class DepositController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const depositId = req.params.depositId as unknown as Types.ObjectId
+      const depositId = req.params.depositId as unknown as AppObjectId
       const response = await this.depositService.delete(depositId)
       res.status(200).json(response)
     } catch (err: any) {

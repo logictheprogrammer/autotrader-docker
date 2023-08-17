@@ -1,4 +1,3 @@
-import { Document, Types } from 'mongoose'
 import {
   NotificationCategory,
   NotificationForWho,
@@ -10,6 +9,8 @@ import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserEnvironment } from '@/modules/user/user.enum'
 import { NotificationStatus } from './notification.type'
+import AppDocument from '../app/app.document'
+import AppObjectId from '../app/app.objectId'
 
 export interface INotificationObject extends IAppObject {
   user?: IUser['_id']
@@ -24,7 +25,7 @@ export interface INotificationObject extends IAppObject {
   environment: UserEnvironment
 }
 
-export interface INotification extends Document {
+export interface INotification extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -63,24 +64,24 @@ export interface INotificationService {
 
   delete(
     fromAllAccounts: boolean,
-    notificationId: Types.ObjectId,
-    userId?: Types.ObjectId
+    notificationId: AppObjectId,
+    userId?: AppObjectId
   ): THttpResponse<{ notification: INotification }>
 
   read(
-    notificationId: Types.ObjectId,
-    userId: Types.ObjectId
+    notificationId: AppObjectId,
+    userId: AppObjectId
   ): THttpResponse<{ notification: INotification }>
 
   fetch(
     fromAllAccounts: boolean,
-    notificationId: Types.ObjectId,
-    userId: Types.ObjectId
+    notificationId: AppObjectId,
+    userId: AppObjectId
   ): THttpResponse<{ notification: INotification }>
 
   fetchAll(
     fromAllAccounts: boolean,
     environment: UserEnvironment,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ notifications: INotification[] }>
 }

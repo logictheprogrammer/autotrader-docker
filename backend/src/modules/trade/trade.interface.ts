@@ -1,5 +1,4 @@
 import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
-import { Document } from 'mongoose'
 import { TradeMove, TradeStatus } from '@/modules/trade/trade.enum'
 import {
   IInvestment,
@@ -10,11 +9,12 @@ import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserEnvironment } from '@/modules/user/user.enum'
-import { Types } from 'mongoose'
 import { AssetType } from '../asset/asset.enum'
 import { IPair, IPairObject } from '../pair/pair.interface'
 import { TUpdateTradeStatus } from './trade.type'
 import AppRepository from '../app/app.repository'
+import AppDocument from '../app/app.document'
+import AppObjectId from '../app/app.objectId'
 
 export interface ITradeObject extends IAppObject {
   investment: IInvestment['_id']
@@ -40,7 +40,7 @@ export interface ITradeObject extends IAppObject {
   manualMode: boolean
 }
 
-export interface ITrade extends Document {
+export interface ITrade extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -83,7 +83,7 @@ export interface ITradeService {
   ): TTransaction<ITradeObject, ITrade>
 
   _updateStatusTransaction(
-    tradeId: Types.ObjectId,
+    tradeId: AppObjectId,
     status: TradeStatus
   ): TTransaction<ITradeObject, ITrade>
 
@@ -97,13 +97,13 @@ export interface ITradeService {
   ): Promise<ITransactionInstance<ITrade>>
 
   createManual(
-    investmentId: Types.ObjectId,
-    pairId: Types.ObjectId
+    investmentId: AppObjectId,
+    pairId: AppObjectId
   ): THttpResponse<{ trade: ITrade }>
 
   updateManual(
-    tradeId: Types.ObjectId,
-    pairId: Types.ObjectId,
+    tradeId: AppObjectId,
+    pairId: AppObjectId,
     move: TradeMove,
     stake: number,
     profit: number,
@@ -114,19 +114,19 @@ export interface ITradeService {
   ): THttpResponse<{ trade: ITrade }>
 
   updateAmount(
-    tradeId: Types.ObjectId,
+    tradeId: AppObjectId,
     stake: number,
     profit: number
   ): THttpResponse<{ trade: ITrade }>
 
   updateStatus(
-    tradeId: Types.ObjectId,
+    tradeId: AppObjectId,
     status: TradeStatus,
     price?: number
   ): Promise<{ model: AppRepository<ITrade>; instances: TUpdateTradeStatus }>
 
   forceUpdateStatus(
-    tradeId: Types.ObjectId,
+    tradeId: AppObjectId,
     status: TradeStatus
   ): THttpResponse<{ trade: ITrade }>
 
@@ -136,5 +136,5 @@ export interface ITradeService {
     userId?: string
   ): THttpResponse<{ trades: ITrade[] }>
 
-  delete(tradeId: Types.ObjectId): THttpResponse<{ trade: ITrade }>
+  delete(tradeId: AppObjectId): THttpResponse<{ trade: ITrade }>
 }

@@ -1,7 +1,8 @@
-import { Document, Types } from 'mongoose'
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
 import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
+import AppObjectId from '../app/app.objectId'
+import AppDocument from '../app/app.document'
 
 export interface IDepositMethodObject extends IAppObject {
   name: string
@@ -16,7 +17,7 @@ export interface IDepositMethodObject extends IAppObject {
   autoUpdate: boolean
 }
 
-export interface IDepositMethod extends Document {
+export interface IDepositMethod extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -34,7 +35,7 @@ export interface IDepositMethod extends Document {
 
 export interface IDepositMethodService {
   create(
-    currencyId: Types.ObjectId,
+    currencyId: AppObjectId,
     address: string,
     network: string,
     fee: number,
@@ -42,34 +43,34 @@ export interface IDepositMethodService {
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
   update(
-    depositMethodId: Types.ObjectId,
-    currencyId: Types.ObjectId,
+    depositMethodId: AppObjectId,
+    currencyId: AppObjectId,
     address: string,
     network: string,
     fee: number,
     minDeposit: number
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
-  get(depositMethodId: Types.ObjectId): Promise<IDepositMethodObject>
+  get(depositMethodId: AppObjectId): Promise<IDepositMethodObject>
 
   fetchAll(all: boolean): THttpResponse<{ depositMethods: IDepositMethod[] }>
 
   delete(
-    depositMethodId: Types.ObjectId
+    depositMethodId: AppObjectId
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
   updateStatus(
-    depositMethodId: Types.ObjectId,
+    depositMethodId: AppObjectId,
     status: DepositMethodStatus
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
   updateMode(
-    depositMethodId: Types.ObjectId,
+    depositMethodId: AppObjectId,
     autoUpdate: boolean
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
   updatePrice(
-    depositMethodId: Types.ObjectId,
+    depositMethodId: AppObjectId,
     price: number
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 }

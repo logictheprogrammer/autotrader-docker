@@ -6,7 +6,6 @@ import userModel from '../../user/user.model'
 import { transactionService } from '../../../setup'
 import transactionModel from '../transaction.model'
 import { transactionA } from './transaction.payload'
-import { Types } from 'mongoose'
 import {
   depositAObj,
   depositA_id,
@@ -18,6 +17,7 @@ import { TradeStatus } from '../../trade/trade.enum'
 import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
 import { ITransaction } from '../transaction.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const transactionRepository = new AppRepository<ITransaction>(transactionModel)
@@ -68,7 +68,7 @@ describe('transaction', () => {
 
         await expect(
           transactionService._updateStatusTransaction(
-            new Types.ObjectId(),
+            new AppObjectId(),
             DepositStatus.APPROVED
           )
         ).rejects.toThrow('Transaction not found')
@@ -144,7 +144,7 @@ describe('transaction', () => {
 
         await expect(
           transactionService._updateAmountTransaction(
-            new Types.ObjectId(),
+            new AppObjectId(),
             TradeStatus.SETTLED,
             1000
           )

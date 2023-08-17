@@ -25,7 +25,7 @@ describe('activity', () => {
 
       expect(result).toMatchObject({
         user: newUser._id,
-        userObject: user,
+        userObject: newUser,
         category: ActivityCategory.PROFILE,
         forWho: ActivityForWho.USER,
         message,

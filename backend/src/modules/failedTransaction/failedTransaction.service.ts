@@ -1,4 +1,3 @@
-import { Types } from 'mongoose'
 import { Service } from 'typedi'
 import { FailedTransactionStatus } from '@/modules/failedTransaction/failedTransaction.enum'
 import {
@@ -12,6 +11,7 @@ import HttpException from '@/modules/http/http.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class FailedTransactionService implements IFailedTransactionService {
@@ -20,7 +20,7 @@ class FailedTransactionService implements IFailedTransactionService {
   )
 
   private find = async (
-    failedTransactionId: Types.ObjectId,
+    failedTransactionId: AppObjectId,
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<IFailedTransaction> => {
@@ -58,7 +58,7 @@ class FailedTransactionService implements IFailedTransactionService {
   }
 
   public async updateStatus(
-    failedTransactionId: Types.ObjectId,
+    failedTransactionId: AppObjectId,
     status: FailedTransactionStatus
   ): THttpResponse<{ failedTransaction: IFailedTransaction }> {
     try {
@@ -82,7 +82,7 @@ class FailedTransactionService implements IFailedTransactionService {
   }
 
   public async delete(
-    failedTransactionId: Types.ObjectId
+    failedTransactionId: AppObjectId
   ): THttpResponse<{ failedTransaction: IFailedTransaction }> {
     try {
       const failedTransaction = await this.find(failedTransactionId)
@@ -95,8 +95,7 @@ class FailedTransactionService implements IFailedTransactionService {
         status: HttpResponseStatus.SUCCESS,
         message: 'Failed transaction deleted successfully',
         data: {
-          failedTransaction:
-            this.failedTransactionRepository.toObject(failedTransaction),
+          failedTransaction: failedTransaction,
         },
       }
     } catch (err: any) {
@@ -108,7 +107,7 @@ class FailedTransactionService implements IFailedTransactionService {
   }
 
   public async fetch(
-    failedTransactionId: Types.ObjectId
+    failedTransactionId: AppObjectId
   ): THttpResponse<{ failedTransaction: IFailedTransaction }> {
     try {
       const failedTransaction = await this.find(failedTransactionId)
@@ -117,8 +116,7 @@ class FailedTransactionService implements IFailedTransactionService {
         status: HttpResponseStatus.SUCCESS,
         message: 'Failed transaction fetched successfully',
         data: {
-          failedTransaction:
-            this.failedTransactionRepository.toObject(failedTransaction),
+          failedTransaction: failedTransaction,
         },
       }
     } catch (err: any) {

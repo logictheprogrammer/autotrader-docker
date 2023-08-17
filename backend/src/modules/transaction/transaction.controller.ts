@@ -8,7 +8,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import { Types } from 'mongoose'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class TransactionController implements IAppController {
@@ -76,7 +76,7 @@ class TransactionController implements IAppController {
       next: NextFunction
     ): Promise<Response | void> => {
       try {
-        const userId = req.params.userId as unknown as Types.ObjectId
+        const userId = req.params.userId as unknown as AppObjectId
 
         const response = await this.transactionService.fetchAll(
           fromAllAccounts,
@@ -130,8 +130,7 @@ class TransactionController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const transactionId = req.params
-        .transactionId as unknown as Types.ObjectId
+      const transactionId = req.params.transactionId as unknown as AppObjectId
       const response = await this.transactionService.delete(transactionId)
       res.status(200).json(response)
     } catch (err: any) {

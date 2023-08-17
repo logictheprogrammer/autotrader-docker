@@ -9,10 +9,10 @@ import {
 import { transferService } from '../../../setup'
 import transferModel from '../transfer.model'
 import { transferA } from './transfer.payload'
-import { Types } from 'mongoose'
 import { UserAccount } from '../../user/user.enum'
 import AppRepository from '../../app/app.repository'
 import { ITransfer } from '../transfer.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const transferRepository = new AppRepository<ITransfer>(transferModel)
 
@@ -56,7 +56,7 @@ describe('transfer', () => {
 
         await expect(
           transferService._updateStatusTransaction(
-            new Types.ObjectId(),
+            new AppObjectId(),
             TransferStatus.SUCCESSFUL
           )
         ).rejects.toThrow('Transfer transaction not found')

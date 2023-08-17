@@ -20,10 +20,8 @@ import {
   userA_id,
   userB,
   userBObj,
-  userB_id,
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
-import { Types } from 'mongoose'
 
 import { executeTransactionManagerMock } from '../../transactionManager/__test__/transactionManager.mock'
 import {
@@ -50,6 +48,7 @@ import {
 import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
 import { ITransfer } from '../transfer.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const transferRepository = new AppRepository<ITransfer>(transferModel)
@@ -556,7 +555,7 @@ describe('transfer', () => {
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
+        const url = baseUrl + `delete/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -703,7 +702,7 @@ describe('transfer', () => {
       it('should throw a 404 error', async () => {
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
-        const url = baseUrl + new Types.ObjectId().toString()
+        const url = baseUrl + new AppObjectId().toString()
 
         const { statusCode, body } = await request
           .get(url)
@@ -805,7 +804,7 @@ describe('transfer', () => {
       it('should throw a 401 Unauthorized error', async () => {
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
-        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
+        const url = baseUrl + `master/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -821,7 +820,7 @@ describe('transfer', () => {
       it('should throw a 404 error', async () => {
         const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
+        const url = baseUrl + `master/${new AppObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -902,13 +901,13 @@ describe('transfer', () => {
         await transferRepository
           .create({
             ...transferA,
-            fromUser: new Types.ObjectId().toString(),
+            fromUser: new AppObjectId().toString(),
           })
           .save()
         await transferRepository
           .create({
             ...transferA,
-            toUser: new Types.ObjectId().toString(),
+            toUser: new AppObjectId().toString(),
           })
           .save()
 

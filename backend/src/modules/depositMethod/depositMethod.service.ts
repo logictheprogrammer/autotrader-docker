@@ -1,4 +1,3 @@
-import { Types } from 'mongoose'
 import { Inject, Service } from 'typedi'
 import {
   IDepositMethod,
@@ -14,6 +13,7 @@ import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import AppRepository from '../app/app.repository'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class DepositMethodService implements IDepositMethodService {
@@ -26,7 +26,7 @@ class DepositMethodService implements IDepositMethodService {
     private currencyService: ICurrencyService
   ) {}
 
-  private async find(depositMethodId: Types.ObjectId): Promise<IDepositMethod> {
+  private async find(depositMethodId: AppObjectId): Promise<IDepositMethod> {
     const depositMethod = await this.depositMethodRepository
       .findById(depositMethodId)
       .collect()
@@ -37,7 +37,7 @@ class DepositMethodService implements IDepositMethodService {
   }
 
   public create = async (
-    currencyId: Types.ObjectId,
+    currencyId: AppObjectId,
     address: string,
     network: string,
     fee: number,
@@ -75,8 +75,8 @@ class DepositMethodService implements IDepositMethodService {
   }
 
   public update = async (
-    depositMethodId: Types.ObjectId,
-    currencyId: Types.ObjectId,
+    depositMethodId: AppObjectId,
+    currencyId: AppObjectId,
     address: string,
     network: string,
     fee: number,
@@ -111,7 +111,7 @@ class DepositMethodService implements IDepositMethodService {
   }
 
   public async get(
-    depositMethodId: Types.ObjectId
+    depositMethodId: AppObjectId
   ): Promise<IDepositMethodObject> {
     try {
       const depositMethod = await this.depositMethodRepository
@@ -134,7 +134,7 @@ class DepositMethodService implements IDepositMethodService {
   }
 
   public delete = async (
-    depositMethodId: Types.ObjectId
+    depositMethodId: AppObjectId
   ): THttpResponse<{ depositMethod: IDepositMethod }> => {
     try {
       const depositMethod = await this.find(depositMethodId)
@@ -154,7 +154,7 @@ class DepositMethodService implements IDepositMethodService {
   }
 
   public updateStatus = async (
-    depositMethodId: Types.ObjectId,
+    depositMethodId: AppObjectId,
     status: DepositMethodStatus
   ): THttpResponse<{ depositMethod: IDepositMethod }> => {
     try {
@@ -180,7 +180,7 @@ class DepositMethodService implements IDepositMethodService {
   }
 
   public async updateMode(
-    depositMethodId: Types.ObjectId,
+    depositMethodId: AppObjectId,
     autoUpdate: boolean
   ): THttpResponse<{ depositMethod: IDepositMethod }> {
     try {
@@ -206,7 +206,7 @@ class DepositMethodService implements IDepositMethodService {
   }
 
   public async updatePrice(
-    depositMethodId: Types.ObjectId,
+    depositMethodId: AppObjectId,
     price: number
   ): THttpResponse<{ depositMethod: IDepositMethod }> {
     try {

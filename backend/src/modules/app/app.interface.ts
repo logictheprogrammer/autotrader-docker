@@ -1,5 +1,6 @@
 import { Query, Types, FilterQuery, Document, Model } from 'mongoose'
 import { Router } from 'express'
+import AppObjectId from './app.objectId'
 
 export interface IAppController {
   path: string
@@ -8,7 +9,7 @@ export interface IAppController {
 
 export interface IAppObject {
   __v: number
-  _id: Types.ObjectId
+  _id: AppObjectId
   updatedAt: Date
   createdAt: Date
 }

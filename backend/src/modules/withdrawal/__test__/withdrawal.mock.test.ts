@@ -7,12 +7,12 @@ import withdrawalMethodModel from '../../withdrawalMethod/withdrawalMethod.model
 import { withdrawalService } from '../../../setup'
 import withdrawalModel from '../withdrawal.model'
 import { withdrawalA } from './withdrawal.payload'
-import { Types } from 'mongoose'
 import { UserAccount } from '../../user/user.enum'
 import AppRepository from '../../app/app.repository'
 import { IWithdrawal } from '../withdrawal.interface'
 import { IWithdrawalMethod } from '../../withdrawalMethod/withdrawalMethod.interface'
 import { IUser } from '../../user/user.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const withdrawalRepository = new AppRepository<IWithdrawal>(withdrawalModel)
@@ -72,7 +72,7 @@ describe('withdrawal', () => {
 
         await expect(
           withdrawalService._updateStatusTransaction(
-            new Types.ObjectId(),
+            new AppObjectId(),
             WithdrawalStatus.APPROVED
           )
         ).rejects.toThrow('Withdrawal transaction not found')

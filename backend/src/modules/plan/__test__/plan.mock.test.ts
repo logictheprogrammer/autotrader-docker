@@ -1,6 +1,5 @@
 import { request } from '../../../test'
 import planModel from '../../../modules/plan/plan.model'
-import { Types } from 'mongoose'
 import { planA } from './plan.payload'
 import { assetService, planService } from '../../../setup'
 import assetModel from '../../asset/asset.model'
@@ -8,6 +7,7 @@ import { assetA, assetA_id } from '../../asset/__test__/asset.payload'
 import AppRepository from '../../app/app.repository'
 import { IPlan } from '../plan.interface'
 import { IAsset } from '../../asset/asset.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const planRepository = new AppRepository<IPlan>(planModel)
 const assetRepository = new AppRepository<IAsset>(assetModel)
@@ -17,7 +17,7 @@ describe('plan', () => {
   describe('get plan', () => {
     describe('given plan those not exist', () => {
       it('should throw an error', async () => {
-        expect(await planService.get(new Types.ObjectId())).toBe(null)
+        expect(await planService.get(new AppObjectId())).toBe(null)
       })
     })
 

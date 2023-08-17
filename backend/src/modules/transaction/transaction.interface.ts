@@ -1,28 +1,28 @@
-import { Document } from 'mongoose'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
 
-import { Types } from 'mongoose'
 import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '../transactionManager/transactionManager.type'
 import { UserEnvironment } from '../user/user.enum'
 import { TransactionStatus } from './transaction.type'
+import AppDocument from '../app/app.document'
+import AppObjectId from '../app/app.objectId'
 
 export interface ITransactionObject extends IAppObject {
   user: IUser['_id']
   userObject: IUserObject
   status: TransactionStatus
   categoryName: TransactionCategory
-  category: Document['_id']
+  category: AppDocument['_id']
   categoryObject: IAppObject
   amount: number
   stake: number
   environment: UserEnvironment
 }
 
-export interface ITransaction extends Document {
+export interface ITransaction extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -30,7 +30,7 @@ export interface ITransaction extends Document {
   userObject: IUserObject
   status: TransactionStatus
   categoryName: TransactionCategory
-  category: Document['_id']
+  category: AppDocument['_id']
   categoryObject: IAppObject
   amount: number
   stake: number
@@ -49,12 +49,12 @@ export interface ITransactionService {
   ): TTransaction<ITransactionObject, ITransaction>
 
   _updateStatusTransaction(
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus
   ): TTransaction<ITransactionObject, ITransaction>
 
   _updateAmountTransaction(
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus,
     amount: number
   ): TTransaction<ITransactionObject, ITransaction>
@@ -70,45 +70,45 @@ export interface ITransactionService {
   ): Promise<ITransactionInstance<ITransaction>>
 
   updateAmount(
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus,
     amount: number
   ): Promise<ITransactionInstance<ITransaction>>
 
   updateStatus(
-    categoryId: Types.ObjectId,
+    categoryId: AppObjectId,
     status: TransactionStatus
   ): Promise<ITransactionInstance<ITransaction>>
 
   forceUpdateAmount(
-    transactionId: Types.ObjectId,
+    transactionId: AppObjectId,
     status: TransactionStatus,
     amount: number
   ): THttpResponse<{ transaction: ITransaction }>
 
   forceUpdateStatus(
-    transactionId: Types.ObjectId,
+    transactionId: AppObjectId,
     status: TransactionStatus
   ): THttpResponse<{ transaction: ITransaction }>
 
   get(
-    transactionId: Types.ObjectId,
+    transactionId: AppObjectId,
     isAdmin: boolean,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): Promise<ITransactionObject>
 
   fetch(
-    transactionId: Types.ObjectId,
-    userId: Types.ObjectId
+    transactionId: AppObjectId,
+    userId: AppObjectId
   ): THttpResponse<{ transaction: ITransaction }>
 
   fetchAll(
     all: boolean,
     environment: UserEnvironment,
-    userId?: Types.ObjectId
+    userId?: AppObjectId
   ): THttpResponse<{ transactions: ITransaction[] }>
 
   delete(
-    transactionId: Types.ObjectId
+    transactionId: AppObjectId
   ): THttpResponse<{ transaction: ITransaction }>
 }

@@ -2,7 +2,6 @@ import pairModel from '../../pair/pair.model'
 import { request } from '../../../test'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
-import { Types } from 'mongoose'
 import { pairA, pairB } from './pair.payload'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
@@ -11,6 +10,7 @@ import { assetA_id, assetB_id } from '../../asset/__test__/asset.payload'
 import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
 import { IPair } from '../pair.interface'
+import AppObjectId from '../../app/app.objectId'
 
 const userRepository = new AppRepository<IUser>(userModel)
 const pairRepository = new AppRepository<IPair>(pairModel)
@@ -140,7 +140,7 @@ describe('pair', () => {
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
         const payload = {
-          pairId: new Types.ObjectId().toString(),
+          pairId: new AppObjectId().toString(),
         }
         const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
@@ -158,7 +158,7 @@ describe('pair', () => {
     describe('given payload is not valid', () => {
       it('it should throw a 400 error', async () => {
         const payload = {
-          pairId: new Types.ObjectId().toString(),
+          pairId: new AppObjectId().toString(),
           assetType: '',
         }
         const admin = await userRepository.create(adminA).save()
@@ -178,7 +178,7 @@ describe('pair', () => {
       it('should throw a 404 not found', async () => {
         await pairRepository.create(pairA).save()
         const payload = {
-          pairId: new Types.ObjectId().toString(),
+          pairId: new AppObjectId().toString(),
           assetType: pairB.assetType,
           baseAssetId: pairB.baseAsset,
           quoteAssetId: pairB.quoteAsset,
