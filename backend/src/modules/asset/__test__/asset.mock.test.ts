@@ -4,6 +4,10 @@ import { assetA } from './asset.payload'
 import { assetService } from '../../../setup'
 import { AssetType } from '../asset.enum'
 import { Types } from 'mongoose'
+import AppRepository from '../../app/app.repository'
+import { IAsset } from '../asset.interface'
+
+const assetRepository = new AppRepository<IAsset>(assetModel)
 
 describe('asset', () => {
   request
@@ -18,7 +22,7 @@ describe('asset', () => {
 
     describe('given asset 2 those not exist', () => {
       it('should throw an error', async () => {
-        const asset = await assetModel.create(assetA)
+        const asset = await assetRepository.create(assetA).save()
 
         expect(await assetService.get(asset._id, AssetType.FOREX)).toBe(
           undefined
@@ -28,11 +32,11 @@ describe('asset', () => {
 
     describe('given asset exist', () => {
       it('should return the asset payload', async () => {
-        const asset = await assetModel.create(assetA)
+        const asset = await assetRepository.create(assetA).save()
 
         const result = await assetService.get(asset._id, AssetType.CRYPTO)
 
-        expect(result).toEqual(asset.toObject())
+        expect(result).toEqual(assetRepository.toObject(asset))
       })
     })
   })

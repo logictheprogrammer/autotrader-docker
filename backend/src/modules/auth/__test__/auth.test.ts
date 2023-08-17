@@ -1,3 +1,5 @@
+import { IEmailVerification } from './../../emailVerification/emailVerification.interface'
+import { IResetPassword } from './../../resetPassword/resetPassword.interface'
 import { request } from '../../../test'
 import emailVerificationModel from '../../../modules/emailVerification/emailVerification.model'
 import {
@@ -6,7 +8,7 @@ import {
 } from './../../activity/activity.enum'
 import resetPasswordModel from '../../../modules/resetPassword/resetPassword.model'
 import userModel from '../../../modules/user/user.model'
-import { AppConstants } from '../../config/constants'
+import { AppConstants } from '../../app/app.constants'
 import { setActivityMock } from '../../activity/__test__/activity.mock'
 import { createEmailVerificationMock } from '../../emailVerification/__test__/emailVerification.mock'
 import { createResetPasswordMock } from '../../resetPassword/__test__/resetPassword.mock'
@@ -23,6 +25,18 @@ import {
   sendResetPasswordMailMock,
   sendWelcomeMailMock,
 } from './auth.mock'
+import AppRepository from '../../app/app.repository'
+import { IUser } from '../../user/user.interface'
+import { Types } from 'mongoose'
+import AppCrypto from '../../app/app.crypto'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const resetPasswordRepository = new AppRepository<IResetPassword>(
+  resetPasswordModel
+)
+const emailVerificationRepository = new AppRepository<IEmailVerification>(
+  emailVerificationModel
+)
 
 describe('authentication', () => {
   const baseUrl = '/api/authentication/'
@@ -55,7 +69,7 @@ describe('authentication', () => {
         confirmPassword: '1234567890',
       }
       it('should return a 409', async () => {
-        await userModel.create(existingUser)
+        await userRepository.create(existingUser).save()
 
         const { statusCode, body } = await request.post(url).send(newUser)
 
@@ -63,7 +77,7 @@ describe('authentication', () => {
         expect(body.message).toBe('Email already exist')
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const usersCount = await userModel.count().exec()
+        const usersCount = await userRepository.count()
 
         expect(usersCount).toBe(1)
       })
@@ -79,7 +93,7 @@ describe('authentication', () => {
         confirmPassword: '1234567890',
       }
       it('should return a 409', async () => {
-        await userModel.create(existingUser)
+        await userRepository.create(existingUser).save()
 
         const { statusCode, body } = await request.post(url).send(newUser)
 
@@ -87,7 +101,7 @@ describe('authentication', () => {
         expect(body.message).toBe('Username already exist')
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const usersCount = await userModel.count().exec()
+        const usersCount = await userRepository.count()
 
         expect(usersCount).toBe(1)
       })
@@ -104,7 +118,7 @@ describe('authentication', () => {
         invite: '1dgfdsserere',
       }
       it('should return a 422', async () => {
-        await userModel.create(existingUser)
+        await userRepository.create(existingUser).save()
 
         const { statusCode, body } = await request.post(url).send(newUser)
 
@@ -112,7 +126,7 @@ describe('authentication', () => {
         expect(body.message).toBe('Invalid referral code')
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const usersCount = await userModel.count().exec()
+        const usersCount = await userRepository.count()
 
         expect(usersCount).toBe(1)
       })
@@ -130,7 +144,7 @@ describe('authentication', () => {
       }
 
       it('should return a 201 and sends an email verification email', async () => {
-        await userModel.create(existingUser)
+        await userRepository.create(existingUser).save()
 
         const { statusCode, body } = await request.post(url).send(newUser)
 
@@ -158,7 +172,7 @@ describe('authentication', () => {
           'email verification link'
         )
 
-        const usersCount = await userModel.count().exec()
+        const usersCount = await userRepository.count()
 
         expect(usersCount).toBe(2)
       })
@@ -188,11 +202,11 @@ describe('authentication', () => {
       it('should return a 404', async () => {
         const { statusCode, body } = await request.post(url).send(userInput)
 
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe(
           'Could not find a user with that Email or Username'
         )
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(statusCode).toBe(404)
       })
     })
     describe('given incorrect password', () => {
@@ -201,12 +215,12 @@ describe('authentication', () => {
         password: '123456789kk',
       }
       it('should return a 400', async () => {
-        await userModel.create(existingUser)
+        await userRepository.create(existingUser).save()
         const { statusCode, body } = await request.post(url).send(userInput)
 
-        expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Incorrect password')
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(statusCode).toBe(400)
       })
     })
     describe('given user email is not verifield', () => {
@@ -215,14 +229,19 @@ describe('authentication', () => {
         password: existingUser.password,
       }
       it('should send return a 200 and send a verification mail', async () => {
-        await userModel.create(existingUser)
+        await userRepository
+          .create({
+            ...existingUser,
+            password: await AppCrypto.setHash(existingUser.password),
+          })
+          .save()
         const { statusCode, body } = await request.post(url).send(userInput)
 
         expect(body.message).toBe(
           'A verification link has been sent to your email address'
         )
-        expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.INFO)
+        expect(statusCode).toBe(200)
 
         expect(createEmailVerificationMock).toHaveBeenCalledTimes(1)
 
@@ -241,7 +260,12 @@ describe('authentication', () => {
         password: suspendedUser.password,
       }
       it('should send return a 403 and send a verification mail', async () => {
-        await userModel.create(suspendedUser)
+        await userRepository
+          .create({
+            ...suspendedUser,
+            password: await AppCrypto.setHash(suspendedUser.password),
+          })
+          .save()
         const { statusCode, body } = await request.post(url).send(userInput)
 
         expect(body.message).toBe(
@@ -257,21 +281,26 @@ describe('authentication', () => {
         password: verifieldUser.password,
       }
       it('should return a 200 and an access token', async () => {
-        const user = await userModel.create(verifieldUser)
+        const user = await userRepository
+          .create({
+            ...verifieldUser,
+            password: await AppCrypto.setHash(verifieldUser.password),
+          })
+          .save()
         const { statusCode, body } = await request.post(url).send(userInput)
+
+        expect(body.message).toBe('Login successful')
+        expect(body.data.accessToken).toBeDefined()
+        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(statusCode).toBe(200)
 
         expect(setActivityMock).toHaveBeenCalledTimes(1)
         expect(setActivityMock).toHaveBeenCalledWith(
-          user.toObject(),
+          userRepository.toObject(user),
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
           'you logged in to your account'
         )
-
-        expect(body.message).toBe('Login successful')
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.data.accessToken).toBeDefined()
 
         expect(sendEmailVerificationMailMock).not.toBeCalled()
       })
@@ -287,18 +316,13 @@ describe('authentication', () => {
         confirmPassword: '12345678',
       }
       it('should return a 401', async () => {
-        const user = new userModel(existingUser)
-        const token = Encryption.createToken(user)
-        const { statusCode, body } = await request
-          .patch(url)
-          .set('Authorization', `Bearer ${token}`)
-          .send(payload)
+        const { statusCode, body } = await request.patch(url).send(payload)
 
         expect(statusCode).toBe(401)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Unauthorized')
 
-        const usersCount = await userModel.count().exec()
+        const usersCount = await userRepository.count()
 
         expect(usersCount).toBe(0)
       })
@@ -310,7 +334,7 @@ describe('authentication', () => {
         confirmPassword: '123411',
       }
       it('should return a 400', async () => {
-        const user = await userModel.create(existingUser)
+        const user = await userRepository.create(existingUser).save()
         const token = Encryption.createToken(user)
         const { statusCode, body } = await request
           .patch(url)
@@ -328,36 +352,45 @@ describe('authentication', () => {
         confirmPassword: '11111111',
       }
       it('should return a 400', async () => {
-        const user = await userModel.create(existingUser)
+        const user = await userRepository.create(existingUser).save()
         const token = Encryption.createToken(user)
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Incorrect password')
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(statusCode).toBe(400)
       })
     })
     describe('given information provided are complete', () => {
       const payload = {
-        oldPassword: '1234567890',
+        oldPassword: existingUser.password,
         password: '11111111',
         confirmPassword: '11111111',
       }
       it('should return a 200', async () => {
-        const user = await userModel.create(existingUser)
+        const user = await userRepository
+          .create({
+            ...existingUser,
+            password: await AppCrypto.setHash(existingUser.password),
+          })
+          .save()
         const token = Encryption.createToken(user)
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
+        expect(body.message).toBe('Password updated successfully')
+        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(statusCode).toBe(200)
+
         expect(setActivityMock).toHaveBeenCalledTimes(1)
         expect(setActivityMock).toHaveBeenCalledWith(
           {
-            ...user.toObject(),
+            ...userRepository.toObject(user),
             password: expect.any(String),
             updatedAt: expect.anything(),
           },
@@ -365,10 +398,6 @@ describe('authentication', () => {
           ActivityCategory.PROFILE,
           'you updated your password'
         )
-
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.message).toBe('Password updated successfully')
 
         expect(body.data.user).toEqual({
           ...existingUser,
@@ -386,9 +415,9 @@ describe('authentication', () => {
         confirmPassword: '123456789',
       }
       it('should return a 400', async () => {
-        const user = await userModel.create(existingUser)
+        const user = await userRepository.create(existingUser).save()
 
-        const notAdmin = await userModel.create(verifieldUser)
+        const notAdmin = await userRepository.create(verifieldUser).save()
         const token = Encryption.createToken(notAdmin)
         const { statusCode, body } = await request
           .patch(url + `/${user._id}`)
@@ -406,9 +435,9 @@ describe('authentication', () => {
         confirmPassword: '123411',
       }
       it('should return a 400', async () => {
-        const user = await userModel.create(existingUser)
+        const user = await userRepository.create(existingUser).save()
 
-        const admin = await userModel.create(adminUser)
+        const admin = await userRepository.create(adminUser).save()
         const token = Encryption.createToken(admin)
         const { statusCode, body } = await request
           .patch(url + `/${user._id}`)
@@ -428,18 +457,16 @@ describe('authentication', () => {
         confirmPassword: '123456789',
       }
       it('should return a 400', async () => {
-        const user = new userModel(existingUser)
-
-        const admin = await userModel.create(adminUser)
+        const admin = await userRepository.create(adminUser).save()
         const token = Encryption.createToken(admin)
         const { statusCode, body } = await request
-          .patch(url + `/${user._id}`)
+          .patch(url + `/${new Types.ObjectId()}`)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('User not found')
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(statusCode).toBe(404)
       })
     })
     describe('admin: given information provided are complete', () => {
@@ -447,20 +474,24 @@ describe('authentication', () => {
         password: '123456789',
         confirmPassword: '123456789',
       }
-      it('should return a 400', async () => {
-        const user = await userModel.create(existingUser)
+      it('should return a 200', async () => {
+        const user = await userRepository.create(existingUser).save()
 
-        const admin = await userModel.create(adminUser)
+        const admin = await userRepository.create(adminUser).save()
         const token = Encryption.createToken(admin)
         const { statusCode, body } = await request
           .patch(url + `/${user._id}`)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
+        expect(body.message).toBe('Password updated successfully')
+        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(statusCode).toBe(200)
+
         expect(setActivityMock).toHaveBeenCalledTimes(1)
         expect(setActivityMock).toHaveBeenCalledWith(
           {
-            ...user.toObject(),
+            ...userRepository.toObject(user),
             password: expect.any(String),
             updatedAt: expect.anything(),
           },
@@ -468,10 +499,6 @@ describe('authentication', () => {
           ActivityCategory.PROFILE,
           'you updated your password'
         )
-
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.message).toBe('Password updated successfully')
       })
     })
   })
@@ -511,7 +538,7 @@ describe('authentication', () => {
         account: 'john',
       }
       it('should return 200 and send a reset password email', async () => {
-        await userModel.create(existingUser)
+        await userRepository.create(existingUser).save()
         const { statusCode, body } = await request.post(url).send(userInput)
 
         expect(statusCode).toBe(200)
@@ -575,11 +602,12 @@ describe('authentication', () => {
         confirmPassword: '1234567890',
       }
       const key = userInput.key
-      const token = userInput.verifyToken
       const expires = new Date().getTime()
       it('should return a 422', async () => {
-        await userModel.create(verifieldUser)
-        await resetPasswordModel.create({ key, token, expires })
+        const token = await AppCrypto.setHash(userInput.verifyToken)
+
+        await userRepository.create(verifieldUser).save()
+        await resetPasswordRepository.create({ key, token, expires }).save()
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
@@ -597,13 +625,13 @@ describe('authentication', () => {
         confirmPassword: '1234567890',
       }
       const key = userInput.key
-      const token = 'valid verify token'
       const expires =
         new Date().getTime() + AppConstants.resetPasswordExpiresTime
 
       it('should return a 422', async () => {
-        await userModel.create(verifieldUser)
-        await resetPasswordModel.create({ key, token, expires })
+        const token = await AppCrypto.setHash('valid token')
+        await userRepository.create(verifieldUser).save()
+        await resetPasswordRepository.create({ key, token, expires }).save()
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
@@ -621,18 +649,18 @@ describe('authentication', () => {
         confirmPassword: '1234567890',
       }
       const key = userInput.key
-      const token = 'valid verify token'
       const expires =
         new Date().getTime() + AppConstants.resetPasswordExpiresTime
 
       it('should return a 404', async () => {
-        await resetPasswordModel.create({ key, token, expires })
+        const token = await AppCrypto.setHash(userInput.verifyToken)
+        await resetPasswordRepository.create({ key, token, expires }).save()
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('User not found')
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(statusCode).toBe(404)
       })
     })
 
@@ -644,13 +672,13 @@ describe('authentication', () => {
         confirmPassword: '1234567890',
       }
       const key = userInput.key
-      const token = 'valid verify token'
       const expires =
         new Date().getTime() + AppConstants.resetPasswordExpiresTime
 
       it('should return a 200, update password, delete the token and create an activity', async () => {
-        const user = await userModel.create(verifieldUser)
-        await resetPasswordModel.create({ key, token, expires })
+        const token = await AppCrypto.setHash(userInput.verifyToken)
+        const user = await userRepository.create(verifieldUser).save()
+        await resetPasswordRepository.create({ key, token, expires }).save()
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
@@ -662,7 +690,7 @@ describe('authentication', () => {
 
         expect(setActivityMock).toHaveBeenCalledWith(
           {
-            ...user.toObject(),
+            ...userRepository.toObject(user),
             password: expect.any(String),
             updatedAt: expect.anything(),
           },
@@ -710,11 +738,11 @@ describe('authentication', () => {
         verifyToken: 'verify token',
       }
       const key = userInput.key
-      const token = userInput.verifyToken
       const expires = new Date().getTime()
       it('should return a 422', async () => {
-        await userModel.create(verifieldUser)
-        await emailVerificationModel.create({ key, token, expires })
+        const token = await AppCrypto.setHash(userInput.verifyToken)
+        await userRepository.create(verifieldUser).save()
+        await emailVerificationRepository.create({ key, token, expires }).save()
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
@@ -730,13 +758,13 @@ describe('authentication', () => {
         verifyToken: 'invalid verify token',
       }
       const key = userInput.key
-      const token = 'valid verify token'
       const expires =
         new Date().getTime() + AppConstants.resetPasswordExpiresTime
 
       it('should return a 422', async () => {
-        await userModel.create(verifieldUser)
-        await emailVerificationModel.create({ key, token, expires })
+        const token = await AppCrypto.setHash('valid token')
+        await userRepository.create(verifieldUser).save()
+        await emailVerificationRepository.create({ key, token, expires }).save()
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
@@ -752,18 +780,18 @@ describe('authentication', () => {
         verifyToken: 'valid verify token',
       }
       const key = userInput.key
-      const token = 'valid verify token'
       const expires =
         new Date().getTime() + AppConstants.resetPasswordExpiresTime
 
       it('should return a 404', async () => {
-        await emailVerificationModel.create({ key, token, expires })
+        const token = await AppCrypto.setHash(userInput.verifyToken)
+        await emailVerificationRepository.create({ key, token, expires }).save()
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('User not found')
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(statusCode).toBe(404)
       })
     })
 
@@ -773,27 +801,29 @@ describe('authentication', () => {
         verifyToken: 'valid verify token',
       }
       const key = userInput.key
-      const token = 'valid verify token'
       const expires =
         new Date().getTime() + AppConstants.resetPasswordExpiresTime
 
       it('should return a 200, send a welcome email and create an activity log', async () => {
-        const user = await userModel.create(verifieldUser)
-        await emailVerificationModel.create({ key, token, expires })
+        const token = await AppCrypto.setHash(userInput.verifyToken)
+
+        const user = await userRepository.create(verifieldUser).save()
+        await emailVerificationRepository.create({ key, token, expires }).save()
 
         const { statusCode, body } = await request.patch(url).send(userInput)
+        const userObj = userRepository.toObject(user)
 
         expect(body.message).toBe('Email successfully verifield')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
         expect(sendWelcomeMailMock).toHaveBeenCalledTimes(1)
-        expect(sendWelcomeMailMock).toHaveBeenCalledWith(user.toObject())
+        expect(sendWelcomeMailMock).toHaveBeenCalledWith(userObj)
 
         expect(setActivityMock).toHaveBeenCalledTimes(1)
 
         expect(setActivityMock).toHaveBeenCalledWith(
-          user.toObject(),
+          userObj,
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
           'you verifield your email address'

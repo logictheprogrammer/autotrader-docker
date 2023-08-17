@@ -4,15 +4,15 @@ import {
   ITransferSettingsService,
 } from '@/modules/transferSettings/transferSettings.interface'
 import transferSettingsModel from '@/modules/transferSettings/transferSettings.model'
-import ServiceQuery from '@/modules/service/service.query'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class TransferSettingsService implements ITransferSettingsService {
-  private transferSettingsModel = new ServiceQuery<ITransferSettings>(
+  private transferSettingsRepository = new AppRepository<ITransferSettings>(
     transferSettingsModel
   )
 
@@ -21,10 +21,12 @@ class TransferSettingsService implements ITransferSettingsService {
     fee: number
   ): THttpResponse<{ transferSettings: ITransferSettings }> {
     try {
-      const transferSettings = await this.transferSettingsModel.self.create({
-        approval,
-        fee,
-      })
+      const transferSettings = await this.transferSettingsRepository
+        .create({
+          approval,
+          fee,
+        })
+        .save()
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -32,7 +34,7 @@ class TransferSettingsService implements ITransferSettingsService {
         data: { transferSettings },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to create transfer settings, please try again'
       )
@@ -44,7 +46,7 @@ class TransferSettingsService implements ITransferSettingsService {
     fee: number
   ): THttpResponse<{ transferSettings: ITransferSettings }> => {
     try {
-      await this.transferSettingsModel.self.updateOne(
+      await this.transferSettingsRepository.updateOne(
         {},
         {
           approval,
@@ -60,7 +62,7 @@ class TransferSettingsService implements ITransferSettingsService {
         data: { transferSettings },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to update transfer settings, please try again'
       )
@@ -69,14 +71,16 @@ class TransferSettingsService implements ITransferSettingsService {
 
   public get = async (): Promise<ITransferSettings> => {
     try {
-      const transferSettings = await this.transferSettingsModel.findOne({})
+      const transferSettings = await this.transferSettingsRepository
+        .findOne({})
+        .collect()
 
       if (!transferSettings)
         throw new HttpException(404, 'Transfer settings not found')
 
       return transferSettings
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to fetch transfer settings, please try again'
       )

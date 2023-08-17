@@ -1,11 +1,11 @@
-import { SiteConstants } from '@/modules/config/constants'
+import { SiteConstants } from '@/modules/config/config.constants'
 import nodemailer, { Transporter } from 'nodemailer'
 import { Inject, Service } from 'typedi'
 import { IMailDetails, IMailService } from '@/modules/mail/mail.interface'
 import ServiceToken from '@/utils/enums/serviceToken'
 import { IMailOptionService } from '@/modules/mailOption/mailOption.interface'
 import HttpException from '@/modules/http/http.exception'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 
 @Service()
 class MailService implements IMailService {
@@ -62,10 +62,7 @@ class MailService implements IMailService {
         },
       })
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to configure mail, please try again'
-      )
+      throw new AppException(err, 'Unable to configure mail, please try again')
     }
   }
 

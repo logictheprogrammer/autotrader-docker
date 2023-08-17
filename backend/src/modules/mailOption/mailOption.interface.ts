@@ -1,8 +1,8 @@
 import { Document } from 'mongoose'
 import { THttpResponse } from '@/modules/http/http.type'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 
-export interface IMailOptionObject extends IServiceObject {
+export interface IMailOptionObject extends IAppObject {
   name: string
   host: string
   port: number
@@ -14,6 +14,9 @@ export interface IMailOptionObject extends IServiceObject {
 }
 
 export interface IMailOption extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   name: string
   host: string
   port: number

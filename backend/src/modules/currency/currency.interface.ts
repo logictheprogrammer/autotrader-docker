@@ -1,14 +1,17 @@
 import { Document, Types } from 'mongoose'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 
-export interface ICurrencyObject extends IServiceObject {
+export interface ICurrencyObject extends IAppObject {
   name: string
   symbol: string
   logo: string
 }
 
 export interface ICurrency extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   name: string
   symbol: string
   logo: string

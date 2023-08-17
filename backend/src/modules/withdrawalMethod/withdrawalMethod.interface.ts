@@ -1,13 +1,9 @@
 import { Document, Types } from 'mongoose'
 import { WithdrawalMethodStatus } from '@/modules/withdrawalMethod/withdrawalMethod.enum'
-import {
-  ICurrency,
-  ICurrencyObject,
-} from '@/modules/currency/currency.interface'
 import { THttpResponse } from '@/modules/http/http.type'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 
-export interface IWithdrawalMethodObject extends IServiceObject {
+export interface IWithdrawalMethodObject extends IAppObject {
   name: string
   symbol: string
   logo: string
@@ -18,6 +14,9 @@ export interface IWithdrawalMethodObject extends IServiceObject {
 }
 
 export interface IWithdrawalMethod extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   name: string
   symbol: string
   logo: string

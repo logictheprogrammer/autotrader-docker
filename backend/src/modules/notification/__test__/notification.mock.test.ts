@@ -9,6 +9,10 @@ import { notificationService } from '../../../setup'
 import { depositAObj } from '../../deposit/__test__/deposit.payload'
 import { UserEnvironment } from '../../user/user.enum'
 import { DepositStatus } from '../../deposit/deposit.enum'
+import AppRepository from '../../app/app.repository'
+import { IUser } from '../../user/user.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
 
 describe('notification', () => {
   describe('_createNotification', () => {
@@ -18,7 +22,7 @@ describe('notification', () => {
       const forWho = NotificationForWho.USER
       const status = DepositStatus.APPROVED
       const environment = UserEnvironment.LIVE
-      const user = await userModel.create(userA)
+      const user = await userRepository.create(userA).save()
       const categoryName = NotificationCategory.DEPOSIT
 
       const notificationInstance = await notificationService._createTransaction(
@@ -37,7 +41,9 @@ describe('notification', () => {
       expect(notificationInstance.object.environment).toBe(environment)
 
       expect(notificationInstance.instance.onFailed).toContain(
-        `Delete the notification with an id of (${notificationInstance.instance.model._id})`
+        `Delete the notification with an id of (${
+          notificationInstance.instance.model.collectUnsaved()._id
+        })`
       )
     })
   })

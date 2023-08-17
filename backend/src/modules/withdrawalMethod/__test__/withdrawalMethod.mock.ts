@@ -17,24 +17,24 @@ export const getWithdrawalMethodMock = jest
         ...withdrawalMethodA,
         _id: withdrawalMethodA_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (key.toString() === withdrawalMethodB_id.toString()) {
       return Promise.resolve({
         ...withdrawalMethodB,
         _id: withdrawalMethodB_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (key.toString() === withdrawalMethodC_id.toString()) {
       return Promise.resolve({
         ...withdrawalMethodC,
         _id: withdrawalMethodC_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else {
       return Promise.reject(

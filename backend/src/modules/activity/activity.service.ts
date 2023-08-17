@@ -10,33 +10,17 @@ import {
   IActivityService,
 } from '@/modules/activity/activity.interface'
 import activityModel from '@/modules/activity/activity.model'
-import { IUser, IUserObject } from '@/modules/user/user.interface'
-import ServiceQuery from '@/modules/service/service.query'
-import ServiceException from '@/modules/service/service.exception'
+import { IUserObject } from '@/modules/user/user.interface'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import { Types } from 'mongoose'
+import AppRepository from '@/modules/app/app.repository'
 
 @Service()
 class ActivityService implements IActivityService {
-  private activityModel = new ServiceQuery<IActivity>(activityModel)
-
-  private async find(
-    activityId: Types.ObjectId,
-    fromAllAccounts: boolean = true,
-    userId?: Types.ObjectId
-  ): Promise<IActivity> {
-    const activity = await this.activityModel.findById(
-      activityId,
-      fromAllAccounts,
-      userId
-    )
-
-    if (!activity) throw new HttpException(404, 'Activity not found')
-
-    return activity
-  }
+  private activityRepository = new AppRepository<IActivity>(activityModel)
 
   public async set(
     user: IUserObject,
@@ -45,17 +29,19 @@ class ActivityService implements IActivityService {
     message: string
   ): Promise<IActivity> {
     try {
-      const activity = await this.activityModel.self.create({
-        user: user._id,
-        userObject: user,
-        category,
-        message,
-        forWho,
-      })
+      const activity = await this.activityRepository
+        .create({
+          user: user._id,
+          userObject: user,
+          category,
+          message,
+          forWho,
+        })
+        .save()
 
       return activity
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to register activity, please try again'
       )
@@ -71,27 +57,30 @@ class ActivityService implements IActivityService {
       let activities
 
       if (accessBy >= UserRole.ADMIN && userId) {
-        activities = await this.activityModel
+        activities = await this.activityRepository
           .find({
             user: userId,
             forWho,
           })
           .select('-userObject')
+          .collectAll()
       } else if (accessBy >= UserRole.ADMIN && !userId) {
-        activities = await this.activityModel
+        activities = await this.activityRepository
           .find({ forWho })
           .select('-userObject')
+          .collectAll()
       } else {
-        activities = await this.activityModel
+        activities = await this.activityRepository
           .find({
             user: userId,
             forWho,
             status: ActivityStatus.VISIBLE,
           })
           .select('-userObject')
+          .collectAll()
       }
 
-      await this.activityModel.populate(
+      await this.activityRepository.populate(
         activities,
         'user',
         'userObject',
@@ -104,7 +93,7 @@ class ActivityService implements IActivityService {
         data: { activities },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch activities, please try again'
       )
@@ -117,12 +106,14 @@ class ActivityService implements IActivityService {
     forWho: ActivityForWho
   ): THttpResponse<{ activity: IActivity }> => {
     try {
-      const activity = await this.activityModel.findOne({
-        _id: activityId,
-        user: userId,
-        status: ActivityStatus.VISIBLE,
-        forWho,
-      })
+      const activity = await this.activityRepository
+        .findOne({
+          _id: activityId,
+          user: userId,
+          status: ActivityStatus.VISIBLE,
+          forWho,
+        })
+        .collect()
 
       if (!activity) throw new HttpException(404, 'Activity not found')
 
@@ -136,7 +127,7 @@ class ActivityService implements IActivityService {
         data: { activity },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete activity log, please try again'
       )
@@ -148,11 +139,13 @@ class ActivityService implements IActivityService {
     forWho: ActivityForWho
   ): THttpResponse => {
     try {
-      const activities = await this.activityModel.find({
-        user: userId,
-        status: ActivityStatus.VISIBLE,
-        forWho,
-      })
+      const activities = await this.activityRepository
+        .find({
+          user: userId,
+          status: ActivityStatus.VISIBLE,
+          forWho,
+        })
+        .collectAll()
 
       if (!activities.length)
         throw new HttpException(404, 'No Activity log found')
@@ -167,7 +160,7 @@ class ActivityService implements IActivityService {
         message: 'Activity logs deleted successfully',
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete activity logs, please try again'
       )
@@ -183,21 +176,25 @@ class ActivityService implements IActivityService {
       let activity
 
       if (userId) {
-        activity = await this.activityModel.findOne({
-          _id: activityId,
-          forWho,
-          user: userId,
-        })
+        activity = await this.activityRepository
+          .findOne({
+            _id: activityId,
+            forWho,
+            user: userId,
+          })
+          .collect()
       } else {
-        activity = await this.activityModel.findOne({
-          _id: activityId,
-          forWho,
-        })
+        activity = await this.activityRepository
+          .findOne({
+            _id: activityId,
+            forWho,
+          })
+          .collect()
       }
 
       if (!activity) throw new HttpException(404, 'Activity not found')
 
-      await activity.deleteOne()
+      await this.activityRepository.deleteOne({ _id: activity._id })
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -205,7 +202,7 @@ class ActivityService implements IActivityService {
         data: { activity },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete activities log, please try again'
       )
@@ -221,15 +218,17 @@ class ActivityService implements IActivityService {
       let activities
 
       if (fromAllAccounts) {
-        activities = await this.activityModel.find({ forWho })
+        activities = await this.activityRepository.find({ forWho }).collectAll()
       } else {
-        activities = await this.activityModel.find({ forWho, user: userId })
+        activities = await this.activityRepository
+          .find({ forWho, user: userId })
+          .collectAll()
       }
 
       if (!activities.length) throw new HttpException(404, 'No Activity found')
 
       for (const activity of activities) {
-        await activity.deleteOne()
+        await this.activityRepository.deleteOne({ _id: activity._id })
       }
 
       return {
@@ -237,7 +236,7 @@ class ActivityService implements IActivityService {
         message: 'Activity logs deleted successfully',
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete activities log, please try again'
       )

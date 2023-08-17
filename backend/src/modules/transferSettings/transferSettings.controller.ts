@@ -3,13 +3,13 @@ import { Service, Inject } from 'typedi'
 import validate from '@/modules/transferSettings/transferSettings.validation'
 import { NextFunction, Request, Response, Router } from 'express'
 import { ITransferSettingsService } from '@/modules/transferSettings/transferSettings.interface'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 
 @Service()
-export default class TransferSettingsController implements IServiceController {
+export default class TransferSettingsController implements IAppController {
   public path = '/transfer-settings'
   public router = Router()
 

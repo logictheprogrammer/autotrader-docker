@@ -17,24 +17,24 @@ export const getDepositMethodMock = jest
         ...depositMethodA,
         _id: depositMethodA_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (key.toString() === depositMethodB_id.toString()) {
       return Promise.resolve({
         ...depositMethodB,
         _id: depositMethodB_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (key.toString() === depositMethodC_id.toString()) {
       return Promise.resolve({
         ...depositMethodC,
         _id: depositMethodC_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else {
       return Promise.reject(new HttpException(404, 'Deposit method not found'))

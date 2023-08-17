@@ -3,6 +3,12 @@ import withdrawalMethodModel from '../../../modules/withdrawalMethod/withdrawalM
 import { Types } from 'mongoose'
 import { withdrawalMethodA } from './withdrawalMethod.payload'
 import { withdrawalMethodService } from '../../../setup'
+import AppRepository from '../../app/app.repository'
+import { IWithdrawalMethod } from '../withdrawalMethod.interface'
+
+const withdrawalMethodRepository = new AppRepository<IWithdrawalMethod>(
+  withdrawalMethodModel
+)
 
 describe('withdrawal method', () => {
   request
@@ -17,9 +23,9 @@ describe('withdrawal method', () => {
 
     describe('given withdrawal method exist', () => {
       it('should return the withdrawalMethod payload', async () => {
-        const withdrawalMethod = await withdrawalMethodModel.create(
-          withdrawalMethodA
-        )
+        const withdrawalMethod = await withdrawalMethodRepository
+          .create(withdrawalMethodA)
+          .save()
 
         const result = await withdrawalMethodService.get(withdrawalMethod._id)
 

@@ -1,4 +1,4 @@
-import { pairA, pairA_id, pairC_id } from './../../pair/__test__/pair.payload'
+import { pairA_id, pairC_id } from './../../pair/__test__/pair.payload'
 import { createTransactionNotificationMock } from '../../notification/__test__/notification.mock'
 import {
   createTransactionTransactionMock,
@@ -13,14 +13,7 @@ import formatNumber from '../../../utils/formats/formatNumber'
 import { TransactionCategory } from '../../transaction/transaction.enum'
 import { TradeMove, TradeStatus } from '../../trade/trade.enum'
 import { request } from '../../../test'
-import {
-  adminA,
-  userA,
-  userA_id,
-  userB,
-  userBObj,
-  userB_id,
-} from '../../user/__test__/user.payload'
+import { adminA, userA, userA_id } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { Types } from 'mongoose'
 
@@ -28,24 +21,14 @@ import { executeTransactionManagerMock } from '../../transactionManager/__test__
 import {
   tradeA,
   tradeA_id,
-  tradeB_id,
   tradeModelReturn,
   tradeAObj,
   tradeB,
-  tradeBObj,
 } from './trade.payload'
-import {
-  createTransactionTradeMock,
-  updateStatusTransactionTradeMock,
-} from './trade.mock'
+import { createTransactionTradeMock } from './trade.mock'
 import { HttpResponseStatus } from '../../http/http.enum'
 import Encryption from '../../../utils/encryption'
-import { fundTransactionUserMock } from '../../user/__test__/user.mock'
-import { UserAccount, UserEnvironment } from '../../user/user.enum'
-import { createTransactionReferralMock } from '../../referral/__test__/referral.mock'
-import { referralA } from '../../referral/__test__/referral.payoad'
-import { ReferralTypes } from '../../referral/referral.enum'
-import Helpers from '../../../utils/helpers/helpers'
+import { UserEnvironment } from '../../user/user.enum'
 import {
   investmentA,
   investmentAObj,
@@ -56,8 +39,6 @@ import {
   getInvestmentMock,
   updateStatusTransactionInvestmentMock,
 } from '../../investment/__test__/investment.mock'
-import FormatNumber from '../../../utils/formats/formatNumber'
-import transactionModel from '../../transaction/transaction.model'
 import { getPairMock } from '../../pair/__test__/pair.mock'
 import {
   getRandomValueMock,
@@ -66,6 +47,12 @@ import {
 import TradeService from '../trade.service'
 import { dynamicRangeMock } from '../../math/__test__/math.mock'
 import { InvestmentStatus } from '../../investment/investment.enum'
+import AppRepository from '../../app/app.repository'
+import { IUser } from '../../user/user.interface'
+import { ITrade } from '../trade.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const tradeRepository = new AppRepository<ITrade>(tradeModel)
 
 describe('trade', () => {
   const baseUrl = '/api/trade/'
@@ -75,7 +62,7 @@ describe('trade', () => {
       it('should throw a 401 Unauthorized', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -94,7 +81,7 @@ describe('trade', () => {
           investmentId: investmentA_id,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -116,7 +103,7 @@ describe('trade', () => {
           pairId,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -141,7 +128,7 @@ describe('trade', () => {
           pairId: new Types.ObjectId().toString(),
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -163,9 +150,9 @@ describe('trade', () => {
           pairId: new Types.ObjectId().toString(),
         }
 
-        await userModel.create({ ...userA, _id: userA_id })
+        await userRepository.create({ ...userA, _id: userA_id }).save()
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -190,9 +177,9 @@ describe('trade', () => {
           investmentId: investmentA_id,
           pairId,
         }
-        await userModel.create({ ...userA, _id: userA_id })
+        await userRepository.create({ ...userA, _id: userA_id }).save()
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -216,9 +203,9 @@ describe('trade', () => {
           pairId: pairA_id,
         }
 
-        await userModel.create({ ...userA, _id: userA_id })
+        await userRepository.create({ ...userA, _id: userA_id }).save()
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -317,7 +304,7 @@ describe('trade', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const payload = {
@@ -338,7 +325,7 @@ describe('trade', () => {
 
     describe('given payload is not valid', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -358,7 +345,7 @@ describe('trade', () => {
     })
     describe('given trade was not found', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -378,13 +365,15 @@ describe('trade', () => {
     })
     describe('given trade status is not allowed', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const trade = await tradeModel.create({
-          ...tradeA,
-          _id: tradeA_id,
-        })
+        const trade = await tradeRepository
+          .create({
+            ...tradeA,
+            _id: tradeA_id,
+          })
+          .save()
 
         const payload = {
           tradeId: trade._id,
@@ -404,13 +393,15 @@ describe('trade', () => {
 
     describe('given trade status is not allowed for auto trades', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const trade = await tradeModel.create({
-          ...tradeA,
-          _id: tradeA_id,
-        })
+        const trade = await tradeRepository
+          .create({
+            ...tradeA,
+            _id: tradeA_id,
+          })
+          .save()
 
         const statuses = [
           TradeStatus.PREPARING,
@@ -445,17 +436,21 @@ describe('trade', () => {
     describe('given all validations passed', () => {
       for (const status of Object.values(TradeStatus)) {
         it(`should executes trade with ${status} status`, async () => {
-          const admin = await userModel.create(adminA)
-          const user = await userModel.create({ ...userA, _id: userA_id })
+          const admin = await userRepository.create(adminA).save()
+          const user = await userRepository
+            .create({ ...userA, _id: userA_id })
+            .save()
 
           const { password: _, ...userA1 } = userA
           const token = Encryption.createToken(admin)
 
-          const trade = await tradeModel.create({
-            ...tradeA,
-            _id: tradeA_id,
-            user: user._id,
-          })
+          const trade = await tradeRepository
+            .create({
+              ...tradeA,
+              _id: tradeA_id,
+              user: user._id,
+            })
+            .save()
           let payload: any
           let statusCode: any
           let body: any
@@ -563,7 +558,7 @@ describe('trade', () => {
 
             case TradeStatus.PREPARING:
               trade.manualMode = true
-              await trade.save()
+              await tradeRepository.save(trade)
 
               payload = {
                 tradeId: trade._id,
@@ -602,7 +597,7 @@ describe('trade', () => {
 
             case TradeStatus.START:
               trade.manualMode = true
-              await trade.save()
+              await tradeRepository.save(trade)
 
               payload = {
                 tradeId: trade._id,
@@ -660,7 +655,7 @@ describe('trade', () => {
 
             case TradeStatus.MARKET_CLOSED:
               trade.manualMode = true
-              await trade.save()
+              await tradeRepository.save(trade)
 
               payload = {
                 tradeId: trade._id,
@@ -715,7 +710,7 @@ describe('trade', () => {
 
             case TradeStatus.MARKET_OPENED:
               trade.manualMode = true
-              await trade.save()
+              await tradeRepository.save(trade)
 
               payload = {
                 tradeId: trade._id,
@@ -770,7 +765,7 @@ describe('trade', () => {
 
             case TradeStatus.SETTLED:
               trade.manualMode = true
-              await trade.save()
+              await tradeRepository.save(trade)
 
               payload = {
                 tradeId: trade._id,
@@ -845,7 +840,7 @@ describe('trade', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -867,7 +862,7 @@ describe('trade', () => {
           stake: 100,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -890,7 +885,7 @@ describe('trade', () => {
           profit: 50,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -907,7 +902,7 @@ describe('trade', () => {
     })
     describe('given pair those not exist', () => {
       it('should return a 404 error', async () => {
-        const trade = await tradeModel.create(tradeA)
+        const trade = await tradeRepository.create(tradeA).save()
         const payload = {
           tradeId: trade._id,
           pairId: new Types.ObjectId().toString(),
@@ -916,7 +911,7 @@ describe('trade', () => {
           profit: 50,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -934,7 +929,7 @@ describe('trade', () => {
     })
     describe('given pair is not compatible', () => {
       it('should return a 400 error', async () => {
-        const trade = await tradeModel.create(tradeA)
+        const trade = await tradeRepository.create(tradeA).save()
         const payload = {
           tradeId: trade._id,
           pairId: pairC_id,
@@ -943,7 +938,7 @@ describe('trade', () => {
           profit: 50,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -960,7 +955,7 @@ describe('trade', () => {
     })
     describe('on success entry', () => {
       it('should return a 200 and payload', async () => {
-        const trade = await tradeModel.create(tradeA)
+        const trade = await tradeRepository.create(tradeA).save()
         const payload = {
           tradeId: trade._id,
           pairId: pairA_id,
@@ -969,7 +964,7 @@ describe('trade', () => {
           profit: 50,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -985,7 +980,9 @@ describe('trade', () => {
 
         expect(getPairMock).toHaveBeenCalledTimes(1)
 
-        const updatedTrade = await tradeModel.findById(payload.tradeId)
+        const updatedTrade = await tradeRepository
+          .findById(payload.tradeId)
+          .collect()
 
         expect(updatedTrade?.stake).toBe(payload.stake)
       })
@@ -996,7 +993,7 @@ describe('trade', () => {
     const url = `${baseUrl}master`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1011,10 +1008,10 @@ describe('trade', () => {
 
     describe('on successfull entry', () => {
       it('should return an array of all users trades', async () => {
-        const trade1 = await tradeModel.create(tradeA)
-        const trade2 = await tradeModel.create(tradeB)
+        const trade1 = await tradeRepository.create(tradeA).save()
+        const trade2 = await tradeRepository.create(tradeB).save()
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -1047,7 +1044,7 @@ describe('trade', () => {
     const url = `${baseUrl}master/demo`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1062,19 +1059,23 @@ describe('trade', () => {
 
     describe('on successfull entry', () => {
       it('should return an array of all users trades', async () => {
-        await tradeModel.create(tradeA)
-        await tradeModel.create(tradeB)
+        await tradeRepository.create(tradeA).save()
+        await tradeRepository.create(tradeB).save()
 
-        const trade1 = await tradeModel.create({
-          ...tradeA,
-          environment: UserEnvironment.DEMO,
-        })
-        await tradeModel.create({
-          ...tradeB,
-          environment: UserEnvironment.DEMO,
-        })
+        const trade1 = await tradeRepository
+          .create({
+            ...tradeA,
+            environment: UserEnvironment.DEMO,
+          })
+          .save()
+        await tradeRepository
+          .create({
+            ...tradeB,
+            environment: UserEnvironment.DEMO,
+          })
+          .save()
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -1117,10 +1118,12 @@ describe('trade', () => {
 
     describe('on successfull entry', () => {
       it('should return an array of current users trades', async () => {
-        const trade1 = await tradeModel.create(tradeA)
-        await tradeModel.create(tradeB)
+        const trade1 = await tradeRepository.create(tradeA).save()
+        await tradeRepository.create(tradeB).save()
 
-        const user = await userModel.create({ ...userA, _id: userA_id })
+        const user = await userRepository
+          .create({ ...userA, _id: userA_id })
+          .save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1153,7 +1156,7 @@ describe('trade', () => {
     const url = `${baseUrl}demo`
     describe('given user is not logged in', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
 
         const { statusCode, body } = await request.get(url)
 
@@ -1165,19 +1168,25 @@ describe('trade', () => {
 
     describe('on successfull entry', () => {
       it('should return an array of current user trades', async () => {
-        await tradeModel.create(tradeA)
-        await tradeModel.create(tradeB)
+        await tradeRepository.create(tradeA).save()
+        await tradeRepository.create(tradeB).save()
 
-        const trade1 = await tradeModel.create({
-          ...tradeA,
-          environment: UserEnvironment.DEMO,
-        })
-        const trade2 = await tradeModel.create({
-          ...tradeB,
-          environment: UserEnvironment.DEMO,
-        })
+        const trade1 = await tradeRepository
+          .create({
+            ...tradeA,
+            environment: UserEnvironment.DEMO,
+          })
+          .save()
+        const trade2 = await tradeRepository
+          .create({
+            ...tradeB,
+            environment: UserEnvironment.DEMO,
+          })
+          .save()
 
-        const user = await userModel.create({ ...userA, _id: userA_id })
+        const user = await userRepository
+          .create({ ...userA, _id: userA_id })
+          .save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1211,7 +1220,7 @@ describe('trade', () => {
       it('should return a 401 Unauthorized error', async () => {
         const url = `${baseUrl}delete/${new Types.ObjectId().toString()}`
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1227,7 +1236,7 @@ describe('trade', () => {
       it('should return a 404 error', async () => {
         const url = `${baseUrl}delete/${new Types.ObjectId().toString()}`
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -1241,10 +1250,10 @@ describe('trade', () => {
     })
     describe('given trade has not been settled', () => {
       it('should return a 400 error', async () => {
-        const trade = await tradeModel.create(tradeA)
+        const trade = await tradeRepository.create(tradeA).save()
         const url = `${baseUrl}delete/${trade._id}`
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -1258,14 +1267,16 @@ describe('trade', () => {
     })
     describe('on success entry', () => {
       it('should return a 200 with a payload', async () => {
-        const trade = await tradeModel.create({
-          ...tradeA,
-          status: TradeStatus.SETTLED,
-        })
+        const trade = await tradeRepository
+          .create({
+            ...tradeA,
+            status: TradeStatus.SETTLED,
+          })
+          .save()
 
         const url = `${baseUrl}delete/${trade._id}`
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -1277,7 +1288,7 @@ describe('trade', () => {
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
         expect(body.data.trade._id).toBe(trade._id.toString())
 
-        expect(await tradeModel.count()).toBe(0)
+        expect(await tradeRepository.count()).toBe(0)
       })
     })
   })

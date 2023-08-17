@@ -9,20 +9,28 @@ import { Types } from 'mongoose'
 import planModel from '../../plan/plan.model'
 import { planA } from '../../plan/__test__/plan.payload'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
+import AppRepository from '../../app/app.repository'
+import { IInvestment } from '../investment.interface'
+import { IUser } from '../../user/user.interface'
+import { IPlan } from '../../plan/plan.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const planRepository = new AppRepository<IPlan>(planModel)
+const investmentRepository = new AppRepository<IInvestment>(investmentModel)
 
 describe('investment', () => {
   describe('_createTransaction', () => {
     it('should return a investment transaction instance', async () => {
       request
-      const user = await userModel.create(userA)
-      const plan = await planModel.create(planA)
+      const user = await userRepository.create(userA).save()
+      const plan = await planRepository.create(planA).save()
       const amount = 100
       const account = UserAccount.MAIN_BALANCE
       const environment = UserEnvironment.LIVE
 
       const investmentInstance = await investmentService._createTransaction(
-        user.toObject(),
-        plan.toObject(),
+        userRepository.toObject(user),
+        planRepository.toObject(plan),
         amount,
         account,
         environment
@@ -38,7 +46,9 @@ describe('investment', () => {
       expect(investmentInstance.object.account).toBe(account)
 
       expect(investmentInstance.instance.onFailed).toContain(
-        `Delete the investment with an id of (${investmentInstance.instance.model._id})`
+        `Delete the investment with an id of (${
+          investmentInstance.instance.model.collectUnsaved()._id
+        })`
       )
     })
   })
@@ -57,7 +67,7 @@ describe('investment', () => {
     describe('on success', () => {
       it('should a funded investment transaction instance', async () => {
         request
-        const investment = await investmentModel.create(investmentA)
+        const investment = await investmentRepository.create(investmentA).save()
         const amount = 1000
 
         const result = await investmentService._fundTransaction(
@@ -73,10 +83,12 @@ describe('investment', () => {
     describe('given investment id those not exist', () => {
       it('should throw a 404 error', async () => {
         request
-        const investment = await investmentModel.create({
-          ...investmentA,
-          status: InvestmentStatus.SUSPENDED,
-        })
+        const investment = await investmentRepository
+          .create({
+            ...investmentA,
+            status: InvestmentStatus.SUSPENDED,
+          })
+          .save()
 
         expect(investment.status).toBe(InvestmentStatus.SUSPENDED)
 
@@ -91,10 +103,12 @@ describe('investment', () => {
     describe('given the status has already been settle', () => {
       it('should throw a 400 error', async () => {
         request
-        const investment = await investmentModel.create({
-          ...investmentA,
-          status: InvestmentStatus.COMPLETED,
-        })
+        const investment = await investmentRepository
+          .create({
+            ...investmentA,
+            status: InvestmentStatus.COMPLETED,
+          })
+          .save()
 
         expect(investment.status).toBe(InvestmentStatus.COMPLETED)
 
@@ -109,7 +123,7 @@ describe('investment', () => {
     describe('given investment was suspended', () => {
       it('should return a investment transaction instance with suspended status', async () => {
         request
-        const investment = await investmentModel.create(investmentA)
+        const investment = await investmentRepository.create(investmentA).save()
 
         expect(investment.status).toBe(InvestmentStatus.RUNNING)
 
@@ -124,7 +138,9 @@ describe('investment', () => {
         )
 
         expect(investmentInstance.instance.onFailed).toContain(
-          `Set the status of the investment with an id of (${investmentInstance.instance.model._id}) to (${InvestmentStatus.RUNNING})`
+          `Set the status of the investment with an id of (${
+            investmentInstance.instance.model.collectUnsaved()._id
+          }) to (${InvestmentStatus.RUNNING})`
         )
       })
     })

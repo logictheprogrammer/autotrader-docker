@@ -1,7 +1,7 @@
 import { Document, Types } from 'mongoose'
 import { FailedTransactionStatus } from '@/modules/failedTransaction/failedTransaction.enum'
 import { THttpResponse } from '@/modules/http/http.type'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 
 export interface IFailedTransactionDoc {
   collectionName: string
@@ -10,7 +10,7 @@ export interface IFailedTransactionDoc {
   isDeleted?: boolean
 }
 
-export interface IFailedTransactionObject extends IServiceObject {
+export interface IFailedTransactionObject extends IAppObject {
   collectionName: string
   message: string
   status: FailedTransactionStatus
@@ -18,6 +18,9 @@ export interface IFailedTransactionObject extends IServiceObject {
 }
 
 export interface IFailedTransaction extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   collectionName: string
   message: string
   status: FailedTransactionStatus

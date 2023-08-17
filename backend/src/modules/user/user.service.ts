@@ -15,25 +15,27 @@ import {
 } from '@/modules/activity/activity.enum'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import HttpException from '@/modules/http/http.exception'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceQuery from '@/modules/service/service.query'
 import FormatNumber from '@/utils/formats/formatNumber'
 import FormatString from '@/utils/formats/formatString'
 import { IMailService } from '@/modules/mail/mail.interface'
 import ParseString from '@/utils/parsers/parseString'
 import renderFile from '@/utils/renderFile'
 import { MailOptionName } from '@/modules/mailOption/mailOption.enum'
-import { INotification } from '../notification/notification.interface'
-import notificationModel from '../notification/notification.model'
-import { SiteConstants } from '../config/constants'
+import { INotification } from '@/modules/notification/notification.interface'
+import notificationModel from '@/modules/notification/notification.model'
+import { SiteConstants } from '@/modules/config/config.constants'
+import AppRepository from '@/modules/app/app.repository'
 
 @Service()
 class UserService implements IUserService {
-  private userModel = new ServiceQuery<IUser>(userModel)
-  private notificationModel = new ServiceQuery<INotification>(notificationModel)
-  private activityModel = new ServiceQuery<IActivity>(activityModel)
+  private userRepository = new AppRepository<IUser>(userModel)
+  private notificationRepository = new AppRepository<INotification>(
+    notificationModel
+  )
+  private activityRepository = new AppRepository<IActivity>(activityModel)
 
   public constructor(
     @Inject(ServiceToken.ACTIVITY_SERVICE)
@@ -46,14 +48,16 @@ class UserService implements IUserService {
   ): Promise<IUser> {
     let user
 
-    user = await this.userModel
+    user = await this.userRepository
       .findOne({ username: userIdOrUsername })
       ?.select('-password')
+      .collect()
 
     if (!user)
-      user = await this.userModel
+      user = await this.userRepository
         .findById(userIdOrUsername)
         ?.select('-password')
+        .collect()
 
     if (!user) throw new HttpException(404, 'User not found')
     return user
@@ -100,14 +104,18 @@ class UserService implements IUserService {
       account
     )} of the user with an id of (${fundedUser._id})`
 
+    const newFundedUser = this.userRepository.toClass(fundedUser)
+
+    const unsavedFundedUser = newFundedUser.collectUnsaved()
+
     return {
-      object: fundedUser.toObject(),
+      object: unsavedFundedUser,
       instance: {
-        model: fundedUser,
+        model: newFundedUser,
         onFailed,
         callback: async () => {
-          const user = await this.setFund(fundedUser, account, -amount)
-          await user.save()
+          const user = await this.setFund(unsavedFundedUser, account, -amount)
+          await this.userRepository.save(user)
         },
       },
     }
@@ -141,7 +149,7 @@ class UserService implements IUserService {
         data: { user: fundedUser.toObject() },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         `Unable to ${amount > 0 ? 'credit' : 'debit'} user, please try again`
       )
@@ -150,7 +158,10 @@ class UserService implements IUserService {
 
   public fetchAll = async (): THttpResponse<{ users: IUser[] }> => {
     try {
-      const users = await this.userModel.find().select('-password')
+      const users = await this.userRepository
+        .find()
+        .select('-password')
+        .collectAll()
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -160,7 +171,7 @@ class UserService implements IUserService {
         },
       }
     } catch (err: any) {
-      throw new ServiceException(err, 'Unable to get users, please try again')
+      throw new AppException(err, 'Unable to get users, please try again')
     }
   }
 
@@ -182,7 +193,7 @@ class UserService implements IUserService {
         data: { user },
       }
     } catch (err: any) {
-      throw new ServiceException(err, 'Unable to get user, please try again')
+      throw new AppException(err, 'Unable to get user, please try again')
     }
   }
 
@@ -193,7 +204,7 @@ class UserService implements IUserService {
     byAdmin: boolean
   ): THttpResponse<{ user: IUser }> => {
     try {
-      await this.userModel.ifExist(
+      await this.userRepository.ifExist(
         {
           username,
           _id: { $ne: userId },
@@ -226,10 +237,7 @@ class UserService implements IUserService {
         data: { user },
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to update profile, please try again'
-      )
+      throw new AppException(err, 'Unable to update profile, please try again')
     }
   }
 
@@ -238,7 +246,7 @@ class UserService implements IUserService {
     email: string
   ): THttpResponse<{ user: IUser }> => {
     try {
-      await this.userModel.ifExist(
+      await this.userRepository.ifExist(
         {
           email,
           _id: { $ne: userId },
@@ -264,10 +272,7 @@ class UserService implements IUserService {
         data: { user },
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to update email, please try again'
-      )
+      throw new AppException(err, 'Unable to update email, please try again')
     }
   }
 
@@ -294,7 +299,7 @@ class UserService implements IUserService {
         data: { user },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to update user status, please try again'
       )
@@ -310,11 +315,11 @@ class UserService implements IUserService {
       if (user.role >= UserRole.ADMIN)
         throw new HttpException(400, 'Users with admin role can not be deleted')
 
-      await this.userModel.self.deleteOne({ _id: userId })
+      await this.userRepository.deleteOne({ _id: userId })
 
-      await this.notificationModel.self.deleteOne({ user: userId })
+      await this.notificationRepository.deleteMany({ user: userId })
 
-      await this.activityModel.self.deleteOne({ user: userId })
+      await this.activityRepository.deleteMany({ user: userId })
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -322,7 +327,7 @@ class UserService implements IUserService {
         data: { user },
       }
     } catch (err: any) {
-      throw new ServiceException(err, 'Unable to delete user, please try again')
+      throw new AppException(err, 'Unable to delete user, please try again')
     }
   }
 
@@ -337,13 +342,16 @@ class UserService implements IUserService {
 
         await this.find(userId)
 
-        users = await this.userModel.self.find({
-          referred: userId,
-        })
+        users = await this.userRepository
+          .find({
+            referred: userId,
+          })
+          .collectAll()
       } else {
-        users = await this.userModel.self
+        users = await this.userRepository
           .find({ referred: { $exists: true } })
           .select('-password')
+          .collectAll()
       }
 
       return {
@@ -352,7 +360,7 @@ class UserService implements IUserService {
         data: { users },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to get referred users, please try again'
       )
@@ -388,7 +396,7 @@ class UserService implements IUserService {
         message: `Email has been sent successfully`,
       }
     } catch (err: any) {
-      throw new ServiceException(err, 'Unable to send email, please try again')
+      throw new AppException(err, 'Unable to send email, please try again')
     }
   }
 }

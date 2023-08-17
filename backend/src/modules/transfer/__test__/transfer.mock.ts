@@ -1,18 +1,26 @@
+import AppRepository from '../../app/app.repository'
+import { ITransfer } from '../transfer.interface'
+import transferModel from '../transfer.model'
 import TransferService from '../transfer.service'
 import {
   transferAObj,
   transferA_id,
   transferBObj,
   transferB_id,
-  transferInstance,
   transferModelReturn,
 } from './transfer.payload'
+
+const transferRepository = new AppRepository<ITransfer>(transferModel)
 
 export const createTransactionTransferMock = jest
   .spyOn(TransferService.prototype, '_createTransaction')
   .mockResolvedValue({
     object: transferAObj,
-    instance: transferInstance,
+    instance: {
+      model: transferRepository.toClass(transferModelReturn),
+      onFailed: 'delete transfer',
+      async callback() {},
+    },
   })
 
 export const updateStatusTransactionTransferMock = jest
@@ -22,7 +30,7 @@ export const updateStatusTransactionTransferMock = jest
       return Promise.resolve({
         object: transferAObj,
         instance: {
-          model: transferModelReturn,
+          model: transferRepository.toClass(transferModelReturn),
           onFailed: 'change transfer status to old status',
           async callback() {},
         },
@@ -32,7 +40,7 @@ export const updateStatusTransactionTransferMock = jest
       return Promise.resolve({
         object: transferBObj,
         instance: {
-          model: transferModelReturn,
+          model: transferRepository.toClass(transferModelReturn),
           onFailed: 'change transfer status to old status',
           async callback() {},
         },

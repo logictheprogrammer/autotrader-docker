@@ -1,4 +1,3 @@
-import { MongoMemoryServer } from 'mongodb-memory-server'
 import 'dotenv/config'
 import 'module-alias/register'
 import validateEnv from '@/utils/validateEnv'
@@ -9,6 +8,6 @@ validateEnv()
 
 const { MONGO_PATH, PORT } = process.env
 
-const app = new App(controllers, Number(PORT), httpMiddleware, MONGO_PATH)
+const app = new App(controllers, Number(PORT), httpMiddleware, true, MONGO_PATH)
 
 app.listen()

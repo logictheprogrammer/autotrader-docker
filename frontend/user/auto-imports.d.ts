@@ -2,7 +2,6 @@
 export {}
 declare global {
   const CONFIG: typeof import('@/modules/config/config.store')['default']
-  const DUMMY_PLANS: typeof import('./src/data/dummyPlans')['DUMMY_PLANS']
   const EffectScope: typeof import('vue')['EffectScope']
   const Helpers: typeof import('@/util/helpers')['default']
   const ResponseStatus: typeof import('./src/modules/http/http.enum')['ResponseStatus']
@@ -14,6 +13,7 @@ declare global {
   const computed: typeof import('vue')['computed']
   const config: typeof import('./src/data/config')['default']
   const configStore: typeof import('./src/modules/config/config.store')['default']
+  const countries: typeof import('./src/data/countries')['default']
   const createApp: typeof import('vue')['createApp']
   const customRef: typeof import('vue')['customRef']
   const defineAsyncComponent: typeof import('vue')['defineAsyncComponent']
@@ -27,6 +27,7 @@ declare global {
   const isReactive: typeof import('vue')['isReactive']
   const isReadonly: typeof import('vue')['isReadonly']
   const isRef: typeof import('vue')['isRef']
+  const languageCodes: typeof import('./src/data/languageCodes')['default']
   const markRaw: typeof import('vue')['markRaw']
   const nextTick: typeof import('vue')['nextTick']
   const onActivated: typeof import('vue')['onActivated']
@@ -80,7 +81,6 @@ import { UnwrapRef } from 'vue'
 declare module 'vue' {
   interface ComponentCustomProperties {
     readonly CONFIG: UnwrapRef<typeof import('@/modules/config/config.store')['default']>
-    readonly DUMMY_PLANS: UnwrapRef<typeof import('./src/data/dummyPlans')['DUMMY_PLANS']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly Helpers: UnwrapRef<typeof import('@/util/helpers')['default']>
     readonly ResponseStatus: UnwrapRef<typeof import('./src/modules/http/http.enum')['ResponseStatus']>
@@ -92,6 +92,7 @@ declare module 'vue' {
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly config: UnwrapRef<typeof import('./src/data/config')['default']>
     readonly configStore: UnwrapRef<typeof import('./src/modules/config/config.store')['default']>
+    readonly countries: UnwrapRef<typeof import('./src/data/countries')['default']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
@@ -105,6 +106,7 @@ declare module 'vue' {
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
+    readonly languageCodes: UnwrapRef<typeof import('./src/data/languageCodes')['default']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>

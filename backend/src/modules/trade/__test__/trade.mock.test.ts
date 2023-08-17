@@ -1,3 +1,4 @@
+import { ITrade } from '../../../modules/trade/trade.interface'
 import { TradeStatus } from '../../trade/trade.enum'
 import { request } from '../../../test'
 import { userA } from '../../user/__test__/user.payload'
@@ -8,22 +9,30 @@ import { tradeA } from './trade.payload'
 import { Types } from 'mongoose'
 import investmentModel from '../../investment/investment.model'
 import { investmentA } from '../../investment/__test__/investment.payload'
-import { UserAccount, UserEnvironment } from '../../user/user.enum'
 import pairModel from '../../pair/pair.model'
 import { pairA } from '../../pair/__test__/pair.payload'
+import AppRepository from '../../app/app.repository'
+import { IUser } from '../../user/user.interface'
+import { IPair } from '../../pair/pair.interface'
+import { IInvestment } from '../../investment/investment.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const pairRepository = new AppRepository<IPair>(pairModel)
+const tradeRepository = new AppRepository<ITrade>(tradeModel)
+const investmentRepository = new AppRepository<IInvestment>(investmentModel)
 
 describe('trade', () => {
   describe('_createTransaction', () => {
     it('should return a trade transaction instance', async () => {
       request
-      const user = await userModel.create(userA)
-      const investment = await investmentModel.create(investmentA)
-      const pair = await pairModel.create(pairA)
+      const user = await userRepository.create(userA).save()
+      const investment = await investmentRepository.create(investmentA).save()
+      const pair = await pairRepository.create(pairA).save()
 
       const tradeInstance = await tradeService._createTransaction(
-        user.toObject(),
-        investment.toObject(),
-        pair.toObject(),
+        userRepository.toObject(user),
+        investmentRepository.toObject(investment),
+        pairRepository.toObject(pair),
         tradeA.move,
         tradeA.stake,
         tradeA.outcome,
@@ -42,7 +51,9 @@ describe('trade', () => {
       expect(tradeInstance.object.pair.toString()).toBe(pair._id.toString())
 
       expect(tradeInstance.instance.onFailed).toContain(
-        `Delete the trade with an id of (${tradeInstance.instance.model._id})`
+        `Delete the trade with an id of (${
+          tradeInstance.instance.model.collectUnsaved()._id
+        })`
       )
     })
   })
@@ -50,7 +61,7 @@ describe('trade', () => {
     describe('given trade id those not exist', () => {
       it('should throw a 404 error', async () => {
         request
-        const trade = await tradeModel.create(tradeA)
+        const trade = await tradeRepository.create(tradeA).save()
 
         expect(trade.status).toBe(TradeStatus.WAITING)
 
@@ -65,10 +76,12 @@ describe('trade', () => {
     describe('given the status has already been settle', () => {
       it('should throw a 400 error', async () => {
         request
-        const trade = await tradeModel.create({
-          ...tradeA,
-          status: TradeStatus.SETTLED,
-        })
+        const trade = await tradeRepository
+          .create({
+            ...tradeA,
+            status: TradeStatus.SETTLED,
+          })
+          .save()
 
         expect(trade.status).toBe(TradeStatus.SETTLED)
 
@@ -80,7 +93,7 @@ describe('trade', () => {
     describe('given trade was on hold', () => {
       it('should return a trade transaction instance with on hold status', async () => {
         request
-        const trade = await tradeModel.create(tradeA)
+        const trade = await tradeRepository.create(tradeA).save()
 
         expect(trade.status).toBe(TradeStatus.WAITING)
 
@@ -92,7 +105,9 @@ describe('trade', () => {
         expect(tradeInstance.object.status).toBe(TradeStatus.ON_HOLD)
 
         expect(tradeInstance.instance.onFailed).toContain(
-          `Set the status of the trade with an id of (${tradeInstance.instance.model._id}) to (${TradeStatus.WAITING})`
+          `Set the status of the trade with an id of (${
+            tradeInstance.instance.model.collectUnsaved()._id
+          }) to (${TradeStatus.WAITING})`
         )
       })
     })

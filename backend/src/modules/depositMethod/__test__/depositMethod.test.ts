@@ -14,6 +14,14 @@ import { currencyA_id } from '../../currency/__test__/currency.payload'
 import { getCurrencyMock } from '../../currency/__test__/currency.mock'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
+import AppRepository from '../../app/app.repository'
+import { IUser } from '../../user/user.interface'
+import { IDepositMethod } from '../depositMethod.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const depositMethodRepository = new AppRepository<IDepositMethod>(
+  depositMethodModel
+)
 
 describe('deposit method', () => {
   const baseUrl = '/api/deposit-method/'
@@ -23,7 +31,7 @@ describe('deposit method', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -45,7 +53,7 @@ describe('deposit method', () => {
           minDeposit: depositMethodA.minDeposit,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -69,7 +77,7 @@ describe('deposit method', () => {
           address: depositMethodA.address,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -96,7 +104,7 @@ describe('deposit method', () => {
           address: depositMethodA.address,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -117,7 +125,7 @@ describe('deposit method', () => {
           payload.currencyId.toString()
         )
 
-        const depositMethodCounts = await depositMethodModel.count().exec()
+        const depositMethodCounts = await depositMethodRepository.count()
 
         expect(depositMethodCounts).toBe(1)
       })
@@ -130,7 +138,7 @@ describe('deposit method', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -149,7 +157,7 @@ describe('deposit method', () => {
           depositMethodId: new Types.ObjectId(),
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -164,14 +172,14 @@ describe('deposit method', () => {
     })
     describe('given deposit method those not exist', () => {
       it('should throw a 404 error', async () => {
-        await depositMethodModel.create(depositMethodA)
+        await depositMethodRepository.create(depositMethodA).save()
 
         const payload = {
           depositMethodId: new Types.ObjectId(),
           status: DepositMethodStatus.DISABLED,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -183,14 +191,14 @@ describe('deposit method', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const depositMethodCounts = await depositMethodModel.count().exec()
+        const depositMethodCounts = await depositMethodRepository.count()
 
         expect(depositMethodCounts).toBe(1)
       })
     })
     describe('given all validations passed', () => {
       it('should return a 200', async () => {
-        const dm = await depositMethodModel.create(depositMethodA)
+        const dm = await depositMethodRepository.create(depositMethodA).save()
 
         const payload = {
           depositMethodId: dm._id,
@@ -199,7 +207,7 @@ describe('deposit method', () => {
 
         let depositMethodCounts: number
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -216,15 +224,15 @@ describe('deposit method', () => {
         )
         expect(body.data.depositMethod.status).toBe(payload.status)
 
-        depositMethodCounts = await depositMethodModel
-          .count({ status: DepositMethodStatus.ENABLED })
-          .exec()
+        depositMethodCounts = await depositMethodRepository.count({
+          status: DepositMethodStatus.ENABLED,
+        })
 
         expect(depositMethodCounts).toBe(0)
 
-        depositMethodCounts = await depositMethodModel
-          .count({ status: DepositMethodStatus.DISABLED })
-          .exec()
+        depositMethodCounts = await depositMethodRepository.count({
+          status: DepositMethodStatus.DISABLED,
+        })
 
         expect(depositMethodCounts).toBe(1)
 
@@ -249,15 +257,15 @@ describe('deposit method', () => {
         )
         expect(body2.data.depositMethod.status).toBe(payload2.status)
 
-        depositMethodCounts = await depositMethodModel
-          .count({ status: DepositMethodStatus.ENABLED })
-          .exec()
+        depositMethodCounts = await depositMethodRepository.count({
+          status: DepositMethodStatus.ENABLED,
+        })
 
         expect(depositMethodCounts).toBe(1)
 
-        depositMethodCounts = await depositMethodModel
-          .count({ status: DepositMethodStatus.DISABLED })
-          .exec()
+        depositMethodCounts = await depositMethodRepository.count({
+          status: DepositMethodStatus.DISABLED,
+        })
 
         expect(depositMethodCounts).toBe(0)
       })
@@ -272,7 +280,7 @@ describe('deposit method', () => {
           depositMethodId: new Types.ObjectId().toString(),
           price: 200,
         }
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -291,7 +299,7 @@ describe('deposit method', () => {
           depositMethodId: new Types.ObjectId().toString(),
           price: '',
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -306,12 +314,12 @@ describe('deposit method', () => {
     })
     describe('given depositMethod those not exist', () => {
       it('should throw a 404 not found', async () => {
-        await depositMethodModel.create(depositMethodA)
+        await depositMethodRepository.create(depositMethodA).save()
         const payload = {
           depositMethodId: new Types.ObjectId().toString(),
           price: 1000,
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -323,19 +331,21 @@ describe('deposit method', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const depositMethodCount = await depositMethodModel.count().exec()
+        const depositMethodCount = await depositMethodRepository.count()
 
         expect(depositMethodCount).toBe(1)
       })
     })
     describe('given deposit method is in auto mode', () => {
       it('should return a 400 error', async () => {
-        const depositMethod = await depositMethodModel.create(depositMethodA)
+        const depositMethod = await depositMethodRepository
+          .create(depositMethodA)
+          .save()
         const payload = {
           depositMethodId: depositMethod._id,
           price: 1000,
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -349,22 +359,24 @@ describe('deposit method', () => {
         expect(statusCode).toBe(400)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const depositMethodCount = await depositMethodModel.count().exec()
+        const depositMethodCount = await depositMethodRepository.count()
 
         expect(depositMethodCount).toBe(1)
       })
     })
     describe('successful entry', () => {
       it('should return a 200 and depositMethod payload', async () => {
-        const depositMethod = await depositMethodModel.create({
-          ...depositMethodA,
-          autoUpdate: false,
-        })
+        const depositMethod = await depositMethodRepository
+          .create({
+            ...depositMethodA,
+            autoUpdate: false,
+          })
+          .save()
         const payload = {
           depositMethodId: depositMethod._id,
           price: 1000,
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -378,7 +390,8 @@ describe('deposit method', () => {
 
         expect(body.data).toEqual({
           depositMethod: {
-            ...depositMethod.toObject(),
+            ...depositMethodA,
+            autoUpdate: false,
             price: 1000,
             __v: expect.any(Number),
             _id: expect.any(String),
@@ -387,7 +400,7 @@ describe('deposit method', () => {
           },
         })
 
-        const depositMethodCount = await depositMethodModel.count().exec()
+        const depositMethodCount = await depositMethodRepository.count()
 
         expect(depositMethodCount).toBe(1)
       })
@@ -402,7 +415,7 @@ describe('deposit method', () => {
           depositMethodId: new Types.ObjectId().toString(),
           autoUpdate: true,
         }
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -420,7 +433,7 @@ describe('deposit method', () => {
         const payload = {
           depositMethodId: new Types.ObjectId().toString(),
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -435,12 +448,12 @@ describe('deposit method', () => {
     })
     describe('given depositMethod those not exist', () => {
       it('should throw a 404 not found', async () => {
-        await depositMethodModel.create(depositMethodA)
+        await depositMethodRepository.create(depositMethodA).save()
         const payload = {
           depositMethodId: new Types.ObjectId().toString(),
           autoUpdate: false,
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -452,14 +465,16 @@ describe('deposit method', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const depositMethodCount = await depositMethodModel.count().exec()
+        const depositMethodCount = await depositMethodRepository.count()
 
         expect(depositMethodCount).toBe(1)
       })
     })
     describe('successful entry', () => {
       it('should return a 200 and depositMethod payload', async () => {
-        const depositMethod = await depositMethodModel.create(depositMethodA)
+        const depositMethod = await depositMethodRepository
+          .create(depositMethodA)
+          .save()
         const payload = {
           depositMethodId: depositMethod._id,
           autoUpdate: false,
@@ -468,7 +483,7 @@ describe('deposit method', () => {
           depositMethodId: depositMethod._id,
           autoUpdate: true,
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -506,7 +521,7 @@ describe('deposit method', () => {
 
         expect(body2.data).toEqual({
           depositMethod: {
-            ...depositMethod.toObject(),
+            ...depositMethodA,
             autoUpdate: true,
             __v: expect.any(Number),
             _id: expect.any(String),
@@ -515,7 +530,7 @@ describe('deposit method', () => {
           },
         })
 
-        const depositMethodCount = await depositMethodModel.count().exec()
+        const depositMethodCount = await depositMethodRepository.count()
 
         expect(depositMethodCount).toBe(1)
       })
@@ -528,7 +543,7 @@ describe('deposit method', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -551,7 +566,7 @@ describe('deposit method', () => {
           minDeposit: depositMethodUpdated.minDeposit,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -566,7 +581,7 @@ describe('deposit method', () => {
     })
     describe('given deposit method those not exist', () => {
       it('should throw a 404 error', async () => {
-        await depositMethodModel.create(depositMethodA)
+        await depositMethodRepository.create(depositMethodA).save()
         const payload = {
           depositMethodId: new Types.ObjectId(),
           currencyId: currencyA_id,
@@ -576,7 +591,7 @@ describe('deposit method', () => {
           minDeposit: depositMethodUpdated.minDeposit,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -592,7 +607,7 @@ describe('deposit method', () => {
 
     describe('given currency those not exist', () => {
       it('should throw a 404 error', async () => {
-        const dm = await depositMethodModel.create(depositMethodA)
+        const dm = await depositMethodRepository.create(depositMethodA).save()
         const payload = {
           depositMethodId: dm._id,
           currencyId: new Types.ObjectId(),
@@ -602,7 +617,7 @@ describe('deposit method', () => {
           minDeposit: depositMethodUpdated.minDeposit,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -617,7 +632,7 @@ describe('deposit method', () => {
     })
     describe('given all validations passed', () => {
       it('should return a 200 and updated deposit method', async () => {
-        const dm = await depositMethodModel.create(depositMethodA)
+        const dm = await depositMethodRepository.create(depositMethodA).save()
         const payload = {
           depositMethodId: dm._id,
           currencyId: currencyA_id,
@@ -627,7 +642,7 @@ describe('deposit method', () => {
           minDeposit: depositMethodUpdated.minDeposit,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -661,7 +676,7 @@ describe('deposit method', () => {
     const url = baseUrl + 'master'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -675,7 +690,7 @@ describe('deposit method', () => {
     })
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -690,14 +705,16 @@ describe('deposit method', () => {
         })
       })
       it('should return a 200 and array', async () => {
-        await depositMethodModel.create(depositMethodA)
-        await depositMethodModel.create(depositMethodB)
-        await depositMethodModel.create({
-          ...depositMethodC,
-          status: DepositMethodStatus.DISABLED,
-        })
+        await depositMethodRepository.create(depositMethodA).save()
+        await depositMethodRepository.create(depositMethodB).save()
+        await depositMethodRepository
+          .create({
+            ...depositMethodC,
+            status: DepositMethodStatus.DISABLED,
+          })
+          .save()
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -751,7 +768,7 @@ describe('deposit method', () => {
     })
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -766,14 +783,16 @@ describe('deposit method', () => {
         })
       })
       it('should return a 200 and array', async () => {
-        await depositMethodModel.create(depositMethodA)
-        await depositMethodModel.create(depositMethodB)
-        await depositMethodModel.create({
-          ...depositMethodC,
-          status: DepositMethodStatus.DISABLED,
-        })
+        await depositMethodRepository.create(depositMethodA).save()
+        await depositMethodRepository.create(depositMethodB).save()
+        await depositMethodRepository
+          .create({
+            ...depositMethodC,
+            status: DepositMethodStatus.DISABLED,
+          })
+          .save()
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request

@@ -6,11 +6,11 @@ import HttpException from '@/modules/http/http.exception'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import userValidation from '@/modules/user/user.validation'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import { Types } from 'mongoose'
 
 @Service()
-class UserController implements IServiceController {
+class UserController implements IAppController {
   public path = '/users'
   public router = Router()
 

@@ -15,19 +15,25 @@ import { UserEnvironment } from '../../user/user.enum'
 import { DepositStatus } from '../../deposit/deposit.enum'
 import { InvestmentStatus } from '../../investment/investment.enum'
 import { TradeStatus } from '../../trade/trade.enum'
+import AppRepository from '../../app/app.repository'
+import { IUser } from '../../user/user.interface'
+import { ITransaction } from '../transaction.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const transactionRepository = new AppRepository<ITransaction>(transactionModel)
 
 describe('transaction', () => {
   describe('_createTransaction', () => {
     it('should return a transaction instance', async () => {
       request
-      const user = await userModel.create(userA)
+      const user = await userRepository.create(userA).save()
       const amount = 100
       const status = DepositStatus.APPROVED
       const categoryName = TransactionCategory.DEPOSIT
       const environment = UserEnvironment.LIVE
 
       const transactionInstance = await transactionService._createTransaction(
-        user.toObject(),
+        userRepository.toObject(user),
         status,
         categoryName,
         depositAObj,
@@ -41,7 +47,9 @@ describe('transaction', () => {
       expect(transactionInstance.object.environment).toBe(environment)
 
       expect(transactionInstance.instance.onFailed).toContain(
-        `Delete the transaction with an id of (${transactionInstance.instance.model._id})`
+        `Delete the transaction with an id of (${
+          transactionInstance.instance.model.collectUnsaved()._id
+        })`
       )
     })
   })
@@ -49,10 +57,12 @@ describe('transaction', () => {
     describe('given transaction id those not exist', () => {
       it('should throw a 404 error', async () => {
         request
-        const transaction = await transactionModel.create({
-          ...transactionA,
-          status: DepositStatus.CANCELLED,
-        })
+        const transaction = await transactionRepository
+          .create({
+            ...transactionA,
+            status: DepositStatus.CANCELLED,
+          })
+          .save()
 
         expect(transaction.status).toBe(DepositStatus.CANCELLED)
 
@@ -67,10 +77,12 @@ describe('transaction', () => {
     describe('given transaction was cancelled', () => {
       it('should return a transaction transaction instance with cancelled status', async () => {
         request
-        const transaction = await transactionModel.create({
-          ...transactionA,
-          status: DepositStatus.PENDING,
-        })
+        const transaction = await transactionRepository
+          .create({
+            ...transactionA,
+            status: DepositStatus.PENDING,
+          })
+          .save()
 
         expect(transaction.status).toBe(DepositStatus.PENDING)
 
@@ -83,17 +95,21 @@ describe('transaction', () => {
         expect(transactionInstance.object.status).toBe(DepositStatus.CANCELLED)
 
         expect(transactionInstance.instance.onFailed).toContain(
-          `Set the status of the transaction with an id of (${transactionInstance.instance.model._id}) to (${DepositStatus.PENDING})`
+          `Set the status of the transaction with an id of (${
+            transactionInstance.instance.model.collectUnsaved()._id
+          }) to (${DepositStatus.PENDING})`
         )
       })
     })
     describe('given transaction was approved', () => {
       it('should return a transaction transaction instance with approved status', async () => {
         request
-        const transaction = await transactionModel.create({
-          ...transactionA,
-          status: DepositStatus.PENDING,
-        })
+        const transaction = await transactionRepository
+          .create({
+            ...transactionA,
+            status: DepositStatus.PENDING,
+          })
+          .save()
 
         expect(transaction.status).toBe(DepositStatus.PENDING)
 
@@ -106,7 +122,9 @@ describe('transaction', () => {
         expect(transactionInstance.object.status).toBe(DepositStatus.APPROVED)
 
         expect(transactionInstance.instance.onFailed).toContain(
-          `Set the status of the transaction with an id of (${transactionInstance.instance.model._id}) to (${DepositStatus.PENDING})`
+          `Set the status of the transaction with an id of (${
+            transactionInstance.instance.model.collectUnsaved()._id
+          }) to (${DepositStatus.PENDING})`
         )
       })
     })
@@ -115,10 +133,12 @@ describe('transaction', () => {
     describe('given transaction id those not exist', () => {
       it('should throw a 404 error', async () => {
         request
-        const transaction = await transactionModel.create({
-          ...transactionA,
-          status: InvestmentStatus.RUNNING,
-        })
+        const transaction = await transactionRepository
+          .create({
+            ...transactionA,
+            status: InvestmentStatus.RUNNING,
+          })
+          .save()
 
         expect(transaction.status).toBe(InvestmentStatus.RUNNING)
 
@@ -134,10 +154,12 @@ describe('transaction', () => {
     describe('given transaction was settled', () => {
       it('should return a transaction instance with settled status', async () => {
         request
-        const transaction = await transactionModel.create({
-          ...transactionA,
-          status: InvestmentStatus.RUNNING,
-        })
+        const transaction = await transactionRepository
+          .create({
+            ...transactionA,
+            status: InvestmentStatus.RUNNING,
+          })
+          .save()
 
         expect(transaction.status).toBe(InvestmentStatus.RUNNING)
 
@@ -152,7 +174,7 @@ describe('transaction', () => {
 
         expect(transactionInstance.instance.onFailed).toContain(
           `Set the status of the transaction with an id of (${
-            transactionInstance.instance.model._id
+            transactionInstance.instance.model.collectUnsaved()._id
           }) to (${
             InvestmentStatus.RUNNING
           }) and the amount to (${formatNumber.toDollar(transactionA.amount)})`

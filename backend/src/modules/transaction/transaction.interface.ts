@@ -5,37 +5,40 @@ import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { Types } from 'mongoose'
 import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
 import { THttpResponse } from '@/modules/http/http.type'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '../transactionManager/transactionManager.type'
 import { UserEnvironment } from '../user/user.enum'
 import { TransactionStatus } from './transaction.type'
 
-export interface ITransactionObject extends IServiceObject {
+export interface ITransactionObject extends IAppObject {
   user: IUser['_id']
   userObject: IUserObject
   status: TransactionStatus
   categoryName: TransactionCategory
   category: Document['_id']
-  categoryObject: IServiceObject
+  categoryObject: IAppObject
   amount: number
   stake: number
   environment: UserEnvironment
 }
 
 export interface ITransaction extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   user: IUser['_id']
   userObject: IUserObject
   status: TransactionStatus
   categoryName: TransactionCategory
   category: Document['_id']
-  categoryObject: IServiceObject
+  categoryObject: IAppObject
   amount: number
   stake: number
   environment: UserEnvironment
 }
 
 export interface ITransactionService {
-  _createTransaction<T extends IServiceObject>(
+  _createTransaction<T extends IAppObject>(
     user: IUserObject,
     status: TransactionStatus,
     categoryName: TransactionCategory,
@@ -60,7 +63,7 @@ export interface ITransactionService {
     user: IUserObject,
     status: TransactionStatus,
     categoryName: TransactionCategory,
-    categoryObject: IServiceObject,
+    categoryObject: IAppObject,
     amount: number,
     environment: UserEnvironment,
     stake?: number

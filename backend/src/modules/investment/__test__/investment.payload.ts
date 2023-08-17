@@ -97,6 +97,13 @@ export const investmentC: IInvestmentObject = {
 // @ts-ignore
 export const investmentModelReturn: IInvestment = {
   save: jest.fn(),
+  toObject: jest.fn().mockReturnValue({
+    _id: 'investment id',
+    // @ts-ignore
+    collection: {
+      name: 'investment',
+    },
+  }),
   _id: 'investment id',
   // @ts-ignore
   collection: {
@@ -116,10 +123,4 @@ export const investmentBObj: IInvestmentObject = {
   ...investmentB,
   // @ts-ignore
   _id: investmentB_id,
-}
-
-export const investmentInstance = {
-  model: investmentModelReturn,
-  onFailed: 'delete investment',
-  async callback() {},
 }

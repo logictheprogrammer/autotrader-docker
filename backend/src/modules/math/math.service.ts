@@ -19,6 +19,8 @@ class MathService implements IMathService {
     return randomValues
   }
 
+  // spread - how far away from the provide value should be possible: min 0
+  // breakpoint - breakpoints to get to the provided values: more than zero
   public dynamicRange(
     minValue: number,
     maxValue: number,
@@ -131,13 +133,4 @@ export default MathService
 
 // mathService.dynamicRange(2, 5, 2, 2, 0.5)
 
-// console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))
-// console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))
-// console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))
-// console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))
-// console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))
-// console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))
-// console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))
-// console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))
-// console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))
 // console.log(mathService.dynamicRange(2, 5, 1, 25, 0.5))

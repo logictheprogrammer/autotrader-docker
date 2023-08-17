@@ -1,5 +1,4 @@
 import { Schema, model, Types } from 'mongoose'
-import bcrypt from 'bcrypt'
 import { IUser } from '@/modules/user/user.interface'
 
 const UserSchema = new Schema(
@@ -74,24 +73,9 @@ const UserSchema = new Schema(
       required: true,
     },
   },
-  { timestamps: true }
-)
-
-UserSchema.pre<IUser>('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next()
+  {
+    timestamps: true,
   }
-
-  const hash = await bcrypt.hash(this.password, 12)
-  this.password = hash
-
-  next()
-})
-
-UserSchema.methods.isValidPassword = async function (
-  password: string
-): Promise<Error | boolean> {
-  return await bcrypt.compare(password, this.password)
-}
+)
 
 export default model<IUser>('User', UserSchema)

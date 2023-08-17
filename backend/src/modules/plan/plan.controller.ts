@@ -3,7 +3,7 @@ import { Inject, Service } from 'typedi'
 import { Router, Request, Response, NextFunction } from 'express'
 import validate from '@/modules/plan/plan.validation'
 import ServiceToken from '@/utils/enums/serviceToken'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
@@ -11,7 +11,7 @@ import { PlanStatus } from '@/modules/plan/plan.enum'
 import { Types } from 'mongoose'
 
 @Service()
-class PlanController implements IServiceController {
+class PlanController implements IAppController {
   public path = '/plans'
   public router = Router()
 

@@ -1,9 +1,9 @@
 import { Document, Types } from 'mongoose'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { AssetType } from '@/modules/asset/asset.enum'
 
-export interface IAssetObject extends IServiceObject {
+export interface IAssetObject extends IAppObject {
   name: string
   symbol: string
   logo: string
@@ -12,6 +12,9 @@ export interface IAssetObject extends IServiceObject {
 }
 
 export interface IAsset extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   name: string
   symbol: string
   logo: string
@@ -30,7 +33,7 @@ export interface IAssetService {
   get(
     assetId: Types.ObjectId,
     assetType: AssetType
-  ): Promise<IAssetObject | null>
+  ): Promise<IAssetObject | null | undefined>
 
   update(
     assetId: Types.ObjectId,

@@ -2,11 +2,11 @@ import { Document, Types } from 'mongoose'
 import { TransferStatus } from '@/modules/transfer/transfer.enum'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { THttpResponse } from '@/modules/http/http.type'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserAccount } from '@/modules/user/user.enum'
 
-export interface ITransferObject extends IServiceObject {
+export interface ITransferObject extends IAppObject {
   fromUser: IUser['_id']
   fromUserObject: IUser
   toUser: IUser['_id']
@@ -18,6 +18,9 @@ export interface ITransferObject extends IServiceObject {
 }
 
 export interface ITransfer extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   fromUser: IUser['_id']
   fromUserObject: IUser
   toUser: IUser['_id']

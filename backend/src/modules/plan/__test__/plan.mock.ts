@@ -16,24 +16,24 @@ export const getPlanMock = jest
         ...planA,
         _id: planA_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (key.toString() === planB_id.toString()) {
       return Promise.resolve({
         ...planB,
         _id: planB_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (key.toString() === planC_id.toString()) {
       return Promise.resolve({
         ...planC,
         _id: planC_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else {
       return Promise.resolve(null)

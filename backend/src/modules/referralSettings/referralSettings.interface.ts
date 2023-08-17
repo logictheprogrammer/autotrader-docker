@@ -2,6 +2,9 @@ import { Document } from 'mongoose'
 import { THttpResponse } from '@/modules/http/http.type'
 
 export interface IReferralSettings extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   deposit: number
   stake: number
   winnings: number

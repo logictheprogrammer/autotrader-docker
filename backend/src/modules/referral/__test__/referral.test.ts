@@ -11,6 +11,12 @@ import {
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { referralA } from './referral.payoad'
+import AppRepository from '../../app/app.repository'
+import { IReferral } from '../referral.interface'
+import { IUser } from '../../user/user.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const referralRepository = new AppRepository<IReferral>(referralModel)
 
 describe('referral', () => {
   const baseUrl = '/api/referral/'
@@ -27,13 +33,15 @@ describe('referral', () => {
     })
     describe('on successful entry', () => {
       it('should return a payload of the current user referral transaction', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
-        const referralTransaction = await referralModel.create({
-          ...referralA,
-          referrer: user._id,
-        })
+        const referralTransaction = await referralRepository
+          .create({
+            ...referralA,
+            referrer: user._id,
+          })
+          .save()
 
         const { statusCode, body } = await request
           .get(url)
@@ -64,19 +72,23 @@ describe('referral', () => {
     })
     describe('on successful entry', () => {
       it('should return a payload of the current user referral earnings', async () => {
-        await userModel.create({ ...userB, _id: userB_id })
-        const user = await userModel.create(userA)
+        await userRepository.create({ ...userB, _id: userB_id }).save()
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
-        await referralModel.create({
-          ...referralA,
-          referrer: user._id,
-        })
+        await referralRepository
+          .create({
+            ...referralA,
+            referrer: user._id,
+          })
+          .save()
 
-        const referralTransaction = await referralModel.create({
-          ...referralA,
-          referrer: user._id,
-        })
+        const referralTransaction = await referralRepository
+          .create({
+            ...referralA,
+            referrer: user._id,
+          })
+          .save()
 
         const { statusCode, body } = await request
           .get(url)
@@ -102,7 +114,7 @@ describe('referral', () => {
     const url = `${baseUrl}users`
     describe('given user is not an admin', () => {
       it('should return a 401', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -116,21 +128,25 @@ describe('referral', () => {
     })
     describe('on successful entry', () => {
       it('should return a payload of the all users referral transactions', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const user1 = await userModel.create(userA)
-        const user2 = await userModel.create(userB)
+        const user1 = await userRepository.create(userA).save()
+        const user2 = await userRepository.create(userB).save()
 
-        await referralModel.create({
-          ...referralA,
-          referrer: user1._id,
-        })
+        await referralRepository
+          .create({
+            ...referralA,
+            referrer: user1._id,
+          })
+          .save()
 
-        await referralModel.create({
-          ...referralA,
-          referrer: user2._id,
-        })
+        await referralRepository
+          .create({
+            ...referralA,
+            referrer: user2._id,
+          })
+          .save()
 
         const { statusCode, body } = await request
           .get(url)
@@ -148,7 +164,7 @@ describe('referral', () => {
     const url = `${baseUrl}earnings/users`
     describe('given user is not an admin', () => {
       it('should return a 401', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -162,19 +178,23 @@ describe('referral', () => {
     })
     describe('on successful entry', () => {
       it('should return a payload of the all users referral earnings', async () => {
-        await userModel.create({ ...userB, _id: userB_id })
-        const admin = await userModel.create(adminA)
+        await userRepository.create({ ...userB, _id: userB_id }).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        await referralModel.create({
-          ...referralA,
-          referrer: new Types.ObjectId().toString(),
-        })
+        await referralRepository
+          .create({
+            ...referralA,
+            referrer: new Types.ObjectId().toString(),
+          })
+          .save()
 
-        const referralTransaction = await referralModel.create({
-          ...referralA,
-          referrer: new Types.ObjectId().toString(),
-        })
+        const referralTransaction = await referralRepository
+          .create({
+            ...referralA,
+            referrer: new Types.ObjectId().toString(),
+          })
+          .save()
 
         const { statusCode, body } = await request
           .get(url)
@@ -200,7 +220,7 @@ describe('referral', () => {
     const url = `${baseUrl}leaderboard`
     describe('given user is not an admin', () => {
       it('should return a 401', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -214,7 +234,7 @@ describe('referral', () => {
     })
     describe('on successful entry', () => {
       it('should return a payload of the referral leaderboard', async () => {
-        await userModel.create({
+        await userRepository.create({
           ...userB,
           _id: userB_id,
           key: '8f6c4c9d7f4b1c2b8e8a8d6c8a8d6c8',
@@ -222,21 +242,25 @@ describe('referral', () => {
           username: 'userb2',
           refer: 'userb2',
         })
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const user1 = await userModel.create(userA)
-        const user2 = await userModel.create(userB)
+        const user1 = await userRepository.create(userA).save()
+        const user2 = await userRepository.create(userB).save()
 
-        await referralModel.create({
-          ...referralA,
-          referrer: user1._id,
-        })
+        await referralRepository
+          .create({
+            ...referralA,
+            referrer: user1._id,
+          })
+          .save()
 
-        await referralModel.create({
-          ...referralA,
-          referrer: user2._id,
-        })
+        await referralRepository
+          .create({
+            ...referralA,
+            referrer: user2._id,
+          })
+          .save()
 
         const { statusCode, body } = await request
           .get(url)

@@ -6,6 +6,12 @@ import { Types } from 'mongoose'
 import { assetA, assetB } from './asset.payload'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
+import AppRepository from '../../app/app.repository'
+import { IAsset } from '../asset.interface'
+import { IUser } from '../../user/user.interface'
+
+const assetRepository = new AppRepository<IAsset>(assetModel)
+const userRepository = new AppRepository<IUser>(userModel)
 
 describe('asset', () => {
   const baseUrl = '/api/asset/'
@@ -13,7 +19,7 @@ describe('asset', () => {
     const url = baseUrl + 'create'
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -28,7 +34,7 @@ describe('asset', () => {
     })
     describe('given payload is not valid', () => {
       it('it should throw a 400 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -43,10 +49,10 @@ describe('asset', () => {
     })
     describe('given asset already exist', () => {
       it('should throw a 409', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        await assetModel.create(assetA)
+        await assetRepository.create(assetA).save()
 
         const { statusCode, body } = await request
           .post(url)
@@ -57,17 +63,17 @@ describe('asset', () => {
         expect(statusCode).toBe(409)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const assetCount = await assetModel.count().exec()
+        const assetCount = await assetRepository.count()
 
         expect(assetCount).toBe(1)
       })
     })
     describe('successful entry', () => {
       it('should return a 200 and asset payload', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        await assetModel.create(assetB)
+        await assetRepository.create(assetB).save()
 
         const { statusCode, body } = await request
           .post(url)
@@ -88,7 +94,7 @@ describe('asset', () => {
           },
         })
 
-        const assetCount = await assetModel.count().exec()
+        const assetCount = await assetRepository.count()
 
         expect(assetCount).toBe(2)
       })
@@ -103,7 +109,7 @@ describe('asset', () => {
           assetId: new Types.ObjectId().toString(),
           ...assetB,
         }
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -123,7 +129,7 @@ describe('asset', () => {
           ...assetB,
           name: '',
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -138,12 +144,12 @@ describe('asset', () => {
     })
     describe('given asset those not exist', () => {
       it('should throw a 404 not found', async () => {
-        await assetModel.create(assetA)
+        await assetRepository.create(assetA).save()
         const payload = {
           assetId: new Types.ObjectId().toString(),
           ...assetB,
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -155,20 +161,20 @@ describe('asset', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const assetCount = await assetModel.count().exec()
+        const assetCount = await assetRepository.count()
 
         expect(assetCount).toBe(1)
       })
     })
     describe('given asset already exist', () => {
       it('should throw a 409 not found', async () => {
-        await assetModel.create(assetB)
-        const asset = await assetModel.create(assetA)
+        await assetRepository.create(assetB).save()
+        const asset = await assetRepository.create(assetA).save()
         const payload = {
           assetId: asset._id,
           ...assetB,
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -183,12 +189,12 @@ describe('asset', () => {
     })
     describe('successful entry', () => {
       it('should return a 200 and asset payload', async () => {
-        const asset = await assetModel.create(assetA)
+        const asset = await assetRepository.create(assetA).save()
         const payload = {
           assetId: asset._id,
           ...assetB,
         }
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -202,7 +208,7 @@ describe('asset', () => {
 
         expect(body.data).toEqual({
           asset: {
-            ...asset.toObject(),
+            ...assetRepository.toObject(asset),
             ...assetB,
             __v: expect.any(Number),
             _id: expect.any(String),
@@ -211,7 +217,7 @@ describe('asset', () => {
           },
         })
 
-        const assetCount = await assetModel.count().exec()
+        const assetCount = await assetRepository.count()
 
         expect(assetCount).toBe(1)
       })
@@ -222,7 +228,7 @@ describe('asset', () => {
     const url = baseUrl
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -236,7 +242,7 @@ describe('asset', () => {
     })
     describe('given no asset available', () => {
       it('should return an empty array of asset', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -254,10 +260,10 @@ describe('asset', () => {
     })
     describe('successful entry', () => {
       it('should return a 200 and assets payload', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const asset = await assetModel.create(assetA)
+        const asset = await assetRepository.create(assetA).save()
 
         const { statusCode, body } = await request
           .get(url)
@@ -270,7 +276,7 @@ describe('asset', () => {
         expect(body.data).toEqual({
           assets: [
             {
-              ...asset.toObject(),
+              ...assetRepository.toObject(asset),
               __v: expect.any(Number),
               _id: expect.any(String),
               createdAt: expect.any(String),

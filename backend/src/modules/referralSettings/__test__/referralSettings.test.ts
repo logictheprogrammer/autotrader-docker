@@ -1,13 +1,21 @@
+import { IReferralSettings } from './../referralSettings.interface'
 import referralSettingsModel from '../../../modules/referralSettings/referralSettings.model'
 import { request } from '../../../test'
 import Encryption from '../../../utils/encryption'
+import AppRepository from '../../app/app.repository'
 import { HttpResponseStatus } from '../../http/http.enum'
 import { adminA, userA } from '../../user/__test__/user.payload'
+import { IUser } from '../../user/user.interface'
 import userModel from '../../user/user.model'
 import {
   referralSettingsA,
   referralSettingsB,
 } from './referralSettings.payload'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const referralSettingsRepository = new AppRepository<IReferralSettings>(
+  referralSettingsModel
+)
 
 describe('referral settings', () => {
   const baseUrl = '/api/referral-settings'
@@ -15,9 +23,9 @@ describe('referral settings', () => {
     const url = `${baseUrl}`
     describe('a get request', () => {
       it('should return the referral settings payload', async () => {
-        const referralSettings = await referralSettingsModel.create(
-          referralSettingsA
-        )
+        const referralSettings = await referralSettingsRepository
+          .create(referralSettingsA)
+          .save()
 
         const { statusCode, body } = await request.get(url)
 
@@ -39,7 +47,7 @@ describe('referral settings', () => {
     const url = `${baseUrl}/update`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const payload = {}
@@ -57,7 +65,7 @@ describe('referral settings', () => {
 
     describe('given input are not valid', () => {
       it('should return a 400', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -78,10 +86,10 @@ describe('referral settings', () => {
 
     describe('on success entry', () => {
       it('should return a payload', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        await referralSettingsModel.create(referralSettingsA)
+        await referralSettingsRepository.create(referralSettingsA).save()
 
         const payload = referralSettingsB
 

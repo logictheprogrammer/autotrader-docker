@@ -5,7 +5,7 @@ import cors from 'cors'
 import morgan from 'morgan'
 import helmet from 'helmet'
 import HttpMiddleware from '@/modules/http/http.middleware'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import path from 'path'
 import cookieParser from 'cookie-parser'
 import { doubleCsrfProtection } from '@/utils/csrf'
@@ -14,9 +14,10 @@ class App {
   public express: Application
 
   constructor(
-    public controllers: IServiceController[],
+    public controllers: IAppController[],
     public port: number,
     private httpMiddleware: HttpMiddleware,
+    private enabledCsrf: boolean,
     private mongoUri?: string
   ) {
     this.express = express()
@@ -45,14 +46,14 @@ class App {
     this.express.use(express.urlencoded({ extended: false }))
     this.express.use(compression())
     this.express.use(cookieParser())
-    this.express.use(doubleCsrfProtection)
+    if (this.enabledCsrf) this.express.use(doubleCsrfProtection)
     this.express.get('/api/token', (req, res, next) => {
       res.json({ token: req.csrfToken && req.csrfToken() })
     })
   }
 
-  private initialiseControllers(controllers: IServiceController[]): void {
-    controllers.forEach((controller: IServiceController) => {
+  private initialiseControllers(controllers: IAppController[]): void {
+    controllers.forEach((controller: IAppController) => {
       this.express.use('/api', controller.router)
     })
   }

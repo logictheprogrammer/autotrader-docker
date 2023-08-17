@@ -2,14 +2,14 @@ import { INotificationService } from '@/modules/notification/notification.interf
 import { Inject, Service } from 'typedi'
 import { Router, Request, Response, NextFunction } from 'express'
 import ServiceToken from '@/utils/enums/serviceToken'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 import { Types } from 'mongoose'
 
 @Service()
-class NotificationController implements IServiceController {
+class NotificationController implements IAppController {
   public path = '/notification'
   public router = Router()
 

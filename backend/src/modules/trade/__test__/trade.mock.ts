@@ -1,18 +1,26 @@
+import AppRepository from '../../app/app.repository'
+import { ITrade } from '../trade.interface'
+import tradeModel from '../trade.model'
 import TradeService from '../trade.service'
 import {
   tradeAObj,
   tradeA_id,
   tradeBObj,
   tradeB_id,
-  tradeInstance,
   tradeModelReturn,
 } from './trade.payload'
+
+const tradeRepository = new AppRepository<ITrade>(tradeModel)
 
 export const createTransactionTradeMock = jest
   .spyOn(TradeService.prototype, '_createTransaction')
   .mockResolvedValue({
     object: tradeAObj,
-    instance: tradeInstance,
+    instance: {
+      model: tradeRepository.toClass(tradeModelReturn),
+      onFailed: 'delete trade',
+      async callback() {},
+    },
   })
 
 export const updateStatusTransactionTradeMock = jest
@@ -22,7 +30,7 @@ export const updateStatusTransactionTradeMock = jest
       return Promise.resolve({
         object: tradeAObj,
         instance: {
-          model: tradeModelReturn,
+          model: tradeRepository.toClass(tradeModelReturn),
           onFailed: 'change trade status to old status',
           async callback() {},
         },
@@ -32,7 +40,7 @@ export const updateStatusTransactionTradeMock = jest
       return Promise.resolve({
         object: tradeBObj,
         instance: {
-          model: tradeModelReturn,
+          model: tradeRepository.toClass(tradeModelReturn),
           onFailed: 'change trade status to old status',
           async callback() {},
         },

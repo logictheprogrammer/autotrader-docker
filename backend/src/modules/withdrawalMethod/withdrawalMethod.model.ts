@@ -1,4 +1,4 @@
-import { Schema, Types, model } from 'mongoose'
+import { Schema, model } from 'mongoose'
 import { IWithdrawalMethod } from '@/modules/withdrawalMethod/withdrawalMethod.interface'
 
 const WithdrawalMethodSchema = new Schema(

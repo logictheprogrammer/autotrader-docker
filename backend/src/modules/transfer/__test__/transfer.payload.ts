@@ -43,6 +43,13 @@ export const transferB = {
 // @ts-ignore
 export const transferModelReturn: ITransfer = {
   save: jest.fn(),
+  toObject: jest.fn().mockReturnValue({
+    _id: 'transfer id',
+    // @ts-ignore
+    collection: {
+      name: 'transfer',
+    },
+  }),
   _id: 'transfer id',
   // @ts-ignore
   collection: {

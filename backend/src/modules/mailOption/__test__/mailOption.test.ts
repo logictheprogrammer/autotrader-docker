@@ -1,10 +1,16 @@
+import { IMailOption } from './../mailOption.interface'
 import mailOptionModel from '../../..//modules/mailOption/mailOption.model'
 import { request } from '../../../test'
 import Encryption from '../../../utils/encryption'
+import AppRepository from '../../app/app.repository'
 import { HttpResponseStatus } from '../../http/http.enum'
 import { adminA, userA } from '../../user/__test__/user.payload'
+import { IUser } from '../../user/user.interface'
 import userModel from '../../user/user.model'
 import { mailOptionA } from './mailOption.payload'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const mailOptionRepository = new AppRepository<IMailOption>(mailOptionModel)
 
 describe('mail option', () => {
   const baseUrl = '/api/mail-options/'
@@ -12,7 +18,7 @@ describe('mail option', () => {
     const url = baseUrl + 'create'
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -27,7 +33,7 @@ describe('mail option', () => {
     })
     describe('given payload is not valid', () => {
       it('it should throw a 400 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -42,10 +48,10 @@ describe('mail option', () => {
     })
     describe('given mail option already exist', () => {
       it('should throw a 409', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        await mailOptionModel.create(mailOptionA)
+        await mailOptionRepository.create(mailOptionA).save()
 
         const { statusCode, body } = await request
           .post(url)
@@ -56,14 +62,14 @@ describe('mail option', () => {
         expect(statusCode).toBe(409)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const mailOptionCount = await mailOptionModel.count().exec()
+        const mailOptionCount = await mailOptionRepository.count()
 
         expect(mailOptionCount).toBe(1)
       })
     })
     describe('successful entry', () => {
       it('should return a 200 and mailOption payload', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request

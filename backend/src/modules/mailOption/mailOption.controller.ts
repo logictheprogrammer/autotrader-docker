@@ -3,13 +3,13 @@ import ServiceToken from '@/utils/enums/serviceToken'
 import { Service, Inject } from 'typedi'
 import validate from '@/modules/mailOption/mailOption.validation'
 import { NextFunction, Request, Response, Router } from 'express'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 
 @Service()
-export default class MailOptionController implements IServiceController {
+export default class MailOptionController implements IAppController {
   public path = '/mail-options'
   public router = Router()
 

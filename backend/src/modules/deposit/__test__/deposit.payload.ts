@@ -17,6 +17,8 @@ import {
 } from '../../user/__test__/user.payload'
 import { DepositStatus } from '../deposit.enum'
 import { Types } from 'mongoose'
+import AppRepository from '../../app/app.repository'
+import depositModel from '../deposit.model'
 
 export const depositA_id = new Types.ObjectId('1145de5d5b1f5b3a5c1b539a')
 
@@ -54,10 +56,19 @@ export const depositC = {
   status: DepositStatus.PENDING,
 }
 
+const id1 = new Types.ObjectId()
+
 // @ts-ignore
 export const depositModelReturn: IDeposit = {
   save: jest.fn(),
-  _id: new Types.ObjectId(),
+  toObject: jest.fn().mockReturnValue({
+    _id: id1,
+    // @ts-ignore
+    collection: {
+      name: 'deposit',
+    },
+  }),
+  _id: id1,
   // @ts-ignore
   collection: {
     name: 'deposit',
@@ -76,10 +87,4 @@ export const depositBObj: IDepositObject = {
   ...depositB,
   // @ts-ignore
   _id: depositB_id,
-}
-
-export const depositInstance = {
-  model: depositModelReturn,
-  onFailed: 'delete deposit',
-  async callback() {},
 }

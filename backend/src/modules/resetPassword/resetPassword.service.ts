@@ -6,14 +6,16 @@ import {
 import resetPasswordModel from '@/modules/resetPassword/resetPassword.model'
 import { Service } from 'typedi'
 import { IUser } from '@/modules/user/user.interface'
-import { AppConstants, SiteConstants } from '@/modules/config/constants'
-import ServiceQuery from '@/modules/service/service.query'
+import { AppConstants } from '@/modules/app/app.constants'
+import { SiteConstants } from '@/modules/config/config.constants'
 import HttpException from '@/modules/http/http.exception'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
+import AppRepository from '../app/app.repository'
+import AppCrypto from '../app/app.crypto'
 
 @Service()
 class resetPasswordService implements IResetPasswordService {
-  private resetPasswordModel = new ServiceQuery<IResetPassword>(
+  private resetPasswordRepository = new AppRepository<IResetPassword>(
     resetPasswordModel
   )
 
@@ -23,21 +25,25 @@ class resetPasswordService implements IResetPasswordService {
     const expires = new Date().getTime() + AppConstants.resetPasswordExpiresTime
     const resetLink = `${SiteConstants.frontendLink}reset-password/${key}/${token}`
 
-    await this.resetPasswordModel.self.deleteMany({ key })
-    await this.resetPasswordModel.self.create({
-      key,
-      token,
-      expires,
-    })
+    await this.resetPasswordRepository.deleteMany({ key })
+    await this.resetPasswordRepository
+      .create({
+        key,
+        token: await AppCrypto.setHash(token),
+        expires,
+      })
+      .save()
 
     return resetLink
   }
 
   public verify = async (key: string, verifyToken: string): Promise<void> => {
     try {
-      const resetPassword = await this.resetPasswordModel.findOne({
-        key,
-      })
+      const resetPassword = await this.resetPasswordRepository
+        .findOne({
+          key,
+        })
+        .collect()
 
       if (!resetPassword)
         throw new HttpException(422, 'Invalid or expired token')
@@ -49,15 +55,12 @@ class resetPasswordService implements IResetPasswordService {
         throw new HttpException(422, 'Invalid or expired token')
       }
 
-      if (!(await resetPassword.isValidToken(verifyToken)))
+      if (!(await AppCrypto.isValidHash(verifyToken, resetPassword.token)))
         throw new HttpException(422, 'Invalid or expired token')
 
       resetPassword.deleteOne()
     } catch (err) {
-      throw new ServiceException(
-        err,
-        'Unable to change password, please try again'
-      )
+      throw new AppException(err, 'Unable to change password, please try again')
     }
   }
 }

@@ -11,31 +11,31 @@ import {
 } from '@/modules/notification/notification.enum'
 import { Types } from 'mongoose'
 import { IUserObject } from '@/modules/user/user.interface'
-import ServiceQuery from '@/modules/service/service.query'
 import { THttpResponse } from '@/modules/http/http.type'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import HttpException from '@/modules/http/http.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
-import { IServiceObject } from '@/modules/service/service.interface'
-import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
+import { IAppObject } from '@/modules/app/app.interface'
+import { UserEnvironment } from '@/modules/user/user.enum'
 import { NotificationStatus } from './notification.type'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class NotificationService implements INotificationService {
-  private notificationModel = new ServiceQuery<INotification>(notificationModel)
+  private notificationRepository = new AppRepository<INotification>(
+    notificationModel
+  )
 
   private find = async (
     notificationId: string | Types.ObjectId,
     fromAllAccounts: boolean = true,
     userId?: Types.ObjectId
   ): Promise<INotification> => {
-    const notification = await this.notificationModel.findById(
-      notificationId,
-      fromAllAccounts,
-      userId
-    )
+    const notification = await this.notificationRepository
+      .findById(notificationId, fromAllAccounts, userId)
+      .collect()
 
     if (!notification) throw new HttpException(404, 'Notification not found')
 
@@ -45,14 +45,14 @@ class NotificationService implements INotificationService {
   public async _createTransaction(
     message: string,
     categoryName: NotificationCategory,
-    categoryObject: IServiceObject,
+    categoryObject: IAppObject,
     forWho: NotificationForWho,
     status: NotificationStatus,
     environment: UserEnvironment,
     user?: IUserObject
   ): TTransaction<INotificationObject, INotification> {
     try {
-      const notification = new this.notificationModel.self({
+      const notification = this.notificationRepository.create({
         user: user ? user._id : undefined,
         userObject: user,
         message,
@@ -64,18 +64,20 @@ class NotificationService implements INotificationService {
         environment,
       })
 
+      const unsavedNotification = notification.collectUnsaved()
+
       return {
-        object: notification.toObject(),
+        object: unsavedNotification,
         instance: {
           model: notification,
-          onFailed: `Delete the notification with an id of (${notification._id})`,
+          onFailed: `Delete the notification with an id of (${unsavedNotification._id})`,
           async callback() {
             await notification.deleteOne()
           },
         },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to send notification, please try again'
       )
@@ -85,7 +87,7 @@ class NotificationService implements INotificationService {
   public async create(
     message: string,
     categoryName: NotificationCategory,
-    categoryObject: IServiceObject,
+    categoryObject: IAppObject,
     forWho: NotificationForWho,
     status: NotificationStatus,
     environment: UserEnvironment,
@@ -109,7 +111,7 @@ class NotificationService implements INotificationService {
 
       return instance
     } catch (err) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to send notification, please try again'
       )
@@ -136,7 +138,7 @@ class NotificationService implements INotificationService {
         data: { notification },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete notification, please try again'
       )
@@ -160,7 +162,7 @@ class NotificationService implements INotificationService {
         data: { notification },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to read notification, please try again'
       )
@@ -185,7 +187,7 @@ class NotificationService implements INotificationService {
         data: { notification },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch notification, please try again'
       )
@@ -198,13 +200,14 @@ class NotificationService implements INotificationService {
     userId?: Types.ObjectId
   ): THttpResponse<{ notifications: INotification[] }> => {
     try {
-      const notifications = await this.notificationModel
+      const notifications = await this.notificationRepository
         .find({ environment }, fromAllAccounts, {
           user: userId,
         })
         .select('-userObject')
+        .collectAll()
 
-      await this.notificationModel.populate(
+      await this.notificationRepository.populate(
         notifications,
         'user',
         'userObject',
@@ -217,7 +220,7 @@ class NotificationService implements INotificationService {
         data: { notifications },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch notifications, please try again'
       )

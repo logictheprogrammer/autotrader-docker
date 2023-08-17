@@ -11,7 +11,7 @@ import {
 import { FailedTransactionStatus } from '@/modules/failedTransaction/failedTransaction.enum'
 import ServiceToken from '@/utils/enums/serviceToken'
 import { ISendMailService } from '@/modules/sendMail/sendMail.interface'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import { Document } from 'mongoose'
 
@@ -84,7 +84,7 @@ class TransactionManagerService<T extends Document>
             failedTransactionsResults.push(transacton)
           }
 
-          // webhook implementation
+          // websocket implementation
           // -----
           const response = {
             status: HttpResponseStatus.SUCCESS,
@@ -97,7 +97,7 @@ class TransactionManagerService<T extends Document>
         }
       }
 
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to process transactions, please try again later'
       )

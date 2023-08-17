@@ -1,11 +1,11 @@
 import { Service } from 'typedi'
 import { NextFunction, Request, Response, Router } from 'express'
-import { SiteConstants } from '@/modules/config/constants'
-import { IServiceController } from '@/modules/service/service.interface'
+import { SiteConstants } from '@/modules/config/config.constants'
+import { IAppController } from '@/modules/app/app.interface'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 
 @Service()
-export default class ConfigController implements IServiceController {
+export default class ConfigController implements IAppController {
   public path = '/configurations'
   public router = Router()
 

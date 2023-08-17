@@ -1,8 +1,12 @@
+import AppRepository from '../../../modules/app/app.repository'
+import { ICurrency } from './../currency.interface'
 import currencyModel from '../../../modules/currency/currency.model'
 import { request } from '../../../test'
 import { currencyA } from './currency.payload'
 import { currencyService } from '../../../setup'
 import { Types } from 'mongoose'
+
+const currencyRepository = new AppRepository<ICurrency>(currencyModel)
 
 describe('currency', () => {
   request
@@ -17,11 +21,11 @@ describe('currency', () => {
 
     describe('given currency exist', () => {
       it('should return the currency payload', async () => {
-        const currency = await currencyModel.create(currencyA)
+        const currency = await currencyRepository.create(currencyA).save()
 
         const result = await currencyService.get(currency._id)
 
-        expect(result).toEqual(currency.toObject())
+        expect(result).toEqual(currencyRepository.toObject(currency))
       })
     })
   })

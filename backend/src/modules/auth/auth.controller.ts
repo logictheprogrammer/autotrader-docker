@@ -3,15 +3,15 @@ import { Service, Inject } from 'typedi'
 import validate from '@/modules/auth/auth.validation'
 import { UserRole, UserStatus } from '@/modules/user/user.enum'
 import ServiceToken from '@/utils/enums/serviceToken'
-import { AppConstants } from '@/modules/config/constants'
+import { AppConstants } from '@/modules/app/app.constants'
 import { IAuthService } from '@/modules/auth/auth.interface'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '../http/http.enum'
 
 @Service()
-class AuthController implements IServiceController {
+class AuthController implements IAppController {
   public path = '/authentication'
   public router = Router()
 

@@ -38,17 +38,17 @@ import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { THttpResponse } from '@/modules/http/http.type'
 import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
-import ServiceQuery from '@/modules/service/service.query'
+import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import FormatNumber from '@/utils/formats/formatNumber'
 import { Types } from 'mongoose'
 import { TUpdateInvestmentStatus } from './investment.type'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class InvestmentService implements IInvestmentService {
-  private investmentModel = new ServiceQuery<IInvestment>(investmentModel)
-  private tradeModel = new ServiceQuery<ITrade>(tradeModel)
+  private investmentRepository = new AppRepository<IInvestment>(investmentModel)
+  private tradeRepository = new AppRepository<ITrade>(tradeModel)
 
   public constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
@@ -69,11 +69,9 @@ class InvestmentService implements IInvestmentService {
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<IInvestment> {
-    const investment = await this.investmentModel.findById(
-      investmentId,
-      fromAllAccounts,
-      userId
-    )
+    const investment = await this.investmentRepository
+      .findById(investmentId, fromAllAccounts, userId)
+      .collect()
 
     if (!investment) throw new HttpException(404, 'Investment plan not found')
 
@@ -81,7 +79,7 @@ class InvestmentService implements IInvestmentService {
   }
 
   public async get(investmentId: Types.ObjectId): Promise<IInvestmentObject> {
-    return (await this.find(investmentId)).toObject()
+    return this.investmentRepository.toObject(await this.find(investmentId))
   }
 
   public async _fundTransaction(
@@ -100,14 +98,18 @@ class InvestmentService implements IInvestmentService {
       investment._id
     })`
 
+    const newInvestment = this.investmentRepository.toClass(investment)
+
+    const unsavedInvestment = newInvestment.collectUnsaved()
+
     return {
-      object: investment.toObject(),
+      object: unsavedInvestment,
       instance: {
-        model: investment,
+        model: newInvestment,
         onFailed,
         callback: async () => {
-          investment.balance -= amount
-          await investment.save()
+          unsavedInvestment.balance -= amount
+          await this.investmentRepository.save(unsavedInvestment)
         },
       },
     }
@@ -120,7 +122,7 @@ class InvestmentService implements IInvestmentService {
     account: UserAccount,
     environment: UserEnvironment
   ): TTransaction<IInvestmentObject, IInvestment> {
-    const investment = new this.investmentModel.self({
+    const investment = this.investmentRepository.create({
       plan: plan._id,
       planObject: plan,
       user: user._id,
@@ -142,11 +144,13 @@ class InvestmentService implements IInvestmentService {
       status: InvestmentStatus.RUNNING,
     })
 
+    const unsavedInvestment = investment.collectUnsaved()
+
     return {
-      object: investment.toObject(),
+      object: unsavedInvestment,
       instance: {
         model: investment,
-        onFailed: `Delete the investment with an id of (${investment._id})`,
+        onFailed: `Delete the investment with an id of (${unsavedInvestment._id})`,
         async callback() {
           await investment.deleteOne()
         },
@@ -188,14 +192,18 @@ class InvestmentService implements IInvestmentService {
 
     investment.status = status
 
+    const newInvestment = this.investmentRepository.toClass(investment)
+
+    const unsavedInvestment = newInvestment.collectUnsaved()
+
     return {
-      object: investment.toObject(),
+      object: unsavedInvestment,
       instance: {
-        model: investment,
-        onFailed: `Set the status of the investment with an id of (${investment._id}) to (${oldStatus})`,
-        async callback() {
-          investment.status = oldStatus
-          await investment.save()
+        model: newInvestment,
+        onFailed: `Set the status of the investment with an id of (${unsavedInvestment._id}) to (${oldStatus})`,
+        callback: async () => {
+          unsavedInvestment.status = oldStatus
+          await this.investmentRepository.save(unsavedInvestment)
         },
       },
     }
@@ -222,9 +230,7 @@ class InvestmentService implements IInvestmentService {
           )} and ${FormatNumber.toDollar(plan.maxAmount)}.`
         )
 
-      const transactionInstances: ITransactionInstance<
-        IInvestment | INotification | IReferral | ITransaction | IUser
-      >[] = []
+      const transactionInstances: ITransactionInstance<any>[] = []
 
       const { instance: userInstance, object: user } =
         await this.userService.fund(userId, account, amount)
@@ -294,10 +300,10 @@ class InvestmentService implements IInvestmentService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Investment has been registered successfully',
-        data: { investment: investmentInstance.model },
+        data: { investment: investmentInstance.model.collectUnsaved() },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to register this investment, please try again'
       )
@@ -308,7 +314,10 @@ class InvestmentService implements IInvestmentService {
     investmentId: Types.ObjectId,
     status: InvestmentStatus,
     sendNotice: boolean = true
-  ): Promise<{ model: IInvestment; instances: TUpdateInvestmentStatus }> {
+  ): Promise<{
+    model: AppRepository<IInvestment>
+    instances: TUpdateInvestmentStatus
+  }> {
     const transactionInstances: TUpdateInvestmentStatus = []
 
     const { object: investment, instance: investmentInstance } =
@@ -394,7 +403,10 @@ class InvestmentService implements IInvestmentService {
       }
     }
 
-    return { model: investmentInstance.model, instances: transactionInstances }
+    return {
+      model: investmentInstance.model,
+      instances: transactionInstances,
+    }
   }
 
   public forceUpdateStatus = async (
@@ -409,10 +421,10 @@ class InvestmentService implements IInvestmentService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { investment: result.model },
+        data: { investment: result.model.collectUnsaved() },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update this investment  status, please try again'
       )
@@ -443,7 +455,7 @@ class InvestmentService implements IInvestmentService {
         data: { investment },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fund this investment, please try again'
       )
@@ -467,7 +479,7 @@ class InvestmentService implements IInvestmentService {
         data: { investment },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to refill this investment, please try again'
       )
@@ -483,9 +495,9 @@ class InvestmentService implements IInvestmentService {
       if (investment.status !== InvestmentStatus.COMPLETED)
         throw new HttpException(400, 'Investment has not been settled yet')
 
-      await investment.deleteOne()
+      await this.investmentRepository.deleteOne({ _id: investment._id })
 
-      await this.tradeModel.self.deleteOne({ investment: investmentId })
+      await this.tradeRepository.deleteMany({ investment: investmentId })
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -493,7 +505,7 @@ class InvestmentService implements IInvestmentService {
         data: { investment },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete this investment, please try again'
       )
@@ -506,13 +518,14 @@ class InvestmentService implements IInvestmentService {
     userId: Types.ObjectId
   ): THttpResponse<{ investments: IInvestment[] }> => {
     try {
-      const investments = await this.investmentModel
+      const investments = await this.investmentRepository
         .find({ environment }, all, {
           user: userId,
         })
         .select('-userObject -plan')
+        .collectAll()
 
-      await this.investmentModel.populate(
+      await this.investmentRepository.populate(
         investments,
         'user',
         'userObject',
@@ -525,7 +538,7 @@ class InvestmentService implements IInvestmentService {
         data: { investments },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch investment history, please try again'
       )

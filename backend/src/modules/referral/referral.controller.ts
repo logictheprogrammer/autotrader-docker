@@ -2,13 +2,13 @@ import ServiceToken from '@/utils/enums/serviceToken'
 import { NextFunction, Request, Response, Router } from 'express'
 import { Inject, Service } from 'typedi'
 import { IReferralService } from '@/modules/referral/referral.interface'
-import { IServiceController } from '../service/service.interface'
+import { IAppController } from '../app/app.interface'
 import HttpMiddleware from '../http/http.middleware'
 import { UserRole } from '../user/user.enum'
 import HttpException from '../http/http.exception'
 
 @Service()
-class ReferralController implements IServiceController {
+class ReferralController implements IAppController {
   public path = '/referral'
   public router = Router()
 

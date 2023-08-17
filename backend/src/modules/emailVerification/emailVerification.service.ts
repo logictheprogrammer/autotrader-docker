@@ -6,14 +6,16 @@ import {
 import emailVerificationModel from '@/modules/emailVerification/emailVerification.model'
 import { Service } from 'typedi'
 import { IUser } from '@/modules/user/user.interface'
-import { AppConstants, SiteConstants } from '@/modules/config/constants'
-import ServiceQuery from '@/modules/service/service.query'
+import { AppConstants } from '@/modules/app/app.constants'
+import { SiteConstants } from '@/modules/config/config.constants'
 import HttpException from '@/modules/http/http.exception'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
+import AppRepository from '../app/app.repository'
+import AppCrypto from '../app/app.crypto'
 
 @Service()
 class EmailVerificationService implements IEmailVerificationService {
-  private emailVerificationModel = new ServiceQuery<IEmailVerification>(
+  private emailVerificationRepository = new AppRepository<IEmailVerification>(
     emailVerificationModel
   )
 
@@ -22,22 +24,26 @@ class EmailVerificationService implements IEmailVerificationService {
     const token = crypto.randomBytes(32).toString('hex')
     const expires = new Date().getTime() + AppConstants.verifyEmailExpiresTime
     const verifyLink = `${SiteConstants.frontendLink}verify-email/${key}/${token}`
-    await this.emailVerificationModel.self.deleteMany({ key })
+    await this.emailVerificationRepository.deleteMany({ key })
 
-    await this.emailVerificationModel.self.create({
-      key,
-      token,
-      expires,
-    })
+    await this.emailVerificationRepository
+      .create({
+        key,
+        token: await AppCrypto.setHash(token),
+        expires,
+      })
+      .save()
 
     return verifyLink
   }
 
   public verify = async (key: string, verifyToken: string): Promise<void> => {
     try {
-      const emailVerification = await this.emailVerificationModel.findOne({
-        key,
-      })
+      const emailVerification = await this.emailVerificationRepository
+        .findOne({
+          key,
+        })
+        .collect()
 
       if (!emailVerification)
         throw new HttpException(422, 'Invalid or expired token')
@@ -49,15 +55,12 @@ class EmailVerificationService implements IEmailVerificationService {
         throw new HttpException(422, 'Invalid or expired token')
       }
 
-      if (!(await emailVerification.isValidToken(verifyToken)))
+      if (!(await AppCrypto.isValidHash(verifyToken, emailVerification.token)))
         throw new HttpException(422, 'Invalid or expired token')
 
       emailVerification.deleteOne()
     } catch (err) {
-      throw new ServiceException(
-        err,
-        'Unable to verify email, please try again'
-      )
+      throw new AppException(err, 'Unable to verify email, please try again')
     }
   }
 }

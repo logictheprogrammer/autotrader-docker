@@ -6,26 +6,24 @@ import {
 } from '@/modules/currency/currency.interface'
 import currencyModel from '@/modules/currency/currency.model'
 import { Types } from 'mongoose'
-import ServiceQuery from '@/modules/service/service.query'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class CurrencyService implements ICurrencyService {
-  private currencyModel = new ServiceQuery<ICurrency>(currencyModel)
+  private currencyRepository = new AppRepository<ICurrency>(currencyModel)
 
   private find = async (
     currencyId: Types.ObjectId,
     fromAllAccounts: boolean = true,
     userId?: Types.ObjectId
   ): Promise<ICurrency> => {
-    const currency = await this.currencyModel.findById(
-      currencyId,
-      fromAllAccounts,
-      userId
-    )
+    const currency = await this.currencyRepository
+      .findById(currencyId, fromAllAccounts, userId)
+      .collect()
 
     if (!currency) throw new HttpException(404, 'Currency not found')
 
@@ -38,25 +36,28 @@ class CurrencyService implements ICurrencyService {
     logo: string
   ): THttpResponse<{ currency: ICurrency }> => {
     try {
-      await this.currencyModel.ifExist(
+      await this.currencyRepository.ifExist(
         {
           $or: [{ name }, { symbol }],
         },
         'Currency already exist'
       )
 
-      const currency = await this.currencyModel.self.create({
-        name,
-        symbol,
-        logo,
-      })
+      const currency = await this.currencyRepository
+        .create({
+          name,
+          symbol,
+          logo,
+        })
+        .save()
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Currency added successfully',
         data: { currency },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to save new currency, please try again'
       )
@@ -67,18 +68,15 @@ class CurrencyService implements ICurrencyService {
     try {
       const currency = await this.find(currencyId)
 
-      return currency.toObject()
+      return this.currencyRepository.toObject(currency)
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to get currency, please try again'
-      )
+      throw new AppException(err, 'Unable to get currency, please try again')
     }
   }
 
   public fetchAll = async (): THttpResponse<{ currencies: ICurrency[] }> => {
     try {
-      const currencies = await this.currencyModel.find()
+      const currencies = await this.currencyRepository.find().collectAll()
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -86,10 +84,7 @@ class CurrencyService implements ICurrencyService {
         data: { currencies },
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to fetch currency, please try again'
-      )
+      throw new AppException(err, 'Unable to fetch currency, please try again')
     }
   }
 }

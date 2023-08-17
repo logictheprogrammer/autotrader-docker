@@ -2,9 +2,9 @@ import { Document, Types } from 'mongoose'
 import { UserAccount, UserRole, UserStatus } from '@/modules/user/user.enum'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { THttpResponse } from '@/modules/http/http.type'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 
-export interface IUserObject extends IServiceObject {
+export interface IUserObject extends IAppObject {
   key: string
   email: string
   username: string
@@ -24,6 +24,9 @@ export interface IUserObject extends IServiceObject {
 }
 
 export interface IUser extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   key: string
   email: string
   username: string

@@ -5,11 +5,11 @@ import {
   IDepositMethodObject,
 } from '@/modules/depositMethod/depositMethod.interface'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 
-export interface IDepositObject extends IServiceObject {
+export interface IDepositObject extends IAppObject {
   depositMethod: IDepositMethod['_id']
   depositMethodObject: IDepositMethodObject
   user: IUser['_id']
@@ -20,6 +20,9 @@ export interface IDepositObject extends IServiceObject {
 }
 
 export interface IDeposit extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   depositMethod: IDepositMethod['_id']
   depositMethodObject: IDepositMethodObject
   user: IUser['_id']

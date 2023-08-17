@@ -9,15 +9,25 @@ import withdrawalModel from '../withdrawal.model'
 import { withdrawalA } from './withdrawal.payload'
 import { Types } from 'mongoose'
 import { UserAccount } from '../../user/user.enum'
+import AppRepository from '../../app/app.repository'
+import { IWithdrawal } from '../withdrawal.interface'
+import { IWithdrawalMethod } from '../../withdrawalMethod/withdrawalMethod.interface'
+import { IUser } from '../../user/user.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const withdrawalRepository = new AppRepository<IWithdrawal>(withdrawalModel)
+const withdrawalMethodRepository = new AppRepository<IWithdrawalMethod>(
+  withdrawalMethodModel
+)
 
 describe('withdrawal', () => {
   describe('_createTransaction', () => {
     it('should return a withdrawal transaction instance', async () => {
       request
-      const user = await userModel.create(userA)
-      const withdrawalMethod = await withdrawalMethodModel.create(
-        withdrawalMethodA
-      )
+      const user = await userRepository.create(userA).save()
+      const withdrawalMethod = await withdrawalMethodRepository
+        .create(withdrawalMethodA)
+        .save()
       const amount = 100
       const address = 'address'
 
@@ -37,11 +47,13 @@ describe('withdrawal', () => {
       expect(withdrawalInstance.object.status).toBe(WithdrawalStatus.PENDING)
       expect(withdrawalInstance.object.user).toEqual(user._id)
       // @ts-ignore
-      expect(withdrawalInstance.instance.model.withdrawalMethod).toEqual(
-        withdrawalMethod._id
-      )
+      expect(
+        withdrawalInstance.instance.model.collectUnsaved().withdrawalMethod
+      ).toEqual(withdrawalMethod._id)
       expect(withdrawalInstance.instance.onFailed).toContain(
-        `Delete the withdrawal with an id of (${withdrawalInstance.instance.model._id})`
+        `Delete the withdrawal with an id of (${
+          withdrawalInstance.instance.model.collectUnsaved()._id
+        })`
       )
     })
   })
@@ -49,10 +61,12 @@ describe('withdrawal', () => {
     describe('given withdrawal id those not exist', () => {
       it('should throw a 404 error', async () => {
         request
-        const withdrawal = await withdrawalModel.create({
-          ...withdrawalA,
-          status: WithdrawalStatus.CANCELLED,
-        })
+        const withdrawal = await withdrawalRepository
+          .create({
+            ...withdrawalA,
+            status: WithdrawalStatus.CANCELLED,
+          })
+          .save()
 
         expect(withdrawal.status).toBe(WithdrawalStatus.CANCELLED)
 
@@ -67,10 +81,12 @@ describe('withdrawal', () => {
     describe('given the status has already been settle', () => {
       it('should throw a 400 error', async () => {
         request
-        const withdrawal = await withdrawalModel.create({
-          ...withdrawalA,
-          status: WithdrawalStatus.CANCELLED,
-        })
+        const withdrawal = await withdrawalRepository
+          .create({
+            ...withdrawalA,
+            status: WithdrawalStatus.CANCELLED,
+          })
+          .save()
 
         expect(withdrawal.status).toBe(WithdrawalStatus.CANCELLED)
 
@@ -85,7 +101,7 @@ describe('withdrawal', () => {
     describe('given withdrawal was cancelled', () => {
       it('should return a withdrawal transaction instance with cancelled status', async () => {
         request
-        const withdrawal = await withdrawalModel.create(withdrawalA)
+        const withdrawal = await withdrawalRepository.create(withdrawalA).save()
 
         expect(withdrawal.status).toBe(WithdrawalStatus.PENDING)
 
@@ -100,14 +116,16 @@ describe('withdrawal', () => {
         )
 
         expect(withdrawalInstance.instance.onFailed).toContain(
-          `Set the status of the withdrawal with an id of (${withdrawalInstance.instance.model._id}) to (${WithdrawalStatus.PENDING})`
+          `Set the status of the withdrawal with an id of (${
+            withdrawalInstance.instance.model.collectUnsaved()._id
+          }) to (${WithdrawalStatus.PENDING})`
         )
       })
     })
     describe('given withdrawal was approved', () => {
       it('should return a withdrawal transaction instance with approved status', async () => {
         request
-        const withdrawal = await withdrawalModel.create(withdrawalA)
+        const withdrawal = await withdrawalRepository.create(withdrawalA).save()
 
         expect(withdrawal.status).toBe(WithdrawalStatus.PENDING)
 
@@ -120,7 +138,9 @@ describe('withdrawal', () => {
         expect(withdrawalInstance.object.status).toBe(WithdrawalStatus.APPROVED)
 
         expect(withdrawalInstance.instance.onFailed).toContain(
-          `Set the status of the withdrawal with an id of (${withdrawalInstance.instance.model._id}) to (${WithdrawalStatus.PENDING})`
+          `Set the status of the withdrawal with an id of (${
+            withdrawalInstance.instance.model.collectUnsaved()._id
+          }) to (${WithdrawalStatus.PENDING})`
         )
       })
     })

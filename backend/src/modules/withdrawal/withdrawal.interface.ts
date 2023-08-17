@@ -6,11 +6,11 @@ import {
 } from '@/modules/withdrawalMethod/withdrawalMethod.interface'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { THttpResponse } from '@/modules/http/http.type'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserAccount } from '@/modules/user/user.enum'
 
-export interface IWithdrawalObject extends IServiceObject {
+export interface IWithdrawalObject extends IAppObject {
   withdrawalMethod: IWithdrawalMethod['_id']
   withdrawalMethodObject: IWithdrawalMethodObject
   user: IUser['_id']
@@ -23,6 +23,9 @@ export interface IWithdrawalObject extends IServiceObject {
 }
 
 export interface IWithdrawal extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   withdrawalMethod: IWithdrawalMethod['_id']
   withdrawalMethodObject: IWithdrawalMethodObject
   user: IUser['_id']

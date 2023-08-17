@@ -6,16 +6,17 @@ import {
   IInvestmentObject,
 } from '@/modules/investment/investment.interface'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
+import { UserEnvironment } from '@/modules/user/user.enum'
 import { Types } from 'mongoose'
 import { AssetType } from '../asset/asset.enum'
 import { IPair, IPairObject } from '../pair/pair.interface'
 import { TUpdateTradeStatus } from './trade.type'
+import AppRepository from '../app/app.repository'
 
-export interface ITradeObject extends IServiceObject {
+export interface ITradeObject extends IAppObject {
   investment: IInvestment['_id']
   investmentObject: IInvestmentObject
   user: IUser['_id']
@@ -40,6 +41,9 @@ export interface ITradeObject extends IServiceObject {
 }
 
 export interface ITrade extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   investment: IInvestment['_id']
   investmentObject: IInvestmentObject
   user: IUser['_id']
@@ -119,7 +123,7 @@ export interface ITradeService {
     tradeId: Types.ObjectId,
     status: TradeStatus,
     price?: number
-  ): Promise<{ model: ITrade; instances: TUpdateTradeStatus }>
+  ): Promise<{ model: AppRepository<ITrade>; instances: TUpdateTradeStatus }>
 
   forceUpdateStatus(
     tradeId: Types.ObjectId,

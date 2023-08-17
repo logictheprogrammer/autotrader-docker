@@ -9,7 +9,11 @@ import { adminA, adminB, editedUser, userA, userB } from './user.payload'
 import { sendMailMock } from '../../mail/__test__/mail.mock'
 import renderFile from '../../../utils/renderFile'
 import ParseString from '../../../utils/parsers/parseString'
-import { SiteConstants } from '../../config/constants'
+import { SiteConstants } from '../../config/config.constants'
+import AppRepository from '../../app/app.repository'
+import { IUser } from '../user.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
 
 describe('users', () => {
   const baseUrl = '/api/users'
@@ -19,7 +23,7 @@ describe('users', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const url = `${baseUrl}/userId/force-fund-user`
 
@@ -39,8 +43,8 @@ describe('users', () => {
           account: UserAccount.MAIN_BALANCE,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/userId/force-fund-user`
 
@@ -61,8 +65,8 @@ describe('users', () => {
           amount: 1000,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${new Types.ObjectId().toString()}/force-fund-user`
 
@@ -83,8 +87,8 @@ describe('users', () => {
           amount: -(userA.mainBalance + 10),
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${user._id}/force-fund-user`
 
@@ -110,8 +114,8 @@ describe('users', () => {
           amount: 1000,
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${user._id}/force-fund-user`
 
@@ -146,18 +150,17 @@ describe('users', () => {
     describe('given invalid inputs', () => {
       it('should throw a 400 error', async () => {
         const payload = {
-          name: editedUser.name,
           username: editedUser.username,
         }
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const { statusCode, body } = await request
           .put(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('"country" is required')
+        expect(body.message).toBe('"name" is required')
         expect(statusCode).toBe(400)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
@@ -170,8 +173,8 @@ describe('users', () => {
           country: editedUser.country,
         }
 
-        await userModel.create(userB)
-        const user = await userModel.create(userA)
+        await userRepository.create(userB).save()
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const { statusCode, body } = await request
           .put(url)
@@ -188,10 +191,9 @@ describe('users', () => {
         const payload = {
           name: editedUser.name,
           username: editedUser.username,
-          country: editedUser.country,
         }
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const { statusCode, body } = await request
           .put(url)
@@ -204,7 +206,6 @@ describe('users', () => {
 
         expect(body.data.user.name).toBe(payload.name)
         expect(body.data.user.username).toBe(payload.username)
-        expect(body.data.user.country).toBe(payload.country)
       })
     })
   })
@@ -214,7 +215,7 @@ describe('users', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const url = `${baseUrl}/userId/update-user-profile`
 
@@ -231,12 +232,11 @@ describe('users', () => {
     describe('given inputs are incorrect', () => {
       it('should return a 400 error', async () => {
         const payload = {
-          name: editedUser.name,
           username: editedUser.username,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/userId/update-user-profile`
 
@@ -245,7 +245,7 @@ describe('users', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('"country" is required')
+        expect(body.message).toBe('"name" is required')
         expect(statusCode).toBe(400)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
@@ -258,8 +258,8 @@ describe('users', () => {
           country: editedUser.country,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${new Types.ObjectId().toString()}/update-user-profile`
 
@@ -281,9 +281,9 @@ describe('users', () => {
           country: editedUser.country,
         }
 
-        await userModel.create(userB)
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        await userRepository.create(userB).save()
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${user._id}/update-user-profile`
 
@@ -302,11 +302,10 @@ describe('users', () => {
         const payload = {
           name: editedUser.name,
           username: editedUser.username,
-          country: editedUser.country,
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${user._id}/update-user-profile`
 
@@ -321,7 +320,6 @@ describe('users', () => {
 
         expect(body.data.user.name).toBe(payload.name)
         expect(body.data.user.username).toBe(payload.username)
-        expect(body.data.user.country).toBe(payload.country)
       })
     })
   })
@@ -331,7 +329,7 @@ describe('users', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const url = `${baseUrl}/userId/update-user-email`
 
@@ -351,8 +349,8 @@ describe('users', () => {
           //   email: editedUser.email,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/userId/update-user-email`
 
@@ -372,8 +370,8 @@ describe('users', () => {
           email: editedUser.email,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${new Types.ObjectId().toString()}/update-user-email`
 
@@ -393,9 +391,9 @@ describe('users', () => {
           email: userB.email,
         }
 
-        await userModel.create(userB)
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        await userRepository.create(userB).save()
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${user._id}/update-user-email`
 
@@ -415,8 +413,8 @@ describe('users', () => {
           email: editedUser.email,
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${user._id}/update-user-email`
 
@@ -439,7 +437,7 @@ describe('users', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const url = `${baseUrl}/userId/update-user-status`
 
@@ -459,8 +457,8 @@ describe('users', () => {
           //   status: UserStatus.SUSPENDED,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/userId/update-user-status`
 
@@ -480,8 +478,8 @@ describe('users', () => {
           status: UserStatus.SUSPENDED,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${new Types.ObjectId().toString()}/update-user-status`
 
@@ -501,9 +499,9 @@ describe('users', () => {
           status: UserStatus.SUSPENDED,
         }
 
-        // const user = await userModel.create(userA)
-        const admin2 = await userModel.create(adminB)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin2 = await userRepository.create(adminB).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${admin2._id}/update-user-status`
 
@@ -523,8 +521,8 @@ describe('users', () => {
           status: UserStatus.SUSPENDED,
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${user._id}/update-user-status`
 
@@ -547,7 +545,7 @@ describe('users', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const url = `${baseUrl}/userId/delete-user`
 
@@ -563,8 +561,8 @@ describe('users', () => {
     })
     describe('given user those not exist', () => {
       it('should return a 404 error', async () => {
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        // const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${new Types.ObjectId().toString()}/delete-user`
 
@@ -579,10 +577,10 @@ describe('users', () => {
     })
     describe('given user is an admin', () => {
       it('should return a 400 error', async () => {
-        // const user = await userModel.create(userA)
+        // const user = await userRepository.create(userA).save()
 
-        const admin2 = await userModel.create(adminB)
-        const admin = await userModel.create(adminA)
+        const admin2 = await userRepository.create(adminB).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${admin2._id}/delete-user`
 
@@ -597,8 +595,8 @@ describe('users', () => {
     })
     describe('on success entry', () => {
       it('should return a 200', async () => {
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${user._id}/delete-user`
 
@@ -610,7 +608,7 @@ describe('users', () => {
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
-        const userCount = await userModel.count().exec()
+        const userCount = await userRepository.count()
 
         expect(userCount).toBe(1)
       })
@@ -629,13 +627,20 @@ describe('users', () => {
     })
     describe('on success', () => {
       it('should return an array of the referred users', async () => {
-        await userModel.create({
-          ...userB,
-          referred: new Types.ObjectId().toString(),
-        })
+        await userRepository
+          .create({
+            ...userB,
+            referred: new Types.ObjectId().toString(),
+          })
+          .save()
 
-        const user = await userModel.create(userA)
-        const user2 = await userModel.create({ ...userB, referred: user._id })
+        const user = await userRepository.create(userA).save()
+        const user2 = await userRepository
+          .create({
+            ...userB,
+            referred: user._id,
+          })
+          .save()
         const token = Encryption.createToken(user)
         const { statusCode, body } = await request
           .get(url)
@@ -654,7 +659,7 @@ describe('users', () => {
     const url = `${baseUrl}/all-referred-users`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -668,11 +673,13 @@ describe('users', () => {
     })
     describe('on success', () => {
       it('should return an array of the referred users', async () => {
-        const user2 = await userModel.create({
-          ...userB,
-          referred: new Types.ObjectId().toString(),
-        })
-        const admin = await userModel.create(adminA)
+        const user2 = await userRepository
+          .create({
+            ...userB,
+            referred: new Types.ObjectId().toString(),
+          })
+          .save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const { statusCode, body } = await request
           .get(url)
@@ -690,7 +697,7 @@ describe('users', () => {
     const url = `${baseUrl}`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -704,8 +711,8 @@ describe('users', () => {
     })
     describe('on success', () => {
       it('should return an array of the referred users', async () => {
-        const user2 = await userModel.create(userB)
-        const admin = await userModel.create(adminA)
+        const user2 = await userRepository.create(userB).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const { statusCode, body } = await request
           .get(url)
@@ -723,7 +730,7 @@ describe('users', () => {
     // const url = `${baseUrl}/userId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const url = `${baseUrl}/userId`
 
@@ -738,7 +745,7 @@ describe('users', () => {
     })
     describe('given user those not exist', () => {
       it('should return a 404 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/${new Types.ObjectId().toString()}`
 
@@ -753,8 +760,8 @@ describe('users', () => {
     })
     describe('on success', () => {
       it('should return an array of the referred users', async () => {
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const url = `${baseUrl}/${user._id}`
@@ -775,7 +782,7 @@ describe('users', () => {
     // const url = `${baseUrl}/userId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
         const url = `${baseUrl}/send-email/userId`
 
@@ -795,7 +802,7 @@ describe('users', () => {
           heading: 'heading',
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/send-email/userId`
 
@@ -818,7 +825,7 @@ describe('users', () => {
           content: 'content',
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
         const url = `${baseUrl}/send-email/${new Types.ObjectId().toString()}`
 
@@ -840,8 +847,8 @@ describe('users', () => {
           content: 'content',
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
+        const user = await userRepository.create(userA).save()
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const url = `${baseUrl}/send-email/${user._id}`

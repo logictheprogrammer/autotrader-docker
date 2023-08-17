@@ -1,6 +1,6 @@
 import { Inject, Service } from 'typedi'
 import { ISendMailService } from '@/modules/sendMail/sendMail.interface'
-import { SiteConstants } from '@/modules/config/constants'
+import { SiteConstants } from '@/modules/config/config.constants'
 import renderFile from '@/utils/renderFile'
 import ServiceToken from '@/utils/enums/serviceToken'
 import { IMailService } from '@/modules/mail/mail.interface'
@@ -8,7 +8,7 @@ import { MailOptionName } from '@/modules/mailOption/mailOption.enum'
 import { IFailedTransactionDoc } from '@/modules/failedTransaction/failedTransaction.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import ParseString from '@/utils/parsers/parseString'
 
 @Service()
@@ -177,7 +177,7 @@ class SendMailService implements ISendMailService {
         message: `Email has been sent successfully`,
       }
     } catch (err: any) {
-      throw new ServiceException(err, 'Unable to send email, please try again')
+      throw new AppException(err, 'Unable to send email, please try again')
     }
   }
 }

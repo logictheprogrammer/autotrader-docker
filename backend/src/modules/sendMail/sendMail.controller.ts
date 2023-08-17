@@ -3,13 +3,13 @@ import ServiceToken from '@/utils/enums/serviceToken'
 import { NextFunction, Request, Response, Router } from 'express'
 import { Inject, Service } from 'typedi'
 import { ISendMailService } from '@/modules/sendMail/sendMail.interface'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 
 @Service()
-class SendMailController implements IServiceController {
+class SendMailController implements IAppController {
   public path = '/send-email'
   public router = Router()
 

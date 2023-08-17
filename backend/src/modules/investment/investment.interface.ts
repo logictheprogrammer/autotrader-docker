@@ -2,19 +2,16 @@ import { Document } from 'mongoose'
 import { InvestmentStatus } from '@/modules/investment/investment.enum'
 import { IPlan, IPlanObject } from '@/modules/plan/plan.interface'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { Types } from 'mongoose'
 import { AssetType } from '@/modules/asset/asset.enum'
-import { ITransactionInstance } from '../transactionManager/transactionManager.interface'
-import { INotification } from '../notification/notification.interface'
-import { IReferral } from '../referral/referral.interface'
-import { ITransaction } from '../transaction/transaction.interface'
 import { TUpdateInvestmentStatus } from './investment.type'
+import AppRepository from '../app/app.repository'
 
-export interface IInvestmentObject extends IServiceObject {
+export interface IInvestmentObject extends IAppObject {
   plan: IPlan['_id']
   planObject: IPlanObject
   user: IUser['_id']
@@ -39,6 +36,9 @@ export interface IInvestmentObject extends IServiceObject {
 }
 
 export interface IInvestment extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   plan: IPlan['_id']
   planObject: IPlanObject
   user: IUser['_id']
@@ -105,7 +105,10 @@ export interface IInvestmentService {
     investmentId: Types.ObjectId,
     status: InvestmentStatus,
     sendNotice?: boolean
-  ): Promise<{ model: IInvestment; instances: TUpdateInvestmentStatus }>
+  ): Promise<{
+    model: AppRepository<IInvestment>
+    instances: TUpdateInvestmentStatus
+  }>
 
   forceUpdateStatus(
     investmentId: Types.ObjectId,

@@ -3,6 +3,10 @@ import { request } from '../../../test'
 import { pairA } from './pair.payload'
 import { pairService } from '../../../setup'
 import { Types } from 'mongoose'
+import AppRepository from '../../app/app.repository'
+import { IPair } from '../pair.interface'
+
+const pairRepository = new AppRepository<IPair>(pairModel)
 
 describe('pair', () => {
   request
@@ -15,11 +19,11 @@ describe('pair', () => {
 
     describe('given pair exist', () => {
       it('should return the pair payload', async () => {
-        const pair = await pairModel.create(pairA)
+        const pair = await pairRepository.create(pairA).save()
 
         const result = await pairService.get(pair._id)
 
-        expect(result).toEqual(pair.toObject())
+        expect(result).toEqual(pairRepository.toObject(pair))
       })
     })
   })

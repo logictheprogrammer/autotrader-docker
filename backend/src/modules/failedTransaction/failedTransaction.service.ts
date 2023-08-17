@@ -7,15 +7,15 @@ import {
   IFailedTransactionService,
 } from '@/modules/failedTransaction/failedTransaction.interface'
 import failedTransactionModel from '@/modules/failedTransaction/failedTransaction.model'
-import ServiceQuery from '@/modules/service/service.query'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class FailedTransactionService implements IFailedTransactionService {
-  private failedTransactionModel = new ServiceQuery<IFailedTransaction>(
+  private failedTransactionRepository = new AppRepository<IFailedTransaction>(
     failedTransactionModel
   )
 
@@ -24,11 +24,9 @@ class FailedTransactionService implements IFailedTransactionService {
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<IFailedTransaction> => {
-    const failedTransaction = await this.failedTransactionModel.findById(
-      failedTransactionId,
-      fromAllAccounts,
-      userId
-    )
+    const failedTransaction = await this.failedTransactionRepository
+      .findById(failedTransactionId, fromAllAccounts, userId)
+      .collect()
 
     if (!failedTransaction)
       throw new HttpException(404, 'Failed transaction not found')
@@ -42,15 +40,17 @@ class FailedTransactionService implements IFailedTransactionService {
     status: FailedTransactionStatus
   ): Promise<IFailedTransactionObject> {
     try {
-      const failedTransaction = await this.failedTransactionModel.self.create({
-        message,
-        collectionName,
-        status,
-      })
+      const failedTransaction = await this.failedTransactionRepository
+        .create({
+          message,
+          collectionName,
+          status,
+        })
+        .save()
 
-      return failedTransaction.toObject()
+      return this.failedTransactionRepository.toObject(failedTransaction)
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to register failed transaction, please try again'
       )
@@ -74,7 +74,7 @@ class FailedTransactionService implements IFailedTransactionService {
         data: { failedTransaction },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to update Failed Transaction status, please try again'
       )
@@ -87,15 +87,20 @@ class FailedTransactionService implements IFailedTransactionService {
     try {
       const failedTransaction = await this.find(failedTransactionId)
 
-      await failedTransaction.deleteOne()
+      await this.failedTransactionRepository.deleteOne({
+        _id: failedTransaction._id,
+      })
 
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Failed transaction deleted successfully',
-        data: { failedTransaction },
+        data: {
+          failedTransaction:
+            this.failedTransactionRepository.toObject(failedTransaction),
+        },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to delete Failed Transaction, please try again'
       )
@@ -111,10 +116,13 @@ class FailedTransactionService implements IFailedTransactionService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Failed transaction fetched successfully',
-        data: { failedTransaction },
+        data: {
+          failedTransaction:
+            this.failedTransactionRepository.toObject(failedTransaction),
+        },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to fetch Failed Transaction, please try again'
       )
@@ -125,7 +133,9 @@ class FailedTransactionService implements IFailedTransactionService {
     failedTransactions: IFailedTransaction[]
   }> => {
     try {
-      const failedTransactions = await this.failedTransactionModel.find()
+      const failedTransactions = await this.failedTransactionRepository
+        .find()
+        .collectAll()
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -133,7 +143,7 @@ class FailedTransactionService implements IFailedTransactionService {
         data: { failedTransactions },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to fetch Failed Transactions, please try again'
       )

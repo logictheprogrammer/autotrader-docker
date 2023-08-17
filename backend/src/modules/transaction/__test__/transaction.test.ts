@@ -1,18 +1,19 @@
 import transactionModel from '../../../modules/transaction/transaction.model'
 import { request } from '../../../test'
 import Encryption from '../../../utils/encryption'
-import {
-  depositA,
-  depositA_id,
-  depositB,
-  depositB_id,
-} from '../../deposit/__test__/deposit.payload'
+import { depositB, depositB_id } from '../../deposit/__test__/deposit.payload'
 import { HttpResponseStatus } from '../../http/http.enum'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import { UserEnvironment } from '../../user/user.enum'
 import userModel from '../../user/user.model'
 import { transactionA } from './transaction.payload'
 import { Types } from 'mongoose'
+import { IUser } from '../../user/user.interface'
+import { ITransaction } from '../transaction.interface'
+import AppRepository from '../../app/app.repository'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const transactionRepository = new AppRepository<ITransaction>(transactionModel)
 
 describe('transaction', () => {
   const baseUrl = '/api/transaction'
@@ -30,18 +31,22 @@ describe('transaction', () => {
     })
     describe('on success entry', () => {
       it('should return an array of the user transaction', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
-        await transactionModel.create(transactionA)
+        await transactionRepository.create(transactionA).save()
 
-        await transactionModel.create({
-          ...transactionA,
-          user: user._id,
-          environment: UserEnvironment.DEMO,
-        })
+        await transactionRepository
+          .create({
+            ...transactionA,
+            user: user._id,
+            environment: UserEnvironment.DEMO,
+          })
+          .save()
 
-        await transactionModel.create({ ...transactionA, user: user._id })
+        await transactionRepository
+          .create({ ...transactionA, user: user._id })
+          .save()
 
         const url = `${baseUrl}/${user._id}`
         const { statusCode, body } = await request
@@ -61,7 +66,7 @@ describe('transaction', () => {
     const url = `${baseUrl}/all`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -75,15 +80,17 @@ describe('transaction', () => {
     })
     describe('on success entry', () => {
       it('should return an array of all users transactions', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        await transactionModel.create(transactionA)
-        await transactionModel.create({
-          ...transactionA,
-          category: depositB_id,
-          categoryObject: depositB,
-          environment: UserEnvironment.DEMO,
-        })
+        await transactionRepository.create(transactionA).save()
+        await transactionRepository
+          .create({
+            ...transactionA,
+            category: depositB_id,
+            categoryObject: depositB,
+            environment: UserEnvironment.DEMO,
+          })
+          .save()
 
         const { statusCode, body } = await request
           .get(url)
@@ -112,18 +119,22 @@ describe('transaction', () => {
     })
     describe('on success entry', () => {
       it('should return an array of the user transaction', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
-        await transactionModel.create(transactionA)
+        await transactionRepository.create(transactionA).save()
 
-        await transactionModel.create({
-          ...transactionA,
-          user: user._id,
-          environment: UserEnvironment.DEMO,
-        })
+        await transactionRepository
+          .create({
+            ...transactionA,
+            user: user._id,
+            environment: UserEnvironment.DEMO,
+          })
+          .save()
 
-        await transactionModel.create({ ...transactionA, user: user._id })
+        await transactionRepository
+          .create({ ...transactionA, user: user._id })
+          .save()
 
         const url = `${baseUrl}/demo/${user._id}`
         const { statusCode, body } = await request
@@ -143,7 +154,7 @@ describe('transaction', () => {
     const url = `${baseUrl}/demo/all`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -157,13 +168,15 @@ describe('transaction', () => {
     })
     describe('on success entry', () => {
       it('should return an array of all users transactions', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        await transactionModel.create(transactionA)
-        await transactionModel.create({
-          ...transactionA,
-          environment: UserEnvironment.DEMO,
-        })
+        await transactionRepository.create(transactionA).save()
+        await transactionRepository
+          .create({
+            ...transactionA,
+            environment: UserEnvironment.DEMO,
+          })
+          .save()
 
         const { statusCode, body } = await request
           .get(url)
@@ -182,7 +195,7 @@ describe('transaction', () => {
     // const url = `${baseUrl}/delete/:transactionId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const url = `${baseUrl}/delete/transactionId`
@@ -197,7 +210,7 @@ describe('transaction', () => {
     })
     describe('given transation those not exist', () => {
       it('should return a 404 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const url = `${baseUrl}/delete/${new Types.ObjectId().toString()}`
@@ -213,11 +226,13 @@ describe('transaction', () => {
     })
     describe('on success entry', () => {
       it('it should delete the transaction', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
-        const transaction = await transactionModel.create(transactionA)
+        const transaction = await transactionRepository
+          .create(transactionA)
+          .save()
 
-        let transactionsCount = await transactionModel.count().exec()
+        let transactionsCount = await transactionRepository.count()
 
         expect(transactionsCount).toBe(1)
 
@@ -231,7 +246,7 @@ describe('transaction', () => {
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
-        transactionsCount = await transactionModel.count().exec()
+        transactionsCount = await transactionRepository.count()
         expect(transactionsCount).toBe(0)
       })
     })
@@ -243,7 +258,7 @@ describe('transaction', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -262,7 +277,7 @@ describe('transaction', () => {
           transactionId: new Types.ObjectId().toString(),
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -282,7 +297,7 @@ describe('transaction', () => {
           status: 'invalid status',
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -304,7 +319,7 @@ describe('transaction', () => {
           status: 'cancelled',
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -319,10 +334,12 @@ describe('transaction', () => {
     })
     describe('on success entry', () => {
       it('should return the transaction payload', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const transaction = await transactionModel.create(transactionA)
+        const transaction = await transactionRepository
+          .create(transactionA)
+          .save()
 
         const payload = {
           transactionId: transaction._id,
@@ -349,7 +366,7 @@ describe('transaction', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -369,7 +386,7 @@ describe('transaction', () => {
           status: 'success',
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -390,7 +407,7 @@ describe('transaction', () => {
           amount: 1000,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -413,7 +430,7 @@ describe('transaction', () => {
           amount: 1000,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -428,10 +445,12 @@ describe('transaction', () => {
     })
     describe('on success entry', () => {
       it('should return the transaction payload', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
-        const transaction = await transactionModel.create(transactionA)
+        const transaction = await transactionRepository
+          .create(transactionA)
+          .save()
 
         const payload = {
           transactionId: transaction._id,

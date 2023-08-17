@@ -10,30 +10,30 @@ import { IUserObject } from '@/modules/user/user.interface'
 import formatNumber from '@/utils/formats/formatNumber'
 import { Types } from 'mongoose'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import ServiceQuery from '@/modules/service/service.query'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { UserEnvironment } from '../user/user.enum'
 import { TransactionStatus } from './transaction.type'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class TransactionService implements ITransactionService {
-  private transactionModel = new ServiceQuery<ITransaction>(transactionModel)
+  private transactionRepository = new AppRepository<ITransaction>(
+    transactionModel
+  )
 
   private async find(
     transactionId: Types.ObjectId,
     fromAllAccounts: boolean = true,
     userId?: Types.ObjectId
   ): Promise<ITransaction> {
-    const transaction = await this.transactionModel.findById(
-      transactionId,
-      fromAllAccounts,
-      userId
-    )
+    const transaction = await this.transactionRepository
+      .findById(transactionId, fromAllAccounts, userId)
+      .collect()
 
     if (!transaction) throw new HttpException(404, 'Transaction not found')
 
@@ -45,13 +45,15 @@ class TransactionService implements ITransactionService {
     status: TransactionStatus,
     amount: number
   ): Promise<{
-    transaction: ITransaction
+    transaction: AppRepository<ITransaction>
     oldStatus: TransactionStatus
     oldAmount: number
   }> => {
-    const transaction = await this.transactionModel.findOne({
-      category: categoryId,
-    })
+    const transaction = await this.transactionRepository
+      .findOne({
+        category: categoryId,
+      })
+      .collect()
 
     if (!transaction) throw new HttpException(404, 'Transaction not found')
 
@@ -61,19 +63,23 @@ class TransactionService implements ITransactionService {
     transaction.status = status
     transaction.amount = amount
 
-    return { transaction, oldAmount, oldStatus }
+    const newTransaction = this.transactionRepository.toClass(transaction)
+
+    return { transaction: newTransaction, oldAmount, oldStatus }
   }
 
   private setStatus = async (
     categoryId: Types.ObjectId,
     status: TransactionStatus
   ): Promise<{
-    transaction: ITransaction
+    transaction: AppRepository<ITransaction>
     oldStatus: TransactionStatus
   }> => {
-    const transaction = await this.transactionModel.findOne({
-      category: categoryId,
-    })
+    const transaction = await this.transactionRepository
+      .findOne({
+        category: categoryId,
+      })
+      .collect()
 
     if (!transaction) throw new HttpException(404, 'Transaction not found')
 
@@ -81,10 +87,12 @@ class TransactionService implements ITransactionService {
 
     transaction.status = status
 
-    return { transaction, oldStatus }
+    const newTransaction = this.transactionRepository.toClass(transaction)
+
+    return { transaction: newTransaction, oldStatus }
   }
 
-  public async _createTransaction<T extends IServiceObject>(
+  public async _createTransaction<T extends IAppObject>(
     user: IUserObject,
     status: TransactionStatus,
     categoryName: TransactionCategory,
@@ -93,7 +101,7 @@ class TransactionService implements ITransactionService {
     environment: UserEnvironment,
     stake?: number
   ): TTransaction<ITransactionObject, ITransaction> {
-    const transaction = new this.transactionModel.self({
+    const transaction = this.transactionRepository.create({
       user: user._id,
       userObject: user,
       amount,
@@ -105,11 +113,13 @@ class TransactionService implements ITransactionService {
       environment,
     })
 
+    const unsavedTransaction = transaction.collectUnsaved()
+
     return {
-      object: transaction.toObject(),
+      object: unsavedTransaction,
       instance: {
         model: transaction,
-        onFailed: `Delete the transaction with an id of (${transaction._id})`,
+        onFailed: `Delete the transaction with an id of (${unsavedTransaction._id})`,
         async callback() {
           await transaction.deleteOne()
         },
@@ -125,19 +135,21 @@ class TransactionService implements ITransactionService {
     const data = await this.setAmount(categoryId, status, amount)
     const { oldAmount, oldStatus, transaction } = data
 
+    const unsavedTransaction = transaction.collectUnsaved()
+
     return {
-      object: transaction.toObject(),
+      object: unsavedTransaction,
       instance: {
         model: transaction,
         onFailed: `Set the status of the transaction with an id of (${
-          transaction._id
+          unsavedTransaction._id
         }) to (${oldStatus}) and the amount to (${formatNumber.toDollar(
           oldAmount
         )})`,
-        async callback() {
-          transaction.status = oldStatus
-          transaction.amount = oldAmount
-          await transaction.save()
+        callback: async () => {
+          unsavedTransaction.status = oldStatus
+          unsavedTransaction.amount = oldAmount
+          await this.transactionRepository.save(unsavedTransaction)
         },
       },
     }
@@ -149,19 +161,20 @@ class TransactionService implements ITransactionService {
   ): TTransaction<ITransactionObject, ITransaction> {
     const { oldStatus, transaction } = await this.setStatus(categoryId, status)
 
+    const unsavedTransaction = transaction.collectUnsaved()
     return {
-      object: transaction.toObject(),
+      object: unsavedTransaction,
       instance: {
         model: transaction,
-        onFailed: `Set the status of the transaction with an id of (${transaction._id}) to (${oldStatus})`,
-        async callback() {
-          await transaction.save()
+        onFailed: `Set the status of the transaction with an id of (${unsavedTransaction._id}) to (${oldStatus})`,
+        callback: async () => {
+          await this.transactionRepository.save(unsavedTransaction)
         },
       },
     }
   }
 
-  public async create<T extends IServiceObject>(
+  public async create<T extends IAppObject>(
     user: IUserObject,
     status: TransactionStatus,
     categoryName: TransactionCategory,
@@ -183,7 +196,7 @@ class TransactionService implements ITransactionService {
 
       return instance
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to register this transaction, please try again'
       )
@@ -204,7 +217,7 @@ class TransactionService implements ITransactionService {
 
       return instance
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update transaction amount, please try again'
       )
@@ -230,7 +243,7 @@ class TransactionService implements ITransactionService {
         data: { transaction },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update transaction amount, please try again'
       )
@@ -249,7 +262,7 @@ class TransactionService implements ITransactionService {
 
       return instance
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update transaction status, please try again'
       )
@@ -273,7 +286,7 @@ class TransactionService implements ITransactionService {
         data: { transaction },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update this transaction status, please try again'
       )
@@ -293,10 +306,12 @@ class TransactionService implements ITransactionService {
     userId: Types.ObjectId
   ): THttpResponse<{ transaction: ITransaction }> => {
     try {
-      const transaction = await this.transactionModel.findOne({
-        _id: transactionId,
-        user: userId,
-      })
+      const transaction = await this.transactionRepository
+        .findOne({
+          _id: transactionId,
+          user: userId,
+        })
+        .collect()
 
       if (!transaction) throw new HttpException(404, 'Transaction not found')
 
@@ -306,7 +321,7 @@ class TransactionService implements ITransactionService {
         data: { transaction },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch transaction, please try again'
       )
@@ -319,13 +334,14 @@ class TransactionService implements ITransactionService {
     userId: Types.ObjectId
   ): THttpResponse<{ transactions: ITransaction[] }> => {
     try {
-      let transactions = await this.transactionModel
+      let transactions = await this.transactionRepository
         .find({ environment }, all, {
           user: userId,
         })
         .select('-userObject -category')
+        .collectAll()
 
-      await this.transactionModel.populate(
+      await this.transactionRepository.populate(
         transactions,
         'user',
         'userObject',
@@ -338,7 +354,7 @@ class TransactionService implements ITransactionService {
         data: { transactions },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch transactions, please try again'
       )
@@ -358,7 +374,7 @@ class TransactionService implements ITransactionService {
         data: { transaction },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete this transaction, please try again'
       )

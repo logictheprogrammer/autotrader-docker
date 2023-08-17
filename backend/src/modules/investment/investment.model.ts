@@ -1,6 +1,5 @@
 import { IInvestment } from '@/modules/investment/investment.interface'
 import { Schema, Types, model } from 'mongoose'
-import { InvestmentStatus } from '@/modules/investment/investment.enum'
 
 const InvestmentSchema = new Schema(
   {

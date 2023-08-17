@@ -9,15 +9,15 @@ import withdrawalMethodModel from '@/modules/withdrawalMethod/withdrawalMethod.m
 import ServiceToken from '@/utils/enums/serviceToken'
 import { ICurrencyService } from '@/modules/currency/currency.interface'
 import { WithdrawalMethodStatus } from '@/modules/withdrawalMethod/withdrawalMethod.enum'
-import ServiceQuery from '@/modules/service/service.query'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class WithdrawalMethodService implements IWithdrawalMethodService {
-  private withdrawalMethodModel = new ServiceQuery<IWithdrawalMethod>(
+  private withdrawalMethodRepository = new AppRepository<IWithdrawalMethod>(
     withdrawalMethodModel
   )
 
@@ -31,11 +31,9 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
     fromAllAccounts: boolean = true,
     userId?: Types.ObjectId | string
   ): Promise<IWithdrawalMethod> => {
-    const withdrawalMethod = await this.withdrawalMethodModel.findById(
-      withdrawalMethodId,
-      fromAllAccounts,
-      userId
-    )
+    const withdrawalMethod = await this.withdrawalMethodRepository
+      .findById(withdrawalMethodId, fromAllAccounts, userId)
+      .collect()
 
     if (!withdrawalMethod)
       throw new HttpException(404, 'Withdrawal method not found')
@@ -52,22 +50,24 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
     try {
       const currency = await this.currencyService.get(currencyId)
 
-      const withdrawalMethod = await this.withdrawalMethodModel.self.create({
-        name: currency.name,
-        symbol: currency.symbol,
-        logo: currency.logo,
-        network,
-        fee,
-        minWithdrawal,
-        status: WithdrawalMethodStatus.ENABLED,
-      })
+      const withdrawalMethod = await this.withdrawalMethodRepository
+        .create({
+          name: currency.name,
+          symbol: currency.symbol,
+          logo: currency.logo,
+          network,
+          fee,
+          minWithdrawal,
+          status: WithdrawalMethodStatus.ENABLED,
+        })
+        .save()
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Withdrawal method added successfully',
         data: { withdrawalMethod },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to add this withdrawal method, please try again'
       )
@@ -102,7 +102,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
         data: { withdrawalMethod },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update this withdrawal method, please try again'
       )
@@ -128,7 +128,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
         data: { withdrawalMethod },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete this withdrawal method, please try again'
       )
@@ -151,7 +151,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
         data: { withdrawalMethod },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update this withdrawal method status, please try again'
       )
@@ -165,11 +165,15 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
       let withdrawalMethods: IWithdrawalMethod[]
 
       if (all) {
-        withdrawalMethods = await this.withdrawalMethodModel.find()
+        withdrawalMethods = await this.withdrawalMethodRepository
+          .find()
+          .collectAll()
       } else {
-        withdrawalMethods = await this.withdrawalMethodModel.find({
-          status: WithdrawalMethodStatus.ENABLED,
-        })
+        withdrawalMethods = await this.withdrawalMethodRepository
+          .find({
+            status: WithdrawalMethodStatus.ENABLED,
+          })
+          .collectAll()
       }
 
       return {
@@ -178,7 +182,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
         data: { withdrawalMethods },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch withdrawal method, please try again'
       )

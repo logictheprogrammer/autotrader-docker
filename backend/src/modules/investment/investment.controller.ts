@@ -3,14 +3,14 @@ import { Inject, Service } from 'typedi'
 import { Router, Request, Response, NextFunction } from 'express'
 import validate from '@/modules/investment/investment.validation'
 import ServiceToken from '@/utils/enums/serviceToken'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 import { Types } from 'mongoose'
 
 @Service()
-class InvestmentController implements IServiceController {
+class InvestmentController implements IAppController {
   public path = '/investment'
   public router = Router()
 

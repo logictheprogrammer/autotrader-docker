@@ -1,9 +1,14 @@
+import transactionModel from '../../../modules/transaction/transaction.model'
+import AppRepository from '../../app/app.repository'
+import { ITransaction } from '../transaction.interface'
 import TransactionService from '../transaction.service'
 import {
   transactionA,
   transactionA_id,
   transactionModelReturn,
 } from './transaction.payload'
+
+const transactionRepository = new AppRepository<ITransaction>(transactionModel)
 
 // @ts-ignore
 const transactionObj: INotificationObj = {
@@ -17,7 +22,7 @@ export const createTransactionTransactionMock = jest
   .mockResolvedValue({
     object: transactionObj,
     instance: {
-      model: transactionModelReturn,
+      model: transactionRepository.toClass(transactionModelReturn),
       onFailed: 'delete transaction',
       async callback() {},
     },
@@ -28,7 +33,7 @@ export const updateStatusTransactionTransactionMock = jest
   .mockResolvedValue({
     object: transactionObj,
     instance: {
-      model: transactionModelReturn,
+      model: transactionRepository.toClass(transactionModelReturn),
       onFailed: 'change transaction status to old status',
       async callback() {},
     },
@@ -39,7 +44,7 @@ export const updateAmountTransactionTransactionMock = jest
   .mockResolvedValue({
     object: transactionObj,
     instance: {
-      model: transactionModelReturn,
+      model: transactionRepository.toClass(transactionModelReturn),
       onFailed: 'change transaction amount to old amount',
       async callback() {},
     },

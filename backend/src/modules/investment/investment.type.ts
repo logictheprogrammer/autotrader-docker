@@ -5,6 +5,4 @@ import { ITransactionInstance } from '../transactionManager/transactionManager.i
 import { IUser } from '../user/user.interface'
 import { IInvestment } from './investment.interface'
 
-export type TUpdateInvestmentStatus = ITransactionInstance<
-  IInvestment | INotification | IUser | IReferral | ITransaction
->[]
+export type TUpdateInvestmentStatus = ITransactionInstance<any>[]

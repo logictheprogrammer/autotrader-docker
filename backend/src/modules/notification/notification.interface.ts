@@ -6,32 +6,35 @@ import {
 import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
 import { THttpResponse } from '@/modules/http/http.type'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserEnvironment } from '@/modules/user/user.enum'
 import { NotificationStatus } from './notification.type'
 
-export interface INotificationObject extends IServiceObject {
+export interface INotificationObject extends IAppObject {
   user?: IUser['_id']
   userObject: IUserObject
   message: string
   read: boolean
   categoryName: NotificationCategory
-  category: IServiceObject['_id']
-  categoryObject: IServiceObject
+  category: IAppObject['_id']
+  categoryObject: IAppObject
   forWho: NotificationForWho
   status: NotificationStatus
   environment: UserEnvironment
 }
 
 export interface INotification extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   user?: IUser['_id']
   userObject: IUserObject
   message: string
   read: boolean
   categoryName: NotificationCategory
-  category: IServiceObject['_id']
-  categoryObject: IServiceObject
+  category: IAppObject['_id']
+  categoryObject: IAppObject
   forWho: NotificationForWho
   status: NotificationStatus
   environment: UserEnvironment
@@ -41,7 +44,7 @@ export interface INotificationService {
   _createTransaction(
     message: string,
     categoryName: NotificationCategory,
-    categoryObject: IServiceObject,
+    categoryObject: IAppObject,
     forWho: NotificationForWho,
     status: NotificationStatus,
     environment: UserEnvironment,
@@ -51,7 +54,7 @@ export interface INotificationService {
   create(
     message: string,
     categoryName: NotificationCategory,
-    categoryObject: IServiceObject,
+    categoryObject: IAppObject,
     forWho: NotificationForWho,
     status: NotificationStatus,
     environment: UserEnvironment,

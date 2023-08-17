@@ -6,6 +6,4 @@ import { ITransactionInstance } from '@/modules/transactionManager/transactionMa
 import { IUser } from '../user/user.interface'
 import { IReferral } from '../referral/referral.interface'
 
-export type TUpdateTradeStatus = ITransactionInstance<
-  ITrade | INotification | ITransaction | IInvestment | IUser | IReferral
->[]
+export type TUpdateTradeStatus = ITransactionInstance<any>[]

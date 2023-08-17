@@ -4,15 +4,15 @@ import {
   IReferralSettingsService,
 } from '@/modules/referralSettings/referralSettings.interface'
 import referralSettingsModel from '@/modules/referralSettings/referralSettings.model'
-import ServiceQuery from '@/modules/service/service.query'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
+import AppRepository from '@/modules/app/app.repository'
 
 @Service()
 class ReferralSettingsService implements IReferralSettingsService {
-  private referralSettingsModel = new ServiceQuery<IReferralSettings>(
+  private referralSettingsRepository = new AppRepository<IReferralSettings>(
     referralSettingsModel
   )
 
@@ -24,13 +24,15 @@ class ReferralSettingsService implements IReferralSettingsService {
     completedPackageEarnings: number
   ): THttpResponse<{ referralSettings: IReferralSettings }> => {
     try {
-      const referralSettings = await this.referralSettingsModel.self.create({
-        deposit,
-        stake,
-        winnings,
-        investment,
-        completedPackageEarnings,
-      })
+      const referralSettings = await this.referralSettingsRepository
+        .create({
+          deposit,
+          stake,
+          winnings,
+          investment,
+          completedPackageEarnings,
+        })
+        .save()
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -38,7 +40,7 @@ class ReferralSettingsService implements IReferralSettingsService {
         data: { referralSettings },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to create referral settings, please try again'
       )
@@ -53,7 +55,7 @@ class ReferralSettingsService implements IReferralSettingsService {
     completedPackageEarnings: number
   ): THttpResponse<{ referralSettings: IReferralSettings }> => {
     try {
-      await this.referralSettingsModel.self.updateOne(
+      await this.referralSettingsRepository.updateOne(
         {},
         {
           deposit,
@@ -72,7 +74,7 @@ class ReferralSettingsService implements IReferralSettingsService {
         data: { referralSettings },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to update referral settings, please try again'
       )
@@ -81,14 +83,16 @@ class ReferralSettingsService implements IReferralSettingsService {
 
   public get = async (): Promise<IReferralSettings> => {
     try {
-      const referralSettings = await this.referralSettingsModel.findOne({})
+      const referralSettings = await this.referralSettingsRepository
+        .findOne({})
+        .collect()
 
       if (!referralSettings)
         throw new HttpException(404, 'Referral settings not found')
 
       return referralSettings
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to fetch referral settings, please try again'
       )

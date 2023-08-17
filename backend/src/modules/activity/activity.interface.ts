@@ -9,6 +9,9 @@ import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 
 export interface IActivity extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   user: IUser['_id']
   userObject: IUserObject
   category: ActivityCategory
@@ -16,6 +19,8 @@ export interface IActivity extends Document {
   status: ActivityStatus
   forWho: ActivityForWho
 }
+
+export interface IActivityRepositry {}
 
 export interface IActivityService {
   set(

@@ -101,7 +101,7 @@ function googleTranslateElementInit() {
 }
 
 function initGoogleTranslate() {
-  Cookie.erase('googtrans')
+  // Cookie.erase('googtrans')
   var googleTranslateScript = document.createElement('script')
   googleTranslateScript.type = 'text/javascript'
   googleTranslateScript.async = true

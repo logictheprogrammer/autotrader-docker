@@ -1,10 +1,10 @@
 import { Document, Types } from 'mongoose'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { AssetType } from '@/modules/asset/asset.enum'
 import { IAsset, IAssetObject } from '@/modules/asset/asset.interface'
 
-export interface IPairObject extends IServiceObject {
+export interface IPairObject extends IAppObject {
   assetType: AssetType
   baseAsset: IAsset['_id']
   baseAssetObject: IAssetObject
@@ -13,6 +13,9 @@ export interface IPairObject extends IServiceObject {
 }
 
 export interface IPair extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   assetType: AssetType
   baseAsset: IAsset['_id']
   baseAssetObject: IAssetObject

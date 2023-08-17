@@ -31,17 +31,17 @@ import {
   ITransactionManagerService,
 } from '@/modules/transactionManager/transactionManager.interface'
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
-import ServiceQuery from '@/modules/service/service.query'
 import { THttpResponse } from '@/modules/http/http.type'
 import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { Types } from 'mongoose'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class WithdrawalService implements IWithdrawalService {
-  private withdrawalModel = new ServiceQuery<IWithdrawal>(withdrawalModel)
+  private withdrawalRepository = new AppRepository<IWithdrawal>(withdrawalModel)
 
   public constructor(
     @Inject(ServiceToken.WITHDRAWAL_METHOD_SERVICE)
@@ -60,11 +60,9 @@ class WithdrawalService implements IWithdrawalService {
     fromAllAccounts: boolean = true,
     userId?: Types.ObjectId
   ): Promise<IWithdrawal> => {
-    const withdrawal = await this.withdrawalModel.findById(
-      withdrawalId,
-      fromAllAccounts,
-      userId
-    )
+    const withdrawal = await this.withdrawalRepository
+      .findById(withdrawalId, fromAllAccounts, userId)
+      .collect()
 
     if (!withdrawal)
       throw new HttpException(404, 'Withdrawal transaction not found')
@@ -88,14 +86,18 @@ class WithdrawalService implements IWithdrawalService {
 
     withdrawal.status = status
 
+    const newWithdrawal = this.withdrawalRepository.toClass(withdrawal)
+
+    const unsavedWithdrawal = newWithdrawal.collectUnsaved()
+
     return {
-      object: withdrawal.toObject(),
+      object: unsavedWithdrawal,
       instance: {
-        model: withdrawal,
-        onFailed: `Set the status of the withdrawal with an id of (${withdrawal._id}) to (${oldStatus})`,
-        async callback() {
-          withdrawal.status = oldStatus
-          await withdrawal.save()
+        model: newWithdrawal,
+        onFailed: `Set the status of the withdrawal with an id of (${unsavedWithdrawal._id}) to (${oldStatus})`,
+        callback: async () => {
+          unsavedWithdrawal.status = oldStatus
+          await this.withdrawalRepository.save(unsavedWithdrawal)
         },
       },
     }
@@ -108,7 +110,7 @@ class WithdrawalService implements IWithdrawalService {
     address: string,
     amount: number
   ): TTransaction<IWithdrawalObject, IWithdrawal> {
-    const withdrawal = new this.withdrawalModel.self({
+    const withdrawal = this.withdrawalRepository.create({
       withdrawalMethod: withdrawalMethod._id,
       withdrawalMethodObject: withdrawalMethod,
       user: user._id,
@@ -120,11 +122,13 @@ class WithdrawalService implements IWithdrawalService {
       status: WithdrawalStatus.PENDING,
     })
 
+    const unsavedWithdrawal = withdrawal.collectUnsaved()
+
     return {
-      object: withdrawal.toObject(),
+      object: unsavedWithdrawal,
       instance: {
         model: withdrawal,
-        onFailed: `Delete the withdrawal with an id of (${withdrawal._id})`,
+        onFailed: `Delete the withdrawal with an id of (${unsavedWithdrawal._id})`,
         async callback() {
           await withdrawal.deleteOne()
         },
@@ -153,9 +157,7 @@ class WithdrawalService implements IWithdrawalService {
           'Amount is lower than the min withdrawal of the selected withdrawal method'
         )
 
-      const transactionInstances: ITransactionInstance<
-        IWithdrawal | ITransaction | INotification | IUser
-      >[] = []
+      const transactionInstances: ITransactionInstance<any>[] = []
 
       const userTransaction = await this.userService.fund(
         userId,
@@ -206,10 +208,10 @@ class WithdrawalService implements IWithdrawalService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Withdrawal has been registered successfully',
-        data: { withdrawal: withdrawalInstance.model },
+        data: { withdrawal: withdrawalInstance.model.collectUnsaved() },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to register this withdrawal, please try again'
       )
@@ -240,7 +242,7 @@ class WithdrawalService implements IWithdrawalService {
         data: { withdrawal },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete this withdrawal, please try again'
       )
@@ -300,10 +302,10 @@ class WithdrawalService implements IWithdrawalService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { withdrawal: withdrawalInstance.model },
+        data: { withdrawal: withdrawalInstance.model.collectUnsaved() },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update this withdrawal status, please try again'
       )
@@ -324,7 +326,7 @@ class WithdrawalService implements IWithdrawalService {
         data: { withdrawal },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch withdrawal history, please try again'
       )
@@ -336,13 +338,14 @@ class WithdrawalService implements IWithdrawalService {
     userId: Types.ObjectId
   ): THttpResponse<{ withdrawals: IWithdrawal[] }> => {
     try {
-      const withdrawals = await this.withdrawalModel
+      const withdrawals = await this.withdrawalRepository
         .find({}, all, {
           user: userId,
         })
         .select('-userObject -withdrawalMethod')
+        .collectAll()
 
-      await this.withdrawalModel.populate(
+      await this.withdrawalRepository.populate(
         withdrawals,
         'user',
         'userObject',
@@ -355,7 +358,7 @@ class WithdrawalService implements IWithdrawalService {
         data: { withdrawals },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch withdrawal history, please try again'
       )

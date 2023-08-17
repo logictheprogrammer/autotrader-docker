@@ -1,11 +1,11 @@
 import { Document, Types } from 'mongoose'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { UserRole } from '@/modules/user/user.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
 
-export interface IPlanObject extends IServiceObject {
+export interface IPlanObject extends IAppObject {
   icon: string
   name: string
   engine: string
@@ -23,6 +23,9 @@ export interface IPlanObject extends IServiceObject {
 }
 
 export interface IPlan extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   icon: string
   name: string
   engine: string

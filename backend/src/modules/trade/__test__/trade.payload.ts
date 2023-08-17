@@ -15,7 +15,6 @@ import {
   userC,
   userC_id,
 } from '../../user/__test__/user.payload'
-import { UserAccount, UserEnvironment } from '../../user/user.enum'
 import {
   pairA,
   pairA_id,
@@ -24,7 +23,6 @@ import {
   pairC,
   pairC_id,
 } from '../../pair/__test__/pair.payload'
-import { InvestmentStatus } from '../../investment/investment.enum'
 import { Types } from 'mongoose'
 
 export const tradeA_id = '1236de5d5b1f5b3a5c1b539a'
@@ -93,10 +91,21 @@ export const tradeC = {
   manualMode: false,
 }
 
+const id1 = new Types.ObjectId().toString()
+
 // @ts-ignore
 export const tradeModelReturn: ITrade = {
-  save: jest.fn(),
-  _id: new Types.ObjectId().toString(),
+  save: jest.fn().mockResolvedValue({
+    toObject: jest.fn(),
+  }),
+  toObject: jest.fn().mockReturnValue({
+    _id: id1,
+    // @ts-ignore
+    collection: {
+      name: 'trade',
+    },
+  }),
+  _id: id1,
   // @ts-ignore
   collection: {
     name: 'trade',
@@ -115,10 +124,4 @@ export const tradeBObj: ITradeObject = {
   ...tradeB,
   // @ts-ignore
   _id: tradeB_id,
-}
-
-export const tradeInstance = {
-  model: tradeModelReturn,
-  onFailed: 'delete trade',
-  async callback() {},
 }

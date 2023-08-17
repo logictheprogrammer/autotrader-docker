@@ -5,10 +5,10 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
 import { ITransaction } from '@/modules/transaction/transaction.interface'
 import { INotification } from '@/modules/notification/notification.interface'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 
-export interface IReferralObject extends IServiceObject {
+export interface IReferralObject extends IAppObject {
   rate: number
   type: ReferralTypes
   referrer: IUser['_id']
@@ -19,6 +19,9 @@ export interface IReferralObject extends IServiceObject {
 }
 
 export interface IReferral extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   rate: number
   type: ReferralTypes
   referrer: IUser['_id']

@@ -1,10 +1,9 @@
 import { AssetType } from '@/modules/asset/asset.enum'
 import { Inject, Service } from 'typedi'
-import PlanModel from '@/modules/plan/plan.model'
+import planModel from '@/modules/plan/plan.model'
 import { IPlan, IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
 import { Types } from 'mongoose'
-import ServiceQuery from '@/modules/service/service.query'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
@@ -12,10 +11,11 @@ import ServiceToken from '@/utils/enums/serviceToken'
 import { IAssetService } from '@/modules/asset/asset.interface'
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { UserRole } from '@/modules/user/user.enum'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class PlanService implements IPlanService {
-  private planModel = new ServiceQuery<IPlan>(PlanModel)
+  private planRepository = new AppRepository<IPlan>(planModel)
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)
@@ -27,7 +27,9 @@ class PlanService implements IPlanService {
     fromAllAccounts: boolean = true,
     userId?: Types.ObjectId
   ): Promise<IPlan> {
-    const plan = await this.planModel.findById(planId, fromAllAccounts, userId)
+    const plan = await this.planRepository
+      .findById(planId, fromAllAccounts, userId)
+      .collect()
 
     if (!plan) throw new HttpException(404, 'Plan not found')
 
@@ -60,21 +62,23 @@ class PlanService implements IPlanService {
           )
       }
 
-      const plan = await this.planModel.self.create({
-        icon,
-        name,
-        engine,
-        minAmount,
-        maxAmount,
-        minProfit,
-        maxProfit,
-        duration,
-        dailyTrades,
-        gas,
-        description,
-        assetType,
-        assets,
-      })
+      const plan = await this.planRepository
+        .create({
+          icon,
+          name,
+          engine,
+          minAmount,
+          maxAmount,
+          minProfit,
+          maxProfit,
+          duration,
+          dailyTrades,
+          gas,
+          description,
+          assetType,
+          assets,
+        })
+        .save()
 
       const assetsObj = []
 
@@ -91,7 +95,7 @@ class PlanService implements IPlanService {
         data: { plan },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to create this plan, please try again'
       )
@@ -150,13 +154,15 @@ class PlanService implements IPlanService {
 
       plan.assets = assetsObj
 
+      await this.planRepository.save(plan)
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Plan has been updated successfully',
         data: { plan },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to create this plan, please try again'
       )
@@ -180,7 +186,7 @@ class PlanService implements IPlanService {
         data: { plan },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update plan status, please try again'
       )
@@ -188,7 +194,7 @@ class PlanService implements IPlanService {
   }
 
   public async get(planId: Types.ObjectId): Promise<IPlanObject | null> {
-    const plan = await this.planModel.self.findById(planId)
+    const plan = await this.planRepository.findById(planId).collect()
 
     if (!plan) return null
 
@@ -201,12 +207,12 @@ class PlanService implements IPlanService {
 
     plan.assets = assetsObj
 
-    return plan.toObject()
+    return this.planRepository.toObject(plan)
   }
 
   public async delete(planId: Types.ObjectId): THttpResponse<{ plan: IPlan }> {
     try {
-      const plan = await this.planModel.self.findByIdAndDelete(planId)
+      const plan = await this.planRepository.findByIdAndDelete(planId)
       if (!plan) throw new HttpException(404, 'Plan not found')
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -214,7 +220,7 @@ class PlanService implements IPlanService {
         data: { plan },
       }
     } catch (err: any) {
-      throw new ServiceException(err, 'Failed to delete plan, please try again')
+      throw new AppException(err, 'Failed to delete plan, please try again')
     }
   }
 
@@ -222,11 +228,13 @@ class PlanService implements IPlanService {
     try {
       let plans
       if (role > UserRole.USER) {
-        plans = await this.planModel.find()
+        plans = await this.planRepository.find().collectAll()
       } else {
-        plans = await this.planModel.find({
-          status: { $ne: PlanStatus.SUSPENDED },
-        })
+        plans = await this.planRepository
+          .find({
+            status: { $ne: PlanStatus.SUSPENDED },
+          })
+          .collectAll()
       }
 
       for (const plan of plans) {
@@ -246,7 +254,7 @@ class PlanService implements IPlanService {
         data: { plans },
       }
     } catch (err: any) {
-      throw new ServiceException(err, 'Failed to fetch plans, please try again')
+      throw new AppException(err, 'Failed to fetch plans, please try again')
     }
   }
 }

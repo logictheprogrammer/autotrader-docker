@@ -1,3 +1,4 @@
+import { IWithdrawalMethod } from './../withdrawalMethod.interface'
 import { WithdrawalMethodStatus } from '../../../modules/withdrawalMethod/withdrawalMethod.enum'
 import withdrawalMethodModel from '../../../modules/withdrawalMethod/withdrawalMethod.model'
 import { request } from '../../../test'
@@ -18,6 +19,13 @@ import {
 import { getCurrencyMock } from '../../currency/__test__/currency.mock'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
+import AppRepository from '../../app/app.repository'
+import { IUser } from '../../user/user.interface'
+
+const userRepository = new AppRepository<IUser>(userModel)
+const withdrawalMethodRepository = new AppRepository<IWithdrawalMethod>(
+  withdrawalMethodModel
+)
 
 describe('withdrawal method', () => {
   const baseUrl = '/api/withdrawal-method/'
@@ -27,7 +35,7 @@ describe('withdrawal method', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -48,7 +56,7 @@ describe('withdrawal method', () => {
           minWithdrawal: withdrawalMethodA.minWithdrawal,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -71,7 +79,7 @@ describe('withdrawal method', () => {
           minWithdrawal: withdrawalMethodA.minWithdrawal,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -95,7 +103,7 @@ describe('withdrawal method', () => {
           minWithdrawal: withdrawalMethodA.minWithdrawal,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -120,9 +128,7 @@ describe('withdrawal method', () => {
           payload.currencyId.toString()
         )
 
-        const withdrawalMethodCounts = await withdrawalMethodModel
-          .count()
-          .exec()
+        const withdrawalMethodCounts = await withdrawalMethodRepository.count()
 
         expect(withdrawalMethodCounts).toBe(1)
       })
@@ -135,7 +141,7 @@ describe('withdrawal method', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -154,7 +160,7 @@ describe('withdrawal method', () => {
           withdrawalMethodId: new Types.ObjectId().toString(),
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -169,14 +175,14 @@ describe('withdrawal method', () => {
     })
     describe('given withdrawal method those not exist', () => {
       it('should throw a 404 error', async () => {
-        await withdrawalMethodModel.create(withdrawalMethodA)
+        await withdrawalMethodRepository.create(withdrawalMethodA).save()
 
         const payload = {
           withdrawalMethodId: new Types.ObjectId().toString(),
           status: WithdrawalMethodStatus.DISABLED,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -188,16 +194,16 @@ describe('withdrawal method', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const withdrawalMethodCounts = await withdrawalMethodModel
-          .count()
-          .exec()
+        const withdrawalMethodCounts = await withdrawalMethodRepository.count()
 
         expect(withdrawalMethodCounts).toBe(1)
       })
     })
     describe('given all validations passed', () => {
       it('should return a 200', async () => {
-        const dm = await withdrawalMethodModel.create(withdrawalMethodA)
+        const dm = await withdrawalMethodRepository
+          .create(withdrawalMethodA)
+          .save()
 
         const payload = {
           withdrawalMethodId: dm._id,
@@ -206,7 +212,7 @@ describe('withdrawal method', () => {
 
         let withdrawalMethodCounts: number
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -227,15 +233,15 @@ describe('withdrawal method', () => {
           status: WithdrawalMethodStatus.DISABLED,
         })
 
-        withdrawalMethodCounts = await withdrawalMethodModel
-          .count({ status: WithdrawalMethodStatus.ENABLED })
-          .exec()
+        withdrawalMethodCounts = await withdrawalMethodRepository.count({
+          status: WithdrawalMethodStatus.ENABLED,
+        })
 
         expect(withdrawalMethodCounts).toBe(0)
 
-        withdrawalMethodCounts = await withdrawalMethodModel
-          .count({ status: WithdrawalMethodStatus.DISABLED })
-          .exec()
+        withdrawalMethodCounts = await withdrawalMethodRepository.count({
+          status: WithdrawalMethodStatus.DISABLED,
+        })
 
         expect(withdrawalMethodCounts).toBe(1)
 
@@ -264,15 +270,15 @@ describe('withdrawal method', () => {
           status: WithdrawalMethodStatus.ENABLED,
         })
 
-        withdrawalMethodCounts = await withdrawalMethodModel
-          .count({ status: WithdrawalMethodStatus.ENABLED })
-          .exec()
+        withdrawalMethodCounts = await withdrawalMethodRepository.count({
+          status: WithdrawalMethodStatus.ENABLED,
+        })
 
         expect(withdrawalMethodCounts).toBe(1)
 
-        withdrawalMethodCounts = await withdrawalMethodModel
-          .count({ status: WithdrawalMethodStatus.DISABLED })
-          .exec()
+        withdrawalMethodCounts = await withdrawalMethodRepository.count({
+          status: WithdrawalMethodStatus.DISABLED,
+        })
 
         expect(withdrawalMethodCounts).toBe(0)
       })
@@ -285,7 +291,7 @@ describe('withdrawal method', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -307,7 +313,7 @@ describe('withdrawal method', () => {
           minWithdrawal: withdrawalMethodUpdated.minWithdrawal,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -322,7 +328,7 @@ describe('withdrawal method', () => {
     })
     describe('given withdrawal method those not exist', () => {
       it('should throw a 404 error', async () => {
-        await withdrawalMethodModel.create(withdrawalMethodA)
+        await withdrawalMethodRepository.create(withdrawalMethodA).save()
         const payload = {
           withdrawalMethodId: new Types.ObjectId().toString(),
           currencyId: currencyA_id,
@@ -331,7 +337,7 @@ describe('withdrawal method', () => {
           minWithdrawal: withdrawalMethodUpdated.minWithdrawal,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -347,7 +353,9 @@ describe('withdrawal method', () => {
 
     describe('given currency those not exist', () => {
       it('should throw a 404 error', async () => {
-        const dm = await withdrawalMethodModel.create(withdrawalMethodA)
+        const dm = await withdrawalMethodRepository
+          .create(withdrawalMethodA)
+          .save()
         const payload = {
           withdrawalMethodId: dm._id,
           currencyId: new Types.ObjectId().toString(),
@@ -356,7 +364,7 @@ describe('withdrawal method', () => {
           minWithdrawal: withdrawalMethodUpdated.minWithdrawal,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -371,7 +379,9 @@ describe('withdrawal method', () => {
     })
     describe('given all validations passed', () => {
       it('should return a 200 and updated withdrawal method', async () => {
-        const dm = await withdrawalMethodModel.create(withdrawalMethodA)
+        const dm = await withdrawalMethodRepository
+          .create(withdrawalMethodA)
+          .save()
         const payload = {
           withdrawalMethodId: dm._id,
           currencyId: currencyA_id,
@@ -380,7 +390,7 @@ describe('withdrawal method', () => {
           minWithdrawal: withdrawalMethodUpdated.minWithdrawal,
         }
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -411,7 +421,7 @@ describe('withdrawal method', () => {
     const url = baseUrl + 'master'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -425,7 +435,7 @@ describe('withdrawal method', () => {
     })
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -440,14 +450,16 @@ describe('withdrawal method', () => {
         })
       })
       it('should return a 200 and array', async () => {
-        await withdrawalMethodModel.create(withdrawalMethodA)
-        await withdrawalMethodModel.create(withdrawalMethodB)
-        await withdrawalMethodModel.create({
-          ...withdrawalMethodC,
-          status: WithdrawalMethodStatus.DISABLED,
-        })
+        await withdrawalMethodRepository.create(withdrawalMethodA).save()
+        await withdrawalMethodRepository.create(withdrawalMethodB).save()
+        await withdrawalMethodRepository
+          .create({
+            ...withdrawalMethodC,
+            status: WithdrawalMethodStatus.DISABLED,
+          })
+          .save()
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -501,7 +513,7 @@ describe('withdrawal method', () => {
     })
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array', async () => {
-        const user = await userModel.create(userA)
+        const user = await userRepository.create(userA).save()
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -516,14 +528,16 @@ describe('withdrawal method', () => {
         })
       })
       it('should return a 200 and array', async () => {
-        await withdrawalMethodModel.create(withdrawalMethodA)
-        await withdrawalMethodModel.create(withdrawalMethodB)
-        await withdrawalMethodModel.create({
-          ...withdrawalMethodC,
-          status: WithdrawalMethodStatus.DISABLED,
-        })
+        await withdrawalMethodRepository.create(withdrawalMethodA).save()
+        await withdrawalMethodRepository.create(withdrawalMethodB).save()
+        await withdrawalMethodRepository
+          .create({
+            ...withdrawalMethodC,
+            status: WithdrawalMethodStatus.DISABLED,
+          })
+          .save()
 
-        const admin = await userModel.create(adminA)
+        const admin = await userRepository.create(adminA).save()
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request

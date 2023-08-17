@@ -6,27 +6,25 @@ import {
 } from '@/modules/asset/asset.interface'
 import assetModel from '@/modules/asset/asset.model'
 import { Types } from 'mongoose'
-import ServiceQuery from '@/modules/service/service.query'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { AssetType } from '@/modules/asset/asset.enum'
+import AppRepository from '@/modules/app/app.repository'
 
 @Service()
 class AssetService implements IAssetService {
-  private assetModel = new ServiceQuery<IAsset>(assetModel)
+  private assetRepository = new AppRepository<IAsset>(assetModel)
 
   private find = async (
     assetId: string | Types.ObjectId,
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<IAsset> => {
-    const asset = await this.assetModel.findById(
-      assetId,
-      fromAllAccounts,
-      userId
-    )
+    const asset = await this.assetRepository
+      .findById(assetId, fromAllAccounts, userId)
+      .collect()
 
     if (!asset) throw new HttpException(404, 'Asset not found')
 
@@ -40,45 +38,49 @@ class AssetService implements IAssetService {
     type: AssetType
   ): THttpResponse<{ asset: IAsset }> => {
     try {
-      await this.assetModel.ifExist(
+      await this.assetRepository.ifExist(
         {
           $or: [{ name }, { symbol }],
         },
         'Asset already exist'
       )
 
-      const asset = await this.assetModel.self.create({
-        name,
-        symbol,
-        logo,
-        type,
-      })
+      const asset = await this.assetRepository
+        .create({
+          name,
+          symbol,
+          logo,
+          type,
+        })
+        .save()
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Asset added successfully',
         data: { asset },
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to save new asset, please try again'
-      )
+      throw new AppException(err, 'Unable to save new asset, please try again')
     }
   }
 
   public async get(
     assetId: Types.ObjectId,
     assetType: AssetType
-  ): Promise<IAssetObject | null> {
+  ): Promise<IAssetObject | null | undefined> {
     try {
-      const asset = await this.assetModel.findOne({
-        _id: assetId,
-        type: assetType,
-      })
+      const asset = await this.assetRepository
+        .findOne({
+          _id: assetId,
+          type: assetType,
+        })
+        .collect()
 
-      return asset?.toObject()
+      if (!asset) return
+
+      return this.assetRepository.toObject(asset)
     } catch (err: any) {
-      throw new ServiceException(err, 'Unable to get asset, please try again')
+      throw new AppException(err, 'Unable to get asset, please try again')
     }
   }
 
@@ -90,7 +92,7 @@ class AssetService implements IAssetService {
     type: AssetType
   ): THttpResponse<{ asset: IAsset }> => {
     try {
-      await this.assetModel.ifExist(
+      await this.assetRepository.ifExist(
         { $and: [{ _id: { $ne: assetId } }, { $or: [{ name }, { symbol }] }] },
         'Asset already exist'
       )
@@ -107,19 +109,16 @@ class AssetService implements IAssetService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Asset updated successfully',
-        data: { asset },
+        data: { asset: this.assetRepository.toObject(asset) },
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to update asset, please try again'
-      )
+      throw new AppException(err, 'Unable to update asset, please try again')
     }
   }
 
   public fetchAll = async (): THttpResponse<{ assets: IAsset[] }> => {
     try {
-      const assets = await this.assetModel.find()
+      const assets = await this.assetRepository.find().collectAll()
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -127,7 +126,7 @@ class AssetService implements IAssetService {
         data: { assets },
       }
     } catch (err: any) {
-      throw new ServiceException(err, 'Unable to fetch asset, please try again')
+      throw new AppException(err, 'Unable to fetch asset, please try again')
     }
   }
 }

@@ -64,6 +64,13 @@ export const withdrawalC = {
 // @ts-ignore
 export const withdrawalModelReturn: IWithdrawal = {
   save: jest.fn(),
+  toObject: jest.fn().mockReturnValue({
+    _id: 'withdrawal id',
+    // @ts-ignore
+    collection: {
+      name: 'withdrawal',
+    },
+  }),
   _id: 'withdrawal id',
   // @ts-ignore
   collection: {

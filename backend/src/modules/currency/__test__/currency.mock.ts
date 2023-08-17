@@ -17,24 +17,24 @@ export const getCurrencyMock = jest
         ...currencyA,
         _id: currencyA_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (key.toString() === currencyB_id.toString()) {
       return Promise.resolve({
         ...currencyB,
         _id: currencyB_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (key.toString() === currencyC_id.toString()) {
       return Promise.resolve({
         ...currencyC,
         _id: currencyC_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else {
       return Promise.reject(new HttpException(404, 'Currency not found'))

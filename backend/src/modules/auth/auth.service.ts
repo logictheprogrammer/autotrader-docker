@@ -15,21 +15,22 @@ import {
   ActivityForWho,
 } from '@/modules/activity/activity.enum'
 import { UserRole, UserStatus } from '@/modules/user/user.enum'
-import ServiceQuery from '@/modules/service/service.query'
 import { THttpResponse } from '@/modules/http/http.type'
-import ServiceException from '@/modules/service/service.exception'
+import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import Encryption from '@/utils/encryption'
 import { IMailService } from '@/modules/mail/mail.interface'
 import renderFile from '@/utils/renderFile'
 import ParseString from '@/utils/parsers/parseString'
-import { SiteConstants } from '@/modules/config/constants'
+import { SiteConstants } from '@/modules/config/config.constants'
 import FormatString from '@/utils/formats/formatString'
+import AppRepository from '../app/app.repository'
+import AppCrypto from '../app/app.crypto'
 
 @Service()
 class AuthService implements IAuthService {
-  private userModel = new ServiceQuery<IUser>(userModel)
+  private userRepository = new AppRepository<IUser>(userModel)
 
   public constructor(
     @Inject(ServiceToken.MAIL_SERVICE) private mailService: IMailService,
@@ -58,7 +59,7 @@ class AuthService implements IAuthService {
         data: { email: FormatString.mask(email, 2, 3) },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Unable to send verification email, please try again'
       )
@@ -82,38 +83,42 @@ class AuthService implements IAuthService {
     try {
       let referred
       if (invite) {
-        referred = await this.userModel.self.findOne({ refer: invite })
+        referred = await this.userRepository
+          .findOne({ refer: invite })
+          .collect()
         if (!referred) throw new HttpException(422, 'Invalid referral code')
       }
 
       const refer = generate({ length: 10 })[0]
 
-      await this.userModel.ifExist({ email }, 'Email already exist')
-      await this.userModel.ifExist({ username }, 'Username already exist')
+      await this.userRepository.ifExist({ email }, 'Email already exist')
+      await this.userRepository.ifExist({ username }, 'Username already exist')
 
       const key = crypto.randomBytes(16).toString('hex')
 
-      const user = await this.userModel.self.create({
-        name,
-        email,
-        username,
-        country,
-        password,
-        role,
-        status,
-        refer,
-        mainBalance,
-        referralBalance,
-        demoBalance,
-        bonusBalance,
-        referred: referred?._id,
-        key,
-        verifield: false,
-        isDeleted: false,
-      })
+      const user = await this.userRepository
+        .create({
+          name,
+          email,
+          username,
+          country,
+          password: await AppCrypto.setHash(password),
+          role,
+          status,
+          refer,
+          mainBalance,
+          referralBalance,
+          demoBalance,
+          bonusBalance,
+          referred: referred?._id,
+          key,
+          verifield: false,
+          isDeleted: false,
+        })
+        .save()
 
       this.activityService.set(
-        user.toObject(),
+        this.userRepository.toObject(user),
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
         'your account was created'
@@ -121,7 +126,7 @@ class AuthService implements IAuthService {
 
       return await this.emailVerification(user)
     } catch (err: any) {
-      throw new ServiceException(err, 'Unable to register, please try again')
+      throw new AppException(err, 'Unable to register, please try again')
     }
   }
 
@@ -132,9 +137,11 @@ class AuthService implements IAuthService {
     { email: string } | { accessToken: string; expiresIn: number }
   > {
     try {
-      const user = await this.userModel.findOne({
-        $or: [{ email: account }, { username: account }],
-      })
+      const user = await this.userRepository
+        .findOne({
+          $or: [{ email: account }, { username: account }],
+        })
+        .collect()
 
       if (!user)
         throw new HttpException(
@@ -142,7 +149,7 @@ class AuthService implements IAuthService {
           'Could not find a user with that Email or Username'
         )
 
-      if (!(await user.isValidPassword(password)))
+      if (!(await AppCrypto.isValidHash(password, user.password)))
         throw new HttpException(400, 'Incorrect password')
 
       if (user.status !== UserStatus.ACTIVE) {
@@ -154,8 +161,9 @@ class AuthService implements IAuthService {
       }
 
       if (user.verifield) {
+        const newUser = this.userRepository.toClass(user).collectUnsaved()
         this.activityService.set(
-          user.toObject(),
+          newUser,
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
           'you logged in to your account'
@@ -171,7 +179,7 @@ class AuthService implements IAuthService {
 
       return await this.emailVerification(user)
     } catch (err: any) {
-      throw new ServiceException(err, 'Unable to login, please try again')
+      throw new AppException(err, 'Unable to login, please try again')
     }
   }
 
@@ -181,11 +189,14 @@ class AuthService implements IAuthService {
     oldPassword?: string
   ): THttpResponse<{ user: IUser }> {
     try {
-      const user = await this.userModel.findById(userId)
+      const user = await this.userRepository.findById(userId).collect()
 
       if (!user) throw new HttpException(404, 'User not found')
 
-      if (oldPassword && !(await user.isValidPassword(oldPassword)))
+      if (
+        oldPassword &&
+        !(await AppCrypto.isValidHash(oldPassword, user.password))
+      )
         throw new HttpException(400, 'Incorrect password')
 
       if (!oldPassword && user.role >= UserRole.ADMIN)
@@ -194,11 +205,12 @@ class AuthService implements IAuthService {
           'This action can not be performed on an admin'
         )
 
-      user.password = password
-      await user.save()
+      user.password = await AppCrypto.setHash(password)
+
+      const newUser = await this.userRepository.save(user)
 
       this.activityService.set(
-        user.toObject(),
+        this.userRepository.toObject(newUser),
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
         'you updated your password'
@@ -210,10 +222,7 @@ class AuthService implements IAuthService {
         data: { user },
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to update password, please try again'
-      )
+      throw new AppException(err, 'Unable to update password, please try again')
     }
   }
 
@@ -221,9 +230,11 @@ class AuthService implements IAuthService {
     account: string
   ): THttpResponse<{ email: string }> {
     try {
-      const user = await this.userModel.findOne({
-        $or: [{ email: account }, { username: account }],
-      })
+      const user = await this.userRepository
+        .findOne({
+          $or: [{ email: account }, { username: account }],
+        })
+        .collect()
 
       if (!user)
         throw new HttpException(
@@ -244,10 +255,7 @@ class AuthService implements IAuthService {
         data: { email: FormatString.mask(email, 2, 3) },
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to reset password, please try again'
-      )
+      throw new AppException(err, 'Unable to reset password, please try again')
     }
   }
 
@@ -259,16 +267,19 @@ class AuthService implements IAuthService {
     try {
       await this.resetPasswordService.verify(key, verifyToken)
 
-      const user = await this.userModel.findOne({ key }).select('-password')
+      const user = await this.userRepository
+        .findOne({ key })
+        .select('-password')
+        .collect()
 
       if (!user) throw new HttpException(404, 'User not found')
 
       user.password = password
 
-      await user.save()
+      const newUser = await this.userRepository.save(user)
 
       this.activityService.set(
-        user.toObject(),
+        this.userRepository.toObject(newUser),
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
         'you reset your password'
@@ -280,10 +291,7 @@ class AuthService implements IAuthService {
         data: undefined,
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to update password, please try again'
-      )
+      throw new AppException(err, 'Unable to update password, please try again')
     }
   }
 
@@ -294,18 +302,20 @@ class AuthService implements IAuthService {
     try {
       await this.emailVerificationService.verify(key, verifyToken)
 
-      const user = await this.userModel.findOne({ key })
+      const user = await this.userRepository.findOne({ key }).collect()
 
       if (!user) throw new HttpException(404, 'User not found')
 
       user.verifield = true
 
-      await user.save()
+      const newUser = await this.userRepository.save(user)
 
-      this.sendWelcomeMail(user.toObject())
+      const userObj = this.userRepository.toObject(newUser)
+
+      this.sendWelcomeMail(userObj)
 
       this.activityService.set(
-        user.toObject(),
+        userObj,
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
         'you verifield your email address'
@@ -316,10 +326,7 @@ class AuthService implements IAuthService {
         message: 'Email successfully verifield',
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Unable to verify email, please try again'
-      )
+      throw new AppException(err, 'Unable to verify email, please try again')
     }
   }
 
@@ -344,7 +351,7 @@ class AuthService implements IAuthService {
         html: emailContent,
       })
     } catch (err: any) {
-      throw new ServiceException(err, 'Failed to send email, please try again')
+      throw new AppException(err, 'Failed to send email, please try again')
     }
   }
 

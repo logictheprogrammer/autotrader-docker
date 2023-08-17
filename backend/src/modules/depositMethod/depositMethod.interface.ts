@@ -1,9 +1,9 @@
 import { Document, Types } from 'mongoose'
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
-import { IServiceObject } from '@/modules/service/service.interface'
+import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 
-export interface IDepositMethodObject extends IServiceObject {
+export interface IDepositMethodObject extends IAppObject {
   name: string
   symbol: string
   logo: string
@@ -17,6 +17,9 @@ export interface IDepositMethodObject extends IServiceObject {
 }
 
 export interface IDepositMethod extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   name: string
   symbol: string
   logo: string

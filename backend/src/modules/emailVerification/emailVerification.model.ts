@@ -21,23 +21,6 @@ const EmailVerificationSchema = new Schema(
   { timestamps: true }
 )
 
-EmailVerificationSchema.pre<IEmailVerification>('save', async function (next) {
-  if (!this.isModified('token')) {
-    return next()
-  }
-
-  const hash = await bcrypt.hash(this.token, 12)
-  this.token = hash
-
-  next()
-})
-
-EmailVerificationSchema.methods.isValidToken = async function (
-  token: string
-): Promise<Error | boolean> {
-  return await bcrypt.compare(token, this.token)
-}
-
 export default model<IEmailVerification>(
   'EmailVerification',
   EmailVerificationSchema

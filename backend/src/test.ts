@@ -23,6 +23,11 @@ afterAll(async () => {
   await mongoose.connection.close()
 })
 
-const app = new App(controllers, Number(process.env.PORT), httpMiddleware)
+const app = new App(
+  controllers,
+  Number(process.env.PORT),
+  httpMiddleware,
+  false
+)
 
 export const request = supertest(app.express)

@@ -16,24 +16,24 @@ export const getAssetMock = jest
         ...assetA,
         _id: assetA_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (assetId.toString() === assetB_id.toString()) {
       return Promise.resolve({
         ...assetB,
         _id: assetB_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (assetId.toString() === assetC_id.toString()) {
       return Promise.resolve({
         ...assetC,
         _id: assetC_id,
         __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else {
       return Promise.resolve(null)

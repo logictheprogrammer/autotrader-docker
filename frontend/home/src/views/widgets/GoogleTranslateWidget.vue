@@ -6,8 +6,23 @@
 const onLoadScript = ref()
 const mySelect = ref()
 const loopMade = ref(0)
-
 const googleSelect = '.goog-te-combo'
+
+function formatOption(option: any) {
+  if (!option.id) {
+    return option.text
+  }
+
+  const countryCodes =
+    languageCodes.find(
+      (country) =>
+        country.languageCode.toLowerCase() === option.id.toLowerCase()
+    )?.countryCode || option.id.toUpperCase()
+
+  return window.$(
+    `<span><img class="lang-flag" src="/img/flags/24/${countryCodes}.png" alt="">${option.text}</span>`
+  )
+}
 
 window.googleTranslateElementInit = () => {
   new window.google.translate.TranslateElement(
@@ -32,6 +47,8 @@ window.googleTranslateElementInit = () => {
       mySelect.value = window.$(`${googleSelect}`).select2({
         minimumResultsForSearch: Infinity,
         theme: 'default filter__select2',
+        templateResult: formatOption,
+        templateSelection: formatOption,
       })
 
       mySelect.value.data('select2').$dropdown.addClass('skiptranslate')
@@ -63,6 +80,13 @@ onUnmounted(() => {
 .goog-logo-link,
 .goog-te-banner-frame.skiptranslate {
   display: none !important;
+}
+
+.lang-flag {
+  width: 20px;
+  height: auto;
+  margin-right: 10px;
+  border-radius: 4px;
 }
 
 .skiptranslate.goog-te-gadget > span {

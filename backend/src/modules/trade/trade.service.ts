@@ -1,7 +1,4 @@
-import {
-  IInvestment,
-  IInvestmentService,
-} from '@/modules/investment/investment.interface'
+import { IInvestmentService } from '@/modules/investment/investment.interface'
 import { Inject, Service } from 'typedi'
 import {
   ITrade,
@@ -11,37 +8,24 @@ import {
 import tradeModel from '@/modules/trade/trade.model'
 import ServiceToken from '@/utils/enums/serviceToken'
 import { TradeMove, TradeStatus } from '@/modules/trade/trade.enum'
-import { IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
-import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
-import {
-  ITransaction,
-  ITransactionService,
-} from '@/modules/transaction/transaction.interface'
+import { IPlanService } from '@/modules/plan/plan.interface'
+import { IUserObject, IUserService } from '@/modules/user/user.interface'
+import { ITransactionService } from '@/modules/transaction/transaction.interface'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
-import {
-  IReferral,
-  IReferralService,
-} from '@/modules/referral/referral.interface'
-import {
-  INotification,
-  INotificationService,
-} from '@/modules/notification/notification.interface'
-import formatNumber from '@/utils/formats/formatNumber'
+import { INotificationService } from '@/modules/notification/notification.interface'
 import {
   NotificationCategory,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
-import { ReferralTypes } from '@/modules/referral/referral.enum'
 import {
   ITransactionInstance,
   ITransactionManagerService,
 } from '@/modules/transactionManager/transactionManager.interface'
-import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
+import { UserEnvironment } from '@/modules/user/user.enum'
 import { THttpResponse } from '@/modules/http/http.type'
 import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
-import ServiceQuery from '@/modules/service/service.query'
+import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { Types } from 'mongoose'
 import { IInvestmentObject } from '../investment/investment.interface'
@@ -50,10 +34,11 @@ import Helpers from '@/utils/helpers/helpers'
 import { IMathService } from '../math/math.interface'
 import { InvestmentStatus } from '../investment/investment.enum'
 import { TUpdateTradeStatus } from './trade.type'
+import AppRepository from '../app/app.repository'
 
 @Service()
 class TradeService implements ITradeService {
-  private tradeModel = new ServiceQuery<ITrade>(tradeModel)
+  private tradeRepository = new AppRepository<ITrade>(tradeModel)
 
   public static minStakeRate = 0.1
   public static maxStakeRate = 0.25
@@ -84,11 +69,9 @@ class TradeService implements ITradeService {
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<ITrade> {
-    const trade = await this.tradeModel.findById(
-      tradeId,
-      fromAllAccounts,
-      userId
-    )
+    const trade = await this.tradeRepository
+      .findById(tradeId, fromAllAccounts, userId)
+      .collect()
 
     if (!trade) throw new HttpException(404, 'Trade not found')
 
@@ -108,7 +91,7 @@ class TradeService implements ITradeService {
     environment: UserEnvironment,
     manualMode: boolean = false
   ): TTransaction<ITradeObject, ITrade> {
-    const trade = new this.tradeModel.self({
+    const trade = this.tradeRepository.create({
       investment: investment._id,
       investmentObject: investment,
       user: user._id,
@@ -126,13 +109,15 @@ class TradeService implements ITradeService {
       manualMode,
     })
 
+    const unSavedTrade = trade.collectUnsaved()
+
     return {
-      object: trade.toObject(),
+      object: unSavedTrade,
       instance: {
         model: trade,
-        onFailed: `Delete the trade with an id of (${trade._id})`,
-        async callback() {
-          await trade.deleteOne()
+        onFailed: `Delete the trade with an id of (${unSavedTrade._id})`,
+        callback: async () => {
+          await this.tradeRepository.deleteOne({ _id: unSavedTrade._id })
         },
       },
     }
@@ -172,14 +157,17 @@ class TradeService implements ITradeService {
         break
     }
 
+    const newTrade = this.tradeRepository.toClass(trade)
+    const unsavedTrade = newTrade.collectUnsaved()
+
     return {
-      object: trade.toObject(),
+      object: unsavedTrade,
       instance: {
-        model: trade,
-        onFailed: `Set the status of the trade with an id of (${trade._id}) to (${oldStatus})`,
-        async callback() {
-          trade.status = oldStatus
-          await trade.save()
+        model: newTrade,
+        onFailed: `Set the status of the trade with an id of (${unsavedTrade._id}) to (${oldStatus})`,
+        callback: async () => {
+          unsavedTrade.status = oldStatus
+          await this.tradeRepository.save(unsavedTrade)
         },
       },
     }
@@ -318,10 +306,10 @@ class TradeService implements ITradeService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Trade created successfully',
-        data: { trade },
+        data: { trade: trade.collectUnsaved() },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to create this trade, please try again'
       )
@@ -366,15 +354,15 @@ class TradeService implements ITradeService {
 
       trade.manualMode = true
 
-      await trade.save()
+      const newTrade = await this.tradeRepository.save(trade)
 
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Trade updated successfully',
-        data: { trade },
+        data: { trade: newTrade },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update this trade, please try again'
       )
@@ -385,7 +373,7 @@ class TradeService implements ITradeService {
     tradeId: Types.ObjectId,
     status: TradeStatus,
     price?: number
-  ): Promise<{ model: ITrade; instances: TUpdateTradeStatus }> {
+  ): Promise<{ model: AppRepository<ITrade>; instances: TUpdateTradeStatus }> {
     const transactionInstances: TUpdateTradeStatus = []
 
     const { object: trade, instance: tradeInstance } =
@@ -536,10 +524,10 @@ class TradeService implements ITradeService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { trade },
+        data: { trade: trade.collectUnsaved() },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update this trade  status, please try again'
       )
@@ -571,7 +559,7 @@ class TradeService implements ITradeService {
         data: { trade },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update this trade, please try again'
       )
@@ -594,7 +582,7 @@ class TradeService implements ITradeService {
         data: { trade },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete this trade, please try again'
       )
@@ -607,20 +595,21 @@ class TradeService implements ITradeService {
     userId: string
   ): THttpResponse<{ trades: ITrade[] }> {
     try {
-      const trades = await this.tradeModel
+      const trades = await this.tradeRepository
         .find({ environment }, all, {
           user: userId,
         })
         .select('-investmentObject -userObject -pair')
+        .collectAll()
 
-      await this.tradeModel.populate(
+      await this.tradeRepository.populate(
         trades,
         'investment',
         'investmentObject',
         'name icon'
       )
 
-      await this.tradeModel.populate(
+      await this.tradeRepository.populate(
         trades,
         'user',
         'userObject',
@@ -633,7 +622,7 @@ class TradeService implements ITradeService {
         data: { trades },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch trade history, please try again'
       )

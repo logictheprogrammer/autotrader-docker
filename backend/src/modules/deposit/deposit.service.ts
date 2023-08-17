@@ -11,20 +11,11 @@ import {
   IDepositMethodObject,
   IDepositMethodService,
 } from '@/modules/depositMethod/depositMethod.interface'
-import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
-import {
-  ITransaction,
-  ITransactionService,
-} from '@/modules/transaction/transaction.interface'
+import { IUserObject, IUserService } from '@/modules/user/user.interface'
+import { ITransactionService } from '@/modules/transaction/transaction.interface'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
-import {
-  IReferral,
-  IReferralService,
-} from '@/modules/referral/referral.interface'
-import {
-  INotification,
-  INotificationService,
-} from '@/modules/notification/notification.interface'
+import { IReferralService } from '@/modules/referral/referral.interface'
+import { INotificationService } from '@/modules/notification/notification.interface'
 import formatNumber from '@/utils/formats/formatNumber'
 import {
   NotificationCategory,
@@ -39,14 +30,14 @@ import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { THttpResponse } from '@/modules/http/http.type'
 import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceException from '@/modules/service/service.exception'
-import ServiceQuery from '@/modules/service/service.query'
+import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { Types } from 'mongoose'
+import AppRepository from '@/modules/app/app.repository'
 
 @Service()
 class DepositService implements IDepositService {
-  private depositModel = new ServiceQuery<IDeposit>(depositModel)
+  private depositRepository = new AppRepository<IDeposit>(depositModel)
 
   public constructor(
     @Inject(ServiceToken.DEPOSIT_METHOD_SERVICE)
@@ -67,11 +58,9 @@ class DepositService implements IDepositService {
     fromAllAccounts: boolean = true,
     userId?: Types.ObjectId
   ): Promise<IDeposit> {
-    const deposit = await this.depositModel.findById(
-      depositId,
-      fromAllAccounts,
-      userId
-    )
+    const deposit = await this.depositRepository
+      .findById(depositId, fromAllAccounts, userId)
+      .collect()
 
     if (!deposit) throw new HttpException(404, 'Deposit transaction not found')
 
@@ -83,7 +72,7 @@ class DepositService implements IDepositService {
     depositMethod: IDepositMethodObject,
     amount: number
   ): TTransaction<IDepositObject, IDeposit> {
-    const deposit = new this.depositModel.self({
+    const deposit = this.depositRepository.create({
       depositMethod: depositMethod._id,
       depositMethodObject: depositMethod,
       user: user._id,
@@ -93,11 +82,13 @@ class DepositService implements IDepositService {
       status: DepositStatus.PENDING,
     })
 
+    const unSavedDeposit = deposit.collectUnsaved()
+
     return {
-      object: deposit.toObject(),
+      object: unSavedDeposit,
       instance: {
         model: deposit,
-        onFailed: `Delete the deposit with an id of (${deposit._id})`,
+        onFailed: `Delete the deposit with an id of (${unSavedDeposit._id})`,
         async callback() {
           await deposit.deleteOne()
         },
@@ -118,14 +109,18 @@ class DepositService implements IDepositService {
 
     deposit.status = status
 
+    const newDeposit = this.depositRepository.toClass(deposit)
+
+    const unsavedDeposit = newDeposit.collectUnsaved()
+
     return {
-      object: deposit.toObject(),
+      object: unsavedDeposit,
       instance: {
-        model: deposit,
-        onFailed: `Set the status of the deposit with an id of (${deposit._id}) to (${oldStatus})`,
-        async callback() {
-          deposit.status = oldStatus
-          await deposit.save()
+        model: newDeposit,
+        onFailed: `Set the status of the deposit with an id of (${unsavedDeposit._id}) to (${oldStatus})`,
+        callback: async () => {
+          unsavedDeposit.status = oldStatus
+          await this.depositRepository.save(unsavedDeposit)
         },
       },
     }
@@ -147,9 +142,7 @@ class DepositService implements IDepositService {
 
       const user = await this.userService.get(userId)
 
-      const transactionInstances: ITransactionInstance<
-        IDeposit | ITransaction | INotification
-      >[] = []
+      const transactionInstances: ITransactionInstance<any>[] = []
 
       const { object: deposit, instance: depositInstance } =
         await this._createTransaction(user, depositMethod, amount)
@@ -187,10 +180,10 @@ class DepositService implements IDepositService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Deposit has been registered successfully',
-        data: { deposit: depositInstance.model },
+        data: { deposit: depositInstance.model.collectUnsaved() },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to register this deposit, please try again'
       )
@@ -213,7 +206,7 @@ class DepositService implements IDepositService {
         data: { deposit },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to delete this deposit, please try again'
       )
@@ -225,9 +218,7 @@ class DepositService implements IDepositService {
     status: DepositStatus
   ): THttpResponse<{ deposit: IDeposit }> => {
     try {
-      const transactionInstances: ITransactionInstance<
-        IDeposit | ITransaction | INotification | IReferral | IUser
-      >[] = []
+      const transactionInstances: ITransactionInstance<any>[] = []
 
       const { object: deposit, instance: depositInstance } =
         await this._updateStatusTransaction(depositId, status)
@@ -286,10 +277,10 @@ class DepositService implements IDepositService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { deposit: depositInstance.model },
+        data: { deposit: depositInstance.model.collectUnsaved() },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to update this deposit  status, please try again'
       )
@@ -310,10 +301,7 @@ class DepositService implements IDepositService {
         data: { deposit },
       }
     } catch (err: any) {
-      throw new ServiceException(
-        err,
-        'Failed to fetch deposit, please try again'
-      )
+      throw new AppException(err, 'Failed to fetch deposit, please try again')
     }
   }
 
@@ -322,11 +310,12 @@ class DepositService implements IDepositService {
     userId: Types.ObjectId
   ): THttpResponse<{ deposits: IDeposit[] }> => {
     try {
-      const deposits = await this.depositModel
+      const deposits = await this.depositRepository
         .find({}, all, { user: userId })
         .select('-userObject -depositMethod')
+        .collectAll()
 
-      await this.depositModel.populate(
+      await this.depositRepository.populate(
         deposits,
         'user',
         'userObject',
@@ -339,7 +328,7 @@ class DepositService implements IDepositService {
         data: { deposits },
       }
     } catch (err: any) {
-      throw new ServiceException(
+      throw new AppException(
         err,
         'Failed to fetch deposit history, please try again'
       )

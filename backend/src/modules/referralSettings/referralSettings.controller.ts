@@ -3,13 +3,13 @@ import { Service, Inject } from 'typedi'
 import validate from '@/modules/referralSettings/referralSettings.validation'
 import { NextFunction, Request, Response, Router } from 'express'
 import { IReferralSettingsService } from '@/modules/referralSettings/referralSettings.interface'
-import { IServiceController } from '@/modules/service/service.interface'
+import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 
 @Service()
-export default class ReferralSettingsController implements IServiceController {
+export default class ReferralSettingsController implements IAppController {
   public path = '/referral-settings'
   public router = Router()
 
