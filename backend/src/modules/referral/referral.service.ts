@@ -12,7 +12,7 @@ import ServiceToken from '@/utils/enums/serviceToken'
 import { INotificationService } from '@/modules/notification/notification.interface'
 import { IReferralSettingsService } from '@/modules/referralSettings/referralSettings.interface'
 import formatNumber from '@/utils/formats/formatNumber'
-import { IUserObject, IUserService } from '@/modules/user/user.interface'
+import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
 import {
   NotificationCategory,
   NotificationForWho,
@@ -33,10 +33,12 @@ import { HttpResponseStatus } from '@/modules/http/http.enum'
 import FormatString from '@/utils/formats/formatString'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import userModel from '../user/user.model'
 
 @Service()
 class ReferralService implements IReferralService {
   private referralRepository = new AppRepository<IReferral>(referralModel)
+  private userRepository = new AppRepository<IUser>(userModel)
 
   constructor(
     @Inject(ServiceToken.NOTIFICATION_SERVICE)
@@ -239,18 +241,20 @@ class ReferralService implements IReferralService {
         .select('-userObject -referrerObject')
         .collectAll()
 
-      await this.referralRepository.populate(
+      await this.referralRepository.populateAll(
         referralTransactions,
         'user',
         'userObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
-      await this.referralRepository.populate(
+      await this.referralRepository.populateAll(
         referralTransactions,
         'referrer',
         'referrerObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       return {
@@ -275,18 +279,20 @@ class ReferralService implements IReferralService {
         .select('-userObject -referrerObject')
         .collectAll()
 
-      await this.referralRepository.populate(
+      await this.referralRepository.populateAll(
         referralTransactions,
         'user',
         'userObject',
-        'username isDeleted createdAt'
+        'username isDeleted createdAt',
+        this.userRepository
       )
 
-      await this.referralRepository.populate(
+      await this.referralRepository.populateAll(
         referralTransactions,
         'referrer',
         'referrerObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       const referralEarnings: IReferralEarnings[] = []
@@ -334,11 +340,12 @@ class ReferralService implements IReferralService {
         .select('-userObject -referrerObject -user')
         .collectAll()
 
-      await this.referralRepository.populate(
+      await this.referralRepository.populateAll(
         referralTransactions,
         'referrer',
         'referrerObject',
-        'username isDeleted createdAt'
+        'username isDeleted createdAt',
+        this.userRepository
       )
 
       const referralLeaderboard: IReferralLeaderboard[] = []

@@ -6,14 +6,16 @@ import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import ServiceToken from '@/utils/enums/serviceToken'
-import { IAssetService } from '../asset/asset.interface'
+import { IAsset, IAssetService } from '../asset/asset.interface'
 import { AssetType } from '../asset/asset.enum'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import assetModel from '../asset/asset.model'
 
 @Service()
 class PairService implements IPairService {
   private pairRepository = new AppRepository<IPair>(pairModel)
+  private assetRepository = new AppRepository<IAsset>(assetModel)
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)
@@ -159,18 +161,20 @@ class PairService implements IPairService {
         .select('-baseAssetObject -quoteAssetObject')
         .collectAll()
 
-      await this.pairRepository.populate(
+      await this.pairRepository.populateAll(
         pairs,
         'baseAsset',
         'baseAssetObject',
-        'name symbol logo type isDeleted'
+        'name symbol logo type isDeleted',
+        this.assetRepository
       )
 
-      await this.pairRepository.populate(
+      await this.pairRepository.populateAll(
         pairs,
         'quoteAsset',
         'quoteAssetObject',
-        'name symbol logo type isDeleted'
+        'name symbol logo type isDeleted',
+        this.assetRepository
       )
 
       return {

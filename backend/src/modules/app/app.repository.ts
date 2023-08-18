@@ -2,19 +2,22 @@ import {
   Query,
   FilterQuery,
   Model,
-  SortOrder,
   IfAny,
   Require_id,
   AnyKeys,
   QueryOptions,
   UpdateWithAggregationPipeline,
   UpdateQuery,
+  MergeType,
 } from 'mongoose'
 import HttpException from '@/modules/http/http.exception'
-import AppObjectId from './app.objectId'
-import AppDocument from './app.document'
+import AppObjectId from '@/modules/app/ObjectIds/app.ObjectId.mongoose'
+import AppDocument from '@/modules/app/Documents/app.document.mongoose'
+import { IAppRepository, SortOrder } from '@/modules/app/app.interface'
 
-export default class AppRepository<T extends AppDocument> {
+export default class AppRepository<T extends AppDocument>
+  implements IAppRepository
+{
   private query: null | Query<T, T> = null
   private queryAll: null | Query<T[], T> = null
   private createNew:
@@ -31,7 +34,6 @@ export default class AppRepository<T extends AppDocument> {
 
   public create(docs: T | AnyKeys<T>): this {
     this.createNew = new this.self(docs)
-
     return this
   }
 
@@ -98,7 +100,6 @@ export default class AppRepository<T extends AppDocument> {
 
   public sort(
     arg?:
-      | string
       | {
           [key: string]:
             | SortOrder
@@ -114,35 +115,34 @@ export default class AppRepository<T extends AppDocument> {
     return this
   }
 
-  public select(
-    arg: string | string[] | Record<string, number | boolean | object>
-  ): this {
+  public select(arg: string | string[]): this {
     this.queryAll?.select(arg)
     return this
   }
 
-  public collect() {
+  public collect(): Promise<T> | undefined {
     const result = this.query?.exec()
     this.query = null
     return result
   }
 
-  public collectAll() {
+  public collectAll(): Promise<T[]> {
     const result = this.queryAll?.exec()
+    if (!result) throw Error('queryAll not available')
     this.queryAll = null
-    return result ? result : []
+    return result
   }
 
   public async updateOne(
-    filter?: FilterQuery<T> | undefined,
-    update?: UpdateWithAggregationPipeline | UpdateQuery<T> | undefined,
+    filter: FilterQuery<T> | undefined,
+    update: UpdateWithAggregationPipeline | UpdateQuery<T> | undefined,
     options?: QueryOptions<T> | null | undefined
-  ) {
+  ): Promise<{}> {
     return await this.self.updateOne(filter, update, options)
   }
 
   public async findByIdAndDelete(
-    id?: any,
+    id: any,
     options?: QueryOptions<T> | null | undefined
   ): Promise<T | null> {
     return await this.self.findByIdAndDelete(id, options)
@@ -151,7 +151,7 @@ export default class AppRepository<T extends AppDocument> {
   public async deleteOne(
     filter?: FilterQuery<T> | undefined,
     options?: QueryOptions<T> | undefined
-  ) {
+  ): Promise<{}> {
     if (this.query) return await this.query.deleteOne()
     return await this.self.deleteOne(filter, options)
   }
@@ -159,12 +159,12 @@ export default class AppRepository<T extends AppDocument> {
   public async deleteMany(
     filter?: FilterQuery<T> | undefined,
     options?: QueryOptions<T> | undefined
-  ) {
+  ): Promise<{}> {
     if (this.queryAll) return await this.queryAll.deleteMany()
-    await this.self.deleteMany(filter, options)
+    return await this.self.deleteMany(filter, options)
   }
 
-  public async count(filter?: FilterQuery<T> | undefined) {
+  public async count(filter?: FilterQuery<T> | undefined): Promise<number> {
     return this.self.count(filter).exec()
   }
 
@@ -180,7 +180,7 @@ export default class AppRepository<T extends AppDocument> {
     })
   }
 
-  public toClass(instance: T) {
+  public toClass(instance: T): this {
     this.createNew = instance
     return this
   }
@@ -195,14 +195,24 @@ export default class AppRepository<T extends AppDocument> {
     return instance.toObject({ getters: true })
   }
 
-  public async populate(
-    arr: T[],
+  public async populate<Paths = {}>(
+    instance: T,
+    path: string,
+    select: string,
+    refInstance: any
+  ) {
+    await instance.populate(path, select)
+  }
+
+  public async populateAll(
+    instanceArr: T[],
     path: string,
     ref: string,
-    select: string
+    select: string,
+    refInstance: any
   ): Promise<void> {
     let populating: any = {}
-    for (const obj of arr) {
+    for (const obj of instanceArr) {
       const populatingId = obj.get(path)
       await obj.populate(path, select)
       if (!obj.get(path)) {

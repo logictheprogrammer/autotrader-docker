@@ -38,10 +38,12 @@ import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import userModel from '../user/user.model'
 
 @Service()
 class WithdrawalService implements IWithdrawalService {
   private withdrawalRepository = new AppRepository<IWithdrawal>(withdrawalModel)
+  private userRepository = new AppRepository<IUser>(userModel)
 
   public constructor(
     @Inject(ServiceToken.WITHDRAWAL_METHOD_SERVICE)
@@ -345,11 +347,12 @@ class WithdrawalService implements IWithdrawalService {
         .select('-userObject -withdrawalMethod')
         .collectAll()
 
-      await this.withdrawalRepository.populate(
+      await this.withdrawalRepository.populateAll(
         withdrawals,
         'user',
         'userObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       return {

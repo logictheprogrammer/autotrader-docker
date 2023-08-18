@@ -66,10 +66,15 @@
     "module-alias": "^2.2.2",
     "mongoose": "^7.0.2",
     "morgan": "^1.10.0",
+    "mysql2": "^3.6.0",
     "nodemailer": "^6.9.1",
+    "pg": "^8.11.3",
     "referral-codes": "^2.0.3",
     "reflect-metadata": "^0.1.13",
-    "typedi": "^0.10.0"
+    "sequelize": "^6.32.1",
+    "sequelize-typescript": "^2.1.5",
+    "typedi": "^0.10.0",
+    "uuidv4": "^6.2.13"
   },
   "_moduleAliases": {
     "@/modules": "dist/modules",

@@ -35,10 +35,12 @@ import { TTransaction } from '@/modules/transactionManager/transactionManager.ty
 import { ITransferSettingsService } from '@/modules/transferSettings/transferSettings.interface'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import userModel from '../user/user.model'
 
 @Service()
 class TransferService implements ITransferService {
   private transferRepository = new AppRepository<ITransfer>(transferModel)
+  private userRepository = new AppRepository<IUser>(userModel)
 
   public constructor(
     @Inject(ServiceToken.TRANSFER_SETTINGS_SERVICE)
@@ -484,18 +486,20 @@ class TransferService implements ITransferService {
         .select('-fromUserObject -toUserObject')
         .collectAll()
 
-      await this.transferRepository.populate(
+      await this.transferRepository.populateAll(
         transfers,
         'fromUser',
         'fromUserObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
-      await this.transferRepository.populate(
+      await this.transferRepository.populateAll(
         transfers,
         'toUser',
         'toUserObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       return {

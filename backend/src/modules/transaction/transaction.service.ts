@@ -6,7 +6,7 @@ import {
 } from '@/modules/transaction/transaction.interface'
 import transactionModel from '@/modules/transaction/transaction.model'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
-import { IUserObject } from '@/modules/user/user.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import formatNumber from '@/utils/formats/formatNumber'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import AppException from '@/modules/app/app.exception'
@@ -19,12 +19,14 @@ import { UserEnvironment } from '../user/user.enum'
 import { TransactionStatus } from './transaction.type'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import userModel from '../user/user.model'
 
 @Service()
 class TransactionService implements ITransactionService {
   private transactionRepository = new AppRepository<ITransaction>(
     transactionModel
   )
+  private userRepository = new AppRepository<IUser>(userModel)
 
   private async find(
     transactionId: AppObjectId,
@@ -341,11 +343,12 @@ class TransactionService implements ITransactionService {
         .select('-userObject -category')
         .collectAll()
 
-      await this.transactionRepository.populate(
+      await this.transactionRepository.populateAll(
         transactions,
         'user',
         'userObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       return {

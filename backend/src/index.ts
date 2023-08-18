@@ -8,6 +8,8 @@ validateEnv()
 
 const { MONGO_PATH, PORT } = process.env
 
-const app = new App(controllers, Number(PORT), httpMiddleware, true, MONGO_PATH)
+const app = new App(controllers, Number(PORT), httpMiddleware, true, {
+  mogodb: MONGO_PATH,
+})
 
 app.listen()

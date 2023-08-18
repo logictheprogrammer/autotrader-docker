@@ -44,11 +44,13 @@ import FormatNumber from '@/utils/formats/formatNumber'
 import { TUpdateInvestmentStatus } from './investment.type'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import userModel from '../user/user.model'
 
 @Service()
 class InvestmentService implements IInvestmentService {
   private investmentRepository = new AppRepository<IInvestment>(investmentModel)
   private tradeRepository = new AppRepository<ITrade>(tradeModel)
+  private userRepository = new AppRepository<IUser>(userModel)
 
   public constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
@@ -525,11 +527,12 @@ class InvestmentService implements IInvestmentService {
         .select('-userObject -plan')
         .collectAll()
 
-      await this.investmentRepository.populate(
+      await this.investmentRepository.populateAll(
         investments,
         'user',
         'userObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       return {

@@ -11,7 +11,7 @@ import {
   IDepositMethodObject,
   IDepositMethodService,
 } from '@/modules/depositMethod/depositMethod.interface'
-import { IUserObject, IUserService } from '@/modules/user/user.interface'
+import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
 import { IReferralService } from '@/modules/referral/referral.interface'
@@ -34,10 +34,12 @@ import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import AppRepository from '@/modules/app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import userModel from '../user/user.model'
 
 @Service()
 class DepositService implements IDepositService {
   private depositRepository = new AppRepository<IDeposit>(depositModel)
+  private userRepository = new AppRepository<IUser>(userModel)
 
   public constructor(
     @Inject(ServiceToken.DEPOSIT_METHOD_SERVICE)
@@ -315,11 +317,12 @@ class DepositService implements IDepositService {
         .select('-userObject -depositMethod')
         .collectAll()
 
-      await this.depositRepository.populate(
+      await this.depositRepository.populateAll(
         deposits,
         'user',
         'userObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       return {

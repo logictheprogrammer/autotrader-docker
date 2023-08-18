@@ -1,11 +1,13 @@
-import { Types } from 'mongoose'
+import { isUuid, uuid } from 'uuidv4'
 
 export default class AppObjectId {
   constructor(inputId?: any) {
-    return new Types.ObjectId(inputId)
+    if (inputId) {
+    }
+    return uuid()
   }
 
   public static isValid(id: any): boolean {
-    return Types.ObjectId.isValid(id)
+    return isUuid(id)
   }
 }

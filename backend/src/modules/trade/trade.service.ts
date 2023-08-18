@@ -9,7 +9,7 @@ import tradeModel from '@/modules/trade/trade.model'
 import ServiceToken from '@/utils/enums/serviceToken'
 import { TradeMove, TradeStatus } from '@/modules/trade/trade.enum'
 import { IPlanService } from '@/modules/plan/plan.interface'
-import { IUserObject, IUserService } from '@/modules/user/user.interface'
+import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
 import { INotificationService } from '@/modules/notification/notification.interface'
@@ -35,10 +35,12 @@ import { InvestmentStatus } from '../investment/investment.enum'
 import { TUpdateTradeStatus } from './trade.type'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import userModel from '../user/user.model'
 
 @Service()
 class TradeService implements ITradeService {
   private tradeRepository = new AppRepository<ITrade>(tradeModel)
+  private userRepository = new AppRepository<IUser>(userModel)
 
   public static minStakeRate = 0.1
   public static maxStakeRate = 0.25
@@ -600,18 +602,20 @@ class TradeService implements ITradeService {
         .select('-investmentObject -userObject -pair')
         .collectAll()
 
-      await this.tradeRepository.populate(
+      await this.tradeRepository.populateAll(
         trades,
         'investment',
         'investmentObject',
-        'name icon'
+        'name icon',
+        this.userRepository
       )
 
-      await this.tradeRepository.populate(
+      await this.tradeRepository.populateAll(
         trades,
         'user',
         'userObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       return {

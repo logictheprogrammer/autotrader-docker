@@ -2,7 +2,7 @@ import { FailedTransactionStatus } from '@/modules/failedTransaction/failedTrans
 import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
 import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectid'
+import AppObjectId from '../app/app.objectId'
 
 export interface IFailedTransactionDoc {
   collectionName: string

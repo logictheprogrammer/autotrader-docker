@@ -1,5 +1,4 @@
 import express, { Application } from 'express'
-import mongoose from 'mongoose'
 import compression from 'compression'
 import cors from 'cors'
 import morgan from 'morgan'
@@ -9,6 +8,10 @@ import { IAppController } from '@/modules/app/app.interface'
 import path from 'path'
 import cookieParser from 'cookie-parser'
 import { doubleCsrfProtection } from '@/utils/csrf'
+import mongodbDatabase from './database/mongodb.database'
+import mysqlDatabase from './database/mysql.database'
+import IDatabaseCredentials from './database/database.interface'
+import postgresDatabase from './database/postgres.database'
 
 class App {
   public express: Application
@@ -18,7 +21,11 @@ class App {
     public port: number,
     private httpMiddleware: HttpMiddleware,
     private enabledCsrf: boolean,
-    private mongoUri?: string
+    private database?: {
+      mogodb?: string
+      postgres?: IDatabaseCredentials
+      mysql?: IDatabaseCredentials
+    }
   ) {
     this.express = express()
 
@@ -70,15 +77,10 @@ class App {
   }
 
   private async initialiseDatabaseConnection(): Promise<void> {
-    if (this.mongoUri)
-      mongoose
-        .connect(`${this.mongoUri}`)
-        .then(() => {
-          console.log('DB CONNECTED')
-        })
-        .catch((error) => {
-          throw error
-        })
+    if (!this.database) return
+    if (this.database.mogodb) mongodbDatabase(this.database.mogodb)
+    if (this.database.mysql) mysqlDatabase(this.database.mysql)
+    if (this.database.postgres) postgresDatabase(this.database.postgres)
   }
 
   public listen(): void {

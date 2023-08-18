@@ -9,7 +9,7 @@ import {
   NotificationForWho,
   NotificationCategory,
 } from '@/modules/notification/notification.enum'
-import { IUserObject } from '@/modules/user/user.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import AppException from '@/modules/app/app.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
@@ -21,12 +21,14 @@ import { UserEnvironment } from '@/modules/user/user.enum'
 import { NotificationStatus } from './notification.type'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import userModel from '../user/user.model'
 
 @Service()
 class NotificationService implements INotificationService {
   private notificationRepository = new AppRepository<INotification>(
     notificationModel
   )
+  private userRepository = new AppRepository<IUser>(userModel)
 
   private find = async (
     notificationId: string | AppObjectId,
@@ -207,11 +209,12 @@ class NotificationService implements INotificationService {
         .select('-userObject')
         .collectAll()
 
-      await this.notificationRepository.populate(
+      await this.notificationRepository.populateAll(
         notifications,
         'user',
         'userObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       return {

@@ -10,17 +10,19 @@ import {
   IActivityService,
 } from '@/modules/activity/activity.interface'
 import activityModel from '@/modules/activity/activity.model'
-import { IUserObject } from '@/modules/user/user.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppRepository from '@/modules/app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import userModel from '../user/user.model'
 
 @Service()
 class ActivityService implements IActivityService {
   private activityRepository = new AppRepository<IActivity>(activityModel)
+  private userRepository = new AppRepository<IUser>(userModel)
 
   public async set(
     user: IUserObject,
@@ -80,11 +82,12 @@ class ActivityService implements IActivityService {
           .collectAll()
       }
 
-      await this.activityRepository.populate(
+      await this.activityRepository.populateAll(
         activities,
         'user',
         'userObject',
-        'username isDeleted'
+        'username isDeleted',
+        this.userRepository
       )
 
       return {
