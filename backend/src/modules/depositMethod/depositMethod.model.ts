@@ -3,6 +3,11 @@ import { IDepositMethod } from '@/modules/depositMethod/depositMethod.interface'
 
 const DepositMethodSchema = new Schema(
   {
+    currency: {
+      type: Types.ObjectId,
+      ref: 'currency',
+      required: true,
+    },
     name: {
       type: String,
       required: true,

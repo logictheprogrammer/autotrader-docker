@@ -112,6 +112,11 @@ const showModal = () => {
   transition: opacity 0.2s ease-in-out;
   z-index: 600;
 }
+.custom-modal-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
 .custom-modal-wrapper {
   padding: 20px;
   position: fixed;

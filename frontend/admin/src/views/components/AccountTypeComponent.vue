@@ -8,12 +8,13 @@
             name="accountType"
             id="main-balance"
             value="main-balance"
-            checked
+            :checked="selected === UserAccount.MAIN_BALANCE"
+            @click="$emit('change', UserAccount.MAIN_BALANCE)"
           /><label
             class="debit-label payment-cards overflow-hidden text-nowrap"
             for="main-balance"
             ><span class="d-block">Main Balance</span>
-            <h4 class="text-center">$3000</h4>
+            <h4 class="text-center">{{ Helpers.toDollar(mainBalance) }}</h4>
           </label>
         </div>
         <div class="col-6">
@@ -22,11 +23,13 @@
             name="accountType"
             id="referral-balance"
             value="referral-balance"
+            :checked="selected === UserAccount.REFERRAL_BALANCE"
+            @click="$emit('change', UserAccount.REFERRAL_BALANCE)"
           /><label
             class="paypal-label payment-cards overflow-hidden text-nowrap"
             for="referral-balance"
             ><span class="d-block">Referral Balance</span>
-            <h4 class="text-center">$3000</h4>
+            <h4 class="text-center">{{ Helpers.toDollar(referralBalance) }}</h4>
           </label>
         </div>
       </div>
@@ -34,7 +37,17 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import type { UserAccount } from '@/modules/user/user.enum'
+
+defineProps<{
+  mainBalance: number
+  referralBalance: number
+  selected: UserAccount
+}>()
+
+defineEmits(['change'])
+</script>
 
 <style scoped>
 .payment-type {
@@ -86,7 +99,7 @@ input:checked + label.payment-cards {
 }
 
 .form input:checked + label:after {
-  content: "";
+  content: '';
   width: 20px;
   height: 20px;
   line-height: 17px;
@@ -100,7 +113,7 @@ input:checked + label.payment-cards {
 }
 
 .form input:checked + label:after {
-  content: "";
+  content: '';
   width: 20px;
   height: 20px;
   line-height: 17px;
@@ -114,7 +127,7 @@ input:checked + label.payment-cards {
 }
 
 .form input:checked + label:before {
-  content: "\2713";
+  content: '\2713';
   z-index: 999;
   position: absolute;
   top: -11px;

@@ -1,12 +1,8 @@
 <template>
-  <div class="f-modal-alert">
-    <div class="f-modal-icon f-modal-error animate scaleWarning">
-      <span class="f-modal-x-mark">
-        <span class="f-modal-line f-modal-left animateXLeft"></span>
-        <span class="f-modal-line f-modal-right animateXRight"></span>
-      </span>
-      <div class="f-modal-placeholder"></div>
-      <div class="f-modal-fix"></div>
+  <div class="f-modal-alert red-alert">
+    <div class="f-modal-icon f-modal-warning scaleWarning">
+      <span class="f-modal-body pulseWarningIns"></span>
+      <span class="f-modal-dot pulseWarningIns"></span>
     </div>
   </div>
 </template>

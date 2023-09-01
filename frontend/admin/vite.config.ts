@@ -57,6 +57,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'admin',
+    rollupOptions: {
+      input: {
+        main: './src/main.ts',
+      },
+    },
   },
   server: {
     port: 5175,

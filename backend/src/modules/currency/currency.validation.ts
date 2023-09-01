@@ -1,8 +1,8 @@
 import Joi from 'joi'
 
 const create = Joi.object({
-  name: Joi.string().required(),
-  symbol: Joi.string().required(),
+  name: Joi.string().required().lowercase(),
+  symbol: Joi.string().required().lowercase(),
   logo: Joi.string().required(),
 })
 

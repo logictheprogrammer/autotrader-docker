@@ -1,3 +1,4 @@
+import { DepositMethodStatus } from '@/modules/depositeMethod/depositMethod.enum'
 import { UserRole, UserStatus } from '@/modules/user/user.enum'
 
 export default class Helpers {
@@ -31,14 +32,17 @@ export default class Helpers {
     }
   }
 
-  public static toUserStatus(status: UserStatus): string[] {
+  public static toStatus(status: UserStatus | DepositMethodStatus): string {
     switch (status) {
       case UserStatus.ACTIVE:
-        return ['Active', 'success']
+      case DepositMethodStatus.ENABLED:
+        return 'success'
       case UserStatus.SUSPENDED:
-        return ['Suspended', 'warning']
+      case DepositMethodStatus.DISABLED:
+        return 'warning'
+
       default:
-        return ['', '']
+        return ''
     }
   }
 }

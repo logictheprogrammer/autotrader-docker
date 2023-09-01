@@ -1,12 +1,17 @@
 import { defineStore } from 'pinia'
-import type { IUser } from './user.interface'
+import type {
+  IFundUserAccount,
+  IUpdateUserEmail,
+  IUpdateUserProfile,
+  IUser,
+} from './user.interface'
 import type { UserStatus } from './user.enum'
 // import type { SubmissionContext } from 'vee-validate'
 
 export const useUserStore = defineStore('user', () => {
   const httpStore = useHttpStore()
   const basePath = 'users'
-  const users = ref<IUser[]>()
+  const users = ref<IUser[]>([])
   const loaded = ref(false)
 
   function setUsers(usersArr: IUser[]) {
@@ -42,7 +47,7 @@ export const useUserStore = defineStore('user', () => {
     setLoaded(true)
   }
 
-  async function updateUserProfile(form: any) {
+  async function updateUserProfile(form: IUpdateUserProfile) {
     try {
       httpStore.setPost(true)
       const userId = form.userId
@@ -59,7 +64,7 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  async function updateUserEmail(form: any) {
+  async function updateUserEmail(form: IUpdateUserEmail) {
     try {
       httpStore.setPost(true)
       const userId = form.userId
@@ -76,15 +81,47 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  async function updateUserStatus(userId?: string, status?: UserStatus) {
+  async function updateUserStatus(userId: string, status: UserStatus) {
     try {
-      if (!userId || !status) return
       httpStore.setPost(true)
       const result = await axios.patch(
         `${basePath}/${userId}/update-user-status`,
         {
           status,
         }
+      )
+
+      updateById(userId, result.data.data.user)
+      httpStore.handlePost(result)
+    } catch (error: any) {
+      console.error(error)
+      httpStore.handlePost(error.response)
+    }
+  }
+
+  async function deleteUser(userId: string) {
+    try {
+      httpStore.setPost(true)
+      const result = await axios.delete(`${basePath}/${userId}/delete-user`)
+
+      const allUsers = users.value
+      if (!allUsers) return
+      const finalUsers = allUsers.filter((user) => user._id !== userId)
+
+      setUsers(finalUsers)
+      httpStore.handlePost(result)
+    } catch (error: any) {
+      console.error(error)
+      httpStore.handlePost(error.response)
+    }
+  }
+
+  async function fundUserAccount(userId: string, form: IFundUserAccount) {
+    try {
+      httpStore.setPost(true)
+      const result = await axios.patch(
+        `${basePath}/${userId}/force-fund-user`,
+        form
       )
 
       updateById(userId, result.data.data.user)
@@ -103,5 +140,7 @@ export const useUserStore = defineStore('user', () => {
     updateUserProfile,
     updateUserEmail,
     updateUserStatus,
+    deleteUser,
+    fundUserAccount,
   }
 })

@@ -7,6 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class DepositMethodController implements IAppController {
@@ -54,6 +55,13 @@ class DepositMethodController implements IAppController {
       HttpMiddleware.authenticate(UserRole.ADMIN),
       HttpMiddleware.validate(validate.update),
       this.update
+    )
+
+    // Delete Deposit Method
+    this.router.delete(
+      `${this.path}/delete/:depositMethodId`,
+      HttpMiddleware.authenticate(UserRole.ADMIN),
+      this.delete
     )
 
     this.router.get(
@@ -143,6 +151,21 @@ class DepositMethodController implements IAppController {
         status
       )
       res.status(200).json(response)
+    } catch (err: any) {
+      next(new HttpException(err.status, err.message, err.statusStrength))
+    }
+  }
+
+  private delete = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const depositMethodId = req.params
+        .depositMethodId as unknown as AppObjectId
+      const responce = await this.depositMethodService.delete(depositMethodId)
+      res.status(200).json(responce)
     } catch (err: any) {
       next(new HttpException(err.status, err.message, err.statusStrength))
     }

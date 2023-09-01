@@ -92,7 +92,7 @@ export default class HttpMiddleware {
   }
 
   public handle404Error(req: Request, res: Response, next: NextFunction) {
-    const message = 'Sorry, the page you requested could not be found.'
+    const message = 'Sorry, the resourse you requested could not be found.'
 
     res
       .status(404)

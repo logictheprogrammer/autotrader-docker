@@ -15,6 +15,7 @@
               <tr>
                 <th class="text-sharp">Action</th>
                 <th class="text-sharp">No</th>
+                <th class="text-sharp text-center">Status</th>
                 <th class="text-sharp">Name</th>
                 <th class="text-sharp">Username</th>
                 <th class="text-sharp">Email</th>
@@ -23,7 +24,6 @@
                 <th class="text-sharp">Referral Balance</th>
                 <th class="text-sharp text-center">Referral Code</th>
                 <th class="text-sharp text-center">Role</th>
-                <th class="text-sharp text-center">Status</th>
                 <th class="text-sharp text-center">Verifield</th>
                 <th class="text-sharp">Registered</th>
               </tr>
@@ -76,6 +76,7 @@
                     >
                     <a
                       v-if="user.role < UserRole.ADMIN"
+                      @click="() => deleteUserHandler(user)"
                       class="dropdown-item"
                       href="javascript:;"
                       ><i class="bi bi-trash me-2"></i>Delete</a
@@ -83,6 +84,14 @@
                   </MyDropdownComponent>
                 </td>
                 <td>{{ i + 1 }}</td>
+                <td class="text-center">
+                  <span
+                    :class="`badge light badge-${Helpers.toStatus(
+                      user.status
+                    )}`"
+                    >{{ Helpers.toTitleCase(user.status) }}
+                  </span>
+                </td>
                 <td>{{ Helpers.toTitleCase(user.name) }}</td>
                 <td>{{ user.username }}</td>
                 <td>{{ user.email }}</td>
@@ -91,14 +100,6 @@
                 <td>{{ Helpers.toDollar(user.referralBalance) }}</td>
                 <td class="text-center">{{ user.refer }}</td>
                 <td class="text-center">{{ Helpers.toUserRole(user.role) }}</td>
-                <td class="text-center">
-                  <span
-                    :class="`badge light badge-${
-                      Helpers.toUserStatus(user.status)[1]
-                    }`"
-                    >{{ Helpers.toUserStatus(user.status)[0] }}
-                  </span>
-                </td>
                 <td class="text-center">{{ user.verifield ? 'Yes' : 'No' }}</td>
                 <td>{{ user.createdAt }}</td>
               </tr>
@@ -114,7 +115,7 @@
     :status="alertModalInfo.status"
     :title="alertModalInfo.title"
     :message="alertModalInfo.message"
-    @confirm="updateUserStatus"
+    @confirm="alertModalInfo.onConfirm"
     @close="openAlertModal = false"
   />
 
@@ -122,7 +123,7 @@
     :is-open="openFundUserModel"
     v-slot="{ errors }"
     :validation-schema="updateEmailSchema"
-    @confirm="(data:any) => console.log(data)"
+    @confirm="fundUserAccount"
     @close="() => (openFundUserModel = false)"
   >
     <div class="w-100">
@@ -132,10 +133,18 @@
         Credit or debit: {{ selectedUser?.username }}
       </h2>
       <div class="mb-3">
-        <AccountTypeComponent />
+        <AccountTypeComponent
+          :main-balance="selectedUser?.mainBalance || 0"
+          :referral-balance="selectedUser?.referralBalance || 0"
+          :selected="userAccount"
+          @change="(account) => setUserAccount(account)"
+        />
+        <Field name="account" v-model="userAccount" type="hidden" />
       </div>
       <div class="mb-3">
-        <label class="form-label text-sharp text-center w-100">Amount</label>
+        <label class="form-label text-sharp text-center w-100"
+          >Amount (add minus to debit)</label
+        >
         <Field
           name="amount"
           type="number"
@@ -151,16 +160,29 @@
 
 <script setup lang="ts">
 import { ResponseStatus } from '@/modules/http/http.enum'
-import { UserStatus } from '@/modules/user/user.enum'
-import type { IUser } from '@/modules/user/user.interface'
+import { UserAccount, UserStatus } from '@/modules/user/user.enum'
+import type { IUser, IFundUserAccount } from '@/modules/user/user.interface'
 
 const userStore = useUserStore()
 const usersLoaded = computed(() => userStore.loaded)
 const users = computed(() => userStore.users)
+const selectedUser = ref<IUser>()
 const openAlertModal = ref(false)
 const openFundUserModel = ref(false)
+const userAccount = ref(UserAccount.MAIN_BALANCE)
+const setUserAccount = (account: UserAccount) => (userAccount.value = account)
 
+const alertModalInfo = reactive<{
+  status: ResponseStatus
+  title: string
+  message: string
+  onConfirm: Function
+}>({ status: ResponseStatus.INFO, title: '', message: '', onConfirm: () => {} })
+
+// Fetch users if not fetched before
 if (!usersLoaded.value) userStore.fetchAll()
+
+// Email Schema
 const updateEmailSchema = yup.object({
   amount: yup
     .number()
@@ -169,45 +191,69 @@ const updateEmailSchema = yup.object({
     .required('Amount is required'),
 })
 
-const selectedUser = ref<IUser>()
-
-const alertModalInfo = reactive<{
-  status: ResponseStatus
-  title: string
-  message: string
-}>({ status: ResponseStatus.INFO, title: '', message: '' })
-
+// User Status handler
 const userStatusHandler = (user: IUser) => {
   selectedUser.value = user
-  selectedUser.value._id = user._id
-  selectedUser.value.status =
-    user.status !== UserStatus.ACTIVE ? UserStatus.ACTIVE : UserStatus.SUSPENDED
-  selectedUser.value.username = user.username
 
   if (selectedUser.value.status === UserStatus.ACTIVE) {
     alertModalInfo.status = ResponseStatus.INFO
     alertModalInfo.title = `Do you really wants to unsuspend ${user.username}?`
     alertModalInfo.message =
-      'Unsuspending this user, will permit him to access this platform and perform regular task.'
+      'Unsuspending this user will permit him to access this platform and perform regular task.'
   } else {
     alertModalInfo.status = ResponseStatus.WARNING
     alertModalInfo.title = `Do you really wants to suspend ${user.username}?`
     alertModalInfo.message =
-      'Suspending this user, will prevent him from accessing this platform until he has been unsuspended.'
+      'Suspending this user will prevent him from accessing this platform until he has been unsuspended.'
   }
 
+  alertModalInfo.onConfirm = updateUserStatus
   openAlertModal.value = true
 }
 
-const updateUserStatus = () => {
-  if (!selectedUser.value) return
-  openAlertModal.value = false
-  userStore.updateUserStatus(selectedUser.value._id, selectedUser.value.status)
+// Delete User handler
+const deleteUserHandler = (user: IUser) => {
+  selectedUser.value = user
+
+  alertModalInfo.status = ResponseStatus.DANGER
+  alertModalInfo.title = `Do you really wants to delete ${user.username}?`
+  alertModalInfo.message =
+    'Deleting this user will remove all his/her entry from this platform complete including some of his/her activities'
+
+  alertModalInfo.onConfirm = deleteUser
+  openAlertModal.value = true
 }
 
+// Fund user handler
 const fundUserHandler = (user: IUser) => {
   selectedUser.value = user
   openFundUserModel.value = true
+}
+
+// Update User status
+const updateUserStatus = () => {
+  if (!selectedUser.value) return
+  openAlertModal.value = false
+  const status =
+    selectedUser.value.status !== UserStatus.ACTIVE
+      ? UserStatus.ACTIVE
+      : UserStatus.SUSPENDED
+  userStore.updateUserStatus(selectedUser.value._id, status)
+}
+
+// Delete User
+const deleteUser = () => {
+  if (!selectedUser.value) return
+  openAlertModal.value = false
+
+  userStore.deleteUser(selectedUser.value._id)
+}
+
+// Fund User account
+const fundUserAccount = (data: IFundUserAccount) => {
+  if (!selectedUser.value) return
+  openFundUserModel.value = false
+  userStore.fundUserAccount(selectedUser.value._id, data)
 }
 </script>
 

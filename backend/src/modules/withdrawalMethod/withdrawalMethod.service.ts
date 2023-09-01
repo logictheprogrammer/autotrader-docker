@@ -50,8 +50,14 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
     try {
       const currency = await this.currencyService.get(currencyId)
 
+      await this.withdrawalMethodRepository.ifExist(
+        { name: currency.name, network },
+        'This withdrawal method already exist'
+      )
+
       const withdrawalMethod = await this.withdrawalMethodRepository
         .create({
+          currency: currency._id,
           name: currency.name,
           symbol: currency.symbol,
           logo: currency.logo,
@@ -87,6 +93,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
       const currency = await this.currencyService.get(currencyId)
       if (!currency) throw new HttpException(404, 'Currency not found')
 
+      withdrawalMethod.currency = currency._id
       withdrawalMethod.name = currency.name
       withdrawalMethod.symbol = currency.symbol
       withdrawalMethod.logo = currency.logo

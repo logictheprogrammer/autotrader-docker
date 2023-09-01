@@ -3,6 +3,7 @@ export {}
 declare global {
   const CONFIG: typeof import('@/modules/config/config.store')['default']
   const DUMMY_PLANS: typeof import('./src/data/dummyPlans')['DUMMY_PLANS']
+  const DepositMethodStatus: typeof import('./src/modules/depositeMethod/depositMethod.enum')['DepositMethodStatus']
   const EffectScope: typeof import('vue')['EffectScope']
   const Helpers: typeof import('@/util/helpers')['default']
   const ResponseStatus: typeof import('./src/modules/http/http.enum')['ResponseStatus']
@@ -63,6 +64,8 @@ declare global {
   const useConfigStore: typeof import('./src/modules/config/config.store')['useConfigStore']
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
+  const useCurrencyStore: typeof import('./src/modules/currency/currency.store')['useCurrencyStore']
+  const useDepositMethodStore: typeof import('./src/modules/depositeMethod/depositMethod.store')['useDepositMethodStore']
   const useHttpStore: typeof import('./src/modules/http/http.store')['useHttpStore']
   const useLink: typeof import('vue-router')['useLink']
   const useRoute: typeof import('vue-router')['useRoute']
@@ -81,6 +84,7 @@ declare module 'vue' {
   interface ComponentCustomProperties {
     readonly CONFIG: UnwrapRef<typeof import('@/modules/config/config.store')['default']>
     readonly DUMMY_PLANS: UnwrapRef<typeof import('./src/data/dummyPlans')['DUMMY_PLANS']>
+    readonly DepositMethodStatus: UnwrapRef<typeof import('./src/modules/depositeMethod/depositMethod.enum')['DepositMethodStatus']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly Helpers: UnwrapRef<typeof import('@/util/helpers')['default']>
     readonly ResponseStatus: UnwrapRef<typeof import('./src/modules/http/http.enum')['ResponseStatus']>
@@ -141,6 +145,8 @@ declare module 'vue' {
     readonly useConfigStore: UnwrapRef<typeof import('./src/modules/config/config.store')['useConfigStore']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useCurrencyStore: UnwrapRef<typeof import('./src/modules/currency/currency.store')['useCurrencyStore']>
+    readonly useDepositMethodStore: UnwrapRef<typeof import('./src/modules/depositeMethod/depositMethod.store')['useDepositMethodStore']>
     readonly useHttpStore: UnwrapRef<typeof import('./src/modules/http/http.store')['useHttpStore']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>

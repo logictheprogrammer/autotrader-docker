@@ -3,4 +3,5 @@ export enum ResponseStatus {
   INFO = 'info',
   SUCCESS = 'success',
   WARNING = 'warning',
+  DANGER = 'danger',
 }

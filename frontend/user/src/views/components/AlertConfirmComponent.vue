@@ -10,7 +10,8 @@
       <SuccessAlertIcon v-if="status === ResponseStatus.SUCCESS" />
       <InfoAlertIcon v-if="status === ResponseStatus.INFO" />
       <WarningAlertIcon v-if="status === ResponseStatus.WARNING" />
-      <DangerAlertIcon v-if="status === ResponseStatus.ERROR" />
+      <ErrorAlertIcon v-if="status === ResponseStatus.ERROR" />
+      <DangerAlertIcon v-if="status === ResponseStatus.DANGER" />
     </div>
     <h2 class="text-center text-lower text-sharp mb-3">
       {{ title }}
@@ -23,6 +24,7 @@
 
 <script setup lang="ts">
 import type { ResponseStatus } from '@/modules/http/http.enum'
+import ErrorAlertIcon from './alert-icons/ErrorAlertIcon.vue'
 
 defineProps<{
   status: ResponseStatus

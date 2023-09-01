@@ -5,6 +5,7 @@ import AppObjectId from '../app/app.objectId'
 import AppDocument from '../app/app.document'
 
 export interface IDepositMethodObject extends IAppObject {
+  currency: AppObjectId
   name: string
   symbol: string
   logo: string
@@ -21,6 +22,7 @@ export interface IDepositMethod extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
+  currency: AppObjectId
   name: string
   symbol: string
   logo: string

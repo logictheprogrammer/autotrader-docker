@@ -46,8 +46,14 @@ class DepositMethodService implements IDepositMethodService {
     try {
       const currency = await this.currencyService.get(currencyId)
 
+      await this.depositMethodRepository.ifExist(
+        { name: currency.name, network },
+        'This deposit method already exist'
+      )
+
       const depositMethod = await this.depositMethodRepository
         .create({
+          currency: currency._id,
           name: currency.name,
           symbol: currency.symbol,
           logo: currency.logo,
@@ -87,6 +93,7 @@ class DepositMethodService implements IDepositMethodService {
 
       const currency = await this.currencyService.get(currencyId)
 
+      depositMethod.currency = currency._id
       depositMethod.name = currency.name
       depositMethod.symbol = currency.symbol
       depositMethod.logo = currency.logo

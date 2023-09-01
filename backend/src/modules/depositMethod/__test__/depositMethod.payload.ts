@@ -1,5 +1,10 @@
 import { DepositMethodStatus } from '../../../modules/depositMethod/depositMethod.enum'
 import AppObjectId from '../../app/app.objectId'
+import {
+  currencyA_id,
+  currencyB_id,
+  currencyC_id,
+} from '../../currency/__test__/currency.payload'
 
 export const depositMethodUpdated = {
   address: '--updated wallet address--',
@@ -11,6 +16,7 @@ export const depositMethodUpdated = {
 export const depositMethodA_id = new AppObjectId('6245de5d5b1f5b3a5c1b539a')
 
 export const depositMethodA = {
+  currency: currencyA_id,
   name: 'bitcoin',
   symbol: 'btc',
   logo: 'btc.svg',
@@ -26,6 +32,7 @@ export const depositMethodA = {
 export const depositMethodB_id = new AppObjectId('6245de5d5b1f5b3a5c1b539b')
 
 export const depositMethodB = {
+  currency: currencyB_id,
   name: 'ethereum',
   symbol: 'eth',
   logo: 'eth.svg',
@@ -41,6 +48,7 @@ export const depositMethodB = {
 export const depositMethodC_id = new AppObjectId('6245de5d5b1f5b3a5c1b539c')
 
 export const depositMethodC = {
+  currency: currencyC_id,
   name: 'litecoin',
   symbol: 'ltc',
   logo: 'ltc.svg',

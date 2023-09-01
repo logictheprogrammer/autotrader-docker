@@ -5,6 +5,7 @@ import AppDocument from '../app/app.document'
 import AppObjectId from '../app/app.objectId'
 
 export interface IWithdrawalMethodObject extends IAppObject {
+  currency: AppObjectId
   name: string
   symbol: string
   logo: string
@@ -18,6 +19,7 @@ export interface IWithdrawalMethod extends AppDocument {
   __v: number
   updatedAt: Date
   createdAt: Date
+  currency: AppObjectId
   name: string
   symbol: string
   logo: string

@@ -1,8 +1,13 @@
-import { Schema, model } from 'mongoose'
+import { Schema, Types, model } from 'mongoose'
 import { IWithdrawalMethod } from '@/modules/withdrawalMethod/withdrawalMethod.interface'
 
 const WithdrawalMethodSchema = new Schema(
   {
+    currency: {
+      type: Types.ObjectId,
+      ref: 'currency',
+      required: true,
+    },
     name: {
       type: String,
       required: true,

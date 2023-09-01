@@ -93,6 +93,38 @@ describe('withdrawal method', () => {
         expect(getCurrencyMock).toHaveBeenCalledWith(payload.currencyId)
       })
     })
+    describe('given withdrawal method already exist', () => {
+      it('should throw a 404 error', async () => {
+        const payload = {
+          currencyId: currencyA_id,
+          network: withdrawalMethodA.network,
+          fee: withdrawalMethodA.fee,
+          minWithdrawal: withdrawalMethodA.minWithdrawal,
+          address: withdrawalMethodA.address,
+        }
+
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+
+        await request
+          .post(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        const { statusCode, body } = await request
+          .post(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('This withdrawal method already exist')
+        expect(statusCode).toBe(409)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+
+        const withdrawalMethodCounts = await withdrawalMethodRepository.count()
+
+        expect(withdrawalMethodCounts).toBe(1)
+      })
+    })
     describe('given all validations passed', () => {
       it('should return a 201', async () => {
         const payload = {
@@ -565,6 +597,65 @@ describe('withdrawal method', () => {
             },
           ],
         })
+      })
+    })
+  })
+
+  describe('delete withdrawal method', () => {
+    describe('given logged in user is not an admin', () => {
+      it('should return a 401 Unauthorized error', async () => {
+        const payload = {}
+
+        const user = await userRepository.create(userA).save()
+        const token = Encryption.createToken(user)
+        const url = `${baseUrl}delete/id`
+
+        const { statusCode, body } = await request
+          .delete(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Unauthorized')
+        expect(statusCode).toBe(401)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
+    describe('given withdrawal method those not exist', () => {
+      it('should return a 404 error', async () => {
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+        const url = `${baseUrl}delete/${new AppObjectId().toString()}`
+
+        const { statusCode, body } = await request
+          .delete(url)
+          .set('Authorization', `Bearer ${token}`)
+
+        expect(body.message).toBe('withdrawal method not found')
+        expect(statusCode).toBe(404)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
+    describe('on success entry', () => {
+      it('should return a 200', async () => {
+        const withdrawalMethod = await withdrawalMethodRepository
+          .create(withdrawalMethodA)
+          .save()
+
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+        const url = `${baseUrl}delete/${withdrawalMethod._id}`
+
+        const { statusCode, body } = await request
+          .delete(url)
+          .set('Authorization', `Bearer ${token}`)
+
+        expect(body.message).toBe('Withdrawal method deleted successfully')
+        expect(statusCode).toBe(200)
+        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+
+        const withdrawalMethodCount = await withdrawalMethodRepository.count()
+
+        expect(withdrawalMethodCount).toBe(0)
       })
     })
   })

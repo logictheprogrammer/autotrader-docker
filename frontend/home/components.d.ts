@@ -23,6 +23,7 @@ declare module '@vue/runtime-core' {
     DangerAlertIcon: typeof import('./src/views/components/alert-icons/DangerAlertIcon.vue')['default']
     Error404Page: typeof import('./src/views/pages/error/Error404Page.vue')['default']
     Error500Page: typeof import('./src/views/pages/error/Error500Page.vue')['default']
+    ErrorAlertIcon: typeof import('./src/views/components/alert-icons/ErrorAlertIcon.vue')['default']
     ErrorLayout: typeof import('./src/views/layouts/ErrorLayout.vue')['default']
     ExchangePage: typeof import('./src/views/pages/ExchangePage.vue')['default']
     ExchangeTableWidget: typeof import('./src/views/widgets/ExchangeTableWidget.vue')['default']

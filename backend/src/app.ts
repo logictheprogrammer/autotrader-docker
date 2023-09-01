@@ -9,9 +9,6 @@ import path from 'path'
 import cookieParser from 'cookie-parser'
 import { doubleCsrfProtection } from '@/utils/csrf'
 import mongodbDatabase from './database/mongodb.database'
-import mysqlDatabase from './database/mysql.database'
-import IDatabaseCredentials from './database/database.interface'
-import postgresDatabase from './database/postgres.database'
 
 class App {
   public express: Application
@@ -23,8 +20,6 @@ class App {
     private enabledCsrf: boolean,
     private database?: {
       mogodb?: string
-      postgres?: IDatabaseCredentials
-      mysql?: IDatabaseCredentials
     }
   ) {
     this.express = express()
@@ -79,8 +74,6 @@ class App {
   private async initialiseDatabaseConnection(): Promise<void> {
     if (!this.database) return
     if (this.database.mogodb) mongodbDatabase(this.database.mogodb)
-    if (this.database.mysql) mysqlDatabase(this.database.mysql)
-    if (this.database.postgres) postgresDatabase(this.database.postgres)
   }
 
   public listen(): void {

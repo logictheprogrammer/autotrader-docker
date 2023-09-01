@@ -4,8 +4,8 @@ import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
 const create = Joi.object({
   currencyId: Joi.string().required(),
   address: Joi.string().required(),
-  network: Joi.string().required(),
-  fee: Joi.number().positive().required(),
+  network: Joi.string().required().lowercase(),
+  fee: Joi.number().min(0).required(),
   minDeposit: Joi.number().positive().required(),
 })
 
@@ -13,8 +13,8 @@ const update = Joi.object({
   depositMethodId: Joi.string().required(),
   currencyId: Joi.string().required(),
   address: Joi.string().required(),
-  network: Joi.string().required(),
-  fee: Joi.number().positive().required(),
+  network: Joi.string().required().lowercase(),
+  fee: Joi.number().min(0).required(),
   minDeposit: Joi.number().positive().required(),
 })
 

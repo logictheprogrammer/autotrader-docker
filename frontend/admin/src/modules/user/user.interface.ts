@@ -1,4 +1,4 @@
-import type { UserRole, UserStatus } from './user.enum'
+import type { UserAccount, UserRole, UserStatus } from './user.enum'
 
 export interface IUser {
   _id: string
@@ -18,4 +18,20 @@ export interface IUser {
   demoBalance: number
   updatedAt: string
   createdAt: string
+}
+
+export interface IUpdateUserProfile {
+  userId: string
+  name: string
+  username: string
+}
+
+export interface IUpdateUserEmail {
+  userId: string
+  email: string
+}
+
+export interface IFundUserAccount {
+  account: UserAccount
+  amount: number
 }

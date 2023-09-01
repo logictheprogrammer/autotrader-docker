@@ -94,6 +94,39 @@ describe('deposit method', () => {
         )
       })
     })
+
+    describe('given deposit method already exist', () => {
+      it('should throw a 404 error', async () => {
+        const payload = {
+          currencyId: currencyA_id,
+          network: depositMethodA.network,
+          fee: depositMethodA.fee,
+          minDeposit: depositMethodA.minDeposit,
+          address: depositMethodA.address,
+        }
+
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+
+        await request
+          .post(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        const { statusCode, body } = await request
+          .post(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('This deposit method already exist')
+        expect(statusCode).toBe(409)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+
+        const depositMethodCounts = await depositMethodRepository.count()
+
+        expect(depositMethodCounts).toBe(1)
+      })
+    })
     describe('given all validations passed', () => {
       it('should return a 201', async () => {
         const payload = {
@@ -821,6 +854,65 @@ describe('deposit method', () => {
             },
           ],
         })
+      })
+    })
+  })
+
+  describe('delete deposit method', () => {
+    describe('given logged in user is not an admin', () => {
+      it('should return a 401 Unauthorized error', async () => {
+        const payload = {}
+
+        const user = await userRepository.create(userA).save()
+        const token = Encryption.createToken(user)
+        const url = `${baseUrl}delete/id`
+
+        const { statusCode, body } = await request
+          .delete(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Unauthorized')
+        expect(statusCode).toBe(401)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
+    describe('given deposit method those not exist', () => {
+      it('should return a 404 error', async () => {
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+        const url = `${baseUrl}delete/${new AppObjectId().toString()}`
+
+        const { statusCode, body } = await request
+          .delete(url)
+          .set('Authorization', `Bearer ${token}`)
+
+        expect(body.message).toBe('Deposit method not found')
+        expect(statusCode).toBe(404)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
+    describe('on success entry', () => {
+      it('should return a 200', async () => {
+        const depositMethod = await depositMethodRepository
+          .create(depositMethodA)
+          .save()
+
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+        const url = `${baseUrl}delete/${depositMethod._id}`
+
+        const { statusCode, body } = await request
+          .delete(url)
+          .set('Authorization', `Bearer ${token}`)
+
+        expect(body.message).toBe('Deposit method deleted successfully')
+        expect(statusCode).toBe(200)
+        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+
+        const depositMethodCount = await depositMethodRepository.count()
+
+        expect(depositMethodCount).toBe(0)
       })
     })
   })

@@ -7,6 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
+import AppObjectId from '../app/app.objectId'
 
 @Service()
 class WithdrawalMethodController implements IAppController {
@@ -40,6 +41,13 @@ class WithdrawalMethodController implements IAppController {
       HttpMiddleware.authenticate(UserRole.ADMIN),
       HttpMiddleware.validate(validate.update),
       this.update
+    )
+
+    // Delete Withdrawal Method
+    this.router.delete(
+      `${this.path}/delete/:withdrawalMethodId`,
+      HttpMiddleware.authenticate(UserRole.ADMIN),
+      this.delete
     )
 
     this.router.get(
@@ -110,6 +118,23 @@ class WithdrawalMethodController implements IAppController {
         minWithdrawal
       )
       res.status(200).json(response)
+    } catch (err: any) {
+      next(new HttpException(err.status, err.message, err.statusStrength))
+    }
+  }
+
+  private delete = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const withdrawalMethodId = req.params
+        .withdrawalMethodId as unknown as AppObjectId
+      const responce = await this.withdrawalMethodService.delete(
+        withdrawalMethodId
+      )
+      res.status(200).json(responce)
     } catch (err: any) {
       next(new HttpException(err.status, err.message, err.statusStrength))
     }

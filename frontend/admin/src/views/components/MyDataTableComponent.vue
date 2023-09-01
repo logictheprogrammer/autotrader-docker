@@ -18,7 +18,7 @@ onMounted(() => {
   tableX = window.$('#' + id).DataTable({
     ordering: props.ordering || false,
     searching: props.searching || false,
-    order: props.order || [0, 'asc'],
+    order: props.order || [1, 'desc'],
     lengthChange: false,
     language: {
       paginate: {
