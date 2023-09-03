@@ -21,9 +21,9 @@ export interface IAppRepository {
     name: string
   }
 
-  create(docs: any): this
+  create(docs: any): IAppRepository
 
-  find(payload: {}, fromAllAccounts: boolean, userPayload?: {}): this
+  find(payload: {}, fromAllAccounts: boolean, userPayload?: {}): IAppRepository
 
   ifExist(payload: {}, errorMessage: string): Promise<void> | void
 
@@ -31,9 +31,13 @@ export interface IAppRepository {
     modelId: AppObjectId | string,
     fromAllAccounts: boolean,
     userId?: AppObjectId | string
-  ): this
+  ): IAppRepository
 
-  findOne(payload: {}, fromAllAccounts: boolean, userPayload?: {}): this
+  findOne(
+    payload: {},
+    fromAllAccounts: boolean,
+    userPayload?: {}
+  ): IAppRepository
 
   sort(
     arg?:
@@ -78,7 +82,7 @@ export interface IAppRepository {
 
   collectUnsaved(): {} & { _id: AppObjectId }
 
-  toClass(instance: {}): this
+  toClass(instance: {}): IAppRepository
 
   save(instance?: {}): Promise<{}>
 

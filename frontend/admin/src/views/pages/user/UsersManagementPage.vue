@@ -132,13 +132,28 @@
       >
         Credit or debit: {{ selectedUser?.username }}
       </h2>
+
       <div class="mb-3">
-        <AccountTypeComponent
-          :main-balance="selectedUser?.mainBalance || 0"
-          :referral-balance="selectedUser?.referralBalance || 0"
-          :selected="userAccount"
-          @change="(account) => setUserAccount(account)"
-        />
+        <MyFineSelectComponent>
+          <MyFineOptionComponent
+            @click="() => setUserAccount(UserAccount.MAIN_BALANCE)"
+            :selected="userAccount === UserAccount.MAIN_BALANCE"
+          >
+            <span class="d-block">Main Balance</span>
+            <h4 class="text-center">
+              {{ Helpers.toDollar(selectedUser?.mainBalance || 0) }}
+            </h4>
+          </MyFineOptionComponent>
+          <MyFineOptionComponent
+            :selected="userAccount === UserAccount.REFERRAL_BALANCE"
+            @click="() => setUserAccount(UserAccount.REFERRAL_BALANCE)"
+          >
+            <span class="d-block">Referral Balance</span>
+            <h4 class="text-center">
+              {{ Helpers.toDollar(selectedUser?.referralBalance || 0) }}
+            </h4>
+          </MyFineOptionComponent>
+        </MyFineSelectComponent>
         <Field name="account" v-model="userAccount" type="hidden" />
       </div>
       <div class="mb-3">
@@ -187,7 +202,7 @@ const updateEmailSchema = yup.object({
   amount: yup
     .number()
     .typeError('Amount is required')
-    .not([0], 'Amount cannot be 0')
+    .positive('Amount is not valid')
     .required('Amount is required'),
 })
 

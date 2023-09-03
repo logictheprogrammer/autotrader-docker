@@ -140,11 +140,11 @@
       </div>
 
       <div class="mb-3">
-        <label class="form-label text-sharp">Address</label>
+        <label class="form-label text-sharp">Wallet Address</label>
         <Field
           name="address"
           type="text"
-          placeholder="Address"
+          placeholder="Wallet Address"
           class="form-control"
           :validate-on-input="true"
         />
@@ -290,7 +290,8 @@ import type {
   IAddNewDepositMethod,
   IDepositMethod,
   IEditDepositMethod,
-} from '@/modules/depositeMethod/depositMethod.interface'
+} from '@/modules/depositMethod/depositMethod.interface'
+import type { IAlertModalInfo } from '@/util/interfaces/alertModalInfo.interface'
 import { ResponseStatus } from '@/modules/http/http.enum'
 
 const selectedDepositMethod = ref<IDepositMethod>()
@@ -311,12 +312,12 @@ const depositMethodLoaded = computed(() => depositMethodStore.loaded)
 // fetch deposit methods if not fetched
 if (!depositMethodLoaded.value) depositMethodStore.fetchAll()
 
-const alertModalInfo = reactive<{
-  status: ResponseStatus
-  title: string
-  message: string
-  onConfirm: Function
-}>({ status: ResponseStatus.INFO, title: '', message: '', onConfirm: () => {} })
+const alertModalInfo = reactive<IAlertModalInfo>({
+  status: ResponseStatus.INFO,
+  title: '',
+  message: '',
+  onConfirm: () => {},
+})
 
 const addNewSchema = yup.object({
   currencyId: yup.string().required('Currency is required'),
@@ -395,7 +396,7 @@ const deleteDepositMethodHandler = (depositMethod: IDepositMethod) => {
   openAlertModal.value = true
 }
 
-// Update Deposite Method Status
+// Update Deposit Method Status
 const updateDepositMethodStatus = () => {
   if (!selectedDepositMethod.value) return
   openAlertModal.value = false
@@ -429,3 +430,4 @@ const deleteDepositMethod = () => {
 </script>
 
 <style scoped></style>
+@/modules/depositMethod/depositMethod.interface

@@ -74,6 +74,25 @@ export const adminUser = {
   isDeleted: false,
 }
 
+// @ts-ignore
+export const notFoundUser: IUserObject = {
+  key: '8f6b4c9d7f4b9c2b8e8a8d6c8a8d6c8a',
+  name: 'John Doe',
+  username: 'nobody',
+  country: 'USA',
+  email: 'usera@gmail.com',
+  status: UserStatus.ACTIVE,
+  verifield: true,
+  password: '1234567890',
+  role: UserRole.USER,
+  refer: 'usera',
+  mainBalance: 200,
+  referralBalance: 1076.85,
+  demoBalance: 1000,
+  bonusBalance: 50,
+  isDeleted: false,
+}
+
 export const userA_id = new AppObjectId('6345de5d5b1f5b3a5c1b539a')
 // @ts-ignore
 export const userA: IUserObject = {

@@ -15,6 +15,7 @@ import { TransferStatus } from '../../transfer/transfer.enum'
 import { request } from '../../../test'
 import {
   adminA,
+  notFoundUser,
   userA,
   userAObj,
   userA_id,
@@ -91,6 +92,33 @@ describe('transfer', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
+    describe('given the recipient was not found', () => {
+      it('should throw a 404 error', async () => {
+        const payload = {
+          toUserUsername: notFoundUser.username,
+          account: UserAccount.MAIN_BALANCE,
+          amount: 1000,
+        }
+
+        await transferSettingsRepository.create(transferSettingsA).save()
+
+        const user = await userRepository
+          .create({ ...userA, _id: userA_id })
+          .save()
+        const token = Encryption.createToken(user)
+
+        const { statusCode, body } = await request
+          .post(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe(
+          `No Recipient with the username of ${notFoundUser.username} was found`
+        )
+        expect(statusCode).toBe(404)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
     describe('given the user tried transferring to its own account', () => {
       it('should throw a 400 error', async () => {
         const payload = {
@@ -159,6 +187,7 @@ describe('transfer', () => {
             payload.toUserUsername,
             UserAccount.MAIN_BALANCE,
             payload.amount,
+            expect.any(String),
           ])
 
           expect(createTransactionTransactionMock).toHaveBeenCalledTimes(2)
@@ -407,7 +436,8 @@ describe('transfer', () => {
           expect(fundTransactionUserMock).toHaveBeenCalledWith(
             transferAObj.fromUser,
             transferAObj.account,
-            +(transferAObj.amount + transferAObj.fee)
+            +(transferAObj.amount + transferAObj.fee),
+            undefined
           )
 
           expect(updateStatusTransactionTransactionMock).toHaveBeenCalledTimes(
@@ -488,7 +518,8 @@ describe('transfer', () => {
           expect(fundTransactionUserMock).toHaveBeenCalledWith(
             transferAObj.toUser,
             UserAccount.MAIN_BALANCE,
-            +transferAObj.amount
+            +transferAObj.amount,
+            undefined
           )
 
           expect(updateStatusTransactionTransactionMock).toHaveBeenCalledTimes(

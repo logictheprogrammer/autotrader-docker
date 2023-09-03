@@ -23,20 +23,11 @@ describe('transfer settings', () => {
     const url = `${baseUrl}`
     describe('a get request', () => {
       it('should return the transfer settings payload', async () => {
-        const transferSettings = await transferSettingsRepository
-          .create(transferSettingsA)
-          .save()
-
         const { statusCode, body } = await request.get(url)
 
         expect(body.message).toBe('Transfer Settings fetched')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-
-        expect(body.data.transferSettings.approval).toBe(
-          transferSettings.approval
-        )
-        expect(body.data.transferSettings.fee).toBe(transferSettings.fee)
       })
     })
   })

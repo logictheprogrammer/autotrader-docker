@@ -1,6 +1,6 @@
 <template>
   <div class="table-responsive">
-    <table :id="id" class="display" style="min-width: 845px">
+    <table :id="id" class="display" style="">
       <slot></slot>
     </table>
   </div>
@@ -46,7 +46,12 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+table {
+  width: 100% !important;
+  min-width: auto !important;
+}
+</style>
 
 <style>
 .dataTables_wrapper .dataTables_filter {

@@ -48,6 +48,12 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
     minWithdrawal: number
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }> => {
     try {
+      if (fee >= minWithdrawal)
+        throw new HttpException(
+          400,
+          'Min withdrawal must be greater than the fee'
+        )
+
       const currency = await this.currencyService.get(currencyId)
 
       await this.withdrawalMethodRepository.ifExist(
@@ -88,10 +94,20 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
     minWithdrawal: number
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }> => {
     try {
+      if (fee >= minWithdrawal)
+        throw new HttpException(
+          400,
+          'Min withdrawal must be greater than the fee'
+        )
+
       const withdrawalMethod = await this.find(withdrawalMethodId)
 
       const currency = await this.currencyService.get(currencyId)
-      if (!currency) throw new HttpException(404, 'Currency not found')
+
+      await this.withdrawalMethodRepository.ifExist(
+        { name: currency.name, network, _id: { $ne: withdrawalMethod._id } },
+        'This withdrawal method already exist'
+      )
 
       withdrawalMethod.currency = currency._id
       withdrawalMethod.name = currency.name

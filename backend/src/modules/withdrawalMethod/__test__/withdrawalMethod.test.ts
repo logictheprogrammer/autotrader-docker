@@ -68,7 +68,28 @@ describe('withdrawal method', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
+    describe('given fee is greater than min withdrawal', () => {
+      it('should throw a 400 error', async () => {
+        const payload = {
+          currencyId: currencyA_id,
+          network: withdrawalMethodA.network,
+          fee: 10,
+          minWithdrawal: 5,
+        }
 
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+
+        const { statusCode, body } = await request
+          .post(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Min withdrawal must be greater than the fee')
+        expect(statusCode).toBe(400)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
     describe('given currency those not exist', () => {
       it('should throw a 404 error', async () => {
         const payload = {
@@ -100,7 +121,6 @@ describe('withdrawal method', () => {
           network: withdrawalMethodA.network,
           fee: withdrawalMethodA.fee,
           minWithdrawal: withdrawalMethodA.minWithdrawal,
-          address: withdrawalMethodA.address,
         }
 
         const admin = await userRepository.create(adminA).save()
@@ -357,6 +377,30 @@ describe('withdrawal method', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
+    describe('given fee is greater than min withdrawal', () => {
+      it('should throw a 400 error', async () => {
+        await withdrawalMethodRepository.create(withdrawalMethodA).save()
+        const payload = {
+          withdrawalMethodId: new AppObjectId(),
+          currencyId: currencyA_id,
+          network: withdrawalMethodUpdated.network,
+          fee: 10,
+          minWithdrawal: 9,
+        }
+
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+
+        const { statusCode, body } = await request
+          .put(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Min withdrawal must be greater than the fee')
+        expect(statusCode).toBe(400)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
     describe('given withdrawal method those not exist', () => {
       it('should throw a 404 error', async () => {
         await withdrawalMethodRepository.create(withdrawalMethodA).save()
@@ -408,6 +452,40 @@ describe('withdrawal method', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
+
+    describe('given withdrawal method already exist', () => {
+      it('should throw a 404 error', async () => {
+        const dm = await withdrawalMethodRepository
+          .create(withdrawalMethodA)
+          .save()
+        const payload = {
+          withdrawalMethodId: dm._id,
+          currencyId: currencyA_id,
+          network: withdrawalMethodUpdated.network,
+          fee: withdrawalMethodUpdated.fee,
+          minWithdrawal: withdrawalMethodUpdated.minWithdrawal,
+        }
+        await withdrawalMethodRepository
+          .create({ ...withdrawalMethodA, ...payload })
+          .save()
+
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+
+        const { statusCode, body } = await request
+          .put(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('This withdrawal method already exist')
+        expect(statusCode).toBe(409)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+
+        const withdrawalMethodCounts = await withdrawalMethodRepository.count()
+
+        expect(withdrawalMethodCounts).toBe(2)
+      })
+    })
     describe('given all validations passed', () => {
       it('should return a 200 and updated withdrawal method', async () => {
         const dm = await withdrawalMethodRepository
@@ -440,6 +518,7 @@ describe('withdrawal method', () => {
           minWithdrawal: withdrawalMethodUpdated.minWithdrawal,
           __v: expect.any(Number),
           _id: expect.any(String),
+          currency: expect.any(String),
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
           status: WithdrawalMethodStatus.ENABLED,
@@ -630,7 +709,7 @@ describe('withdrawal method', () => {
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('withdrawal method not found')
+        expect(body.message).toBe('Withdrawal method not found')
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })

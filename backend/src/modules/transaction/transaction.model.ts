@@ -18,7 +18,6 @@ const TransactionSchema = new Schema(
     },
     category: {
       type: Types.ObjectId,
-      unique: true,
       required: true,
     },
     categoryName: {

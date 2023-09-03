@@ -1,9 +1,11 @@
+import HttpException from '../../../modules/http/http.exception'
 import UserService from '../../../modules/user/user.service'
 import AppRepository from '../../app/app.repository'
 import { IUser } from '../user.interface'
 import userModel from '../user.model'
 
 import {
+  notFoundUser,
   userAObj,
   userA_id,
   userBObj,
@@ -41,6 +43,12 @@ export const fundTransactionUserMock = jest
           async callback() {},
         },
       })
+    }
+    if (userId === notFoundUser.username) {
+      throw new HttpException(
+        404,
+        `No Recipient with the username of ${notFoundUser.username} was found`
+      )
     }
     return Promise.reject('Mock: User not found')
   })

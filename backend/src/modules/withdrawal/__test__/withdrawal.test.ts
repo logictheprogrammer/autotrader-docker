@@ -198,7 +198,8 @@ describe('withdrawal', () => {
         expect(fundTransactionUserMock).toHaveBeenCalledWith(
           user._id,
           payload.account,
-          -(payload.amount + withdrawalMethodA.fee)
+          -(payload.amount + withdrawalMethodA.fee),
+          undefined
         )
 
         expect(createTransactionTransactionMock).toHaveBeenCalledTimes(1)
@@ -354,7 +355,8 @@ describe('withdrawal', () => {
           expect(fundTransactionUserMock).toHaveBeenCalledWith(
             withdrawalAObj.user,
             UserAccount.MAIN_BALANCE,
-            +(withdrawalAObj.amount + withdrawalAObj.fee)
+            +(withdrawalAObj.amount + withdrawalAObj.fee),
+            undefined
           )
 
           expect(updateStatusTransactionTransactionMock).toHaveBeenCalledTimes(

@@ -15,7 +15,7 @@ export const withdrawalMethodUpdated = {
 export const withdrawalMethodA_id = new AppObjectId('6245de5d5b1f5b3a5c1b539a')
 
 export const withdrawalMethodA = {
-  currency: currencyA_id,
+  currency: currencyA_id.toString(),
   name: 'bitcoin',
   symbol: 'btc',
   logo: 'btc.svg',
@@ -28,7 +28,7 @@ export const withdrawalMethodA = {
 export const withdrawalMethodB_id = new AppObjectId('6245de5d5b1f5b3a5c1b539b')
 
 export const withdrawalMethodB = {
-  currency: currencyB_id,
+  currency: currencyB_id.toString(),
   name: 'ethereum',
   symbol: 'eth',
   logo: 'eth.svg',
@@ -41,7 +41,7 @@ export const withdrawalMethodB = {
 export const withdrawalMethodC_id = new AppObjectId('6245de5d5b1f5b3a5c1b539c')
 
 export const withdrawalMethodC = {
-  currency: currencyC_id,
+  currency: currencyC_id.toString(),
   name: 'litecoin',
   symbol: 'ltc',
   logo: 'ltc.svg',

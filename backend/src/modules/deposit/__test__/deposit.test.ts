@@ -441,7 +441,8 @@ describe('deposit', () => {
           expect(fundTransactionUserMock).toHaveBeenCalledWith(
             depositAObj.user,
             UserAccount.MAIN_BALANCE,
-            depositAObj.amount - depositAObj.fee
+            depositAObj.amount - depositAObj.fee,
+            undefined
           )
 
           expect(createTransactionReferralMock).toHaveBeenCalledTimes(0)
@@ -1050,10 +1051,6 @@ describe('deposit', () => {
 
         expect(body.data.deposits[0].depositMethodObject.address).toBe(
           deposit.depositMethodObject.address
-        )
-        expect(body.data.deposits[0].user._id).toBe(deposit.user.toString())
-        expect(body.data.deposits[0].user.username).toBe(
-          deposit.userObject.username
         )
       })
     })

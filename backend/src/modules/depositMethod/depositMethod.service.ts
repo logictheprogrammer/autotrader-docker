@@ -44,6 +44,9 @@ class DepositMethodService implements IDepositMethodService {
     minDeposit: number
   ): THttpResponse<{ depositMethod: IDepositMethod }> => {
     try {
+      if (fee >= minDeposit)
+        throw new HttpException(400, 'Min deposit must be greater than the fee')
+
       const currency = await this.currencyService.get(currencyId)
 
       await this.depositMethodRepository.ifExist(
@@ -89,9 +92,17 @@ class DepositMethodService implements IDepositMethodService {
     minDeposit: number
   ): THttpResponse<{ depositMethod: IDepositMethod }> => {
     try {
+      if (fee >= minDeposit)
+        throw new HttpException(400, 'Min deposit must be greater than the fee')
+
       const depositMethod = await this.find(depositMethodId)
 
       const currency = await this.currencyService.get(currencyId)
+
+      await this.depositMethodRepository.ifExist(
+        { name: currency.name, network, _id: { $ne: depositMethod._id } },
+        'This deposit method already exist'
+      )
 
       depositMethod.currency = currency._id
       depositMethod.name = currency.name

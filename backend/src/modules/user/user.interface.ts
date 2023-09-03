@@ -2,8 +2,8 @@ import { UserAccount, UserRole, UserStatus } from '@/modules/user/user.enum'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
+import AppDocument from '@/modules/app/app.document'
+import AppObjectId from '@/modules/app/app.objectId'
 
 export interface IUserObject extends IAppObject {
   key: string
@@ -55,7 +55,10 @@ export interface IUserService {
     amount: number
   ): TTransaction<IUserObject, IUser>
 
-  get(userIdOrUsername: AppObjectId | string): Promise<IUserObject>
+  get(
+    userIdOrUsername: AppObjectId | string,
+    errorMessage?: string
+  ): Promise<IUserObject>
 
   fetch(userId: AppObjectId): THttpResponse<{ user: IUser }>
 
@@ -89,7 +92,8 @@ export interface IUserService {
   fund(
     userIdOrUsername: AppObjectId | string,
     account: UserAccount,
-    amount: number
+    amount: number,
+    notFoundErrorMessage?: string
   ): TTransaction<IUserObject, IUser>
 
   getReferredUsers(

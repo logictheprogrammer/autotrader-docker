@@ -66,6 +66,29 @@ describe('deposit method', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
+    describe('given fee is greater than min deposit', () => {
+      it('should throw a 400 error', async () => {
+        const payload = {
+          currencyId: currencyA_id,
+          network: depositMethodA.network,
+          fee: 10,
+          minDeposit: 5,
+          address: depositMethodA.address,
+        }
+
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+
+        const { statusCode, body } = await request
+          .post(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Min deposit must be greater than the fee')
+        expect(statusCode).toBe(400)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
 
     describe('given currency those not exist', () => {
       it('should throw a 404 error', async () => {
@@ -203,6 +226,7 @@ describe('deposit method', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
+
     describe('given deposit method those not exist', () => {
       it('should throw a 404 error', async () => {
         await depositMethodRepository.create(depositMethodA).save()
@@ -612,6 +636,31 @@ describe('deposit method', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
+    describe('given fee is greater than min deposit', () => {
+      it('should throw a 400 error', async () => {
+        await depositMethodRepository.create(depositMethodA).save()
+        const payload = {
+          depositMethodId: new AppObjectId(),
+          currencyId: currencyA_id,
+          network: depositMethodUpdated.network,
+          address: depositMethodUpdated.address,
+          fee: 10,
+          minDeposit: 9,
+        }
+
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+
+        const { statusCode, body } = await request
+          .put(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Min deposit must be greater than the fee')
+        expect(statusCode).toBe(400)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
     describe('given deposit method those not exist', () => {
       it('should throw a 404 error', async () => {
         await depositMethodRepository.create(depositMethodA).save()
@@ -661,6 +710,39 @@ describe('deposit method', () => {
         expect(body.message).toBe('Currency not found')
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
+      })
+    })
+
+    describe('given deposit method already exist', () => {
+      it('should throw a 404 error', async () => {
+        const dm = await depositMethodRepository.create(depositMethodA).save()
+        const payload = {
+          depositMethodId: dm._id,
+          currencyId: currencyA_id,
+          network: depositMethodUpdated.network,
+          address: depositMethodUpdated.address,
+          fee: depositMethodUpdated.fee,
+          minDeposit: depositMethodUpdated.minDeposit,
+        }
+        await depositMethodRepository
+          .create({ ...depositMethodA, ...payload })
+          .save()
+
+        const admin = await userRepository.create(adminA).save()
+        const token = Encryption.createToken(admin)
+
+        const { statusCode, body } = await request
+          .put(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('This deposit method already exist')
+        expect(statusCode).toBe(409)
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+
+        const depositMethodCounts = await depositMethodRepository.count()
+
+        expect(depositMethodCounts).toBe(2)
       })
     })
     describe('given all validations passed', () => {

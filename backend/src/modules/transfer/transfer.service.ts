@@ -109,16 +109,18 @@ class TransferService implements ITransferService {
     fee: number,
     amount: number
   ): TTransaction<ITransferObject, ITransfer> {
-    const transfer = this.transferRepository.create({
-      fromUser: fromUser._id,
-      fromUserObject: fromUser,
-      toUser: toUser._id,
-      toUserObject: toUser,
-      account,
-      amount,
-      fee,
-      status,
-    })
+    const transfer = this.transferRepository
+      .create({
+        fromUser: fromUser._id,
+        fromUserObject: fromUser,
+        toUser: toUser._id,
+        toUserObject: toUser,
+        account,
+        amount,
+        fee,
+        status,
+      })
+      .select('-fromUserObject -toUserObject')
 
     const unsavedTransfer = transfer.collectUnsaved()
 
@@ -147,6 +149,9 @@ class TransferService implements ITransferService {
       // transfer settings options
       const transferSettings = await this.transferSettingsService.get()
 
+      if (!transferSettings)
+        throw new HttpException(404, 'Transfer settings not found')
+
       const fee = transferSettings.fee
       const status = !transferSettings.approval
         ? TransferStatus.SUCCESSFUL
@@ -170,16 +175,19 @@ class TransferService implements ITransferService {
         const toUserTransaction = await this.userService.fund(
           toUserUsername,
           UserAccount.MAIN_BALANCE,
-          amount
+          amount,
+          `No Recipient with the username of ${toUserUsername} was found`
         )
         transactionInstances.push(toUserTransaction.instance)
-
         toUser = toUserTransaction.object
       } else {
-        toUser = await this.userService.get(toUserUsername)
+        toUser = await this.userService.get(
+          toUserUsername,
+          `No Recipient with the username of ${toUserUsername} was found`
+        )
       }
 
-      if (toUser._id === fromUser._id)
+      if (toUser._id.toString() === fromUser._id.toString())
         throw new HttpException(400, 'You can not transfer to your own account')
 
       // transfer instance
@@ -305,10 +313,26 @@ class TransferService implements ITransferService {
       // execute all transaction instances
       await this.transactionManagerService.execute(transactionInstances)
 
+      const rawTransfer = transferInstance.model.collectRaw()
+
+      await this.transferRepository.populate(
+        rawTransfer,
+        'toUser',
+        'username isDeleted',
+        this.userRepository
+      )
+
+      await this.transferRepository.populate(
+        rawTransfer,
+        'fromUser',
+        'username isDeleted',
+        this.userRepository
+      )
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Transfer has been registered successfully',
-        data: { transfer: transferInstance.model.collectRaw() },
+        data: { transfer: rawTransfer },
       }
     } catch (err: any) {
       throw new AppException(
@@ -482,6 +506,9 @@ class TransferService implements ITransferService {
       const transfers = await this.transferRepository
         .find({}, allUsers, {
           $or: [{ fromUser: userId }, { toUser: userId }],
+        })
+        .sort({
+          createdAt: -1,
         })
         .select('-fromUserObject -toUserObject')
         .collectAll()

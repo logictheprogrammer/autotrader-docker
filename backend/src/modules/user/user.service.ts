@@ -43,7 +43,10 @@ class UserService implements IUserService {
     @Inject(ServiceToken.MAIL_SERVICE) private mailService: IMailService
   ) {}
 
-  private async find(userIdOrUsername: AppObjectId | string): Promise<IUser> {
+  private async find(
+    userIdOrUsername: AppObjectId | string,
+    errorMessage?: string
+  ): Promise<IUser> {
     let user
 
     user = await this.userRepository
@@ -57,7 +60,7 @@ class UserService implements IUserService {
         ?.select('-password')
         .collect()
 
-    if (!user) throw new HttpException(404, 'User not found')
+    if (!user) throw new HttpException(404, errorMessage || 'User not found')
     return user
   }
 
@@ -88,9 +91,10 @@ class UserService implements IUserService {
   public async _fundTransaction(
     userIdOrUsername: AppObjectId | string,
     account: UserAccount,
-    amount: number
+    amount: number,
+    notFoundErrorMessage?: string
   ): TTransaction<IUserObject, IUser> {
-    const user = await this.find(userIdOrUsername)
+    const user = await this.find(userIdOrUsername, notFoundErrorMessage)
 
     const fundedUser = await this.setFund(user, account, amount)
 
@@ -112,7 +116,7 @@ class UserService implements IUserService {
         model: newFundedUser,
         onFailed,
         callback: async () => {
-          const user = await this.setFund(unsavedFundedUser, account, -amount)
+          const user = await this.setFund(fundedUser, account, -amount)
           await this.userRepository.save(user)
         },
       },
@@ -122,9 +126,15 @@ class UserService implements IUserService {
   public fund = async (
     userIdOrUsername: AppObjectId | string,
     account: UserAccount,
-    amount: number
+    amount: number,
+    notFoundErrorMessage?: string
   ): TTransaction<IUserObject, IUser> => {
-    return await this._fundTransaction(userIdOrUsername, account, amount)
+    return await this._fundTransaction(
+      userIdOrUsername,
+      account,
+      amount,
+      notFoundErrorMessage
+    )
   }
 
   public forceFund = async (
@@ -174,9 +184,10 @@ class UserService implements IUserService {
   }
 
   public get = async (
-    userIdOrUsername: AppObjectId | string
+    userIdOrUsername: AppObjectId | string,
+    errorMessage?: string
   ): Promise<IUserObject> => {
-    return (await this.find(userIdOrUsername)).toObject()
+    return (await this.find(userIdOrUsername, errorMessage)).toObject()
   }
 
   public fetch = async (

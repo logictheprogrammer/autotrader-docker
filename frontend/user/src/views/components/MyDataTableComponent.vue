@@ -1,6 +1,6 @@
 <template>
   <div class="table-responsive">
-    <table :id="id" class="display" style="min-width: 845px">
+    <table :id="id" class="display">
       <slot></slot>
     </table>
   </div>
@@ -8,12 +8,17 @@
 
 <script setup lang="ts">
 let tableX: any
-const props = defineProps(['ordering'])
+const props = defineProps<{
+  ordering?: boolean
+  searching?: boolean
+  order?: [number, string?]
+}>()
 const id = 'data-' + Math.ceil(Math.random() * 10000)
 onMounted(() => {
   tableX = window.$('#' + id).DataTable({
     ordering: props.ordering || false,
-    searching: false,
+    searching: props.searching || false,
+    order: props.order || [1, 'desc'],
     lengthChange: false,
     language: {
       paginate: {
@@ -41,4 +46,24 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+table {
+  width: 100% !important;
+  min-width: auto !important;
+}
+</style>
+
+<style>
+.dataTables_wrapper .dataTables_filter {
+  margin: 0;
+}
+
+.dataTables_wrapper .dataTables_filter {
+  float: none;
+  text-align: unset;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+  margin: 0.5rem 1rem;
+}
+</style>

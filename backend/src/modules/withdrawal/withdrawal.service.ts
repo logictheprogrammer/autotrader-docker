@@ -344,6 +344,7 @@ class WithdrawalService implements IWithdrawalService {
         .find({}, all, {
           user: userId,
         })
+        .sort({ createdAt: -1 })
         .select('-userObject -withdrawalMethod')
         .collectAll()
 

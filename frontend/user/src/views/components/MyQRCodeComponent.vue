@@ -1,16 +1,19 @@
 <template>
-  <div id="qrcode"></div>
+  <div :id="id"></div>
 </template>
 
 <script setup lang="ts">
-// qrcode
-const address = "jjjjj";
+const id = 'qrcode' + Math.ceil(Math.random() * 10000)
+
+const props = defineProps<{
+  value: string
+}>()
 
 onMounted(() => {
-  window.$("#qrcode").html("");
-  const qrcode = new window.QRCode(document.getElementById("qrcode"));
-  qrcode.makeCode(address);
-});
+  window.$(`#${id}`).html('')
+  const qrcode = new window.QRCode(document.getElementById(id))
+  qrcode.makeCode(props.value)
+})
 </script>
 
 <style scoped></style>

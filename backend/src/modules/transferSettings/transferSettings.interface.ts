@@ -20,7 +20,7 @@ export interface ITransferSettingsService {
     fee: number
   ): THttpResponse<{ transferSettings: ITransferSettings }>
 
-  get(): Promise<ITransferSettings>
+  get(): Promise<ITransferSettings | undefined>
 
   fetch(): THttpResponse<{ transferSettings: ITransferSettings }>
 }

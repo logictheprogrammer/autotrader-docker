@@ -314,16 +314,20 @@ class DepositService implements IDepositService {
     try {
       const deposits = await this.depositRepository
         .find({}, all, { user: userId })
+        .sort({ createdAt: -1 })
         .select('-userObject -depositMethod')
         .collectAll()
 
-      await this.depositRepository.populateAll(
-        deposits,
-        'user',
-        'userObject',
-        'username isDeleted',
-        this.userRepository
-      )
+      if (all) {
+        await this.depositRepository.populateAll(
+          deposits,
+          'user',
+          'userObject',
+          'username isDeleted',
+          this.userRepository
+        )
+        console.log(deposits)
+      }
 
       return {
         status: HttpResponseStatus.SUCCESS,

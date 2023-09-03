@@ -46,15 +46,14 @@ class TransferSettingsService implements ITransferSettingsService {
     fee: number
   ): THttpResponse<{ transferSettings: ITransferSettings }> => {
     try {
-      await this.transferSettingsRepository.updateOne(
-        {},
-        {
-          approval,
-          fee,
-        }
-      )
-
       const transferSettings = await this.get()
+      if (!transferSettings)
+        throw new HttpException(404, 'Transfer settings not found')
+
+      transferSettings.approval = approval
+      transferSettings.fee = fee
+
+      await this.transferSettingsRepository.save(transferSettings)
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -69,14 +68,11 @@ class TransferSettingsService implements ITransferSettingsService {
     }
   }
 
-  public get = async (): Promise<ITransferSettings> => {
+  public get = async (): Promise<ITransferSettings | undefined> => {
     try {
       const transferSettings = await this.transferSettingsRepository
         .findOne({})
         .collect()
-
-      if (!transferSettings)
-        throw new HttpException(404, 'Transfer settings not found')
 
       return transferSettings
     } catch (err: any) {
@@ -91,6 +87,9 @@ class TransferSettingsService implements ITransferSettingsService {
     transferSettings: ITransferSettings
   }> => {
     const transferSettings = await this.get()
+
+    if (!transferSettings)
+      throw new HttpException(404, 'Transfer settings not found')
 
     return {
       status: HttpResponseStatus.SUCCESS,

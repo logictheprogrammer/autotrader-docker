@@ -187,7 +187,8 @@ describe('investment', () => {
           expect(fundTransactionUserMock).toHaveBeenCalledWith(
             user._id,
             payload.account,
-            payload.amount
+            payload.amount,
+            undefined
           )
 
           expect(createTransactionInvestmentMock).toHaveBeenCalledTimes(1)
@@ -283,13 +284,15 @@ describe('investment', () => {
           expect(fundTransactionUserMock).toHaveBeenCalledWith(
             user._id,
             payload.account,
-            payload.amount
+            payload.amount,
+            undefined
           )
 
           expect(fundTransactionUserMock).toHaveBeenCalledWith(
             userA_id,
             UserAccount.REFERRAL_BALANCE,
-            referralA.amount
+            referralA.amount,
+            undefined
           )
 
           expect(createTransactionInvestmentMock).toHaveBeenCalledTimes(1)
@@ -411,7 +414,8 @@ describe('investment', () => {
           expect(fundTransactionUserMock).toHaveBeenCalledWith(
             user._id,
             payload.account,
-            payload.amount
+            payload.amount,
+            undefined
           )
 
           expect(createTransactionInvestmentMock).toHaveBeenCalledTimes(1)
@@ -646,7 +650,8 @@ describe('investment', () => {
           expect(fundTransactionUserMock).toHaveBeenCalledWith(
             investmentAObj.user,
             UserAccount.MAIN_BALANCE,
-            investmentAObj.balance
+            investmentAObj.balance,
+            undefined
           )
 
           expect(createTransactionReferralMock).toHaveBeenCalledTimes(0)
@@ -741,7 +746,8 @@ describe('investment', () => {
             1,
             investmentBObj.user,
             UserAccount.MAIN_BALANCE,
-            investmentBObj.balance
+            investmentBObj.balance,
+            undefined
           )
 
           expect(createTransactionReferralMock).toHaveBeenCalledTimes(1)

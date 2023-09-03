@@ -468,3 +468,12 @@ body * :not(.select2-results__options)::-webkit-scrollbar-thumb {
 .w-24 {
   width: 24px !important;
 }
+
+[data-theme-version='dark'] .light.badge-info {
+  background-color: rgb(141 156 211 / 10%);
+}
+
+.light.badge-info {
+  background-color: #f1e9f7;
+  color: #709fba;
+}

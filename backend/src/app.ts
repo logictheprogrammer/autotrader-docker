@@ -9,6 +9,7 @@ import path from 'path'
 import cookieParser from 'cookie-parser'
 import { doubleCsrfProtection } from '@/utils/csrf'
 import mongodbDatabase from './database/mongodb.database'
+import { transferSettingsService } from './setup'
 
 class App {
   public express: Application
@@ -24,11 +25,12 @@ class App {
   ) {
     this.express = express()
 
-    this.initialiseDatabaseConnection()
-    this.initialiseMiddleware()
-    this.initialiseControllers(controllers)
-    this.initialiseStatic()
-    this.initialiseErrorHandling()
+    this.beforeStart().then(() => {
+      this.initialiseMiddleware()
+      this.initialiseControllers(controllers)
+      this.initialiseStatic()
+      this.initialiseErrorHandling()
+    })
   }
 
   private initialiseMiddleware(): void {
@@ -74,6 +76,14 @@ class App {
   private async initialiseDatabaseConnection(): Promise<void> {
     if (!this.database) return
     if (this.database.mogodb) mongodbDatabase(this.database.mogodb)
+  }
+
+  private async beforeStart(): Promise<void> {
+    await this.initialiseDatabaseConnection()
+    const transferSettings = await transferSettingsService.get()
+    if (!transferSettings) {
+      await transferSettingsService.create(false, 0)
+    }
   }
 
   public listen(): void {

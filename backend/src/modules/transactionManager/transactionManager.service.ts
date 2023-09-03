@@ -31,10 +31,11 @@ class TransactionManagerService<T extends AppDocument>
   ): Promise<void> {
     const successfullyProccesedTransactions: ITransactionInstance<T>[] = []
     const failedTransactions: IFailedTransactionDoc[] = []
-
+    console.log(transactionInstances.length)
     try {
       for (let i = 0; i < transactionInstances.length; i++) {
         const transactionInstance = transactionInstances[i]
+
         await transactionInstance.model.save()
 
         successfullyProccesedTransactions.push(transactionInstance)

@@ -32,26 +32,29 @@ export default class AppRepository<T extends AppDocument>
 
   public constructor(private self: Model<T>) {}
 
-  public create(docs: T | AnyKeys<T>): this {
-    this.createNew = new this.self(docs)
-    return this
+  public create(docs: T | AnyKeys<T>): AppRepository<T> {
+    const newAppRepository = new AppRepository(this.self)
+
+    newAppRepository.createNew = new this.self(docs)
+    return newAppRepository
   }
 
   public find = (
     payload: FilterQuery<T> = {},
     fromAllAccounts: boolean = true,
     userPayload?: FilterQuery<T>
-  ): this => {
+  ): AppRepository<T> => {
+    const newAppRepository = new AppRepository(this.self)
     if (fromAllAccounts) {
-      this.queryAll = this.self.find(payload) as Query<T[], T>
+      newAppRepository.queryAll = this.self.find(payload) as Query<T[], T>
     } else {
-      this.queryAll = this.self.find({
+      newAppRepository.queryAll = this.self.find({
         ...payload,
         ...userPayload,
       }) as Query<T[], T>
     }
 
-    return this
+    return newAppRepository
   }
 
   public ifExist = async (
@@ -66,36 +69,38 @@ export default class AppRepository<T extends AppDocument>
     modelId: AppObjectId | string,
     fromAllAccounts: boolean = true,
     userId?: AppObjectId | string
-  ): this => {
-    if (!AppObjectId.isValid(modelId)) return this
+  ): AppRepository<T> => {
+    const newAppRepository = new AppRepository(this.self)
+    if (!AppObjectId.isValid(modelId)) return newAppRepository
 
     if (fromAllAccounts) {
-      this.query = this.self.findById(modelId) as Query<T, T>
+      newAppRepository.query = this.self.findById(modelId) as Query<T, T>
     } else {
-      this.query = this.self.findOne({
+      newAppRepository.query = this.self.findOne({
         _id: modelId,
         user: userId,
       }) as Query<T, T>
     }
 
-    return this
+    return newAppRepository
   }
 
   public findOne = (
     payload: FilterQuery<T> = {},
     fromAllAccounts: boolean = true,
     userPayload?: FilterQuery<T>
-  ): this => {
+  ): AppRepository<T> => {
+    const newAppRepository = new AppRepository(this.self)
     if (fromAllAccounts) {
-      this.query = this.self.findOne(payload) as Query<T, T>
+      newAppRepository.query = this.self.findOne(payload) as Query<T, T>
     } else {
-      this.query = this.self.findOne({
+      newAppRepository.query = this.self.findOne({
         ...payload,
         ...userPayload,
       }) as Query<T, T>
     }
 
-    return this
+    return newAppRepository
   }
 
   public sort(
@@ -111,7 +116,7 @@ export default class AppRepository<T extends AppDocument>
       | null
       | undefined
   ): this {
-    this.query?.sort(arg)
+    this.queryAll?.sort(arg)
     return this
   }
 
@@ -188,6 +193,7 @@ export default class AppRepository<T extends AppDocument>
   public async save(instance?: T): Promise<T> {
     if (instance) return await instance.save()
     if (!this.createNew) throw new Error('createNew payload is empty')
+
     return await this.createNew.save()
   }
 
@@ -201,7 +207,7 @@ export default class AppRepository<T extends AppDocument>
     select: string,
     refInstance: any
   ) {
-    await instance.populate(path, select)
+    if (instance.populate) await instance.populate(path, select)
   }
 
   public async populateAll(
