@@ -4,16 +4,18 @@
       <img src="/images/pattern/circle.png" class="mb-4" alt="" />
       <div class="row">
         <div class="col-sm-6 col-xl-12 text-center">
-          <h2 class="text-white fs-36">$8,571.93</h2>
+          <h2 class="text-white fs-36">
+            {{ Helpers.toDollar(totalReferralEarnings) }}
+          </h2>
           <p class="fs-16">Referral Earnings</p>
         </div>
         <div class="col-sm-6 col-xl-12 text-center">
-          <h2 class="text-white fs-36">75</h2>
+          <h2 class="text-white fs-36">{{ totalReferred }}</h2>
           <p class="fs-16">Total Referrals</p>
         </div>
       </div>
       <div class="ic-card">
-        <a href="page-invoices.html">
+        <RouterLink :to="{ name: 'withdraw' }">
           <i class="bg-danger">
             <svg
               width="28"
@@ -29,8 +31,8 @@
             </svg>
           </i>
           <span>Withdraw</span>
-        </a>
-        <a href="page-transaction.html">
+        </RouterLink>
+        <RouterLink :to="{ name: 'transfer' }">
           <i class="bg-success">
             <svg
               width="28"
@@ -62,7 +64,7 @@
             </svg>
           </i>
           <span>Transfer</span>
-        </a>
+        </RouterLink>
       </div>
       <div class="settings-form">
         <Form>
@@ -95,6 +97,11 @@
 </template>
 
 <script setup lang="ts">
+defineProps<{
+  totalReferred: number
+  totalReferralEarnings: number
+}>()
+
 const authStore = useAuthStore()
 const user = computed(() => authStore.user)
 </script>

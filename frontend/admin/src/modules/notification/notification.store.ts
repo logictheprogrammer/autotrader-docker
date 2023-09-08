@@ -18,7 +18,7 @@ export const useNotificationStore = defineStore('notification', () => {
   async function fetchAll() {
     setLoaded(false)
     try {
-      const result = await axios.get(`${basePath}`)
+      const result = await axios.get(`${basePath}/admin`)
       setNotifications(result.data.data.notifications)
     } catch (error: any) {
       console.error(error)
@@ -30,7 +30,9 @@ export const useNotificationStore = defineStore('notification', () => {
   async function deleteOne(notificationId: string) {
     try {
       httpStore.setPost(true)
-      const result = await axios.delete(`${basePath}/delete/${notificationId}`)
+      const result = await axios.delete(
+        `${basePath}/admin/delete/${notificationId}`
+      )
 
       const allNotifications = notifications.value
       if (!allNotifications) return

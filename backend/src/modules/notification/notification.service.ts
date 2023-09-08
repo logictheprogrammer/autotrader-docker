@@ -199,18 +199,19 @@ class NotificationService implements INotificationService {
   public fetchAll = async (
     fromAllAccounts: boolean,
     environment: UserEnvironment,
+    forWho: NotificationForWho,
     userId?: AppObjectId
   ): THttpResponse<{ notifications: INotification[] }> => {
     try {
       const notifications = await this.notificationRepository
-        .find({ environment }, fromAllAccounts, {
+        .find({ environment, forWho }, fromAllAccounts, {
           user: userId,
         })
         .sort({ createdAt: -1 })
-        .select('-userObject -categoryObject -environment')
+        .select('-userObject -categoryObject')
         .collectAll()
 
-      if (fromAllAccounts) {
+      if (fromAllAccounts && forWho === NotificationForWho.USER) {
         await this.notificationRepository.populateAll(
           notifications,
           'user',

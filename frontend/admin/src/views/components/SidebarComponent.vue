@@ -84,7 +84,7 @@ const navItems = [
   },
   {
     name: 'Notifications',
-    to: 'testimonies',
+    to: 'notifications',
     parent: false,
     icon: 'fa-solid fa-bell',
     notice: 5,
@@ -114,16 +114,16 @@ const navItems = [
     icon: 'fa-solid fa-house',
   },
   {
-    name: 'Purchased Packages',
-    to: 'purchased-packages',
-    parent: false,
-    icon: 'fa-solid fa-bolt',
-  },
-  {
     name: 'Package Plans',
     to: 'plans',
     parent: false,
     icon: 'fa-solid fa-cube',
+  },
+  {
+    name: 'Purchased Packages',
+    to: 'purchased-packages',
+    parent: false,
+    icon: 'fa-solid fa-bolt',
   },
   {
     name: 'Support',

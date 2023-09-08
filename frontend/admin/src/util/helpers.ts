@@ -66,7 +66,7 @@ export default class Helpers {
     }
   }
 
-  public static toNiceDate(date: Date | string | number) {
+  public static toNiceDay(date: Date | string | number) {
     const months = [
       'Jan',
       'Feb',
@@ -88,6 +88,16 @@ export default class Helpers {
     const day = date.getDate()
     const year = date.getFullYear()
 
+    const formattedDay = `${month} ${day}, ${year}`
+    return formattedDay
+  }
+
+  public static toNiceTime(
+    date: Date | string | number,
+    withseconds: boolean = false
+  ) {
+    date = new Date(date)
+
     let hours = date.getHours()
     const ampm = hours >= 12 ? 'PM' : 'AM'
     hours = hours % 12 || 12 // Convert to 12-hour format
@@ -97,7 +107,21 @@ export default class Helpers {
       minutes = '0' + minutes // Manual padding with leading zero
     }
 
-    const formattedDate = `${month} ${day}, ${year} ${hours}:${minutes} ${ampm}`
-    return formattedDate
+    let seconds = date.getSeconds().toString()
+    if (+seconds < 10) {
+      seconds = '0' + seconds // Manual padding with leading zero
+    }
+
+    const formattedTime = `${hours}:${minutes}${
+      withseconds ? ':' + seconds : ''
+    } ${ampm}`
+    return formattedTime
+  }
+
+  public static toNiceDate(
+    date: Date | string | number,
+    withseconds: boolean = false
+  ) {
+    return `${Helpers.toNiceDay(date)} ${Helpers.toNiceTime(date, withseconds)}`
   }
 }

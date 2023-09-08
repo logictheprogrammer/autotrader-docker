@@ -15,7 +15,7 @@ const EditUserPageSuspense = () =>
 const PurchasedPackagesPage = () =>
   import('@/views/pages/PurchasedPackagesPage.vue')
 const ReferralPage = () => import('@/views/pages/ReferralPage.vue')
-const TestimoniesPage = () => import('@/views/pages/TestimoniesPage.vue')
+const NotificationsPage = () => import('@/views/pages/NotificationsPage.vue')
 const SupportPage = () => import('@/views/pages/SupportPage.vue')
 const ChatPage = () => import('@/views/pages/ChatPage.vue')
 const ReferralSettingsPage = () =>
@@ -141,11 +141,11 @@ const routes = [
         },
       },
       {
-        path: '/testimonies',
-        name: 'testimonies',
-        component: TestimoniesPage,
+        path: '/notifications',
+        name: 'notifications',
+        component: NotificationsPage,
         meta: {
-          page: 'Testimonies',
+          page: 'Notifications',
         },
       },
       {

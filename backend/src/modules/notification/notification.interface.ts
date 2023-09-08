@@ -82,6 +82,7 @@ export interface INotificationService {
   fetchAll(
     fromAllAccounts: boolean,
     environment: UserEnvironment,
+    forWho: NotificationForWho,
     userId?: AppObjectId
   ): THttpResponse<{ notifications: INotification[] }>
 }

@@ -7,6 +7,7 @@ declare global {
   const DepositStatus: typeof import('./src/modules/deposit/deposit.enum')['DepositStatus']
   const EffectScope: typeof import('vue')['EffectScope']
   const Helpers: typeof import('@/util/helpers')['default']
+  const NotificationCategory: typeof import('./src/modules/notification/notification.enum')['NotificationCategory']
   const ResponseStatus: typeof import('./src/modules/http/http.enum')['ResponseStatus']
   const TransactionCategory: typeof import('./src/modules/transaction/transaction.enum')['TransactionCategory']
   const TransferStatus: typeof import('./src/modules/transfer/transfer.enum')['TransferStatus']
@@ -74,6 +75,7 @@ declare global {
   const useDepositStore: typeof import('./src/modules/deposit/deposit.store')['useDepositStore']
   const useHttpStore: typeof import('./src/modules/http/http.store')['useHttpStore']
   const useLink: typeof import('vue-router')['useLink']
+  const useNotificationStore: typeof import('./src/modules/notification/notification.store')['useNotificationStore']
   const useRoute: typeof import('vue-router')['useRoute']
   const useRouter: typeof import('vue-router')['useRouter']
   const useSlots: typeof import('vue')['useSlots']
@@ -98,6 +100,7 @@ declare module 'vue' {
     readonly DepositStatus: UnwrapRef<typeof import('./src/modules/deposit/deposit.enum')['DepositStatus']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly Helpers: UnwrapRef<typeof import('@/util/helpers')['default']>
+    readonly NotificationCategory: UnwrapRef<typeof import('./src/modules/notification/notification.enum')['NotificationCategory']>
     readonly ResponseStatus: UnwrapRef<typeof import('./src/modules/http/http.enum')['ResponseStatus']>
     readonly TransactionCategory: UnwrapRef<typeof import('./src/modules/transaction/transaction.enum')['TransactionCategory']>
     readonly TransferStatus: UnwrapRef<typeof import('./src/modules/transfer/transfer.enum')['TransferStatus']>
@@ -165,6 +168,7 @@ declare module 'vue' {
     readonly useDepositStore: UnwrapRef<typeof import('./src/modules/deposit/deposit.store')['useDepositStore']>
     readonly useHttpStore: UnwrapRef<typeof import('./src/modules/http/http.store')['useHttpStore']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
+    readonly useNotificationStore: UnwrapRef<typeof import('./src/modules/notification/notification.store')['useNotificationStore']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>

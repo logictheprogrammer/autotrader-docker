@@ -252,13 +252,15 @@ class ReferralService implements IReferralService {
         this.userRepository
       )
 
-      await this.referralRepository.populateAll(
-        referralTransactions,
-        'referrer',
-        'referrerObject',
-        'username isDeleted',
-        this.userRepository
-      )
+      if (fromAllAccounts) {
+        await this.referralRepository.populateAll(
+          referralTransactions,
+          'referrer',
+          'referrerObject',
+          'username isDeleted',
+          this.userRepository
+        )
+      }
 
       return {
         status: HttpResponseStatus.SUCCESS,

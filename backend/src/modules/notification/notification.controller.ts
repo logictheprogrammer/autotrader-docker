@@ -7,6 +7,7 @@ import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 import AppObjectId from '../app/app.objectId'
+import { NotificationForWho } from './notification.enum'
 
 @Service()
 class NotificationController implements IAppController {
@@ -22,6 +23,12 @@ class NotificationController implements IAppController {
 
   private intialiseRoutes(): void {
     this.router.delete(
+      `${this.path}/admin/delete/:notificationId`,
+      HttpMiddleware.authenticate(UserRole.ADMIN),
+      this.delete(true)
+    )
+
+    this.router.delete(
       `${this.path}/delete/:notificationId`,
       HttpMiddleware.authenticate(UserRole.USER),
       this.delete(false)
@@ -30,30 +37,40 @@ class NotificationController implements IAppController {
     this.router.get(
       `${this.path}/demo/all`,
       HttpMiddleware.authenticate(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO)
+      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
     )
 
     this.router.get(
       `${this.path}/all`,
       HttpMiddleware.authenticate(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.LIVE)
+      this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.USER)
     )
 
     this.router.get(
       `${this.path}/demo`,
       HttpMiddleware.authenticate(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.DEMO)
+      this.fetchAll(false, UserEnvironment.DEMO, NotificationForWho.USER)
+    )
+
+    this.router.get(
+      `${this.path}/admin`,
+      HttpMiddleware.authenticate(UserRole.ADMIN),
+      this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.ADMIN)
     )
 
     this.router.get(
       `${this.path}`,
       HttpMiddleware.authenticate(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.LIVE)
+      this.fetchAll(false, UserEnvironment.LIVE, NotificationForWho.USER)
     )
   }
 
   private fetchAll =
-    (fromAllAccounts: boolean, environment: UserEnvironment) =>
+    (
+      fromAllAccounts: boolean,
+      environment: UserEnvironment,
+      forWho: NotificationForWho
+    ) =>
     async (
       req: Request,
       res: Response,
@@ -64,6 +81,7 @@ class NotificationController implements IAppController {
         const response = await this.notificationService.fetchAll(
           fromAllAccounts,
           environment,
+          forWho,
           userId
         )
         res.status(200).json(response)

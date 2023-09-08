@@ -55,6 +55,7 @@ declare module '@vue/runtime-core' {
     NavHeaderComponent: typeof import('./src/views/components/NavHeaderComponent.vue')['default']
     NavItemComponent: typeof import('./src/views/components/ui/NavItemComponent.vue')['default']
     NoticeTimerWidget: typeof import('./src/views/widgets/NoticeTimerWidget.vue')['default']
+    NotificationsPage: typeof import('./src/views/pages/NotificationsPage.vue')['default']
     PackageInfoComponent: typeof import('./src/views/components/PackageInfoComponent.vue')['default']
     PackagePlanCardComponent: typeof import('./src/views/components/cards/PackagePlanCardComponent.vue')['default']
     PackagePlansPage: typeof import('./src/views/pages/PackagePlansPage.vue')['default']
