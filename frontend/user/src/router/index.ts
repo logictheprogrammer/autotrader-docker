@@ -4,7 +4,7 @@ import HomePage from '@/views/pages/HomePage.vue'
 const PackagePlansPage = () => import('@/views/pages/PackagePlansPage.vue')
 const ActiveTradePage = () => import('@/views/pages/ActiveTradePage.vue')
 const ReferralPage = () => import('@/views/pages/ReferralPage.vue')
-const TestimoniesPage = () => import('@/views/pages/TestimoniesPage.vue')
+const NotificationPage = () => import('@/views/pages/NotificationPage.vue')
 const SupportPage = () => import('@/views/pages/SupportPage.vue')
 const SettingsPage = () => import('@/views/pages/SettingsPage.vue')
 const WalletLayout = () => import('@/views/layouts/WalletLayout.vue')
@@ -61,11 +61,11 @@ const routes = [
         },
       },
       {
-        path: '/testimonies',
-        name: 'testimonies',
-        component: TestimoniesPage,
+        path: '/notifications',
+        name: 'notifications',
+        component: NotificationPage,
         meta: {
-          page: 'Testimonies',
+          page: 'Notifications',
         },
       },
       {

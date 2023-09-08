@@ -7,13 +7,12 @@ export interface IDeposit {
   updatedAt: string
   createdAt: string
   depositMethodObject: IDepositMethod
-  user: string
+  user: {
+    _id: string
+    username: string
+    isDeleted: boolean
+  }
   status: DepositStatus
   amount: number
   fee: number
-}
-
-export interface ICreateDeposit {
-  depositMethodId: string
-  amount: number
 }

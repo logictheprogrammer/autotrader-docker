@@ -7,5 +7,5 @@ export enum ReferralTypes {
 }
 
 export enum ReferralStatus {
-  SUCCESS = 'success',
+  SUCCESS = 'credited',
 }

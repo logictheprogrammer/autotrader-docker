@@ -96,6 +96,24 @@ const navItems = [
     icon: 'fa-solid fa-house',
   },
   {
+    name: 'Deposits',
+    to: 'deposits',
+    parent: true,
+    icon: 'fa-solid fa-house',
+  },
+  {
+    name: 'Withdrawals',
+    to: 'withdrawals',
+    parent: true,
+    icon: 'fa-solid fa-house',
+  },
+  {
+    name: 'Transfers',
+    to: 'transfers',
+    parent: true,
+    icon: 'fa-solid fa-house',
+  },
+  {
     name: 'Purchased Packages',
     to: 'purchased-packages',
     parent: false,

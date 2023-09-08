@@ -10,9 +10,9 @@
               <span class="fs-20 text-sharp font-w500 d-block mb-2"
                 >Main Balance</span
               >
-              <span class="text-num text-black fs-36 font-w500"
-                >$63,644.98</span
-              >
+              <span class="text-num text-black fs-36 font-w500">{{
+                Helpers.toDollar(mainBalance)
+              }}</span>
             </div>
           </div>
           <div class="col-md-6 col-lg-4 d-none d-md-block">
@@ -22,7 +22,9 @@
               <span class="fs-20 text-sharp font-w500 d-block mb-2"
                 >Unsettled Balance</span
               >
-              <span class="text-num text-black fs-36 font-w500">$7,412.66</span>
+              <span class="text-num text-black fs-36 font-w500">{{
+                Helpers.toDollar(unsettledBalance)
+              }}</span>
             </div>
           </div>
           <div class="col-md-6 col-lg-4 d-none d-lg-block">
@@ -30,9 +32,11 @@
               class="py-3 text-center rounded border-bottom border-left border-3 border-dark"
             >
               <span class="fs-20 text-sharp font-w500 d-block mb-2"
-                >Affiliate Balance</span
+                >Referral Balance</span
               >
-              <span class="text-num text-black fs-36 font-w500">$7,412.66</span>
+              <span class="text-num text-black fs-36 font-w500">{{
+                Helpers.toDollar(referralBalance)
+              }}</span>
             </div>
           </div>
         </div>
@@ -79,17 +83,17 @@
               <span class="fs-18 text-sharp font-w500 d-block"
                 >Unsettled Balance</span
               >
-              <span class="text-num text-black fs-24 font-w500"
-                >$63,644.98</span
-              >
+              <span class="text-num text-black fs-24 font-w500">{{
+                Helpers.toDollar(unsettledBalance)
+              }}</span>
             </div>
             <div class="m-3">
               <span class="fs-18 text-sharp font-w500 d-block"
-                >Affiliate Balance</span
+                >Referral Balance</span
               >
-              <span class="text-num text-black fs-24 font-w500"
-                >$63,644.98</span
-              >
+              <span class="text-num text-black fs-24 font-w500">{{
+                Helpers.toDollar(unsettledBalance)
+              }}</span>
             </div>
           </div>
         </div>
@@ -98,6 +102,12 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+defineProps<{
+  mainBalance: number
+  referralBalance: number
+  unsettledBalance: number
+}>()
+</script>
 
 <style scoped></style>

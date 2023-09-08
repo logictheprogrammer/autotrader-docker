@@ -206,16 +206,19 @@ class NotificationService implements INotificationService {
         .find({ environment }, fromAllAccounts, {
           user: userId,
         })
-        .select('-userObject')
+        .sort({ createdAt: -1 })
+        .select('-userObject -categoryObject -environment')
         .collectAll()
 
-      await this.notificationRepository.populateAll(
-        notifications,
-        'user',
-        'userObject',
-        'username isDeleted',
-        this.userRepository
-      )
+      if (fromAllAccounts) {
+        await this.notificationRepository.populateAll(
+          notifications,
+          'user',
+          'userObject',
+          'username isDeleted',
+          this.userRepository
+        )
+      }
 
       return {
         status: HttpResponseStatus.SUCCESS,

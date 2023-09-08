@@ -459,3 +459,26 @@ body * :not(.select2-results__options)::-webkit-scrollbar-thumb {
   background-color: #f1e9f7;
   color: #709fba;
 }
+
+.light.badge-danger {
+  background-color: #fee6ea;
+  color: #f9728b;
+}
+
+[data-theme-version='dark'] .light.badge-danger {
+  background-color: rgb(253 0 46 / 15%);
+}
+
+.bg-opacity-15 {
+  --bs-bg-opacity: 0.15;
+}
+
+.notice.bi-trash::before {
+  content: '\f5de';
+  font-size: 3rem;
+  color: #1d263b;
+}
+
+.pointer {
+  cursor: pointer;
+}

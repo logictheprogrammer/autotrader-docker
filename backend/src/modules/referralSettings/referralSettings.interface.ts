@@ -29,7 +29,7 @@ export interface IReferralSettingsService {
     completedPackageEarnings: number
   ): THttpResponse<{ referralSettings: IReferralSettings }>
 
-  get(): Promise<IReferralSettings>
+  get(): Promise<IReferralSettings | undefined>
 
   fetch(): THttpResponse<{ referralSettings: IReferralSettings }>
 }

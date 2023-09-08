@@ -105,7 +105,7 @@ const navItems = [
   },
   {
     name: 'Notifications',
-    to: 'testimonies',
+    to: 'notifications',
     parent: false,
     icon: 'fa-solid fa-bell',
     notice: 5,

@@ -65,4 +65,63 @@ export default class Helpers {
         return ''
     }
   }
+
+  public static toNiceDay(date: Date | string | number) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ]
+
+    date = new Date(date)
+
+    const month = months[date.getMonth()]
+    const day = date.getDate()
+    const year = date.getFullYear()
+
+    const formattedDay = `${month} ${day}, ${year}`
+    return formattedDay
+  }
+
+  public static toNiceTime(
+    date: Date | string | number,
+    withseconds: boolean = false
+  ) {
+    date = new Date(date)
+
+    let hours = date.getHours()
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    hours = hours % 12 || 12 // Convert to 12-hour format
+
+    let minutes = date.getMinutes().toString()
+    if (+minutes < 10) {
+      minutes = '0' + minutes // Manual padding with leading zero
+    }
+
+    let seconds = date.getSeconds().toString()
+    if (+seconds < 10) {
+      seconds = '0' + seconds // Manual padding with leading zero
+    }
+
+    const formattedTime = `${hours}:${minutes}${
+      withseconds ? ':' + seconds : ''
+    } ${ampm}`
+    return formattedTime
+  }
+
+  public static toNiceDate(
+    date: Date | string | number,
+    withseconds: boolean = false
+  ) {
+    return `${Helpers.toNiceDay(date)} ${Helpers.toNiceTime(date, withseconds)}`
+  }
 }

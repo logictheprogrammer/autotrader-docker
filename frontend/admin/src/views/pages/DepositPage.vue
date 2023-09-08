@@ -1,127 +1,199 @@
 <template>
-  <div class="row" v-if="page === 1">
-    <div class="col-xl-12 col-xxl-4">
-      <div class="card bg-blue action-card">
-        <div class="card-body text-white">
-          <img src="/images/pattern/circle.png" class="mb-4" alt="" />
-          <div class="row">
-            <div class="col-12 text-center">
-              <h2 class="text-white fs-36">$8,571.93</h2>
-              <p class="fs-16">Current Balance</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-12 col-xxl-8">
+  <div class="row mt-4">
+    <div class="col-12">
       <div class="card">
-        <div class="card-body py-4">
-          <div class="settings-form">
-            <form>
-              <PaymentMethod></PaymentMethod>
-              <div class="row mt-4">
-                <div class="mb-3 col-12">
-                  <label class="form-label">Amount</label>
-                  <input
-                    type="number"
-                    placeholder="Amount"
-                    class="form-control"
-                  />
-                </div>
-                <div class="text-center mt-2">
-                  <button class="btn btn-primary" type="button">Pay Now</button>
-                </div>
-              </div>
-            </form>
-          </div>
+        <div class="card-header">
+          <h4 class="card-title">Users Deposits</h4>
+        </div>
+        <EmptyResourceComponent v-if="depositLoaded && !deposits?.length">
+          No Deposit Record Found
+        </EmptyResourceComponent>
+        <div class="card-body pt-0 px-0" v-else>
+          <TablePreview v-if="!depositLoaded" :rows="8" :cols="6" searching />
+          <MyDataTableComponent ordering searching v-else>
+            <thead class="bg-background">
+              <tr>
+                <th class="text-sharp d-none">Sort</th>
+                <th class="text-sharp text-center">Action</th>
+                <th class="text-sharp text-center">Status</th>
+                <th class="text-sharp">User</th>
+                <th class="text-sharp">Amount</th>
+                <th class="text-sharp">Currency</th>
+                <th class="text-sharp">Network</th>
+                <th class="text-sharp">Created</th>
+                <th class="text-sharp">Settled</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(deposit, i) in deposits" :key="deposit._id">
+                <td class="d-none">{{ i + 1 }}</td>
+                <td>
+                  <MyDropdownComponent>
+                    <a
+                      @click="
+                        () => statusHandler(deposit, DepositStatus.APPROVED)
+                      "
+                      v-if="deposit.status === DepositStatus.PENDING"
+                      class="dropdown-item border-bottom"
+                      href="javascript:;"
+                      ><i :class="`bi bi-check-circle me-2`"></i>Approve</a
+                    >
+                    <a
+                      @click="
+                        () => statusHandler(deposit, DepositStatus.CANCELLED)
+                      "
+                      v-if="deposit.status === DepositStatus.PENDING"
+                      class="dropdown-item"
+                      href="javascript:;"
+                      ><i :class="`bi bi-slash-circle me-2`"></i>Cancel</a
+                    >
+                    <a
+                      @click="() => deleteHandler(deposit)"
+                      v-if="deposit.status !== DepositStatus.PENDING"
+                      class="dropdown-item"
+                      href="javascript:;"
+                      ><i class="bi bi-trash me-2"></i>Delete</a
+                    >
+                  </MyDropdownComponent>
+                </td>
+                <td class="text-center">
+                  <span
+                    :class="`badge light badge-${Helpers.toStatus(
+                      deposit.status
+                    )}`"
+                    >{{ Helpers.toTitleCase(deposit.status) }}
+                  </span>
+                </td>
+                <td>{{ Helpers.toTitleCase(deposit.user.username) }}</td>
+                <td>{{ Helpers.toDollar(deposit.amount) }}</td>
+                <td>
+                  <div class="d-flex">
+                    <img
+                      :src="`/icons/crypto-svg/${deposit.depositMethodObject.logo}`"
+                      class="me-3"
+                      :alt="deposit.depositMethodObject.name"
+                      width="24"
+                    />
+                    <div class="d-flex flex-column">
+                      <span class="fw-bold">{{
+                        Helpers.toTitleCase(deposit.depositMethodObject.name)
+                      }}</span>
+                      <span class="fs-14"
+                        >{{ deposit.depositMethodObject.symbol.toUpperCase() }}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  {{ deposit.depositMethodObject.network.toUpperCase() }}
+                </td>
+                <td>
+                  {{ Helpers.toNiceDate(deposit.createdAt) }}
+                </td>
+                <td>
+                  {{
+                    deposit.status === DepositStatus.PENDING
+                      ? '--'
+                      : Helpers.toNiceDate(deposit.updatedAt)
+                  }}
+                </td>
+              </tr>
+            </tbody>
+          </MyDataTableComponent>
         </div>
       </div>
     </div>
   </div>
-  <div class="card" v-else>
-    <div class="card-header">
-      <h4 class="card-title">Make Payment and Confirm</h4>
-    </div>
-    <div class="card-body">
-      <p class="fs-18 text-center mx-auto mb-4" style="max-width: 490px">
-        SEND <span class="fw-bold text-info">$ 1,000</span> TO THE WALLET
-        ADDRESS BELOW OR SCAN THE QR CODE WITH YOUR WALLET APP
-      </p>
-      <div class="row">
-        <div class="col-lg-5 mb-3 mb-lg-0">
-          <div
-            class="d-flex justify-content-center align-items-center h-100 flex-column"
-          >
-            <div class="bg-background p-4 rounded">
-              <div class="p-2 bg-skin rounded-2">
-                <MyQRCode></MyQRCode>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-7">
-          <div class="mb-3">
-            <label class="form-label">Coin Name</label>
-            <input
-              type="text"
-              placeholder="Coin Name"
-              class="form-control"
-              value="Bitcoin - (BTC)"
-              readonly
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Network</label>
-            <input
-              type="text"
-              placeholder="Coin Network"
-              class="form-control"
-              value="Trc20"
-              readonly
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Wallet Address</label>
-            <input
-              type="text"
-              placeholder="Wallet Address"
-              class="form-control"
-              value="hsdgsfsiufsidufd"
-              readonly
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Amount</label>
-            <input
-              type="text"
-              placeholder="Amount"
-              class="form-control"
-              value="$ 3000"
-              readonly
-            />
-          </div>
-        </div>
-        <div class="col-lg-5">
-          <p class="text-info mt-3 text-primary text-center">
-            Awaiting payment...
-          </p>
-        </div>
-      </div>
 
-      <div class="d-flex justify-content-center gap-3 mt-3">
-        <RouterLink :to="{ name: 'withdraw' }" class="btn btn-secondary"
-          >Go Back</RouterLink
-        >
-        <RouterLink :to="{ name: 'deposit' }" class="btn btn-primary"
-          >Confirm</RouterLink
-        >
-      </div>
-    </div>
-  </div>
+  <AlertConfirmComponent
+    :is-open="openAlertModal"
+    :status="alertModalInfo.status"
+    :title="alertModalInfo.title"
+    :message="alertModalInfo.message"
+    @confirm="alertModalInfo.onConfirm"
+    @close="openAlertModal = false"
+  />
 </template>
 
 <script setup lang="ts">
-const page = ref(1);
+import { DepositStatus } from '@/modules/deposit/deposit.enum'
+import type { IDeposit } from '@/modules/deposit/deposit.interface'
+import { ResponseStatus } from '@/modules/http/http.enum'
+
+const openAlertModal = ref(false)
+
+const deposit = ref<IDeposit>()
+const setDeposit = (data: IDeposit) => (deposit.value = data)
+const status = ref<DepositStatus>()
+const setStatus = (value: DepositStatus) => (status.value = value)
+
+const depositStore = useDepositStore()
+const deposits = computed(() => depositStore.deposits)
+const depositLoaded = computed(() => depositStore.loaded)
+// fetch deposit s if not fetched
+if (!depositLoaded.value) depositStore.fetchAll()
+
+const alertModalInfo = reactive<{
+  status: ResponseStatus
+  title: string
+  message: string
+  onConfirm: Function
+}>({ status: ResponseStatus.INFO, title: '', message: '', onConfirm: () => {} })
+
+//  Status handler
+const statusHandler = (deposit: IDeposit, status: DepositStatus) => {
+  setDeposit(deposit)
+  setStatus(status)
+
+  if (status === DepositStatus.APPROVED) {
+    alertModalInfo.status = ResponseStatus.INFO
+    alertModalInfo.title = `Do you really wants to approve this deposit?`
+    alertModalInfo.message = `Approving this deposit will credit ${Helpers.toTitleCase(
+      deposit.user.username
+    )} with the sum of ${Helpers.toDollar(
+      deposit.amount
+    )} and cannot be reversed.`
+  } else {
+    alertModalInfo.status = ResponseStatus.WARNING
+    alertModalInfo.title = `Do you really wants to cancel this deposit?`
+    alertModalInfo.message = `Canceling this deposit mark it has ${status} whereby the user will not be credited`
+  }
+
+  alertModalInfo.onConfirm = updateStatus
+  openAlertModal.value = true
+}
+
+// Delete handler
+const deleteHandler = (Deposit: IDeposit) => {
+  deposit.value = Deposit
+
+  alertModalInfo.status = ResponseStatus.DANGER
+  alertModalInfo.title = `Do you really wants to delete this deposit?`
+  alertModalInfo.message = 'Deleting this deposit can not be reversed'
+
+  alertModalInfo.onConfirm = deleteOne
+  openAlertModal.value = true
+}
+
+// Update status
+const updateStatus = () => {
+  if (!deposit.value) return
+  if (
+    status.value !== DepositStatus.APPROVED &&
+    status.value !== DepositStatus.CANCELLED
+  )
+    return
+  openAlertModal.value = false
+  depositStore.updateStatus(deposit.value._id, status.value)
+}
+
+// Delete One
+const deleteOne = () => {
+  if (!deposit.value) return
+  openAlertModal.value = false
+
+  depositStore.deleteOne(deposit.value._id)
+}
 </script>
 
 <style scoped></style>

@@ -340,16 +340,19 @@ class TransactionService implements ITransactionService {
         .find({ environment }, all, {
           user: userId,
         })
-        .select('-userObject -category')
+        .sort({ updatedAt: -1 })
+        .select('-userObject -categoryObject -environment')
         .collectAll()
 
-      await this.transactionRepository.populateAll(
-        transactions,
-        'user',
-        'userObject',
-        'username isDeleted',
-        this.userRepository
-      )
+      if (all) {
+        await this.transactionRepository.populateAll(
+          transactions,
+          'user',
+          'userObject',
+          'username isDeleted',
+          this.userRepository
+        )
+      }
 
       return {
         status: HttpResponseStatus.SUCCESS,

@@ -68,6 +68,9 @@ class ReferralSettingsService implements IReferralSettingsService {
 
       const referralSettings = await this.get()
 
+      if (!referralSettings)
+        throw new HttpException(404, 'Referral settings not found')
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Referral Settings Updated',
@@ -81,14 +84,11 @@ class ReferralSettingsService implements IReferralSettingsService {
     }
   }
 
-  public get = async (): Promise<IReferralSettings> => {
+  public get = async (): Promise<IReferralSettings | undefined> => {
     try {
       const referralSettings = await this.referralSettingsRepository
         .findOne({})
         .collect()
-
-      if (!referralSettings)
-        throw new HttpException(404, 'Referral settings not found')
 
       return referralSettings
     } catch (err: any) {
@@ -103,6 +103,9 @@ class ReferralSettingsService implements IReferralSettingsService {
     referralSettings: IReferralSettings
   }> => {
     const referralSettings = await this.get()
+
+    if (!referralSettings)
+      throw new HttpException(404, 'Referral settings not found')
 
     return {
       status: HttpResponseStatus.SUCCESS,

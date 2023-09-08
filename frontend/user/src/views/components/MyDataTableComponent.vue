@@ -1,5 +1,5 @@
 <template>
-  <div class="table-responsive">
+  <div :class="`table-responsive ${wrap ? '' : 'text-nowrap'}`">
     <table :id="id" class="display">
       <slot></slot>
     </table>
@@ -12,13 +12,14 @@ const props = defineProps<{
   ordering?: boolean
   searching?: boolean
   order?: [number, string?]
+  wrap?: boolean
 }>()
 const id = 'data-' + Math.ceil(Math.random() * 10000)
 onMounted(() => {
   tableX = window.$('#' + id).DataTable({
     ordering: props.ordering || false,
     searching: props.searching || false,
-    order: props.order || [1, 'desc'],
+    order: props.order || [0, 'asc'],
     lengthChange: false,
     language: {
       paginate: {

@@ -41,7 +41,7 @@
             <div class="card-body py-4">
               <div class="settings-form">
                 <Form
-                  @submit="(data)=>setTransfer(data as ICreateTransfer)"
+                  @submit="(data)=>makeTransfer(data as ICreateTransfer)"
                   v-slot="{ errors }"
                   class="custom-modal-content"
                   :validation-schema="makeTransferSchema"
@@ -208,6 +208,8 @@
                   <th class="text-sharp">Fee</th>
                   <th class="text-sharp">Sender</th>
                   <th class="text-sharp">Reciever</th>
+                  <th class="text-sharp">Created</th>
+                  <th class="text-sharp">Settled</th>
                 </tr>
               </thead>
               <tbody>
@@ -222,7 +224,9 @@
                     </span>
                   </td>
                   <td>{{ Helpers.toDollar(transfer.amount) }}</td>
-                  <td>{{ Helpers.toDollar(transfer.fee) }}</td>
+                  <td>
+                    {{ transfer.fee ? Helpers.toDollar(-transfer.fee) : '--' }}
+                  </td>
                   <td>
                     {{
                       transfer.fromUser._id === authStore.user?._id
@@ -235,6 +239,16 @@
                       transfer.toUser._id === authStore.user?._id
                         ? 'Me'
                         : transfer.toUser.username
+                    }}
+                  </td>
+                  <td>
+                    {{ Helpers.toNiceDate(transfer.createdAt) }}
+                  </td>
+                  <td>
+                    {{
+                      transfer.status === TransferStatus.PENDING
+                        ? '--'
+                        : Helpers.toNiceDate(transfer.updatedAt)
                     }}
                   </td>
                 </tr>
@@ -297,10 +311,15 @@ const transfer = ref<ICreateTransfer>({
   amount: 0,
   toUserUsername: '',
 })
+
 const setTransfer = (data: ICreateTransfer) => {
+  transfer.value = data
+}
+
+const makeTransfer = (data: ICreateTransfer) => {
   httpStore.setPost(true)
 
-  transfer.value = data
+  setTransfer(data)
   setCurrentPage(PAGE.CONFIRM_TRANSFER)
   httpStore.setPost(false)
 }
@@ -324,7 +343,10 @@ const makeTransferSchema = yup.object({
     .min(0, 'amount should not be a nagative value')
     .required('amount is required')
     .test(function (value) {
-      if (authStore.user && value > authStore.user[userAccount.value]) {
+      if (
+        authStore.user &&
+        value + transferSettings.value!.fee > authStore.user[userAccount.value]
+      ) {
         throw this.createError({
           message: `You do not have sufficient balance in your ${Helpers.fromCamelToTitleCase(
             userAccount.value

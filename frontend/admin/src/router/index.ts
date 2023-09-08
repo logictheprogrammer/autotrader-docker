@@ -77,6 +77,30 @@ const routes = [
         },
       },
       {
+        path: '/deposits',
+        name: 'deposits',
+        component: DepositPage,
+        meta: {
+          page: 'Deposits',
+        },
+      },
+      {
+        path: '/withdrawals',
+        name: 'withdrawals',
+        component: WithdrawPage,
+        meta: {
+          page: 'Withdrawals',
+        },
+      },
+      {
+        path: '/transfers',
+        name: 'transfers',
+        component: TransferPage,
+        meta: {
+          page: 'Transfers',
+        },
+      },
+      {
         path: '/plans',
         name: 'plans',
         component: PackagePlansPage,

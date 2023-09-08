@@ -207,10 +207,12 @@ class WithdrawalService implements IWithdrawalService {
 
       await this.transactionManagerService.execute(transactionInstances)
 
+      const rawWithdrawalIntance = withdrawalInstance.model.collectRaw()
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Withdrawal has been registered successfully',
-        data: { withdrawal: withdrawalInstance.model.collectRaw() },
+        data: { withdrawal: rawWithdrawalIntance },
       }
     } catch (err: any) {
       throw new AppException(
@@ -275,7 +277,7 @@ class WithdrawalService implements IWithdrawalService {
       if (status === WithdrawalStatus.CANCELLED) {
         const fundedUserTransaction = await this.userService.fund(
           withdrawal.user,
-          UserAccount.MAIN_BALANCE,
+          withdrawal.account,
           withdrawal.amount + withdrawal.fee
         )
 
@@ -301,10 +303,19 @@ class WithdrawalService implements IWithdrawalService {
 
       await this.transactionManagerService.execute(transactionInstances)
 
+      const rawWithdrawalIntance = withdrawalInstance.model.collectRaw()
+
+      await this.withdrawalRepository.populate(
+        rawWithdrawalIntance,
+        'user',
+        'username isDeleted',
+        this.userRepository
+      )
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { withdrawal: withdrawalInstance.model.collectRaw() },
+        data: { withdrawal: rawWithdrawalIntance },
       }
     } catch (err: any) {
       throw new AppException(

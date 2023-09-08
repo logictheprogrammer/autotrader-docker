@@ -208,7 +208,7 @@ class TransferService implements ITransferService {
           await this.transactionService.create(
             fromUser,
             status,
-            TransactionCategory.TRANSFER,
+            TransactionCategory.TRANSFER_OUT,
             transfer,
             amount,
             UserEnvironment.LIVE
@@ -233,7 +233,7 @@ class TransferService implements ITransferService {
         const toUserTransaction = await this.transactionService.create(
           toUser,
           status,
-          TransactionCategory.TRANSFER,
+          TransactionCategory.TRANSFER_IN,
           transfer,
           amount,
           UserEnvironment.LIVE
@@ -273,7 +273,7 @@ class TransferService implements ITransferService {
         const fromUserTransaction = await this.transactionService.create(
           fromUser,
           status,
-          TransactionCategory.TRANSFER,
+          TransactionCategory.TRANSFER_REVERSED,
           transfer,
           amount,
           UserEnvironment.LIVE
@@ -426,7 +426,7 @@ class TransferService implements ITransferService {
           await this.transactionService.create(
             toUser,
             status,
-            TransactionCategory.TRANSFER,
+            TransactionCategory.TRANSFER_IN,
             transfer,
             transfer.amount,
             UserEnvironment.LIVE
@@ -464,10 +464,26 @@ class TransferService implements ITransferService {
 
       await this.transactionManagerService.execute(transactionInstances)
 
+      const rawTransfer = transferInstance.model.collectRaw()
+
+      await this.transferRepository.populate(
+        rawTransfer,
+        'toUser',
+        'username isDeleted',
+        this.userRepository
+      )
+
+      await this.transferRepository.populate(
+        rawTransfer,
+        'fromUser',
+        'username isDeleted',
+        this.userRepository
+      )
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { transfer: transferInstance.model.collectUnsaved() },
+        data: { transfer: rawTransfer },
       }
     } catch (err: any) {
       throw new AppException(
@@ -505,10 +521,13 @@ class TransferService implements ITransferService {
     try {
       const transfers = await this.transferRepository
         .find({}, allUsers, {
-          $or: [{ fromUser: userId }, { toUser: userId }],
+          $or: [
+            { fromUser: userId },
+            { toUser: userId, status: TransferStatus.SUCCESSFUL },
+          ],
         })
         .sort({
-          createdAt: -1,
+          updatedAt: -1,
         })
         .select('-fromUserObject -toUserObject')
         .collectAll()

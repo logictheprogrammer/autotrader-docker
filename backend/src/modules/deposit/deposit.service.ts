@@ -276,10 +276,19 @@ class DepositService implements IDepositService {
 
       await this.transactionManagerService.execute(transactionInstances)
 
+      const rawDepositIntance = depositInstance.model.collectRaw()
+
+      await this.depositRepository.populate(
+        rawDepositIntance,
+        'user',
+        'username isDeleted',
+        this.userRepository
+      )
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { deposit: depositInstance.model.collectRaw() },
+        data: { deposit: rawDepositIntance },
       }
     } catch (err: any) {
       throw new AppException(
@@ -326,7 +335,6 @@ class DepositService implements IDepositService {
           'username isDeleted',
           this.userRepository
         )
-        console.log(deposits)
       }
 
       return {

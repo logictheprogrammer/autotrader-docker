@@ -233,8 +233,11 @@
                   <th class="text-sharp d-none">Sort</th>
                   <th class="text-sharp text-center">Status</th>
                   <th class="text-sharp">Amount</th>
+                  <th class="text-sharp">fee</th>
                   <th class="text-sharp">Currency</th>
                   <th class="text-sharp">Network</th>
+                  <th class="text-sharp">Created</th>
+                  <th class="text-sharp">Settled</th>
                 </tr>
               </thead>
               <tbody>
@@ -249,6 +252,9 @@
                     </span>
                   </td>
                   <td>{{ Helpers.toDollar(deposit.amount) }}</td>
+                  <td>
+                    {{ deposit.fee ? Helpers.toDollar(-deposit.fee) : '--' }}
+                  </td>
                   <td>
                     <div class="d-flex">
                       <img
@@ -271,6 +277,16 @@
                   </td>
                   <td>
                     {{ deposit.depositMethodObject.network.toUpperCase() }}
+                  </td>
+                  <td>
+                    {{ Helpers.toNiceDate(deposit.createdAt) }}
+                  </td>
+                  <td>
+                    {{
+                      deposit.status === DepositStatus.PENDING
+                        ? '--'
+                        : Helpers.toNiceDate(deposit.updatedAt)
+                    }}
                   </td>
                 </tr>
               </tbody>

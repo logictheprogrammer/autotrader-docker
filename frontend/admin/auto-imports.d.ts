@@ -4,14 +4,18 @@ declare global {
   const CONFIG: typeof import('@/modules/config/config.store')['default']
   const DUMMY_PLANS: typeof import('./src/data/dummyPlans')['DUMMY_PLANS']
   const DepositMethodStatus: typeof import('./src/modules/depositMethod/depositMethod.enum')['DepositMethodStatus']
+  const DepositStatus: typeof import('./src/modules/deposit/deposit.enum')['DepositStatus']
   const EffectScope: typeof import('vue')['EffectScope']
   const Helpers: typeof import('@/util/helpers')['default']
   const ResponseStatus: typeof import('./src/modules/http/http.enum')['ResponseStatus']
+  const TransactionCategory: typeof import('./src/modules/transaction/transaction.enum')['TransactionCategory']
+  const TransferStatus: typeof import('./src/modules/transfer/transfer.enum')['TransferStatus']
   const UserAccount: typeof import('./src/modules/user/user.enum')['UserAccount']
   const UserEnvironment: typeof import('./src/modules/user/user.enum')['UserEnvironment']
   const UserRole: typeof import('./src/modules/user/user.enum')['UserRole']
   const UserStatus: typeof import('./src/modules/user/user.enum')['UserStatus']
   const WithdrawalMethodStatus: typeof import('./src/modules/withdrawalMethod/withdrawalMethod.enum')['WithdrawalMethodStatus']
+  const WithdrawalStatus: typeof import('./src/modules/withdrawal/withdrawal.enum')['WithdrawalStatus']
   const axios: typeof import('axios')['default']
   const computed: typeof import('vue')['computed']
   const config: typeof import('./src/data/config')['default']
@@ -67,13 +71,17 @@ declare global {
   const useCssVars: typeof import('vue')['useCssVars']
   const useCurrencyStore: typeof import('./src/modules/currency/currency.store')['useCurrencyStore']
   const useDepositMethodStore: typeof import('./src/modules/depositMethod/depositMethod.store')['useDepositMethodStore']
+  const useDepositStore: typeof import('./src/modules/deposit/deposit.store')['useDepositStore']
   const useHttpStore: typeof import('./src/modules/http/http.store')['useHttpStore']
   const useLink: typeof import('vue-router')['useLink']
   const useRoute: typeof import('vue-router')['useRoute']
   const useRouter: typeof import('vue-router')['useRouter']
   const useSlots: typeof import('vue')['useSlots']
+  const useTransactionStore: typeof import('./src/modules/transaction/transaction.store')['useTransactionStore']
+  const useTransferStore: typeof import('./src/modules/transfer/transfer.store')['useTransferStore']
   const useUserStore: typeof import('./src/modules/user/user.store')['useUserStore']
   const useWithdrawalMethodStore: typeof import('./src/modules/withdrawalMethod/withdrawalMethod.store')['useWithdrawalMethodStore']
+  const useWithdrawalStore: typeof import('./src/modules/withdrawal/withdrawal.store')['useWithdrawalStore']
   const watch: typeof import('vue')['watch']
   const watchEffect: typeof import('vue')['watchEffect']
   const watchPostEffect: typeof import('vue')['watchPostEffect']
@@ -87,14 +95,18 @@ declare module 'vue' {
     readonly CONFIG: UnwrapRef<typeof import('@/modules/config/config.store')['default']>
     readonly DUMMY_PLANS: UnwrapRef<typeof import('./src/data/dummyPlans')['DUMMY_PLANS']>
     readonly DepositMethodStatus: UnwrapRef<typeof import('./src/modules/depositMethod/depositMethod.enum')['DepositMethodStatus']>
+    readonly DepositStatus: UnwrapRef<typeof import('./src/modules/deposit/deposit.enum')['DepositStatus']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly Helpers: UnwrapRef<typeof import('@/util/helpers')['default']>
     readonly ResponseStatus: UnwrapRef<typeof import('./src/modules/http/http.enum')['ResponseStatus']>
+    readonly TransactionCategory: UnwrapRef<typeof import('./src/modules/transaction/transaction.enum')['TransactionCategory']>
+    readonly TransferStatus: UnwrapRef<typeof import('./src/modules/transfer/transfer.enum')['TransferStatus']>
     readonly UserAccount: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserAccount']>
     readonly UserEnvironment: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserEnvironment']>
     readonly UserRole: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserRole']>
     readonly UserStatus: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserStatus']>
     readonly WithdrawalMethodStatus: UnwrapRef<typeof import('./src/modules/withdrawalMethod/withdrawalMethod.enum')['WithdrawalMethodStatus']>
+    readonly WithdrawalStatus: UnwrapRef<typeof import('./src/modules/withdrawal/withdrawal.enum')['WithdrawalStatus']>
     readonly axios: UnwrapRef<typeof import('axios')['default']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly config: UnwrapRef<typeof import('./src/data/config')['default']>
@@ -150,13 +162,17 @@ declare module 'vue' {
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useCurrencyStore: UnwrapRef<typeof import('./src/modules/currency/currency.store')['useCurrencyStore']>
     readonly useDepositMethodStore: UnwrapRef<typeof import('./src/modules/depositMethod/depositMethod.store')['useDepositMethodStore']>
+    readonly useDepositStore: UnwrapRef<typeof import('./src/modules/deposit/deposit.store')['useDepositStore']>
     readonly useHttpStore: UnwrapRef<typeof import('./src/modules/http/http.store')['useHttpStore']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useTransactionStore: UnwrapRef<typeof import('./src/modules/transaction/transaction.store')['useTransactionStore']>
+    readonly useTransferStore: UnwrapRef<typeof import('./src/modules/transfer/transfer.store')['useTransferStore']>
     readonly useUserStore: UnwrapRef<typeof import('./src/modules/user/user.store')['useUserStore']>
     readonly useWithdrawalMethodStore: UnwrapRef<typeof import('./src/modules/withdrawalMethod/withdrawalMethod.store')['useWithdrawalMethodStore']>
+    readonly useWithdrawalStore: UnwrapRef<typeof import('./src/modules/withdrawal/withdrawal.store')['useWithdrawalStore']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>

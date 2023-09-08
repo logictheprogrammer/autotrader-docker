@@ -9,7 +9,7 @@ import path from 'path'
 import cookieParser from 'cookie-parser'
 import { doubleCsrfProtection } from '@/utils/csrf'
 import mongodbDatabase from './database/mongodb.database'
-import { transferSettingsService } from './setup'
+import { referralSettingsService, transferSettingsService } from './setup'
 
 class App {
   public express: Application
@@ -83,6 +83,10 @@ class App {
     const transferSettings = await transferSettingsService.get()
     if (!transferSettings) {
       await transferSettingsService.create(false, 0)
+    }
+    const referralSettings = await referralSettingsService.get()
+    if (!referralSettings) {
+      await referralSettingsService.create(10, 5, 15, 10, 10)
     }
   }
 

@@ -185,9 +185,10 @@ export default class AppRepository<T extends AppDocument>
     })
   }
 
-  public toClass(instance: T): this {
-    this.createNew = instance
-    return this
+  public toClass(instance: T): AppRepository<T> {
+    const newAppRepository = new AppRepository(this.self)
+    newAppRepository.createNew = instance
+    return newAppRepository
   }
 
   public async save(instance?: T): Promise<T> {

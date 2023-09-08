@@ -40,13 +40,13 @@ class NotificationController implements IAppController {
     )
 
     this.router.get(
-      `${this.path}/demo/:userId`,
+      `${this.path}/demo`,
       HttpMiddleware.authenticate(UserRole.USER),
       this.fetchAll(false, UserEnvironment.DEMO)
     )
 
     this.router.get(
-      `${this.path}/:userId`,
+      `${this.path}`,
       HttpMiddleware.authenticate(UserRole.USER),
       this.fetchAll(false, UserEnvironment.LIVE)
     )
@@ -60,7 +60,7 @@ class NotificationController implements IAppController {
       next: NextFunction
     ): Promise<Response | void> => {
       try {
-        const userId = req.params.userId as unknown as AppObjectId
+        const userId = req.user._id
         const response = await this.notificationService.fetchAll(
           fromAllAccounts,
           environment,

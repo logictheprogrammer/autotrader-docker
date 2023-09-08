@@ -92,6 +92,9 @@ class ReferralService implements IReferralService {
   ): Promise<{ earn: number; rate: number }> {
     const referralSettings = await this.referralSettingsService.get()
 
+    if (!referralSettings)
+      throw new HttpException(404, 'Referral settings not found')
+
     const rate = referralSettings[type]
     const earn = (rate / 100) * amount
 

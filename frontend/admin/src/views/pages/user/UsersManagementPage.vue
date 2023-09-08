@@ -13,6 +13,7 @@
           <MyDataTableComponent v-else ordering searching :order="[1, 'asc']">
             <thead class="bg-background">
               <tr>
+                <th class="text-sharp d-none">Sort</th>
                 <th class="text-sharp">Action</th>
                 <th class="text-sharp">No</th>
                 <th class="text-sharp text-center">Status</th>
@@ -30,6 +31,7 @@
             </thead>
             <tbody>
               <tr v-for="(user, i) in users" :key="user._id">
+                <td class="d-none">{{ i + 1 }}</td>
                 <td>
                   <MyDropdownComponent>
                     <a
@@ -101,7 +103,7 @@
                 <td class="text-center">{{ user.refer }}</td>
                 <td class="text-center">{{ Helpers.toUserRole(user.role) }}</td>
                 <td class="text-center">{{ user.verifield ? 'Yes' : 'No' }}</td>
-                <td>{{ user.createdAt }}</td>
+                <td>{{ Helpers.toNiceDate(user.createdAt) }}</td>
               </tr>
             </tbody>
           </MyDataTableComponent>

@@ -41,7 +41,7 @@
             <div class="card-body py-4">
               <div class="settings-form">
                 <Form
-                  @submit="(data)=>setWithdrawal(data as ICreateWithdrawal)"
+                  @submit="(data)=>makeWithdrawal(data as ICreateWithdrawal)"
                   v-slot="{ errors }"
                   class="custom-modal-content"
                   :validation-schema="makeWithdrawalSchema"
@@ -269,6 +269,8 @@
                   <th class="text-sharp">Currency</th>
                   <th class="text-sharp">Network</th>
                   <th class="text-sharp">Wallet Address</th>
+                  <th class="text-sharp">Created</th>
+                  <th class="text-sharp">Settled</th>
                 </tr>
               </thead>
               <tbody>
@@ -286,7 +288,11 @@
                     </span>
                   </td>
                   <td>{{ Helpers.toDollar(withdrawal.amount) }}</td>
-                  <td>{{ Helpers.toDollar(withdrawal.fee) }}</td>
+                  <td>
+                    {{
+                      withdrawal.fee ? Helpers.toDollar(-withdrawal.fee) : '--'
+                    }}
+                  </td>
                   <td>
                     <div class="d-flex">
                       <img
@@ -315,6 +321,16 @@
                     }}
                   </td>
                   <td>{{ withdrawal.address }}</td>
+                  <td>
+                    {{ Helpers.toNiceDate(withdrawal.createdAt) }}
+                  </td>
+                  <td>
+                    {{
+                      withdrawal.status === WithdrawalStatus.PENDING
+                        ? '--'
+                        : Helpers.toNiceDate(withdrawal.updatedAt)
+                    }}
+                  </td>
                 </tr>
               </tbody>
             </MyDataTableComponent>
@@ -372,9 +388,12 @@ const withdrawal = ref<ICreateWithdrawal>({
   amount: 0,
 })
 const setWithdrawal = (data: ICreateWithdrawal) => {
+  withdrawal.value = data
+}
+const makeWithdrawal = (data: ICreateWithdrawal) => {
   httpStore.setPost(true)
 
-  withdrawal.value = data
+  setWithdrawal(data)
   setCurrentPage(PAGE.CONFIRM_WITHDRAWAL)
   httpStore.setPost(false)
 }
@@ -423,7 +442,12 @@ const makeWithdrawalSchema = yup.object({
           message: `Amount must be at least ${selectedWithdrawalMethod.value.minWithdrawal}`,
         })
       }
-      if (authStore.user && value > authStore.user[userAccount.value]) {
+      if (
+        authStore.user &&
+        selectedWithdrawalMethod.value &&
+        value + selectedWithdrawalMethod.value.fee >
+          authStore.user[userAccount.value]
+      ) {
         throw this.createError({
           message: `You do not have sufficient balance in your ${Helpers.fromCamelToTitleCase(
             userAccount.value
