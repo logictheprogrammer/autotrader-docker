@@ -1,5 +1,5 @@
-import { IAsset } from './../asset/asset.interface'
 import type { AssetType } from '../asset/asset.enum'
+import type { IAsset } from '../asset/asset.interface'
 import type { PlanStatus } from './plan.enum'
 
 export interface IPlan {

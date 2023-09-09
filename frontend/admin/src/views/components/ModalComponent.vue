@@ -1,7 +1,11 @@
 <template>
   <Teleport to="#modal">
     <Transition name="modal">
-      <div v-if="isModalOpen" class="custom-modal">
+      <div
+        v-if="isModalOpen"
+        class="custom-modal"
+        :style="{ zIndex: zIndex || 600 }"
+      >
         <div
           @click.self="clicked"
           class="custom-modal-wrapper"
@@ -30,7 +34,7 @@
                   {{ confirmBtnText || 'Ok' }}
                 </button>
               </div>
-              <div v-else class="custom-modal-footer">
+              <div v-else-if="!noBtn" class="custom-modal-footer">
                 <button
                   type="button"
                   @click="$emit('close')"
@@ -55,12 +59,14 @@ const edmit = defineEmits(['close', 'confirm'])
 const props = defineProps<{
   isOpen: boolean
   onlyOneBtn?: boolean
+  noBtn?: boolean
   closeBtnText?: string
   confirmBtnText?: string
   title?: string
   closeSelf?: boolean
   class?: string
   validationSchema?: Record<string, any>
+  zIndex?: number
 }>()
 
 const isModalOpen = ref(false)
@@ -110,7 +116,6 @@ const showModal = () => {
   opacity: 1;
   display: block;
   transition: opacity 0.2s ease-in-out;
-  z-index: 600;
 }
 .custom-modal-header {
   display: flex;

@@ -27,17 +27,19 @@
         <ul>
           <li class="text-white mb-2 d-flex gap-2 align-items-center">
             Assets:
-            <div
-              class="ms-3 fs-5 avatar-group1"
-              v-html="
-                plan.assets
-                  .map((asset) => {
-                    return `<a class='avatar-group-item1' href='javascript: void(0);'><img src='/icons/crypto-svg/${asset.logo}' class='' alt='${asset.logo}'  width='24'  /></a>`
-                  })
-                  .reverse()
-                  .join('')
-              "
-            ></div>
+            <div class="ms-3 fs-5 avatar-group1">
+              <a
+                v-for="asset in plan.assets.slice().reverse()"
+                :key="asset._id"
+                class="avatar-group-item1"
+                href="javascript: void(0);"
+                ><img
+                  :src="`/icons/crypto-svg/${asset.logo}`"
+                  class=""
+                  :alt="`${asset.name}`"
+                  width="24"
+              /></a>
+            </div>
           </li>
           <li class="text-white mb-2">
             Trading Duration:

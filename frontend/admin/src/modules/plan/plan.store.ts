@@ -62,9 +62,11 @@ export const usePlanStore = defineStore('plan', () => {
 
       setPlans([...plans.value, plan])
       httpStore.handlePost(result)
+      return true
     } catch (error: any) {
       console.error(error)
       httpStore.handlePost(error.response)
+      return false
     }
   }
 
@@ -75,9 +77,11 @@ export const usePlanStore = defineStore('plan', () => {
       const result = await axios.put(`${basePath}/update`, data)
       updateById(data.planId, result.data.data.plan)
       httpStore.handlePost(result)
+      return true
     } catch (error: any) {
       console.error(error)
       httpStore.handlePost(error.response)
+      return false
     }
   }
 
@@ -92,9 +96,11 @@ export const usePlanStore = defineStore('plan', () => {
 
       setPlans(finalPlans)
       httpStore.handlePost(result)
+      return true
     } catch (error: any) {
       console.error(error)
       httpStore.handlePost(error.response)
+      return false
     }
   }
 

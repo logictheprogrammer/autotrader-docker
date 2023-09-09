@@ -30,7 +30,7 @@
                   {{ confirmBtnText || 'Ok' }}
                 </button>
               </div>
-              <div v-else class="custom-modal-footer">
+              <div v-else-if="!noBtn" class="custom-modal-footer">
                 <button
                   type="button"
                   @click="$emit('close')"
@@ -55,6 +55,7 @@ const edmit = defineEmits(['close', 'confirm'])
 const props = defineProps<{
   isOpen: boolean
   onlyOneBtn?: boolean
+  noBtn?: boolean
   closeBtnText?: string
   confirmBtnText?: string
   title?: string

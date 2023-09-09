@@ -6,6 +6,7 @@
     :only-one-btn="true"
     :close-self="true"
     confirm-btn-text="Close"
+    :z-index="1000"
   >
     <div class="overflow-hidden">
       <SuccessAlertIcon

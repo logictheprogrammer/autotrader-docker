@@ -77,11 +77,7 @@
   <ModalComponent
     :is-open="openPlanFormModal"
     @close="() => setOpenPlanFormModal(false)"
-    @confirm="
-      planForm === PlanForm.CREATE
-        ? () => console.log('Create')
-        : () => console.log('Update')
-    "
+    @confirm="onSubmitPlanFormHandler"
     :validation-schema="planFormSchema"
     v-slot="{ errors }"
     :title="planForm === PlanForm.CREATE ? `Create New Plan` : `Update Plan`"
@@ -249,14 +245,90 @@
         </Field>
         <span class="error-message">{{ errors.assetType }}</span>
       </div>
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <label class="form-label text-sharp">Assets</label>
+          <button
+            @click="() => setOpenAssetModal(true)"
+            type="button"
+            class="py-1 btn btn-outline-success btn-xs"
+          >
+            Add
+            <i class="bi bi-plus"></i>
+          </button>
+        </div>
+        <div class="d-flex gap-3 flex-wrap">
+          <a
+            v-for="asset in selectedAssets"
+            :key="asset._id"
+            :class="`border p-2 rounded-5 shadow overflow-hidden ${
+              selectedAsset?._id === asset._id ? 'border-danger' : ''
+            } position-relative`"
+            href="javascript: void(0);"
+            @click="() => setSelectedAsset(asset)"
+          >
+            <span
+              @click="() => removeFromSelectedAssets(asset)"
+              v-if="selectedAsset?._id === asset._id"
+              class="position-absolute bg-danger top-0 bottom-0 start-0 end-0 bg-opacity-15"
+            ></span>
+            <img
+              :src="`/icons/crypto-svg/${asset.logo}`"
+              class="me-2"
+              :alt="asset.name"
+              width="24"
+            /><span class=""> {{ asset.name }} </span></a
+          >
+        </div>
+      </div>
+    </div>
+  </ModalComponent>
+
+  <ModalComponent
+    :is-open="openAssetModal"
+    :close-self="true"
+    :only-one-btn="true"
+    @close="() => setOpenAssetModal(false)"
+    @confirm="() => setOpenAssetModal(false)"
+    :z-index="700"
+  >
+    <div class="d-flex gap-3 flex-wrap">
+      <a
+        v-for="asset in assets"
+        :key="asset._id"
+        :class="`border p-2 rounded-5 shadow overflow-hidden position-relative`"
+        href="javascript: void(0);"
+        @click="() => addToSelectedAssets(asset)"
+      >
+        <span
+          @click.stop="() => removeFromSelectedAssets(asset)"
+          v-if="
+            selectedAssets.filter(
+              (selectedAsset) => selectedAsset._id === asset._id
+            ).length
+          "
+          class="position-absolute bg-danger top-0 bottom-0 start-0 end-0 bg-opacity-15"
+        ></span>
+        <img
+          :src="`/icons/crypto-svg/${asset.logo}`"
+          class="me-2"
+          :alt="asset.name"
+          width="24"
+        /><span class=""> {{ asset.name }} </span></a
+      >
     </div>
   </ModalComponent>
 </template>
 
 <script setup lang="ts">
+import type { IAsset } from '@/modules/asset/asset.interface'
 import { ResponseStatus } from '@/modules/http/http.enum'
 import { PlanStatus } from '@/modules/plan/plan.enum'
-import type { IPlan } from '@/modules/plan/plan.interface'
+import type {
+  IPlan,
+  ICreatePlan,
+  IEditPlan,
+} from '@/modules/plan/plan.interface'
 import type { IAlertModalInfo } from '@/util/interfaces/alertModalInfo.interface'
 
 const planStore = usePlanStore()
@@ -276,12 +348,35 @@ const assetTypeValues: string[] = Object.keys(AssetType).map(
 )
 
 const selectedPlan = ref<IPlan>()
+const selectedAsset = ref<IAsset>()
+const selectedAssets = ref<IAsset[]>([])
+
+const setSelectedAsset = (asset: IAsset) => {
+  if (selectedAsset.value) return (selectedAsset.value = undefined)
+  selectedAsset.value = asset
+}
+
+const setSelectedAssets = (assets: IAsset[]) => {
+  selectedAssets.value = assets
+}
+
+const addToSelectedAssets = (asset: IAsset) => {
+  const newAssets = selectedAssets.value.slice()
+  newAssets.push(asset)
+  setSelectedAssets(newAssets)
+}
+
+const removeFromSelectedAssets = (asset: IAsset) => {
+  const newAssets = selectedAssets.value.filter((ast) => ast._id !== asset._id)
+  setSelectedAssets(newAssets)
+}
 
 // Plan Form
 enum PlanForm {
   CREATE,
   UPDATE,
 }
+
 const planForm = ref<PlanForm>()
 const openPlanFormModal = ref(false)
 const setOpenPlanFormModal = (
@@ -292,6 +387,12 @@ const setOpenPlanFormModal = (
   openPlanFormModal.value = isOpen
   planForm.value = form
   selectedPlan.value = plan
+  setSelectedAssets(plan ? plan.assets : [])
+}
+
+const openAssetModal = ref(false)
+const setOpenAssetModal = (isOpen: boolean) => {
+  openAssetModal.value = isOpen
 }
 
 // alert
@@ -413,6 +514,17 @@ const onPlanStatusChangeHandler = (plan: IPlan, status: PlanStatus) => {
     onConfirm: () => console.log(plan),
   })
   setOpenAlertModal(true)
+}
+
+// Submit Plan Form handler
+const onSubmitPlanFormHandler = async (form: ICreatePlan | IEditPlan) => {
+  form.assets = selectedAssets.value.map((asset) => asset._id)
+  let successful = false
+  if (planForm.value === PlanForm.CREATE)
+    successful = await planStore.createPlan(form as ICreatePlan)
+  else successful = await planStore.updatePlan(form as IEditPlan)
+
+  if (successful) setOpenPlanFormModal(false)
 }
 </script>
 
