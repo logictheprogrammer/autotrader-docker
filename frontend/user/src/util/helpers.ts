@@ -47,6 +47,7 @@ export default class Helpers {
       case DepositStatus.APPROVED:
       case WithdrawalStatus.APPROVED:
       case TransferStatus.SUCCESSFUL:
+      case ReferralStatus.SUCCESS:
         return 'success'
       case UserStatus.SUSPENDED:
       case DepositMethodStatus.DISABLED:

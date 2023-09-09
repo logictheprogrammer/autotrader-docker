@@ -9,7 +9,7 @@
     <div class="col-xl-8">
       <div class="card">
         <div class="card-header">
-          <h4 class="card-title">Referral History</h4>
+          <h4 class="card-title">Active Referred Users</h4>
         </div>
         <EmptyResourceComponent
           v-if="referralUsersLoaded && !referralUsers?.length"

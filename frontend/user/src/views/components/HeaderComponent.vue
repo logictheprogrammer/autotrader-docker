@@ -82,7 +82,10 @@ const route = useRoute()
 const page = computed(() => route.meta.page)
 const onDemo = computed(() => httpStore.onDemo)
 const balance = computed(() =>
-  !onDemo.value ? authStore.user?.mainBalance : authStore.user?.demoBalance
+  !onDemo.value
+    ? (authStore.user?.mainBalance || 0) +
+      (authStore.user?.referralBalance || 0)
+    : authStore.user?.demoBalance
 )
 
 const toggleMenu = () => {

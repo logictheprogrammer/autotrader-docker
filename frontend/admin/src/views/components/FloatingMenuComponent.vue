@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-skin floating-menu shadow d-flex justify-content-around border border-dark d-md-none"
+    class="bg-skin floating-menu menu-shadow d-flex justify-content-around border border-dark d-md-none"
   >
     <RouterLink
       v-for="item in navItems"
