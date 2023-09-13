@@ -10,29 +10,24 @@ import { TUpdateInvestmentStatus } from './investment.type'
 import AppRepository from '../app/app.repository'
 import AppDocument from '../app/app.document'
 import AppObjectId from '../app/app.objectId'
+import { TradeStatus } from '../trade/trade.enum'
+import { ITrade, ITradeObject } from '../trade/trade.interface'
 
 export interface IInvestmentObject extends IAppObject {
   plan: IPlan['_id']
   planObject: IPlanObject
   user: IUser['_id']
   userObject: IUserObject
-  icon: string
-  name: string
-  engine: string
-  minProfit: number
-  maxProfit: number
-  duration: number
+  timeLeft: number
   gas: number
-  description: string
-  assetType: AssetType
-  assets: any[]
   status: InvestmentStatus
-  dailyTrades: number
+  tradeStatus?: TradeStatus
   amount: number
   balance: number
-  dateSuspended?: Date
+  tradeStart?: Date
   account: UserAccount
   environment: UserEnvironment
+  manualMode: boolean
 }
 
 export interface IInvestment extends AppDocument {
@@ -43,23 +38,16 @@ export interface IInvestment extends AppDocument {
   planObject: IPlanObject
   user: IUser['_id']
   userObject: IUserObject
-  icon: string
-  name: string
-  engine: string
-  minProfit: number
-  maxProfit: number
-  duration: number
+  timeLeft: number
   gas: number
-  description: string
-  assetType: AssetType
-  assets: any[]
   status: InvestmentStatus
-  dailyTrades: number
+  tradeStatus?: TradeStatus
   amount: number
   balance: number
-  dateSuspended?: Date
+  tradeStart?: Date
   account: UserAccount
   environment: UserEnvironment
+  manualMode: boolean
 }
 
 export interface IInvestmentService {
@@ -76,9 +64,9 @@ export interface IInvestmentService {
     status: InvestmentStatus
   ): TTransaction<IInvestmentObject, IInvestment>
 
-  _fundTransaction(
+  updateTradeDetailsTransaction(
     investmentId: AppObjectId,
-    amount: number
+    trade: ITradeObject
   ): TTransaction<IInvestmentObject, IInvestment>
 
   create(
@@ -107,16 +95,6 @@ export interface IInvestmentService {
     model: AppRepository<IInvestment>
     instances: TUpdateInvestmentStatus
   }>
-
-  forceUpdateStatus(
-    investmentId: AppObjectId,
-    status: InvestmentStatus
-  ): THttpResponse<{ investment: IInvestment }>
-
-  fund(
-    investmentId: AppObjectId,
-    amount: number
-  ): TTransaction<IInvestmentObject, IInvestment>
 
   forceFund(
     investmentId: AppObjectId,

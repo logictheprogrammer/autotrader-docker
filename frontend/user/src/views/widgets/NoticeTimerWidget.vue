@@ -32,6 +32,10 @@ const counter = () => {
 }
 const timer = setInterval(counter, 1000)
 counter()
+
+onBeforeUnmount(() => {
+  clearInterval(timer)
+})
 </script>
 
 <style scoped>

@@ -1,5 +1,5 @@
 import tradeModel from '@/modules/trade/trade.model'
-import { ITrade } from '@/modules/trade/trade.interface'
+import { ITrade, ITradeObject } from '@/modules/trade/trade.interface'
 import { Inject, Service } from 'typedi'
 import {
   IInvestment,
@@ -45,6 +45,7 @@ import { TUpdateInvestmentStatus } from './investment.type'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
+import { TradeStatus } from '../trade/trade.enum'
 
 @Service()
 class InvestmentService implements IInvestmentService {
@@ -84,38 +85,7 @@ class InvestmentService implements IInvestmentService {
     return this.investmentRepository.toObject(await this.find(investmentId))
   }
 
-  public async _fundTransaction(
-    investmentId: AppObjectId,
-    amount: number
-  ): TTransaction<IInvestmentObject, IInvestment> {
-    const investment = await this.find(investmentId)
-
-    investment.balance += amount
-
-    const onFailed = `${amount > 0 ? 'substract' : 'add'} ${
-      amount > 0
-        ? FormatNumber.toDollar(amount)
-        : FormatNumber.toDollar(-amount)
-    } ${amount > 0 ? 'from' : 'to'} the investment with an id of (${
-      investment._id
-    })`
-
-    const newInvestment = this.investmentRepository.toClass(investment)
-
-    const unsavedInvestment = newInvestment.collectUnsaved()
-
-    return {
-      object: unsavedInvestment,
-      instance: {
-        model: newInvestment,
-        onFailed,
-        callback: async () => {
-          unsavedInvestment.balance -= amount
-          await this.investmentRepository.save(unsavedInvestment)
-        },
-      },
-    }
-  }
+  // public async getAllRunningAuto(): Promise
 
   public async _createTransaction(
     user: IUserObject,
@@ -129,21 +99,14 @@ class InvestmentService implements IInvestmentService {
       planObject: plan,
       user: user._id,
       userObject: user,
-      icon: plan.icon,
-      name: plan.name,
-      engine: plan.engine,
-      minProfit: plan.minProfit,
-      maxProfit: plan.maxProfit,
-      duration: plan.duration * 1000 * 60 * 60 * 24,
+      timeLeft: plan.duration * 1000 * 60 * 60 * 24,
       gas: plan.gas,
-      description: plan.description,
-      assetType: plan.assetType,
-      assets: plan.assets,
       amount,
       balance: amount,
       account,
       environment,
-      status: InvestmentStatus.RUNNING,
+      status: InvestmentStatus.AWAITING_TRADE,
+      manualMode: plan.manualMode,
     })
 
     const unsavedInvestment = investment.collectUnsaved()
@@ -171,27 +134,6 @@ class InvestmentService implements IInvestmentService {
     if (oldStatus === InvestmentStatus.COMPLETED)
       throw new HttpException(400, 'Investment plan has already been settled')
 
-    switch (status) {
-      case InvestmentStatus.MARKET_OPENED:
-        status = InvestmentStatus.RUNNING
-      case InvestmentStatus.SUSPENDED:
-      case InvestmentStatus.MARKET_CLOSED:
-      case InvestmentStatus.TRADE_ON_HOLD:
-      case InvestmentStatus.INSUFFICIENT_GAS:
-        investment.dateSuspended = new Date()
-        break
-      case InvestmentStatus.RUNNING:
-        if (!investment.dateSuspended) break
-
-        const timeDifference =
-          new Date().getTime() - investment.dateSuspended.getTime()
-
-        investment.duration += timeDifference
-
-        investment.dateSuspended = undefined
-        break
-    }
-
     investment.status = status
 
     const newInvestment = this.investmentRepository.toClass(investment)
@@ -205,6 +147,42 @@ class InvestmentService implements IInvestmentService {
         onFailed: `Set the status of the investment with an id of (${unsavedInvestment._id}) to (${oldStatus})`,
         callback: async () => {
           unsavedInvestment.status = oldStatus
+          await this.investmentRepository.save(unsavedInvestment)
+        },
+      },
+    }
+  }
+
+  public async updateTradeDetailsTransaction(
+    investmentId: AppObjectId,
+    trade: ITradeObject
+  ): TTransaction<IInvestmentObject, IInvestment> {
+    const investment = await this.find(investmentId)
+
+    const oldTradeStatus = investment.tradeStatus
+    const oldTradeStart = investment.tradeStart
+    const oldBalance = investment.balance
+
+    investment.tradeStatus = trade.status
+    investment.tradeStart = trade.startTime
+
+    if (trade.status === TradeStatus.SETTLED) {
+      investment.balance += trade.profit
+    }
+
+    const newInvestment = this.investmentRepository.toClass(investment)
+
+    const unsavedInvestment = newInvestment.collectUnsaved()
+
+    return {
+      object: unsavedInvestment,
+      instance: {
+        model: newInvestment,
+        onFailed: `Set the tradeStatus of the investment with an id of (${unsavedInvestment._id}) to (${oldTradeStatus}) and the tradeStart to (${oldTradeStart}) and the balance to (${oldBalance})`,
+        callback: async () => {
+          unsavedInvestment.tradeStatus = oldTradeStatus
+          unsavedInvestment.tradeStart = oldTradeStart
+          unsavedInvestment.balance = oldBalance
           await this.investmentRepository.save(unsavedInvestment)
         },
       },
@@ -365,22 +343,28 @@ class InvestmentService implements IInvestmentService {
       let notificationMessage
       switch (status) {
         case InvestmentStatus.RUNNING:
-          notificationMessage = 'is now ' + status
+          notificationMessage = 'is now running'
           break
         case InvestmentStatus.SUSPENDED:
-          notificationMessage = 'has been ' + status
+          notificationMessage = 'has been suspended'
           break
         case InvestmentStatus.COMPLETED:
-          notificationMessage = 'has been ' + status
+          notificationMessage = 'has been completed'
           break
         case InvestmentStatus.INSUFFICIENT_GAS:
           notificationMessage = 'has ran out of gas'
           break
-        case InvestmentStatus.MARKET_CLOSED:
-          notificationMessage = 'has closed until the next business hours'
+        case InvestmentStatus.REFILLING:
+          notificationMessage = 'is now filling'
           break
-        case InvestmentStatus.MARKET_OPENED:
-          notificationMessage = 'has been opened and running'
+        case InvestmentStatus.ON_MAINTAINACE:
+          notificationMessage = 'is corrently on maintance'
+          break
+        case InvestmentStatus.AWAITING_TRADE:
+          notificationMessage = 'is awaiting the current trade'
+          break
+        case InvestmentStatus.PROCESSING_TRADE:
+          notificationMessage = 'is processing the next trade'
           break
       }
 
@@ -390,9 +374,7 @@ class InvestmentService implements IInvestmentService {
           : await this.userService.get(investment.user)
 
         const notificationInstance = await this.notificationService.create(
-          `Your investment of ${formatNumber.toDollar(
-            investment.amount
-          )} ${notificationMessage}`,
+          `Your investment package ${notificationMessage}`,
           NotificationCategory.INVESTMENT,
           investment,
           NotificationForWho.USER,
@@ -409,35 +391,6 @@ class InvestmentService implements IInvestmentService {
       model: investmentInstance.model,
       instances: transactionInstances,
     }
-  }
-
-  public forceUpdateStatus = async (
-    investmentId: AppObjectId,
-    status: InvestmentStatus
-  ): THttpResponse<{ investment: IInvestment }> => {
-    try {
-      const result = await this.updateStatus(investmentId, status)
-
-      await this.transactionManagerService.execute(result.instances)
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Status updated successfully',
-        data: { investment: result.model.collectRaw() },
-      }
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to update this investment  status, please try again'
-      )
-    }
-  }
-
-  public async fund(
-    investmentId: AppObjectId,
-    amount: number
-  ): TTransaction<IInvestmentObject, IInvestment> {
-    return await this._fundTransaction(investmentId, amount)
   }
 
   public async forceFund(

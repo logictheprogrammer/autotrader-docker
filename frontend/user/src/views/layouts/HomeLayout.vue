@@ -87,7 +87,6 @@ onMounted(() => {
 }
 
 .translator {
-  position: absolute;
   top: 5rem;
   left: 0;
   right: 0;
@@ -96,13 +95,14 @@ onMounted(() => {
 }
 
 .demo-alert {
-  margin-bottom: -2.5rem;
+  margin-bottom: -1rem;
 }
 
 @media only screen and (min-width: 768px) {
   .translator {
     left: auto;
     right: auto;
+    justify-content: start !important;
   }
 }
 

@@ -18,6 +18,7 @@
       >
         <i :class="item.icon"></i>
         <span
+          style="margin-top: 0.15rem"
           :class="`icon-text ${isExactActive ? 'text-info' : 'text-sharp'}`"
         >
           {{ item.name }}
@@ -36,8 +37,8 @@ const navItems = [
     icon: 'fa-solid fa-house',
   },
   {
-    name: 'Trade',
-    to: 'active-trade',
+    name: 'Trades',
+    to: 'purchasedPackages',
     parent: false,
     icon: 'fa-solid fa-bolt',
   },

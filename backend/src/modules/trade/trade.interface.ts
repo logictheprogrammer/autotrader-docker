@@ -15,6 +15,8 @@ import { TUpdateTradeStatus } from './trade.type'
 import AppRepository from '../app/app.repository'
 import AppDocument from '../app/app.document'
 import AppObjectId from '../app/app.objectId'
+import { InvestmentStatus } from '../investment/investment.enum'
+import { TUpdateInvestmentStatus } from '../investment/investment.type'
 
 export interface ITradeObject extends IAppObject {
   investment: IInvestment['_id']
@@ -25,7 +27,7 @@ export interface ITradeObject extends IAppObject {
   pairObject: IPairObject
   market: AssetType
   status: TradeStatus
-  move: TradeMove
+  move?: TradeMove
   stake: number
   outcome: number
   profit: number
@@ -33,8 +35,9 @@ export interface ITradeObject extends IAppObject {
   investmentPercentage: number
   openingPrice?: number
   closingPrice?: number
+  runTime: number
+  timeStamps: number[]
   startTime?: Date
-  stopTime?: Date
   environment: UserEnvironment
   manualUpdateAmount: boolean
   manualMode: boolean
@@ -52,7 +55,7 @@ export interface ITrade extends AppDocument {
   pairObject: IPairObject
   market: AssetType
   status: TradeStatus
-  move: TradeMove
+  move?: TradeMove
   stake: number
   outcome: number
   profit: number
@@ -60,8 +63,9 @@ export interface ITrade extends AppDocument {
   investmentPercentage: number
   openingPrice?: number
   closingPrice?: number
+  runTime: number
+  timeStamps: number[]
   startTime?: Date
-  stopTime?: Date
   environment: UserEnvironment
   manualUpdateAmount: boolean
   manualMode: boolean
@@ -72,33 +76,33 @@ export interface ITradeService {
     user: IUserObject,
     investment: IInvestmentObject,
     pair: IPairObject,
-    move: TradeMove,
     stake: number,
     outcome: number,
     profit: number,
     percentage: number,
     investmentPercentage: number,
-    environment: UserEnvironment,
-    manualMode: boolean
+    environment: UserEnvironment
   ): TTransaction<ITradeObject, ITrade>
 
   _updateStatusTransaction(
     tradeId: AppObjectId,
-    status: TradeStatus
+    status: TradeStatus,
+    move?: TradeMove
   ): TTransaction<ITradeObject, ITrade>
 
   create(
     user: IUserObject,
     investment: IInvestmentObject,
     pair: IPairObject,
-    move: TradeMove,
     stakeRate: number,
     investmentPercentage: number
-  ): Promise<ITransactionInstance<ITrade>>
+  ): TTransaction<ITradeObject, ITrade>
 
   createManual(
     investmentId: AppObjectId,
-    pairId: AppObjectId
+    pairId: AppObjectId,
+    stake: number,
+    profit: number
   ): THttpResponse<{ trade: ITrade }>
 
   updateManual(
@@ -122,13 +126,21 @@ export interface ITradeService {
   updateStatus(
     tradeId: AppObjectId,
     status: TradeStatus,
-    price?: number
+    move?: TradeMove
   ): Promise<{ model: AppRepository<ITrade>; instances: TUpdateTradeStatus }>
 
-  forceUpdateStatus(
-    tradeId: AppObjectId,
-    status: TradeStatus
-  ): THttpResponse<{ trade: ITrade }>
+  updateInvestmentStatus(
+    investmentId: AppObjectId,
+    investmentStatus: InvestmentStatus
+  ): Promise<{
+    model: AppRepository<IInvestment>
+    instances: TUpdateInvestmentStatus
+  }>
+
+  forceUpdateInvestmentStatus(
+    investmentId: AppObjectId,
+    status: InvestmentStatus
+  ): THttpResponse<{ investment: IInvestment }>
 
   fetchAll(
     all: boolean,

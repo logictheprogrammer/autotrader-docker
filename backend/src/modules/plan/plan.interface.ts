@@ -5,6 +5,8 @@ import { UserRole } from '@/modules/user/user.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
 import AppDocument from '../app/app.document'
 import AppObjectId from '../app/app.objectId'
+import { IInvestment } from '../investment/investment.interface'
+import { IPair } from '../pair/pair.interface'
 
 export interface IPlanObject extends IAppObject {
   icon: string
@@ -19,8 +21,11 @@ export interface IPlanObject extends IAppObject {
   gas: number
   description: string
   assetType: AssetType
-  assets: any[]
+  pairs: IPair[]
   status: PlanStatus
+  manualMode: boolean
+  investors: IInvestment['_id'][]
+  dummyInvestors: number
 }
 
 export interface IPlan extends AppDocument {
@@ -39,8 +44,11 @@ export interface IPlan extends AppDocument {
   gas: number
   description: string
   assetType: AssetType
-  assets: any[]
+  pairs: IPair[]
   status: PlanStatus
+  manualMode: boolean
+  investors: IInvestment['_id'][]
+  dummyInvestors: number
 }
 
 export interface IPlanService {
@@ -76,6 +84,10 @@ export interface IPlanService {
     assetType: AssetType,
     assets: AppObjectId[]
   ): THttpResponse<{ plan: IPlan }>
+
+  autoTrade(): Promise<void>
+
+  manualTrade(): Promise<void>
 
   updateStatus(
     planId: AppObjectId,

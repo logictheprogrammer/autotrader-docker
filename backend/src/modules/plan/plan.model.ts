@@ -1,6 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { IPlan } from '@/modules/plan/plan.interface'
 import { PlanStatus } from '@/modules/plan/plan.enum'
+import { Types } from 'mongoose'
 
 const PlanSchema = new Schema(
   {
@@ -57,9 +58,25 @@ const PlanSchema = new Schema(
       type: String,
       required: true,
     },
-    assets: {
-      type: Array,
+    pairs: {
+      type: Types.ObjectId,
+      ref: 'Pair',
+    },
+    manualMode: {
+      type: Boolean,
       required: true,
+      default: false,
+    },
+    investors: [
+      {
+        type: Types.ObjectId,
+        ref: 'Investment',
+      },
+    ],
+    dummyInvestors: {
+      type: Number,
+      required: true,
+      default: 0,
     },
   },
   { timestamps: true }

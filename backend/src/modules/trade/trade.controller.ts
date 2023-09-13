@@ -37,13 +37,6 @@ class TradeController implements IAppController {
     )
 
     this.router.patch(
-      `${this.path}/update-status`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateStatus),
-      this.updateStatus
-    )
-
-    this.router.patch(
       `${this.path}/update-amount`,
       HttpMiddleware.authenticate(UserRole.ADMIN),
       HttpMiddleware.validate(validate.updateAmount),
@@ -145,23 +138,6 @@ class TradeController implements IAppController {
         closingPrice,
         startTime,
         stopTime
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
-
-  private updateStatus = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { tradeId, status } = req.body
-      const response = await this.tradeService.forceUpdateStatus(
-        tradeId,
-        status
       )
       res.status(200).json(response)
     } catch (err: any) {

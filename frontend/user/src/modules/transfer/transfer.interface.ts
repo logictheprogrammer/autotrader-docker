@@ -4,8 +4,8 @@ import type { UserAccount } from '../user/user.enum'
 export interface ITransfer {
   __v: number
   _id: string
-  updatedAt: Date
-  createdAt: Date
+  updatedAt: string
+  createdAt: string
   fromUser: {
     _id: string
     username: string

@@ -1,7 +1,11 @@
 <template>
   <Teleport to="#modal">
     <Transition name="modal">
-      <div v-if="isModalOpen" class="custom-modal">
+      <div
+        v-if="isModalOpen"
+        class="custom-modal"
+        :style="{ zIndex: zIndex || 600 }"
+      >
         <div
           @click.self="clicked"
           class="custom-modal-wrapper"
@@ -62,6 +66,7 @@ const props = defineProps<{
   closeSelf?: boolean
   class?: string
   validationSchema?: Record<string, any>
+  zIndex?: number
 }>()
 
 const isModalOpen = ref(false)
@@ -111,7 +116,6 @@ const showModal = () => {
   opacity: 1;
   display: block;
   transition: opacity 0.2s ease-in-out;
-  z-index: 600;
 }
 .custom-modal-header {
   display: flex;

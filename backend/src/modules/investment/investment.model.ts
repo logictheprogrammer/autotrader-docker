@@ -29,48 +29,19 @@ const InvestmentSchema = new Schema(
       type: String,
       required: true,
     },
+    tradeStatus: {
+      type: String,
+    },
     status: {
       type: String,
       required: true,
     },
-    icon: {
-      type: String,
-      required: true,
-    },
-    name: {
-      type: String,
-      required: true,
-    },
-    engine: {
-      type: String,
-      required: true,
-    },
-    minProfit: {
-      type: Number,
-      required: true,
-    },
-    maxProfit: {
-      type: Number,
-      required: true,
-    },
-    duration: {
-      type: Number,
-      required: true,
-    },
-    dailyTrades: {
+    timeLeft: {
       type: Number,
       required: true,
     },
     gas: {
       type: Number,
-      required: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    assets: {
-      type: Array,
       required: true,
     },
     amount: {
@@ -81,8 +52,13 @@ const InvestmentSchema = new Schema(
       type: Number,
       required: true,
     },
-    dateSuspended: {
+    tradeStart: {
       type: Date,
+    },
+    manualMode: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
   },
   { timestamps: true }

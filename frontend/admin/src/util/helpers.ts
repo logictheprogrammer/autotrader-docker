@@ -48,19 +48,28 @@ export default class Helpers {
       case WithdrawalStatus.APPROVED:
       case TransferStatus.SUCCESSFUL:
       case ReferralStatus.SUCCESS:
+      case PlanStatus.ACTIVE:
+      case InvestmentStatus.RUNNING:
         return 'success'
       case UserStatus.SUSPENDED:
       case DepositMethodStatus.DISABLED:
       case WithdrawalMethodStatus.DISABLED:
       case TransferStatus.REVERSED:
+      case PlanStatus.SUSPENDED:
+      case InvestmentStatus.TRADE_ON_HOLD:
+      case InvestmentStatus.MARKET_CLOSED:
+      case InvestmentStatus.INSUFFICIENT_GAS:
         return 'warning'
       case DepositStatus.PENDING:
       case WithdrawalStatus.PENDING:
       case TransferStatus.PENDING:
+      case PlanStatus.ON_MAINTENANCE:
         return 'info'
       case DepositStatus.CANCELLED:
       case WithdrawalStatus.CANCELLED:
         return 'danger'
+      case InvestmentStatus.COMPLETED:
+        return 'secondary'
 
       default:
         return ''

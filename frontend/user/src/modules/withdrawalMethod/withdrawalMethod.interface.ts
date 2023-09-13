@@ -4,8 +4,8 @@ export interface IWithdrawalMethod {
   __v: number
   _id: string
   currency: string
-  updatedAt: Date
-  createdAt: Date
+  updatedAt: string
+  createdAt: string
   name: string
   symbol: string
   logo: string

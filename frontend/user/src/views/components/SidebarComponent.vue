@@ -117,14 +117,14 @@ const navItems = [
     icon: 'fa-solid fa-wallet',
   },
   {
-    name: 'Active Trade',
-    to: 'active-trade',
+    name: 'My Packages',
+    to: 'purchasedPackages',
     parent: false,
     icon: 'fa-solid fa-bolt',
   },
   {
-    name: 'Package Plans',
-    to: 'packagePlans',
+    name: 'Available Packages',
+    to: 'packages',
     parent: false,
     icon: 'fa-solid fa-cube',
   },

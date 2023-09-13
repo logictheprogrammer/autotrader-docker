@@ -1,9 +1,10 @@
 export enum InvestmentStatus {
   RUNNING = 'running',
+  AWAITING_TRADE = 'awaiting trade',
+  PROCESSING_TRADE = 'processing trade',
   SUSPENDED = 'suspended',
-  MARKET_OPENED = 'market opened',
-  MARKET_CLOSED = 'market closed',
-  TRADE_ON_HOLD = 'trade on hold',
-  INSUFFICIENT_GAS = 'insufficient gas',
+  INSUFFICIENT_GAS = 'out of gas',
+  REFILLING = 'refilling',
+  ON_MAINTAINACE = 'on maintainace',
   COMPLETED = 'completed',
 }

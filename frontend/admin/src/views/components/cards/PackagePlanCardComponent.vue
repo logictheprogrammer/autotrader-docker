@@ -48,7 +48,7 @@
             </span>
           </li>
           <li class="text-white mb-2">
-            Stakeable Amount:
+            Amount:
             <span class="ms-3 fw-bold text-primary fs-5"
               >{{ Helpers.toDollar(plan.minAmount) }} -
               {{ Helpers.toDollar(plan.maxAmount) }}</span

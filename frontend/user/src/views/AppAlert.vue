@@ -5,6 +5,7 @@
     @close="closeModal"
     :only-one-btn="true"
     :close-self="true"
+    :z-index="1000"
     confirm-btn-text="Close"
   >
     <div class="overflow-hidden">

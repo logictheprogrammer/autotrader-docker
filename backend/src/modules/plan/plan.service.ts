@@ -12,10 +12,14 @@ import { PlanStatus } from '@/modules/plan/plan.enum'
 import { UserRole } from '@/modules/user/user.enum'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
+import Helpers from '@/utils/helpers/helpers'
+import { IPair } from '../pair/pair.interface'
+import pairModel from '../pair/pair.model'
 
 @Service()
 class PlanService implements IPlanService {
   private planRepository = new AppRepository<IPlan>(planModel)
+  private pairRepository = new AppRepository<IPair>(pairModel)
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)
@@ -99,6 +103,72 @@ class PlanService implements IPlanService {
         err,
         'Failed to create this plan, please try again'
       )
+    }
+  }
+
+  public async autoTrade(): Promise<void> {
+    const runningPlans = await this.planRepository
+      .find({ investors: { $exists: true, $ne: [] } })
+      .collectAll()
+
+    await this.planRepository.populateAll(
+      runningPlans,
+      'pairs',
+      'pairObject',
+      '*',
+      this.pairRepository
+    )
+
+    for (const plan of runningPlans) {
+      // get pair
+    }
+
+    const investment = await this.investmentService.get(investmentId)
+    const pair = await this.pairService.get(pairId)
+    const user = await this.userService.get(investment.user)
+
+    if (!pair) throw new HttpException(404, 'The selected pair no longer exist')
+
+    if (pair.assetType !== investment.planObject.assetType)
+      throw new HttpException(
+        400,
+        'The pair is not compatible with this investment plan'
+      )
+
+    const minProfit =
+      investment.planObject.minProfit /
+      (investment.planObject.dailyTrades * investment.planObject.duration)
+    const maxProfit =
+      investment.planObject.maxProfit /
+      (investment.planObject.dailyTrades * investment.planObject.duration)
+
+    const stakeRate = Helpers.getRandomValue(
+      TradeService.minStakeRate,
+      TradeService.maxStakeRate
+    )
+
+    const spread = stakeRate * minProfit
+
+    const breakpoint = spread * TradeService.profitBreakpoint
+
+    const investmentPercentage = this.mathService.dynamicRange(
+      minProfit,
+      maxProfit,
+      spread,
+      breakpoint,
+      TradeService.profitProbability
+    )
+
+    const { model: trade } = (
+      await this.create(user, investment, pair, stakeRate, investmentPercentage)
+    ).instance
+
+    await trade.save()
+
+    return {
+      status: HttpResponseStatus.SUCCESS,
+      message: 'Trade created successfully',
+      data: { trade: trade.collectRaw() },
     }
   }
 

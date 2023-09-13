@@ -48,19 +48,28 @@ export default class Helpers {
       case WithdrawalStatus.APPROVED:
       case TransferStatus.SUCCESSFUL:
       case ReferralStatus.SUCCESS:
+      case PlanStatus.ACTIVE:
+      case InvestmentStatus.RUNNING:
         return 'success'
       case UserStatus.SUSPENDED:
       case DepositMethodStatus.DISABLED:
       case WithdrawalMethodStatus.DISABLED:
       case TransferStatus.REVERSED:
+      case PlanStatus.SUSPENDED:
+      case InvestmentStatus.TRADE_ON_HOLD:
+      case InvestmentStatus.MARKET_CLOSED:
+      case InvestmentStatus.INSUFFICIENT_GAS:
         return 'warning'
       case DepositStatus.PENDING:
       case WithdrawalStatus.PENDING:
       case TransferStatus.PENDING:
+      case PlanStatus.ON_MAINTENANCE:
         return 'info'
       case DepositStatus.CANCELLED:
       case WithdrawalStatus.CANCELLED:
         return 'danger'
+      case InvestmentStatus.COMPLETED:
+        return 'secondary'
 
       default:
         return ''
@@ -124,5 +133,43 @@ export default class Helpers {
     withseconds: boolean = false
   ) {
     return `${Helpers.toNiceDay(date)} ${Helpers.toNiceTime(date, withseconds)}`
+  }
+
+  public static timeRemaining(timestamp: number) {
+    const now = Date.now() // current time in milliseconds
+    const diff = timestamp - now // difference in milliseconds
+
+    if (0 >= diff) return
+
+    const diffSeconds = Math.floor(diff / 1000) // convert to seconds
+
+    // if (diffSeconds < 60) {
+    //   // If less than a minute, return in seconds
+    //   return `${diffSeconds} seconds`
+    // }
+
+    const diffMinutes = Math.ceil(diffSeconds / 60)
+    if (diffMinutes < 60) {
+      // If less than an hour, return in minutes
+      return `${diffMinutes} minutes left`
+    }
+
+    const diffHours = Math.floor(diffMinutes / 60)
+    if (diffHours < 24) {
+      // If less than a day, return in hours and minutes
+      return `${diffHours} hours ${
+        diffMinutes % 60 ? ' and ' + (diffMinutes % 60) + ' minutes ' : ''
+      } left`
+    }
+
+    const diffDays = Math.floor(diffHours / 24)
+    // If more than a day, return in days, hours, and minutes
+    return `${diffDays} days${
+      diffHours % 24
+        ? diffMinutes % 60
+          ? ', ' + (diffHours % 24) + '  hours'
+          : ' and ' + (diffHours % 24) + '  hours'
+        : ''
+    }${diffMinutes % 60 ? ' and ' + (diffMinutes % 60) + ' minutes ' : ''} left`
   }
 }

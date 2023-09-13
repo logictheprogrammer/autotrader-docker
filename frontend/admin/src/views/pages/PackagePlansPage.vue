@@ -31,14 +31,16 @@
           >Edit</a
         >
         <a
+          v-if="packagePlan.status !== PlanStatus.ACTIVE"
           class="dropdown-item"
           href="javascript:void(0)"
           @click="
             () => onPlanStatusChangeHandler(packagePlan, PlanStatus.ACTIVE)
           "
-          >Unsuspend</a
+          >Active</a
         >
         <a
+          v-if="packagePlan.status !== PlanStatus.SUSPENDED"
           class="dropdown-item"
           href="javascript:void(0)"
           @click="
@@ -47,6 +49,7 @@
           >Suspend</a
         >
         <a
+          v-if="packagePlan.status !== PlanStatus.ON_MAINTENANCE"
           @click="
             () =>
               onPlanStatusChangeHandler(packagePlan, PlanStatus.ON_MAINTENANCE)
@@ -71,7 +74,7 @@
     :title="alertModalInfo.title"
     :message="alertModalInfo.message"
     @confirm="alertModalInfo.onConfirm"
-    @close="openAlertModal = false"
+    @close="() => setOpenAlertModal(false)"
   />
 
   <ModalComponent
@@ -348,8 +351,13 @@ const assetTypeValues: string[] = Object.keys(AssetType).map(
 )
 
 const selectedPlan = ref<IPlan>()
+const selectedPlanStatus = ref<PlanStatus>()
 const selectedAsset = ref<IAsset>()
 const selectedAssets = ref<IAsset[]>([])
+
+const setSelectedPlan = (plan: IPlan) => (selectedPlan.value = plan)
+const setSelectedPlanStatus = (planStatus: PlanStatus) =>
+  (selectedPlanStatus.value = planStatus)
 
 const setSelectedAsset = (asset: IAsset) => {
   if (selectedAsset.value) return (selectedAsset.value = undefined)
@@ -471,19 +479,24 @@ const planFormSchema = yup.object({
 
 // Delete Plan Handler
 const onDeletePlanHandler = (plan: IPlan) => {
-  selectedPlan.value = plan
+  setSelectedPlan(plan)
   setAlertModalInfo({
     status: ResponseStatus.DANGER,
     title: `Do you really wants to delete this plan`,
     message: `Please note that this action cannot be reversed`,
-    onConfirm: () => console.log(plan),
+    onConfirm: async () => {
+      if (!selectedPlan.value) return
+      await planStore.deletePlan(selectedPlan.value._id)
+      setOpenAlertModal(false)
+    },
   })
   setOpenAlertModal(true)
 }
 
 // Plan Status Change Handler
 const onPlanStatusChangeHandler = (plan: IPlan, status: PlanStatus) => {
-  selectedPlan.value = plan
+  setSelectedPlan(plan)
+  setSelectedPlanStatus(status)
   let resStatus = ResponseStatus.INFO,
     title = '',
     message = ''
@@ -511,7 +524,15 @@ const onPlanStatusChangeHandler = (plan: IPlan, status: PlanStatus) => {
     status: resStatus,
     title,
     message,
-    onConfirm: () => console.log(plan),
+    onConfirm: async () => {
+      if (!selectedPlan.value || !selectedPlanStatus.value) return
+      await planStore.updatePlanStatus({
+        planId: selectedPlan.value._id,
+        status: selectedPlanStatus.value,
+      })
+
+      setOpenAlertModal(false)
+    },
   })
   setOpenAlertModal(true)
 }

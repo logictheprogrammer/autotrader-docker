@@ -38,11 +38,10 @@ const TradeSchema = new Schema(
     status: {
       type: String,
       required: true,
-      default: TradeStatus.WAITING,
+      default: TradeStatus.PREPARING,
     },
     move: {
       type: String,
-      required: true,
     },
     stake: {
       type: Number,
@@ -70,10 +69,15 @@ const TradeSchema = new Schema(
     closingPrice: {
       type: Number,
     },
-    startTime: {
-      type: Date,
+    runTime: {
+      type: Number,
+      required: true,
     },
-    stopTime: {
+    timeStamps: {
+      type: [Number],
+      required: true,
+    },
+    startTime: {
       type: Date,
     },
     environment: {

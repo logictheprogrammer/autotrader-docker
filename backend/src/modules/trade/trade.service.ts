@@ -1,4 +1,7 @@
-import { IInvestmentService } from '@/modules/investment/investment.interface'
+import {
+  IInvestment,
+  IInvestmentService,
+} from '@/modules/investment/investment.interface'
 import { Inject, Service } from 'typedi'
 import {
   ITrade,
@@ -36,6 +39,7 @@ import { TUpdateTradeStatus } from './trade.type'
 import AppRepository from '../app/app.repository'
 import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
+import { TUpdateInvestmentStatus } from '../investment/investment.type'
 
 @Service()
 class TradeService implements ITradeService {
@@ -46,7 +50,6 @@ class TradeService implements ITradeService {
   public static maxStakeRate = 0.25
   public static profitBreakpoint = 3
   public static profitProbability = 0.5
-  public static dailTrades = 24
 
   public constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
@@ -84,14 +87,12 @@ class TradeService implements ITradeService {
     user: IUserObject,
     investment: IInvestmentObject,
     pair: IPairObject,
-    move: TradeMove,
     stake: number,
     outcome: number,
     profit: number,
     percentage: number,
     investmentPercentage: number,
-    environment: UserEnvironment,
-    manualMode: boolean = false
+    environment: UserEnvironment
   ): TTransaction<ITradeObject, ITrade> {
     const trade = this.tradeRepository.create({
       investment: investment._id,
@@ -101,14 +102,13 @@ class TradeService implements ITradeService {
       pair: pair._id,
       pairObject: pair,
       market: pair.assetType,
-      move,
       stake,
       outcome,
       profit,
       percentage,
       investmentPercentage,
       environment,
-      manualMode,
+      manualMode: investment.manualMode,
     })
 
     const unSavedTrade = trade.collectUnsaved()
@@ -128,7 +128,7 @@ class TradeService implements ITradeService {
   public async _updateStatusTransaction(
     tradeId: AppObjectId,
     status: TradeStatus,
-    price?: number
+    move?: TradeMove
   ): TTransaction<ITradeObject, ITrade> {
     const trade = await this.find(tradeId)
 
@@ -137,28 +137,37 @@ class TradeService implements ITradeService {
     if (oldStatus === TradeStatus.SETTLED)
       throw new HttpException(400, 'This trade has already been settled')
 
+    let startTime: Date | undefined,
+      runtime: number,
+      oldTimeStamps: number[] = []
     switch (status) {
-      case TradeStatus.START:
-        if (price === undefined) throw new Error('Price is required')
-        trade.status = TradeStatus.RUNNING
-        trade.startTime = new Date()
-        trade.openingPrice = price
+      case TradeStatus.MARKET_CLOSED:
+      case TradeStatus.ON_HOLD:
+        startTime = trade.startTime
+        runtime =
+          new Date().getTime() - (startTime?.getTime() || new Date().getTime())
+
+        oldTimeStamps = trade.timeStamps.slice()
+        if (runtime) trade.timeStamps = [...oldTimeStamps, runtime]
+        trade.startTime = undefined
         break
 
-      case TradeStatus.ACTIVE:
-        trade.status = TradeStatus.RUNNING
-        break
+      case TradeStatus.RUNNING:
+        trade.startTime = new Date()
 
       case TradeStatus.SETTLED:
-        if (price === undefined) throw new Error('Price is required')
-        trade.stopTime = new Date()
-        trade.closingPrice = price
+        startTime = trade.startTime
+        runtime =
+          new Date().getTime() - (startTime?.getTime() || new Date().getTime())
 
-      default:
-        trade.status = status
-        break
+        oldTimeStamps = trade.timeStamps.slice()
+        if (runtime) trade.timeStamps = [...oldTimeStamps, runtime]
+        trade.runTime = trade.timeStamps.reduce((acc, curr) => (acc += curr), 0)
+        trade.startTime = undefined
+        trade.move = move
     }
 
+    trade.status = status
     const newTrade = this.tradeRepository.toClass(trade)
     const unsavedTrade = newTrade.collectUnsaved()
 
@@ -166,9 +175,16 @@ class TradeService implements ITradeService {
       object: unsavedTrade,
       instance: {
         model: newTrade,
-        onFailed: `Set the status of the trade with an id of (${unsavedTrade._id}) to (${oldStatus})`,
+        onFailed: `Set the status of the trade with an id of (${
+          unsavedTrade._id
+        }) to (${oldStatus}) and startTime to (${startTime}) and timeStamps to (${JSON.stringify(
+          oldTimeStamps
+        )}) and move to undefined`,
         callback: async () => {
           unsavedTrade.status = oldStatus
+          unsavedTrade.startTime = startTime
+          unsavedTrade.timeStamps = oldTimeStamps
+          unsavedTrade.move = undefined
           await this.tradeRepository.save(unsavedTrade)
         },
       },
@@ -179,40 +195,13 @@ class TradeService implements ITradeService {
     user: IUserObject,
     investment: IInvestmentObject,
     pair: IPairObject,
-    move: TradeMove,
     stakeRate: number,
     investmentPercentage: number
-  ): Promise<ITransactionInstance<ITrade>> {
+  ): TTransaction<ITradeObject, ITrade> {
     const amount = investment.amount
     const environment = investment.environment
-    // const assets = investment.assets
-    // const minProfit = investment.minProfit / 24
-    // const maxProfit = investment.maxProfit / 24
 
-    // const baseAsset = Helpers.randomPickFromArray<AppObjectId>(assets)
-
-    // const pairs = await this.pairService.getByBase(baseAsset)
-
-    // if (!pairs.length) throw new Error('Pairs of the base asset was not found')
-
-    // const pair = Helpers.randomPickFromArray<IPairObject>(pairs)
-
-    // const move = Helpers.randomPickFromArray<TradeMove>(
-    //   Object.values(TradeMove)
-    // )
-
-    // const stakeRate = Helpers.getRandomValue(TradeService.minStakeRate,TradeService.maxStakeRate)
     const stake = stakeRate * amount
-
-    // const spread = stakeRate * minProfit
-
-    // const investmentPercentage = this.mathService.dynamicRange(
-    //   minProfit,
-    //   maxProfit,
-    //   spread,
-    //   spread * 3,
-    //   0.5
-    // )
 
     const profit = (investmentPercentage / 100) * amount
 
@@ -220,25 +209,77 @@ class TradeService implements ITradeService {
 
     const percentage = (profit * 100) / stake
 
-    return (
-      await this._createTransaction(
-        user,
-        investment,
-        pair,
-        move,
-        stake,
-        outcome,
-        profit,
-        percentage,
-        investmentPercentage,
-        environment
+    return await this._createTransaction(
+      user,
+      investment,
+      pair,
+      stake,
+      outcome,
+      profit,
+      percentage,
+      investmentPercentage,
+      environment
+    )
+  }
+
+  public async createAuto(
+    investmentId: AppObjectId,
+    pairId: AppObjectId
+  ): Promise<void> {
+    const investment = await this.investmentService.get(investmentId)
+    const pair = await this.pairService.get(pairId)
+    const user = await this.userService.get(investment.user)
+
+    if (!pair) throw new HttpException(404, 'The selected pair no longer exist')
+
+    if (pair.assetType !== investment.planObject.assetType)
+      throw new HttpException(
+        400,
+        'The pair is not compatible with this investment plan'
       )
+
+    const minProfit =
+      investment.planObject.minProfit /
+      (investment.planObject.dailyTrades * investment.planObject.duration)
+    const maxProfit =
+      investment.planObject.maxProfit /
+      (investment.planObject.dailyTrades * investment.planObject.duration)
+
+    const stakeRate = Helpers.getRandomValue(
+      TradeService.minStakeRate,
+      TradeService.maxStakeRate
+    )
+
+    const spread = stakeRate * minProfit
+
+    const breakpoint = spread * TradeService.profitBreakpoint
+
+    const investmentPercentage = this.mathService.dynamicRange(
+      minProfit,
+      maxProfit,
+      spread,
+      breakpoint,
+      TradeService.profitProbability
+    )
+
+    const { model: trade } = (
+      await this.create(user, investment, pair, stakeRate, investmentPercentage)
     ).instance
+
+    await trade.save()
+
+    return {
+      status: HttpResponseStatus.SUCCESS,
+      message: 'Trade created successfully',
+      data: { trade: trade.collectRaw() },
+    }
   }
 
   public async createManual(
     investmentId: AppObjectId,
-    pairId: AppObjectId
+    pairId: AppObjectId,
+    stake: number,
+    profit: number
   ): THttpResponse<{ trade: ITrade }> {
     try {
       const investment = await this.investmentService.get(investmentId)
@@ -248,58 +289,28 @@ class TradeService implements ITradeService {
       if (!pair)
         throw new HttpException(404, 'The selected pair no longer exist')
 
-      if (pair.assetType !== investment.assetType)
+      if (pair.assetType !== investment.planObject.assetType)
         throw new HttpException(
           400,
           'The pair is not compatible with this investment plan'
         )
 
-      const amount = investment.amount
       const environment = investment.environment
-      const minProfit = investment.minProfit / TradeService.dailTrades
-      const maxProfit = investment.maxProfit / TradeService.dailTrades
-
-      const move = Helpers.randomPickFromArray<TradeMove>(
-        Object.values(TradeMove)
-      )
-
-      const stakeRate = Helpers.getRandomValue(
-        TradeService.minStakeRate,
-        TradeService.maxStakeRate
-      )
-      const stake = stakeRate * amount
-
-      const spread = stakeRate * minProfit
-
-      const breakpoint = spread * TradeService.profitBreakpoint
-
-      const investmentPercentage = this.mathService.dynamicRange(
-        minProfit,
-        maxProfit,
-        spread,
-        breakpoint,
-        TradeService.profitProbability
-      )
-
-      const profit = (investmentPercentage / 100) * amount
-
       const outcome = stake + profit
-
       const percentage = (profit * 100) / stake
+      const investmentPercentage = (profit * 100) / investment.amount
 
       const { model: trade } = (
         await this._createTransaction(
           user,
           investment,
           pair,
-          move,
           stake,
           outcome,
           profit,
           percentage,
           investmentPercentage,
-          environment,
-          true
+          environment
         )
       ).instance
 
@@ -371,117 +382,128 @@ class TradeService implements ITradeService {
     }
   }
 
+  public async updateInvestmentStatus(
+    investmentId: AppObjectId,
+    investmentStatus: InvestmentStatus
+  ): Promise<{
+    model: AppRepository<IInvestment>
+    instances: TUpdateInvestmentStatus
+  }> {
+    const { instances, model } = await this.investmentService.updateStatus(
+      investmentId,
+      investmentStatus
+    )
+
+    // When the status stops the investment
+    if (
+      investmentStatus === InvestmentStatus.SUSPENDED ||
+      investmentStatus === InvestmentStatus.INSUFFICIENT_GAS ||
+      investmentStatus === InvestmentStatus.ON_MAINTAINACE ||
+      investmentStatus === InvestmentStatus.REFILLING
+    ) {
+      const tradeStillRunning = await this.tradeRepository
+        .findOne({ investment: investmentId, status: TradeStatus.RUNNING })
+        .collect()
+
+      // stop the trade if it's still running..
+      if (tradeStillRunning) {
+        const { instance: tradeInstance } = await this._updateStatusTransaction(
+          tradeStillRunning._id,
+          TradeStatus.ON_HOLD
+        )
+
+        instances.push(tradeInstance)
+      }
+    } else if (investmentStatus === InvestmentStatus.RUNNING) {
+      const tradeOnHold = await this.tradeRepository
+        .findOne({ investment: investmentId, status: TradeStatus.ON_HOLD })
+        .collect()
+
+      // prepare trade if trade is on hold
+      if (tradeOnHold) {
+        const { instance: tradeInstance } = await this._updateStatusTransaction(
+          tradeOnHold._id,
+          TradeStatus.PREPARING
+        )
+
+        instances.push(tradeInstance)
+      }
+    }
+
+    return { model, instances }
+  }
+
+  public async forceUpdateInvestmentStatus(
+    investmentId: AppObjectId,
+    status: InvestmentStatus
+  ): THttpResponse<{ investment: IInvestment }> {
+    try {
+      const result = await this.updateInvestmentStatus(investmentId, status)
+
+      await this.transactionManagerService.execute(result.instances)
+
+      return {
+        status: HttpResponseStatus.SUCCESS,
+        message: 'Status updated successfully',
+        data: { investment: result.model.collectRaw() },
+      }
+    } catch (err: any) {
+      throw new AppException(
+        err,
+        'Failed to update this investment  status, please try again'
+      )
+    }
+  }
+
   public async updateStatus(
     tradeId: AppObjectId,
     status: TradeStatus,
-    price?: number
+    move?: TradeMove
   ): Promise<{ model: AppRepository<ITrade>; instances: TUpdateTradeStatus }> {
     const transactionInstances: TUpdateTradeStatus = []
 
     const { object: trade, instance: tradeInstance } =
-      await this._updateStatusTransaction(tradeId, status, price)
+      await this._updateStatusTransaction(tradeId, status, move)
 
     transactionInstances.push(tradeInstance)
 
     const user = await this.userService.get(trade.user)
 
-    switch (status) {
-      case TradeStatus.START:
-        const transactionInstance1 = await this.transactionService.create(
-          user,
-          TradeStatus.ACTIVE,
-          TransactionCategory.TRADE,
-          trade,
-          trade.stake,
-          trade.environment,
-          trade.stake
-        )
-        transactionInstances.push(transactionInstance1)
-        break
+    const { instance: investmentInstance } =
+      await this.investmentService.updateTradeDetailsTransaction(
+        trade.investment,
+        trade
+      )
+    transactionInstances.push(investmentInstance)
 
-      case TradeStatus.MARKET_OPENED:
-        ;(
-          await this.investmentService.updateStatus(
-            trade.investment,
-            InvestmentStatus.MARKET_OPENED,
-            true
-          )
-        ).instances.forEach((instance) => {
-          transactionInstances.push(instance)
-        })
-        break
-
-      case TradeStatus.RUNNING:
-        ;(
-          await this.investmentService.updateStatus(
-            trade.investment,
-            InvestmentStatus.RUNNING,
-            false
-          )
-        ).instances.forEach((instance) => {
-          transactionInstances.push(instance)
-        })
-
-        break
-
-      case TradeStatus.ON_HOLD:
-        ;(
-          await this.investmentService.updateStatus(
-            trade.investment,
-            InvestmentStatus.TRADE_ON_HOLD,
-            false
-          )
-        ).instances.forEach((instance) => {
-          transactionInstances.push(instance)
-        })
-        break
-
-      case TradeStatus.MARKET_CLOSED:
-        ;(
-          await this.investmentService.updateStatus(
-            trade.investment,
-            InvestmentStatus.MARKET_CLOSED,
-            true
-          )
-        ).instances.forEach((instance) => {
-          transactionInstances.push(instance)
-        })
-
-        break
-
-      case TradeStatus.SETTLED:
-        const { instance: investmentInstance } =
-          await this.investmentService.fund(trade.investment, trade.outcome)
-        transactionInstances.push(investmentInstance)
-
-        const transactionInstance = await this.transactionService.updateAmount(
-          trade._id,
-          status,
-          trade.outcome
-        )
-        transactionInstances.push(transactionInstance)
-        break
+    if (status === TradeStatus.SETTLED) {
+      const transactionInstance = await this.transactionService.updateAmount(
+        trade._id,
+        status,
+        trade.outcome
+      )
+      transactionInstances.push(transactionInstance)
     }
 
     let notificationMessage
     switch (status) {
       case TradeStatus.RUNNING:
-        notificationMessage = 'is now ' + status
+        notificationMessage = 'is now running'
         break
-      case TradeStatus.START:
-        notificationMessage = 'just kick started'
+      case TradeStatus.MARKET_CLOSED:
+        notificationMessage = 'market has closed'
         break
       case TradeStatus.ON_HOLD:
-        notificationMessage = 'is currently ' + status
+        notificationMessage = 'is currently on hold'
         break
       case TradeStatus.SETTLED:
-        notificationMessage = 'has been ' + status
+        notificationMessage = 'has been settled'
         break
     }
 
     if (notificationMessage) {
       const notificationInstance = await this.notificationService.create(
-        `Your investment trade ${notificationMessage}`,
+        `Your investment current trade ${notificationMessage}`,
         NotificationCategory.TRADE,
         trade,
         NotificationForWho.USER,
@@ -494,46 +516,6 @@ class TradeService implements ITradeService {
     }
 
     return { model: tradeInstance.model, instances: transactionInstances }
-  }
-
-  public async forceUpdateStatus(
-    tradeId: AppObjectId,
-    status: TradeStatus
-  ): THttpResponse<{ trade: ITrade }> {
-    try {
-      const tradeExist = await this.find(tradeId)
-
-      if (status === TradeStatus.WAITING)
-        throw new HttpException(400, 'Status not allowed')
-
-      if (!tradeExist.manualMode) {
-        switch (status) {
-          case TradeStatus.PREPARING:
-          case TradeStatus.START:
-          case TradeStatus.ACTIVE:
-          case TradeStatus.MARKET_CLOSED:
-          case TradeStatus.MARKET_OPENED:
-          case TradeStatus.SETTLED:
-            throw new HttpException(400, 'Status not allowed')
-        }
-      }
-
-      const { model: trade, instances: transactionInstances } =
-        await this.updateStatus(tradeId, status)
-
-      await this.transactionManagerService.execute(transactionInstances)
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Status updated successfully',
-        data: { trade: trade.collectUnsaved() },
-      }
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to update this trade  status, please try again'
-      )
-    }
   }
 
   public async updateAmount(

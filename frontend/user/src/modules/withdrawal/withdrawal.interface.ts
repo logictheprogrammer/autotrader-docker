@@ -5,8 +5,8 @@ import type { UserAccount } from '../user/user.enum'
 export interface IWithdrawal {
   __v: number
   _id: string
-  updatedAt: Date
-  createdAt: Date
+  updatedAt: string
+  createdAt: string
   withdrawalMethodObject: IWithdrawalMethod
   user: string
   account: UserAccount

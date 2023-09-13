@@ -8,6 +8,7 @@ import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 import AppObjectId from '../app/app.objectId'
+import { ITradeService } from '../trade/trade.interface'
 
 @Service()
 class InvestmentController implements IAppController {
@@ -16,7 +17,8 @@ class InvestmentController implements IAppController {
 
   constructor(
     @Inject(ServiceToken.INVESTMENT_SERVICE)
-    private investmentService: IInvestmentService
+    private investmentService: IInvestmentService,
+    @Inject(ServiceToken.TRADE_SERVICE) private tradeService: ITradeService
   ) {
     this.intialiseRoutes()
   }
@@ -131,7 +133,7 @@ class InvestmentController implements IAppController {
   ): Promise<Response | void> => {
     try {
       const { investmentId, status } = req.body
-      const response = await this.investmentService.forceUpdateStatus(
+      const response = await this.tradeService.forceUpdateInvestmentStatus(
         investmentId,
         status
       )

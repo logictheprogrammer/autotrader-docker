@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeLayout from '@/views/layouts/HomeLayout.vue'
 import HomePage from '@/views/pages/HomePage.vue'
+const PurchasedPackagesPage = () =>
+  import('@/views/pages/PurchasedPackagesPage.vue')
 const PackagePlansPage = () => import('@/views/pages/PackagePlansPage.vue')
 const ActiveTradePage = () => import('@/views/pages/ActiveTradePage.vue')
 const ReferralPage = () => import('@/views/pages/ReferralPage.vue')
@@ -29,19 +31,28 @@ const routes = [
         },
       },
       {
-        path: '/active-trade',
-        name: 'active-trade',
+        path: '/purchased-package/:packageId',
+        name: 'purchasedPackage',
         component: ActiveTradePage,
         meta: {
-          page: 'Active Trade',
+          page: 'Trades',
+          breadcrumb: [{ name: 'My Packages', to: 'purchasedPackages' }],
         },
       },
       {
-        path: '/packagePlans',
-        name: 'packagePlans',
+        path: '/purchased-packages',
+        name: 'purchasedPackages',
+        component: PurchasedPackagesPage,
+        meta: {
+          page: 'My Packages',
+        },
+      },
+      {
+        path: '/packages',
+        name: 'packages',
         component: PackagePlansPage,
         meta: {
-          page: 'Package Plans',
+          page: 'Packages',
         },
       },
       {
