@@ -8,8 +8,7 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserAccount } from '@/modules/user/user.enum'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
+import { Document, ObjectId } from 'mongoose'
 
 export interface IWithdrawalObject extends IAppObject {
   withdrawalMethod: IWithdrawalMethod['_id']
@@ -23,7 +22,7 @@ export interface IWithdrawalObject extends IAppObject {
   fee: number
 }
 
-export interface IWithdrawal extends AppDocument {
+export interface IWithdrawal extends Document {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -48,19 +47,19 @@ export interface IWithdrawalService {
   ): TTransaction<IWithdrawalObject, IWithdrawal>
 
   _updateStatusTransaction(
-    withdrawalId: AppObjectId,
+    withdrawalId: ObjectId,
     status: WithdrawalStatus
   ): TTransaction<IWithdrawalObject, IWithdrawal>
 
   get(
-    withdrawalId: AppObjectId,
+    withdrawalId: ObjectId,
     isAdmin: boolean,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<IWithdrawalObject>
 
   create(
-    withdrawalMethodId: AppObjectId,
-    userId: AppObjectId,
+    withdrawalMethodId: ObjectId,
+    userId: ObjectId,
     account: UserAccount,
     address: string,
     amount: number
@@ -68,19 +67,19 @@ export interface IWithdrawalService {
 
   fetch(
     isAdmin: boolean,
-    withdrawalId: AppObjectId,
-    userId?: AppObjectId
+    withdrawalId: ObjectId,
+    userId?: ObjectId
   ): THttpResponse<{ withdrawal: IWithdrawal }>
 
   fetchAll(
     all: boolean,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ withdrawals: IWithdrawal[] }>
 
-  delete(withdrawalId: AppObjectId): THttpResponse<{ withdrawal: IWithdrawal }>
+  delete(withdrawalId: ObjectId): THttpResponse<{ withdrawal: IWithdrawal }>
 
   updateStatus(
-    withdrawalId: AppObjectId,
+    withdrawalId: ObjectId,
     status: WithdrawalStatus
   ): THttpResponse<{ withdrawal: IWithdrawal }>
 }

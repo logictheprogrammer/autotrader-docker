@@ -13,10 +13,10 @@ import ServiceToken from '@/utils/enums/serviceToken'
 import { ISendMailService } from '@/modules/sendMail/sendMail.interface'
 import AppException from '@/modules/app/app.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import AppDocument from '../app/app.document'
+import { Document } from 'mongoose'
 
 @Service()
-class TransactionManagerService<T extends AppDocument>
+class TransactionManagerService<T extends Document>
   implements ITransactionManagerService<T>
 {
   constructor(

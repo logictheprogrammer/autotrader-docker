@@ -7,7 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class ActivityController implements IAppController {
@@ -115,7 +115,7 @@ class ActivityController implements IAppController {
             ActivityForWho.USER
           )
         } else if (role >= UserRole.ADMIN && !all) {
-          const userId = req.params.userId as unknown as AppObjectId
+          const userId = req.params.userId as unknown as ObjectId
           response = await this.activityService.fetchAll(
             role,
             ActivityForWho.USER,
@@ -159,7 +159,7 @@ class ActivityController implements IAppController {
   ): Promise<Response | void> => {
     try {
       const userId = req.user._id
-      const activityId = req.params.activityId as unknown as AppObjectId
+      const activityId = req.params.activityId as unknown as ObjectId
       const response = await this.activityService.hide(
         userId,
         activityId,
@@ -196,7 +196,7 @@ class ActivityController implements IAppController {
       next: NextFunction
     ): Promise<Response | void> => {
       try {
-        const activityId = req.params.activityId as unknown as AppObjectId
+        const activityId = req.params.activityId as unknown as ObjectId
         let response
         if (role >= UserRole.ADMIN) {
           response = await this.activityService.delete(

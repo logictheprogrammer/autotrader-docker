@@ -7,8 +7,7 @@ import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
+import { Document, ObjectId } from 'mongoose'
 
 export interface IDepositObject extends IAppObject {
   depositMethod: IDepositMethod['_id']
@@ -20,10 +19,7 @@ export interface IDepositObject extends IAppObject {
   fee: number
 }
 
-export interface IDeposit extends AppDocument {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
+export interface IDeposit extends Document {
   depositMethod: IDepositMethod['_id']
   depositMethodObject: IDepositMethodObject
   user: IUser['_id']
@@ -41,31 +37,31 @@ export interface IDepositService {
   ): TTransaction<IDepositObject, IDeposit>
 
   _updateStatusTransaction(
-    depositId: AppObjectId,
+    depositId: ObjectId,
     status: DepositStatus
   ): TTransaction<IDepositObject, IDeposit>
 
   create(
-    depositMethodId: AppObjectId,
-    userId: AppObjectId,
+    depositMethodId: ObjectId,
+    userId: ObjectId,
     amount: number
   ): THttpResponse<{ deposit: IDeposit }>
 
   fetch(
     isAdmin: boolean,
-    depositId: AppObjectId,
-    userId?: AppObjectId
+    depositId: ObjectId,
+    userId?: ObjectId
   ): THttpResponse<{ deposit: IDeposit }>
 
   fetchAll(
     all: boolean,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ deposits: IDeposit[] }>
 
-  delete(depositId: AppObjectId): THttpResponse<{ deposit: IDeposit }>
+  delete(depositId: ObjectId): THttpResponse<{ deposit: IDeposit }>
 
   updateStatus(
-    depositId: AppObjectId,
+    depositId: ObjectId,
     status: DepositStatus
   ): THttpResponse<{ deposit: IDeposit }>
 }

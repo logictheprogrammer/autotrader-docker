@@ -32,14 +32,13 @@ import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import AppRepository from '@/modules/app/app.repository'
-import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class DepositService implements IDepositService {
-  private depositRepository = new AppRepository<IDeposit>(depositModel)
-  private userRepository = new AppRepository<IUser>(userModel)
+  private depositModel = depositModel
+  private userModel = userModel
 
   public constructor(
     @Inject(ServiceToken.DEPOSIT_METHOD_SERVICE)
@@ -56,13 +55,20 @@ class DepositService implements IDepositService {
   ) {}
 
   private async find(
-    depositId: AppObjectId,
+    depositId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<IDeposit> {
-    const deposit = await this.depositRepository
-      .findById(depositId, fromAllAccounts, userId)
-      .collect()
+    let deposit
+
+    if (fromAllAccounts) {
+      deposit = await this.depositModel.findById(depositId)
+    } else {
+      deposit = await this.depositModel.findById({
+        _id: depositId,
+        user: userId,
+      })
+    }
 
     if (!deposit) throw new HttpException(404, 'Deposit transaction not found')
 
@@ -74,7 +80,7 @@ class DepositService implements IDepositService {
     depositMethod: IDepositMethodObject,
     amount: number
   ): TTransaction<IDepositObject, IDeposit> {
-    const deposit = this.depositRepository.create({
+    const deposit = new this.depositModel({
       depositMethod: depositMethod._id,
       depositMethodObject: depositMethod,
       user: user._id,
@@ -84,13 +90,11 @@ class DepositService implements IDepositService {
       status: DepositStatus.PENDING,
     })
 
-    const unSavedDeposit = deposit.collectUnsaved()
-
     return {
-      object: unSavedDeposit,
+      object: deposit.toObject({ getters: true }),
       instance: {
         model: deposit,
-        onFailed: `Delete the deposit with an id of (${unSavedDeposit._id})`,
+        onFailed: `Delete the deposit with an id of (${deposit._id})`,
         async callback() {
           await deposit.deleteOne()
         },
@@ -99,7 +103,7 @@ class DepositService implements IDepositService {
   }
 
   public async _updateStatusTransaction(
-    depositId: AppObjectId,
+    depositId: ObjectId,
     status: DepositStatus
   ): TTransaction<IDepositObject, IDeposit> {
     const deposit = await this.find(depositId)
@@ -111,26 +115,22 @@ class DepositService implements IDepositService {
 
     deposit.status = status
 
-    const newDeposit = this.depositRepository.toClass(deposit)
-
-    const unsavedDeposit = newDeposit.collectUnsaved()
-
     return {
-      object: unsavedDeposit,
+      object: deposit.toObject({ getters: true }),
       instance: {
-        model: newDeposit,
-        onFailed: `Set the status of the deposit with an id of (${unsavedDeposit._id}) to (${oldStatus})`,
+        model: deposit,
+        onFailed: `Set the status of the deposit with an id of (${deposit._id}) to (${oldStatus})`,
         callback: async () => {
-          unsavedDeposit.status = oldStatus
-          await this.depositRepository.save(unsavedDeposit)
+          deposit.status = oldStatus
+          await deposit.save()
         },
       },
     }
   }
 
   public create = async (
-    depositMethodId: AppObjectId,
-    userId: AppObjectId,
+    depositMethodId: ObjectId,
+    userId: ObjectId,
     amount: number
   ): THttpResponse<{ deposit: IDeposit }> => {
     try {
@@ -193,7 +193,7 @@ class DepositService implements IDepositService {
   }
 
   public delete = async (
-    depositId: AppObjectId
+    depositId: ObjectId
   ): THttpResponse<{ deposit: IDeposit }> => {
     try {
       const deposit = await this.find(depositId)
@@ -216,7 +216,7 @@ class DepositService implements IDepositService {
   }
 
   public updateStatus = async (
-    depositId: AppObjectId,
+    depositId: ObjectId,
     status: DepositStatus
   ): THttpResponse<{ deposit: IDeposit }> => {
     try {
@@ -276,13 +276,9 @@ class DepositService implements IDepositService {
 
       await this.transactionManagerService.execute(transactionInstances)
 
-      const rawDepositIntance = depositInstance.model.collectRaw()
-
-      await this.depositRepository.populate(
-        rawDepositIntance,
+      const rawDepositIntance = await depositInstance.model.populate(
         'user',
-        'username isDeleted',
-        this.userRepository
+        'username isDeleted'
       )
 
       return {
@@ -300,8 +296,8 @@ class DepositService implements IDepositService {
 
   public fetch = async (
     fromAllAccounts: boolean,
-    depositId: AppObjectId,
-    userId?: AppObjectId
+    depositId: ObjectId,
+    userId?: ObjectId
   ): THttpResponse<{ deposit: IDeposit }> => {
     try {
       const deposit = await this.find(depositId, fromAllAccounts, userId)
@@ -318,23 +314,22 @@ class DepositService implements IDepositService {
 
   public fetchAll = async (
     all: boolean,
-    userId: AppObjectId
+    userId: ObjectId
   ): THttpResponse<{ deposits: IDeposit[] }> => {
     try {
-      const deposits = await this.depositRepository
-        .find({}, all, { user: userId })
-        .sort({ createdAt: -1 })
-        .select('-userObject -depositMethod')
-        .collectAll()
+      let deposits
 
       if (all) {
-        await this.depositRepository.populateAll(
-          deposits,
-          'user',
-          'userObject',
-          'username isDeleted',
-          this.userRepository
-        )
+        deposits = await this.depositModel
+          .find()
+          .sort({ createdAt: -1 })
+          .select('-userObject -depositMethod')
+          .populate('user', 'username isDeleted')
+      } else {
+        deposits = await this.depositModel
+          .find({ user: userId })
+          .sort({ createdAt: -1 })
+          .select('-userObject -depositMethod')
       }
 
       return {

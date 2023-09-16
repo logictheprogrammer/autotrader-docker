@@ -7,7 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class DepositMethodController implements IAppController {
@@ -162,8 +162,7 @@ class DepositMethodController implements IAppController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const depositMethodId = req.params
-        .depositMethodId as unknown as AppObjectId
+      const depositMethodId = req.params.depositMethodId as unknown as ObjectId
       const responce = await this.depositMethodService.delete(depositMethodId)
       res.status(200).json(responce)
     } catch (err: any) {

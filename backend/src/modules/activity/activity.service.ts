@@ -15,14 +15,13 @@ import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
-import AppRepository from '@/modules/app/app.repository'
-import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class ActivityService implements IActivityService {
-  private activityRepository = new AppRepository<IActivity>(activityModel)
-  private userRepository = new AppRepository<IUser>(userModel)
+  private activityModel = activityModel
+  private userModel = userModel
 
   public async set(
     user: IUserObject,
@@ -31,15 +30,13 @@ class ActivityService implements IActivityService {
     message: string
   ): Promise<IActivity> {
     try {
-      const activity = await this.activityRepository
-        .create({
-          user: user._id,
-          userObject: user,
-          category,
-          message,
-          forWho,
-        })
-        .save()
+      const activity = await this.activityModel.create({
+        user: user._id,
+        userObject: user,
+        category,
+        message,
+        forWho,
+      })
 
       return activity
     } catch (err: any) {
@@ -53,42 +50,34 @@ class ActivityService implements IActivityService {
   public fetchAll = async (
     accessBy: UserRole,
     forWho: ActivityForWho,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ activities: IActivity[] }> => {
     try {
       let activities
 
       if (accessBy >= UserRole.ADMIN && userId) {
-        activities = await this.activityRepository
+        activities = await this.activityModel
           .find({
             user: userId,
             forWho,
           })
           .select('-userObject')
-          .collectAll()
+          .populate('user', 'username isDeleted')
       } else if (accessBy >= UserRole.ADMIN && !userId) {
-        activities = await this.activityRepository
+        activities = await this.activityModel
           .find({ forWho })
           .select('-userObject')
-          .collectAll()
+          .populate('user', 'username isDeleted')
       } else {
-        activities = await this.activityRepository
+        activities = await this.activityModel
           .find({
             user: userId,
             forWho,
             status: ActivityStatus.VISIBLE,
           })
           .select('-userObject')
-          .collectAll()
+          .populate('user', 'username isDeleted')
       }
-
-      await this.activityRepository.populateAll(
-        activities,
-        'user',
-        'userObject',
-        'username isDeleted',
-        this.userRepository
-      )
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -104,19 +93,17 @@ class ActivityService implements IActivityService {
   }
 
   public hide = async (
-    userId: AppObjectId,
-    activityId: AppObjectId,
+    userId: ObjectId,
+    activityId: ObjectId,
     forWho: ActivityForWho
   ): THttpResponse<{ activity: IActivity }> => {
     try {
-      const activity = await this.activityRepository
-        .findOne({
-          _id: activityId,
-          user: userId,
-          status: ActivityStatus.VISIBLE,
-          forWho,
-        })
-        .collect()
+      const activity = await this.activityModel.findOne({
+        _id: activityId,
+        user: userId,
+        status: ActivityStatus.VISIBLE,
+        forWho,
+      })
 
       if (!activity) throw new HttpException(404, 'Activity not found')
 
@@ -138,17 +125,15 @@ class ActivityService implements IActivityService {
   }
 
   public hideAll = async (
-    userId: AppObjectId,
+    userId: ObjectId,
     forWho: ActivityForWho
   ): THttpResponse => {
     try {
-      const activities = await this.activityRepository
-        .find({
-          user: userId,
-          status: ActivityStatus.VISIBLE,
-          forWho,
-        })
-        .collectAll()
+      const activities = await this.activityModel.find({
+        user: userId,
+        status: ActivityStatus.VISIBLE,
+        forWho,
+      })
 
       if (!activities.length)
         throw new HttpException(404, 'No Activity log found')
@@ -171,33 +156,29 @@ class ActivityService implements IActivityService {
   }
 
   public delete = async (
-    activityId: AppObjectId,
+    activityId: ObjectId,
     forWho: ActivityForWho,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ activity: IActivity }> => {
     try {
       let activity
 
       if (userId) {
-        activity = await this.activityRepository
-          .findOne({
-            _id: activityId,
-            forWho,
-            user: userId,
-          })
-          .collect()
+        activity = await this.activityModel.findOne({
+          _id: activityId,
+          forWho,
+          user: userId,
+        })
       } else {
-        activity = await this.activityRepository
-          .findOne({
-            _id: activityId,
-            forWho,
-          })
-          .collect()
+        activity = await this.activityModel.findOne({
+          _id: activityId,
+          forWho,
+        })
       }
 
       if (!activity) throw new HttpException(404, 'Activity not found')
 
-      await this.activityRepository.deleteOne({ _id: activity._id })
+      await this.activityModel.deleteOne({ _id: activity._id })
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -215,23 +196,21 @@ class ActivityService implements IActivityService {
   public deleteAll = async (
     fromAllAccounts: boolean,
     forWho: ActivityForWho,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse => {
     try {
       let activities
 
       if (fromAllAccounts) {
-        activities = await this.activityRepository.find({ forWho }).collectAll()
+        activities = await this.activityModel.find({ forWho })
       } else {
-        activities = await this.activityRepository
-          .find({ forWho, user: userId })
-          .collectAll()
+        activities = await this.activityModel.find({ forWho, user: userId })
       }
 
       if (!activities.length) throw new HttpException(404, 'No Activity found')
 
       for (const activity of activities) {
-        await this.activityRepository.deleteOne({ _id: activity._id })
+        await this.activityModel.deleteOne({ _id: activity._id })
       }
 
       return {

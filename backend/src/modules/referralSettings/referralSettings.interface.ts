@@ -1,7 +1,7 @@
 import { THttpResponse } from '@/modules/http/http.type'
-import AppDocument from '../app/app.document'
+import { Document } from 'mongoose'
 
-export interface IReferralSettings extends AppDocument {
+export interface IReferralSettings extends Document {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -29,7 +29,7 @@ export interface IReferralSettingsService {
     completedPackageEarnings: number
   ): THttpResponse<{ referralSettings: IReferralSettings }>
 
-  get(): Promise<IReferralSettings | undefined>
+  get(): Promise<IReferralSettings | null>
 
   fetch(): THttpResponse<{ referralSettings: IReferralSettings }>
 }

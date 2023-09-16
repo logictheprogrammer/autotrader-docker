@@ -3,10 +3,9 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { UserRole } from '@/modules/user/user.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
 import { IInvestment } from '../investment/investment.interface'
-import { IPair } from '../pair/pair.interface'
+import { Document, ObjectId } from 'mongoose'
+import { IAsset } from '../asset/asset.interface'
 
 export interface IPlanObject extends IAppObject {
   icon: string
@@ -21,17 +20,14 @@ export interface IPlanObject extends IAppObject {
   gas: number
   description: string
   assetType: AssetType
-  pairs: IPair[]
+  assets: IAsset['_id'][]
   status: PlanStatus
   manualMode: boolean
   investors: IInvestment['_id'][]
   dummyInvestors: number
 }
 
-export interface IPlan extends AppDocument {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
+export interface IPlan extends Document {
   icon: string
   name: string
   engine: string
@@ -44,7 +40,7 @@ export interface IPlan extends AppDocument {
   gas: number
   description: string
   assetType: AssetType
-  pairs: IPair[]
+  assets: IAsset['_id'][]
   status: PlanStatus
   manualMode: boolean
   investors: IInvestment['_id'][]
@@ -65,11 +61,11 @@ export interface IPlanService {
     gas: number,
     description: string,
     assetType: AssetType,
-    assets: AppObjectId[]
+    assets: ObjectId[]
   ): THttpResponse<{ plan: IPlan }>
 
   update(
-    planId: AppObjectId,
+    planId: ObjectId,
     icon: string,
     name: string,
     engine: string,
@@ -82,21 +78,21 @@ export interface IPlanService {
     gas: number,
     description: string,
     assetType: AssetType,
-    assets: AppObjectId[]
+    assets: ObjectId[]
   ): THttpResponse<{ plan: IPlan }>
 
-  autoTrade(): Promise<void>
+  // autoTrade(): Promise<void>
 
-  manualTrade(): Promise<void>
+  // manualTrade(): Promise<void>
 
   updateStatus(
-    planId: AppObjectId,
+    planId: ObjectId,
     status: PlanStatus
   ): THttpResponse<{ plan: IPlan }>
 
-  get(planId: AppObjectId): Promise<IPlanObject | null>
+  get(planId: ObjectId): Promise<IPlanObject | null>
 
-  delete(planId: AppObjectId): THttpResponse<{ plan: IPlan }>
+  delete(planId: ObjectId): THttpResponse<{ plan: IPlan }>
 
   fetchAll(role: UserRole): THttpResponse<{ plans: IPlan[] }>
 }

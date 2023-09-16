@@ -2,8 +2,7 @@ import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { AssetType } from '@/modules/asset/asset.enum'
 import { IAsset, IAssetObject } from '@/modules/asset/asset.interface'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
+import { Document, ObjectId } from 'mongoose'
 
 export interface IPairObject extends IAppObject {
   assetType: AssetType
@@ -13,7 +12,7 @@ export interface IPairObject extends IAppObject {
   quoteAssetObject: IAssetObject
 }
 
-export interface IPair extends AppDocument {
+export interface IPair extends Document {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -27,19 +26,19 @@ export interface IPair extends AppDocument {
 export interface IPairService {
   create(
     assetType: AssetType,
-    baseAssetId: AppObjectId,
-    quoteAssetId: AppObjectId
+    baseAssetId: ObjectId,
+    quoteAssetId: ObjectId
   ): THttpResponse<{ pair: IPair }>
 
-  get(pairId: AppObjectId): Promise<IPairObject | null>
+  get(pairId: ObjectId): Promise<IPairObject | null>
 
-  getByBase(baseId: AppObjectId): Promise<IPairObject[]>
+  getByBase(baseId: ObjectId): Promise<IPairObject[]>
 
   update(
-    pairId: AppObjectId,
+    pairId: ObjectId,
     assetType: AssetType,
-    baseAssetId: AppObjectId,
-    quoteAssetId: AppObjectId
+    baseAssetId: ObjectId,
+    quoteAssetId: ObjectId
   ): THttpResponse<{ pair: IPair }>
 
   fetchAll(): THttpResponse<{ pairs: IPair[] }>

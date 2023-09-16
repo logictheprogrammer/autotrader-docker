@@ -26,16 +26,14 @@ import { MailOptionName } from '@/modules/mailOption/mailOption.enum'
 import { INotification } from '@/modules/notification/notification.interface'
 import notificationModel from '@/modules/notification/notification.model'
 import { SiteConstants } from '@/modules/config/config.constants'
-import AppRepository from '@/modules/app/app.repository'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId, isValidObjectId } from 'mongoose'
+import { ErrorCode } from '@/utils/enums/errorCodes.enum'
 
 @Service()
 class UserService implements IUserService {
-  private userRepository = new AppRepository<IUser>(userModel)
-  private notificationRepository = new AppRepository<INotification>(
-    notificationModel
-  )
-  private activityRepository = new AppRepository<IActivity>(activityModel)
+  private userModel = userModel
+  private notificationModel = notificationModel
+  private activityModel = activityModel
 
   public constructor(
     @Inject(ServiceToken.ACTIVITY_SERVICE)
@@ -44,21 +42,17 @@ class UserService implements IUserService {
   ) {}
 
   private async find(
-    userIdOrUsername: AppObjectId | string,
+    userIdOrUsername: ObjectId | string,
     errorMessage?: string
   ): Promise<IUser> {
     let user
 
-    user = await this.userRepository
+    user = await this.userModel
       .findOne({ username: userIdOrUsername })
-      ?.select('-password')
-      .collect()
+      .select('-password')
 
-    if (!user)
-      user = await this.userRepository
-        .findById(userIdOrUsername)
-        ?.select('-password')
-        .collect()
+    if (!user && isValidObjectId(userIdOrUsername))
+      user = await this.userModel.findById(userIdOrUsername).select('-password')
 
     if (!user) throw new HttpException(404, errorMessage || 'User not found')
     return user
@@ -89,7 +83,7 @@ class UserService implements IUserService {
   }
 
   public async _fundTransaction(
-    userIdOrUsername: AppObjectId | string,
+    userIdOrUsername: ObjectId | string,
     account: UserAccount,
     amount: number,
     notFoundErrorMessage?: string
@@ -106,25 +100,21 @@ class UserService implements IUserService {
       account
     )} of the user with an id of (${fundedUser._id})`
 
-    const newFundedUser = this.userRepository.toClass(fundedUser)
-
-    const unsavedFundedUser = newFundedUser.collectUnsaved()
-
     return {
-      object: unsavedFundedUser,
+      object: user.toObject({ getters: true }),
       instance: {
-        model: newFundedUser,
+        model: user,
         onFailed,
         callback: async () => {
           const user = await this.setFund(fundedUser, account, -amount)
-          await this.userRepository.save(user)
+          await user.save()
         },
       },
     }
   }
 
   public fund = async (
-    userIdOrUsername: AppObjectId | string,
+    userIdOrUsername: ObjectId | string,
     account: UserAccount,
     amount: number,
     notFoundErrorMessage?: string
@@ -138,7 +128,7 @@ class UserService implements IUserService {
   }
 
   public forceFund = async (
-    userId: AppObjectId,
+    userId: ObjectId,
     account: UserAccount,
     amount: number
   ): THttpResponse<{ user: IUser }> => {
@@ -166,10 +156,7 @@ class UserService implements IUserService {
 
   public fetchAll = async (): THttpResponse<{ users: IUser[] }> => {
     try {
-      const users = await this.userRepository
-        .find()
-        .select('-password')
-        .collectAll()
+      const users = await this.userModel.find().select('-password')
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -184,15 +171,13 @@ class UserService implements IUserService {
   }
 
   public get = async (
-    userIdOrUsername: AppObjectId | string,
+    userIdOrUsername: ObjectId | string,
     errorMessage?: string
   ): Promise<IUserObject> => {
     return (await this.find(userIdOrUsername, errorMessage)).toObject()
   }
 
-  public fetch = async (
-    userId: AppObjectId
-  ): THttpResponse<{ user: IUser }> => {
+  public fetch = async (userId: ObjectId): THttpResponse<{ user: IUser }> => {
     try {
       const user = await this.find(userId)
 
@@ -207,19 +192,22 @@ class UserService implements IUserService {
   }
 
   public updateProfile = async (
-    userId: AppObjectId,
+    userId: ObjectId,
     name: string,
     username: string,
     byAdmin: boolean
   ): THttpResponse<{ user: IUser }> => {
     try {
-      await this.userRepository.ifExist(
-        {
-          username,
-          _id: { $ne: userId },
-        },
-        'Username already exist'
-      )
+      const usernameExist = await this.userModel.findOne({
+        username,
+        _id: { $ne: userId },
+      })
+
+      if (usernameExist)
+        throw new HttpException(
+          ErrorCode.REQUEST_CONFLICT,
+          'Username already exist'
+        )
 
       const user = await this.find(userId)
 
@@ -251,17 +239,20 @@ class UserService implements IUserService {
   }
 
   public updateEmail = async (
-    userId: AppObjectId,
+    userId: ObjectId,
     email: string
   ): THttpResponse<{ user: IUser }> => {
     try {
-      await this.userRepository.ifExist(
-        {
-          email,
-          _id: { $ne: userId },
-        },
-        'Email already exist'
-      )
+      const emailExist = await this.userModel.findOne({
+        email,
+        _id: { $ne: userId },
+      })
+
+      if (emailExist)
+        throw new HttpException(
+          ErrorCode.REQUEST_CONFLICT,
+          'EmailVerificationServicemail already exist'
+        )
 
       const user = await this.find(userId)
 
@@ -286,7 +277,7 @@ class UserService implements IUserService {
   }
 
   public updateStatus = async (
-    userId: AppObjectId,
+    userId: ObjectId,
     status: UserStatus
   ): THttpResponse<{ user: IUser }> => {
     try {
@@ -315,20 +306,18 @@ class UserService implements IUserService {
     }
   }
 
-  public delete = async (
-    userId: AppObjectId
-  ): THttpResponse<{ user: IUser }> => {
+  public delete = async (userId: ObjectId): THttpResponse<{ user: IUser }> => {
     try {
       const user = await this.find(userId)
 
       if (user.role >= UserRole.ADMIN)
         throw new HttpException(400, 'Users with admin role can not be deleted')
 
-      await this.userRepository.deleteOne({ _id: userId })
+      await this.userModel.deleteOne({ _id: userId })
 
-      await this.notificationRepository.deleteMany({ user: userId })
+      await this.notificationModel.deleteMany({ user: userId })
 
-      await this.activityRepository.deleteMany({ user: userId })
+      await this.activityModel.deleteMany({ user: userId })
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -342,7 +331,7 @@ class UserService implements IUserService {
 
   public getReferredUsers = async (
     getAll: boolean,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ users: IUser[] }> => {
     try {
       let users: IUser[] = []
@@ -351,16 +340,15 @@ class UserService implements IUserService {
 
         await this.find(userId)
 
-        users = await this.userRepository
+        users = await this.userModel
           .find({
             referred: userId,
           })
-          .collectAll()
+          .select('-password')
       } else {
-        users = await this.userRepository
+        users = await this.userModel
           .find({ referred: { $exists: true } })
           .select('-password')
-          .collectAll()
       }
 
       return {
@@ -377,7 +365,7 @@ class UserService implements IUserService {
   }
 
   public async sendEmail(
-    userId: AppObjectId,
+    userId: ObjectId,
     subject: string,
     heading: string,
     content: string

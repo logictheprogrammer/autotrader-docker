@@ -1,11 +1,10 @@
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
 import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
-import AppObjectId from '../app/app.objectId'
-import AppDocument from '../app/app.document'
+import { Document, ObjectId } from 'mongoose'
 
 export interface IDepositMethodObject extends IAppObject {
-  currency: AppObjectId
+  currency: ObjectId
   name: string
   symbol: string
   logo: string
@@ -18,11 +17,8 @@ export interface IDepositMethodObject extends IAppObject {
   autoUpdate: boolean
 }
 
-export interface IDepositMethod extends AppDocument {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  currency: AppObjectId
+export interface IDepositMethod extends Document {
+  currency: ObjectId
   name: string
   symbol: string
   logo: string
@@ -37,7 +33,7 @@ export interface IDepositMethod extends AppDocument {
 
 export interface IDepositMethodService {
   create(
-    currencyId: AppObjectId,
+    currencyId: ObjectId,
     address: string,
     network: string,
     fee: number,
@@ -45,34 +41,34 @@ export interface IDepositMethodService {
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
   update(
-    depositMethodId: AppObjectId,
-    currencyId: AppObjectId,
+    depositMethodId: ObjectId,
+    currencyId: ObjectId,
     address: string,
     network: string,
     fee: number,
     minDeposit: number
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
-  get(depositMethodId: AppObjectId): Promise<IDepositMethodObject>
+  get(depositMethodId: ObjectId): Promise<IDepositMethodObject>
 
   fetchAll(all: boolean): THttpResponse<{ depositMethods: IDepositMethod[] }>
 
   delete(
-    depositMethodId: AppObjectId
+    depositMethodId: ObjectId
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
   updateStatus(
-    depositMethodId: AppObjectId,
+    depositMethodId: ObjectId,
     status: DepositMethodStatus
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
   updateMode(
-    depositMethodId: AppObjectId,
+    depositMethodId: ObjectId,
     autoUpdate: boolean
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
   updatePrice(
-    depositMethodId: AppObjectId,
+    depositMethodId: ObjectId,
     price: number
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 }

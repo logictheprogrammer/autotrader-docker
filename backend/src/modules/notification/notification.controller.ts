@@ -6,8 +6,8 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import AppObjectId from '../app/app.objectId'
 import { NotificationForWho } from './notification.enum'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class NotificationController implements IAppController {
@@ -98,8 +98,7 @@ class NotificationController implements IAppController {
       next: NextFunction
     ): Promise<Response | void> => {
       try {
-        const notificationId = req.params
-          .notificationId as unknown as AppObjectId
+        const notificationId = req.params.notificationId as unknown as ObjectId
         const response = await this.notificationService.delete(
           fromAllAccounts,
           notificationId,

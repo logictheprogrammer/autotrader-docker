@@ -36,15 +36,14 @@ import Helpers from '@/utils/helpers/helpers'
 import { IMathService } from '../math/math.interface'
 import { InvestmentStatus } from '../investment/investment.enum'
 import { TUpdateTradeStatus } from './trade.type'
-import AppRepository from '../app/app.repository'
-import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
 import { TUpdateInvestmentStatus } from '../investment/investment.type'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class TradeService implements ITradeService {
-  private tradeRepository = new AppRepository<ITrade>(tradeModel)
-  private userRepository = new AppRepository<IUser>(userModel)
+  private tradeModel = tradeModel
+  private userModel = userModel
 
   public static minStakeRate = 0.1
   public static maxStakeRate = 0.25
@@ -70,13 +69,17 @@ class TradeService implements ITradeService {
   ) {}
 
   private async find(
-    tradeId: AppObjectId,
+    tradeId: ObjectId,
     fromAllAccounts: boolean = true,
     userId?: string
   ): Promise<ITrade> {
-    const trade = await this.tradeRepository
-      .findById(tradeId, fromAllAccounts, userId)
-      .collect()
+    let trade
+
+    if (fromAllAccounts) {
+      trade = await this.tradeModel.findById(tradeId)
+    } else {
+      trade = await this.tradeModel.findOne({ _id: tradeId, user: userId })
+    }
 
     if (!trade) throw new HttpException(404, 'Trade not found')
 
@@ -94,7 +97,7 @@ class TradeService implements ITradeService {
     investmentPercentage: number,
     environment: UserEnvironment
   ): TTransaction<ITradeObject, ITrade> {
-    const trade = this.tradeRepository.create({
+    const trade = new this.tradeModel({
       investment: investment._id,
       investmentObject: investment,
       user: user._id,
@@ -111,22 +114,20 @@ class TradeService implements ITradeService {
       manualMode: investment.manualMode,
     })
 
-    const unSavedTrade = trade.collectUnsaved()
-
     return {
-      object: unSavedTrade,
+      object: trade.toObject({ getters: true }),
       instance: {
         model: trade,
-        onFailed: `Delete the trade with an id of (${unSavedTrade._id})`,
+        onFailed: `Delete the trade with an id of (${trade._id})`,
         callback: async () => {
-          await this.tradeRepository.deleteOne({ _id: unSavedTrade._id })
+          await this.tradeModel.deleteOne({ _id: trade._id })
         },
       },
     }
   }
 
   public async _updateStatusTransaction(
-    tradeId: AppObjectId,
+    tradeId: ObjectId,
     status: TradeStatus,
     move?: TradeMove
   ): TTransaction<ITradeObject, ITrade> {
@@ -168,24 +169,22 @@ class TradeService implements ITradeService {
     }
 
     trade.status = status
-    const newTrade = this.tradeRepository.toClass(trade)
-    const unsavedTrade = newTrade.collectUnsaved()
 
     return {
-      object: unsavedTrade,
+      object: trade.toObject({ getters: true }),
       instance: {
-        model: newTrade,
+        model: trade,
         onFailed: `Set the status of the trade with an id of (${
-          unsavedTrade._id
+          trade._id
         }) to (${oldStatus}) and startTime to (${startTime}) and timeStamps to (${JSON.stringify(
           oldTimeStamps
         )}) and move to undefined`,
         callback: async () => {
-          unsavedTrade.status = oldStatus
-          unsavedTrade.startTime = startTime
-          unsavedTrade.timeStamps = oldTimeStamps
-          unsavedTrade.move = undefined
-          await this.tradeRepository.save(unsavedTrade)
+          trade.status = oldStatus
+          trade.startTime = startTime
+          trade.timeStamps = oldTimeStamps
+          trade.move = undefined
+          await trade.save()
         },
       },
     }
@@ -223,8 +222,8 @@ class TradeService implements ITradeService {
   }
 
   public async createAuto(
-    investmentId: AppObjectId,
-    pairId: AppObjectId
+    investmentId: ObjectId,
+    pairId: ObjectId
   ): Promise<void> {
     const investment = await this.investmentService.get(investmentId)
     const pair = await this.pairService.get(pairId)
@@ -268,16 +267,16 @@ class TradeService implements ITradeService {
 
     await trade.save()
 
-    return {
-      status: HttpResponseStatus.SUCCESS,
-      message: 'Trade created successfully',
-      data: { trade: trade.collectRaw() },
-    }
+    // return {
+    //   status: HttpResponseStatus.SUCCESS,
+    //   message: 'Trade created successfully',
+    //   data: { trade: trade.collectRaw() },
+    // }
   }
 
   public async createManual(
-    investmentId: AppObjectId,
-    pairId: AppObjectId,
+    investmentId: ObjectId,
+    pairId: ObjectId,
     stake: number,
     profit: number
   ): THttpResponse<{ trade: ITrade }> {
@@ -319,7 +318,7 @@ class TradeService implements ITradeService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Trade created successfully',
-        data: { trade: trade.collectRaw() },
+        data: { trade: trade },
       }
     } catch (err: any) {
       throw new AppException(
@@ -330,8 +329,8 @@ class TradeService implements ITradeService {
   }
 
   public async updateManual(
-    tradeId: AppObjectId,
-    pairId: AppObjectId,
+    tradeId: ObjectId,
+    pairId: ObjectId,
     move: TradeMove,
     stake: number,
     profit: number,
@@ -358,7 +357,6 @@ class TradeService implements ITradeService {
       trade.openingPrice = openingPrice ?? trade.openingPrice
       trade.closingPrice = closingPrice ?? trade.openingPrice
       trade.startTime = startTime ?? trade.startTime
-      trade.stopTime = stopTime ?? trade.stopTime
 
       trade.outcome = profit + stake
       trade.percentage = (profit * 100) / stake
@@ -367,12 +365,12 @@ class TradeService implements ITradeService {
 
       trade.manualMode = true
 
-      const newTrade = await this.tradeRepository.save(trade)
+      await trade.save()
 
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Trade updated successfully',
-        data: { trade: newTrade },
+        data: { trade },
       }
     } catch (err: any) {
       throw new AppException(
@@ -383,10 +381,10 @@ class TradeService implements ITradeService {
   }
 
   public async updateInvestmentStatus(
-    investmentId: AppObjectId,
+    investmentId: ObjectId,
     investmentStatus: InvestmentStatus
   ): Promise<{
-    model: AppRepository<IInvestment>
+    model: IInvestment
     instances: TUpdateInvestmentStatus
   }> {
     const { instances, model } = await this.investmentService.updateStatus(
@@ -401,9 +399,10 @@ class TradeService implements ITradeService {
       investmentStatus === InvestmentStatus.ON_MAINTAINACE ||
       investmentStatus === InvestmentStatus.REFILLING
     ) {
-      const tradeStillRunning = await this.tradeRepository
-        .findOne({ investment: investmentId, status: TradeStatus.RUNNING })
-        .collect()
+      const tradeStillRunning = await this.tradeModel.findOne({
+        investment: investmentId,
+        status: TradeStatus.RUNNING,
+      })
 
       // stop the trade if it's still running..
       if (tradeStillRunning) {
@@ -415,9 +414,10 @@ class TradeService implements ITradeService {
         instances.push(tradeInstance)
       }
     } else if (investmentStatus === InvestmentStatus.RUNNING) {
-      const tradeOnHold = await this.tradeRepository
-        .findOne({ investment: investmentId, status: TradeStatus.ON_HOLD })
-        .collect()
+      const tradeOnHold = await this.tradeModel.findOne({
+        investment: investmentId,
+        status: TradeStatus.ON_HOLD,
+      })
 
       // prepare trade if trade is on hold
       if (tradeOnHold) {
@@ -434,7 +434,7 @@ class TradeService implements ITradeService {
   }
 
   public async forceUpdateInvestmentStatus(
-    investmentId: AppObjectId,
+    investmentId: ObjectId,
     status: InvestmentStatus
   ): THttpResponse<{ investment: IInvestment }> {
     try {
@@ -445,7 +445,7 @@ class TradeService implements ITradeService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Status updated successfully',
-        data: { investment: result.model.collectRaw() },
+        data: { investment: result.model },
       }
     } catch (err: any) {
       throw new AppException(
@@ -456,10 +456,10 @@ class TradeService implements ITradeService {
   }
 
   public async updateStatus(
-    tradeId: AppObjectId,
+    tradeId: ObjectId,
     status: TradeStatus,
     move?: TradeMove
-  ): Promise<{ model: AppRepository<ITrade>; instances: TUpdateTradeStatus }> {
+  ): Promise<{ model: ITrade; instances: TUpdateTradeStatus }> {
     const transactionInstances: TUpdateTradeStatus = []
 
     const { object: trade, instance: tradeInstance } =
@@ -519,7 +519,7 @@ class TradeService implements ITradeService {
   }
 
   public async updateAmount(
-    tradeId: AppObjectId,
+    tradeId: ObjectId,
     stake: number,
     profit: number
   ): THttpResponse<{ trade: ITrade }> {
@@ -550,7 +550,7 @@ class TradeService implements ITradeService {
     }
   }
 
-  public async delete(tradeId: AppObjectId): THttpResponse<{ trade: ITrade }> {
+  public async delete(tradeId: ObjectId): THttpResponse<{ trade: ITrade }> {
     try {
       const trade = await this.find(tradeId)
 
@@ -577,28 +577,20 @@ class TradeService implements ITradeService {
     userId: string
   ): THttpResponse<{ trades: ITrade[] }> {
     try {
-      const trades = await this.tradeRepository
-        .find({ environment }, all, {
-          user: userId,
-        })
-        .select('-investmentObject -userObject -pair')
-        .collectAll()
+      let trades
 
-      await this.tradeRepository.populateAll(
-        trades,
-        'investment',
-        'investmentObject',
-        'name icon',
-        this.userRepository
-      )
-
-      await this.tradeRepository.populateAll(
-        trades,
-        'user',
-        'userObject',
-        'username isDeleted',
-        this.userRepository
-      )
+      if (all) {
+        trades = await this.tradeModel
+          .find({ environment })
+          .select('-investmentObject -userObject -pair')
+          .populate('investment', 'name icon')
+          .populate('user', 'username isDeleted')
+      } else {
+        trades = await this.tradeModel
+          .find({ environment, user: userId })
+          .select('-investmentObject -userObject -pair')
+          .populate('investment', 'name icon')
+      }
 
       return {
         status: HttpResponseStatus.SUCCESS,

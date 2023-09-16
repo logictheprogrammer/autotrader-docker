@@ -4,8 +4,7 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserAccount } from '@/modules/user/user.enum'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
+import { Document, ObjectId } from 'mongoose'
 
 export interface ITransferObject extends IAppObject {
   fromUser: IUser['_id']
@@ -18,7 +17,7 @@ export interface ITransferObject extends IAppObject {
   fee: number
 }
 
-export interface ITransfer extends AppDocument {
+export interface ITransfer extends Document {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -43,18 +42,18 @@ export interface ITransferService {
   ): TTransaction<ITransferObject, ITransfer>
 
   _updateStatusTransaction(
-    transferId: AppObjectId,
+    transferId: ObjectId,
     status: TransferStatus
   ): TTransaction<ITransferObject, ITransfer>
 
   get(
-    transferId: AppObjectId,
+    transferId: ObjectId,
     isAdmin: boolean,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<ITransferObject>
 
   create(
-    fromUserId: AppObjectId,
+    fromUserId: ObjectId,
     toUserUsername: string,
     account: UserAccount,
     amount: number
@@ -62,19 +61,19 @@ export interface ITransferService {
 
   fetch(
     isAdmin: boolean,
-    transferId: AppObjectId,
-    userId?: AppObjectId
+    transferId: ObjectId,
+    userId?: ObjectId
   ): THttpResponse<{ transfer: ITransfer }>
 
   fetchAll(
     allUsers: boolean,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ transfers: ITransfer[] }>
 
-  delete(transferId: AppObjectId): THttpResponse<{ transfer: ITransfer }>
+  delete(transferId: ObjectId): THttpResponse<{ transfer: ITransfer }>
 
   updateStatus(
-    transferId: AppObjectId,
+    transferId: ObjectId,
     status: TransferStatus
   ): THttpResponse<{ transfer: ITransfer }>
 }

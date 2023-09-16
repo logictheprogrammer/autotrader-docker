@@ -1,8 +1,7 @@
 import { FailedTransactionStatus } from '@/modules/failedTransaction/failedTransaction.enum'
 import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
+import { Document, ObjectId } from 'mongoose'
 
 export interface IFailedTransactionDoc {
   collectionName: string
@@ -18,10 +17,7 @@ export interface IFailedTransactionObject extends IAppObject {
   isDeleted?: boolean
 }
 
-export interface IFailedTransaction extends AppDocument {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
+export interface IFailedTransaction extends Document {
   collectionName: string
   message: string
   status: FailedTransactionStatus
@@ -36,16 +32,16 @@ export interface IFailedTransactionService {
   ): Promise<IFailedTransactionObject>
 
   delete(
-    failedTransactionId: AppObjectId
+    failedTransactionId: ObjectId
   ): THttpResponse<{ failedTransaction: IFailedTransaction }>
 
   updateStatus(
-    failedTransactionId: AppObjectId,
+    failedTransactionId: ObjectId,
     status: FailedTransactionStatus
   ): THttpResponse<{ failedTransaction: IFailedTransaction }>
 
   fetch(
-    failedTransactionId: AppObjectId
+    failedTransactionId: ObjectId
   ): THttpResponse<{ failedTransaction: IFailedTransaction }>
 
   fetchAll(): THttpResponse<{ failedTransactions: IFailedTransaction[] }>

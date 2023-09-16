@@ -9,8 +9,7 @@ import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserEnvironment } from '@/modules/user/user.enum'
 import { NotificationStatus } from './notification.type'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
+import { Document, ObjectId } from 'mongoose'
 
 export interface INotificationObject extends IAppObject {
   user?: IUser['_id']
@@ -25,7 +24,7 @@ export interface INotificationObject extends IAppObject {
   environment: UserEnvironment
 }
 
-export interface INotification extends AppDocument {
+export interface INotification extends Document {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -64,25 +63,25 @@ export interface INotificationService {
 
   delete(
     fromAllAccounts: boolean,
-    notificationId: AppObjectId,
-    userId?: AppObjectId
+    notificationId: ObjectId,
+    userId?: ObjectId
   ): THttpResponse<{ notification: INotification }>
 
   read(
-    notificationId: AppObjectId,
-    userId: AppObjectId
+    notificationId: ObjectId,
+    userId: ObjectId
   ): THttpResponse<{ notification: INotification }>
 
   fetch(
     fromAllAccounts: boolean,
-    notificationId: AppObjectId,
-    userId: AppObjectId
+    notificationId: ObjectId,
+    userId: ObjectId
   ): THttpResponse<{ notification: INotification }>
 
   fetchAll(
     fromAllAccounts: boolean,
     environment: UserEnvironment,
     forWho: NotificationForWho,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ notifications: INotification[] }>
 }

@@ -1,11 +1,10 @@
 import { WithdrawalMethodStatus } from '@/modules/withdrawalMethod/withdrawalMethod.enum'
 import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId, Document } from 'mongoose'
 
 export interface IWithdrawalMethodObject extends IAppObject {
-  currency: AppObjectId
+  currency: ObjectId
   name: string
   symbol: string
   logo: string
@@ -15,11 +14,11 @@ export interface IWithdrawalMethodObject extends IAppObject {
   minWithdrawal: number
 }
 
-export interface IWithdrawalMethod extends AppDocument {
+export interface IWithdrawalMethod extends Document {
   __v: number
   updatedAt: Date
   createdAt: Date
-  currency: AppObjectId
+  currency: ObjectId
   name: string
   symbol: string
   logo: string
@@ -31,32 +30,32 @@ export interface IWithdrawalMethod extends AppDocument {
 
 export interface IWithdrawalMethodService {
   create(
-    currencyId: AppObjectId,
+    currencyId: ObjectId,
     network: string,
     fee: number,
     minWithdrawal: number
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }>
 
   update(
-    withdrawalMethodId: AppObjectId,
-    currencyId: AppObjectId,
+    withdrawalMethodId: ObjectId,
+    currencyId: ObjectId,
     network: string,
     fee: number,
     minWithdrawal: number
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }>
 
-  get(withdrawalMethodId: AppObjectId): Promise<IWithdrawalMethodObject>
+  get(withdrawalMethodId: ObjectId): Promise<IWithdrawalMethodObject>
 
   fetchAll(
     all: boolean
   ): THttpResponse<{ withdrawalMethods: IWithdrawalMethod[] }>
 
   delete(
-    withdrawalMethodId: AppObjectId
+    withdrawalMethodId: ObjectId
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }>
 
   updateStatus(
-    withdrawalMethodId: AppObjectId,
+    withdrawalMethodId: ObjectId,
     status: WithdrawalMethodStatus
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }>
 }

@@ -17,25 +17,28 @@ import { ITransactionInstance } from '@/modules/transactionManager/transactionMa
 import { IAppObject } from '@/modules/app/app.interface'
 import { UserEnvironment } from '../user/user.enum'
 import { TransactionStatus } from './transaction.type'
-import AppRepository from '../app/app.repository'
-import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class TransactionService implements ITransactionService {
-  private transactionRepository = new AppRepository<ITransaction>(
-    transactionModel
-  )
-  private userRepository = new AppRepository<IUser>(userModel)
+  private transactionModel = transactionModel
+  private userModel = userModel
 
   private async find(
-    transactionId: AppObjectId,
+    transactionId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<ITransaction> {
-    const transaction = await this.transactionRepository
-      .findById(transactionId, fromAllAccounts, userId)
-      .collect()
+    let transaction
+    if (fromAllAccounts) {
+      transaction = await this.transactionModel.findById(transactionId)
+    } else {
+      transaction = await this.transactionModel.findOne({
+        _id: transactionId,
+        user: userId,
+      })
+    }
 
     if (!transaction) throw new HttpException(404, 'Transaction not found')
 
@@ -43,19 +46,17 @@ class TransactionService implements ITransactionService {
   }
 
   private setAmount = async (
-    categoryId: AppObjectId,
+    categoryId: ObjectId,
     status: TransactionStatus,
     amount: number
   ): Promise<{
-    transaction: AppRepository<ITransaction>
+    transaction: ITransaction
     oldStatus: TransactionStatus
     oldAmount: number
   }> => {
-    const transaction = await this.transactionRepository
-      .findOne({
-        category: categoryId,
-      })
-      .collect()
+    const transaction = await this.transactionModel.findOne({
+      category: categoryId,
+    })
 
     if (!transaction) throw new HttpException(404, 'Transaction not found')
 
@@ -65,23 +66,19 @@ class TransactionService implements ITransactionService {
     transaction.status = status
     transaction.amount = amount
 
-    const newTransaction = this.transactionRepository.toClass(transaction)
-
-    return { transaction: newTransaction, oldAmount, oldStatus }
+    return { transaction: transaction, oldAmount, oldStatus }
   }
 
   private setStatus = async (
-    categoryId: AppObjectId,
+    categoryId: ObjectId,
     status: TransactionStatus
   ): Promise<{
-    transaction: AppRepository<ITransaction>
+    transaction: ITransaction
     oldStatus: TransactionStatus
   }> => {
-    const transaction = await this.transactionRepository
-      .findOne({
-        category: categoryId,
-      })
-      .collect()
+    const transaction = await this.transactionModel.findOne({
+      category: categoryId,
+    })
 
     if (!transaction) throw new HttpException(404, 'Transaction not found')
 
@@ -89,9 +86,7 @@ class TransactionService implements ITransactionService {
 
     transaction.status = status
 
-    const newTransaction = this.transactionRepository.toClass(transaction)
-
-    return { transaction: newTransaction, oldStatus }
+    return { transaction, oldStatus }
   }
 
   public async _createTransaction<T extends IAppObject>(
@@ -103,7 +98,7 @@ class TransactionService implements ITransactionService {
     environment: UserEnvironment,
     stake?: number
   ): TTransaction<ITransactionObject, ITransaction> {
-    const transaction = this.transactionRepository.create({
+    const transaction = new this.transactionModel({
       user: user._id,
       userObject: user,
       amount,
@@ -115,13 +110,11 @@ class TransactionService implements ITransactionService {
       environment,
     })
 
-    const unsavedTransaction = transaction.collectUnsaved()
-
     return {
-      object: unsavedTransaction,
+      object: transaction.toObject({ getters: true }),
       instance: {
         model: transaction,
-        onFailed: `Delete the transaction with an id of (${unsavedTransaction._id})`,
+        onFailed: `Delete the transaction with an id of (${transaction._id})`,
         async callback() {
           await transaction.deleteOne()
         },
@@ -130,47 +123,44 @@ class TransactionService implements ITransactionService {
   }
 
   public async _updateAmountTransaction(
-    categoryId: AppObjectId,
+    categoryId: ObjectId,
     status: TransactionStatus,
     amount: number
   ): TTransaction<ITransactionObject, ITransaction> {
     const data = await this.setAmount(categoryId, status, amount)
     const { oldAmount, oldStatus, transaction } = data
 
-    const unsavedTransaction = transaction.collectUnsaved()
-
     return {
-      object: unsavedTransaction,
+      object: transaction.toObject({ getters: true }),
       instance: {
         model: transaction,
         onFailed: `Set the status of the transaction with an id of (${
-          unsavedTransaction._id
+          transaction._id
         }) to (${oldStatus}) and the amount to (${formatNumber.toDollar(
           oldAmount
         )})`,
         callback: async () => {
-          unsavedTransaction.status = oldStatus
-          unsavedTransaction.amount = oldAmount
-          await this.transactionRepository.save(unsavedTransaction)
+          transaction.status = oldStatus
+          transaction.amount = oldAmount
+          await transaction.save()
         },
       },
     }
   }
 
   public async _updateStatusTransaction(
-    categoryId: AppObjectId,
+    categoryId: ObjectId,
     status: TransactionStatus
   ): TTransaction<ITransactionObject, ITransaction> {
     const { oldStatus, transaction } = await this.setStatus(categoryId, status)
 
-    const unsavedTransaction = transaction.collectUnsaved()
     return {
-      object: unsavedTransaction,
+      object: transaction.toObject({ getters: true }),
       instance: {
         model: transaction,
-        onFailed: `Set the status of the transaction with an id of (${unsavedTransaction._id}) to (${oldStatus})`,
+        onFailed: `Set the status of the transaction with an id of (${transaction._id}) to (${oldStatus})`,
         callback: async () => {
-          await this.transactionRepository.save(unsavedTransaction)
+          await transaction.save()
         },
       },
     }
@@ -206,7 +196,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async updateAmount(
-    categoryId: AppObjectId,
+    categoryId: ObjectId,
     status: TransactionStatus,
     amount: number
   ): Promise<ITransactionInstance<ITransaction>> {
@@ -227,7 +217,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async forceUpdateAmount(
-    transactionId: AppObjectId,
+    transactionId: ObjectId,
     status: TransactionStatus,
     amount: number
   ): THttpResponse<{ transaction: ITransaction }> {
@@ -253,7 +243,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async updateStatus(
-    categoryId: AppObjectId,
+    categoryId: ObjectId,
     status: TransactionStatus
   ): Promise<ITransactionInstance<ITransaction>> {
     try {
@@ -272,7 +262,7 @@ class TransactionService implements ITransactionService {
   }
 
   public async forceUpdateStatus(
-    transactionId: AppObjectId,
+    transactionId: ObjectId,
     status: TransactionStatus
   ): THttpResponse<{ transaction: ITransaction }> {
     try {
@@ -296,24 +286,22 @@ class TransactionService implements ITransactionService {
   }
 
   public async get(
-    transactionId: AppObjectId,
+    transactionId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<ITransactionObject> {
     return (await this.find(transactionId, fromAllAccounts, userId)).toObject()
   }
 
   public fetch = async (
-    transactionId: AppObjectId,
-    userId: AppObjectId
+    transactionId: ObjectId,
+    userId: ObjectId
   ): THttpResponse<{ transaction: ITransaction }> => {
     try {
-      const transaction = await this.transactionRepository
-        .findOne({
-          _id: transactionId,
-          user: userId,
-        })
-        .collect()
+      const transaction = await this.transactionModel.findOne({
+        _id: transactionId,
+        user: userId,
+      })
 
       if (!transaction) throw new HttpException(404, 'Transaction not found')
 
@@ -333,25 +321,22 @@ class TransactionService implements ITransactionService {
   public fetchAll = async (
     all: boolean,
     environment: UserEnvironment,
-    userId: AppObjectId
+    userId: ObjectId
   ): THttpResponse<{ transactions: ITransaction[] }> => {
     try {
-      let transactions = await this.transactionRepository
-        .find({ environment }, all, {
-          user: userId,
-        })
-        .sort({ updatedAt: -1 })
-        .select('-userObject -categoryObject -environment')
-        .collectAll()
+      let transactions
 
       if (all) {
-        await this.transactionRepository.populateAll(
-          transactions,
-          'user',
-          'userObject',
-          'username isDeleted',
-          this.userRepository
-        )
+        transactions = await this.transactionModel
+          .find({ environment })
+          .sort({ updatedAt: -1 })
+          .select('-userObject -categoryObject -environment')
+          .populate('user', 'username isDeleted')
+      } else {
+        transactions = await this.transactionModel
+          .find({ environment, user: userId })
+          .sort({ updatedAt: -1 })
+          .select('-userObject -categoryObject -environment')
       }
 
       return {
@@ -368,7 +353,7 @@ class TransactionService implements ITransactionService {
   }
 
   public delete = async (
-    transactionId: AppObjectId
+    transactionId: ObjectId
   ): THttpResponse<{ transaction: ITransaction }> => {
     try {
       const transaction = await this.find(transactionId)

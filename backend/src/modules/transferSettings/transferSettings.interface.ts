@@ -1,7 +1,7 @@
 import { THttpResponse } from '@/modules/http/http.type'
-import AppDocument from '../app/app.document'
+import { Document } from 'mongoose'
 
-export interface ITransferSettings extends AppDocument {
+export interface ITransferSettings extends Document {
   __v: number
   updatedAt: Date
   createdAt: Date
@@ -20,7 +20,7 @@ export interface ITransferSettingsService {
     fee: number
   ): THttpResponse<{ transferSettings: ITransferSettings }>
 
-  get(): Promise<ITransferSettings | undefined>
+  get(): Promise<ITransferSettings | null>
 
   fetch(): THttpResponse<{ transferSettings: ITransferSettings }>
 }

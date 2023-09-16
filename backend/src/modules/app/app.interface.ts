@@ -1,8 +1,5 @@
 import { Router } from 'express'
-import AppObjectId from './app.objectId'
-import { MergeType } from 'mongoose'
-
-export type SortOrder = -1 | 1
+import { ObjectId } from 'mongoose'
 
 export interface IAppController {
   path: string
@@ -11,95 +8,7 @@ export interface IAppController {
 
 export interface IAppObject {
   __v: number
-  _id: AppObjectId
+  _id: ObjectId
   updatedAt: Date
   createdAt: Date
-}
-
-export interface IAppRepository {
-  collection: {
-    name: string
-  }
-
-  create(docs: any): IAppRepository
-
-  find(payload: {}, fromAllAccounts: boolean, userPayload?: {}): IAppRepository
-
-  ifExist(payload: {}, errorMessage: string): Promise<void> | void
-
-  findById(
-    modelId: AppObjectId | string,
-    fromAllAccounts: boolean,
-    userId?: AppObjectId | string
-  ): IAppRepository
-
-  findOne(
-    payload: {},
-    fromAllAccounts: boolean,
-    userPayload?: {}
-  ): IAppRepository
-
-  sort(
-    arg?:
-      | {
-          [key: string]: SortOrder
-        }
-      | [string, SortOrder][]
-      | null
-      | undefined
-  ): this
-
-  select(arg: string | string[]): this
-
-  collect():
-    | Promise<{}>
-    | Promise<{} | null>
-    | undefined
-    | null
-    | Promise<undefined>
-    | Promise<null>
-
-  collectAll(): Promise<{}[]>
-
-  updateOne(
-    filter: {} | undefined,
-    update: {} | undefined,
-    options?: {} | null | undefined
-  ): Promise<{}>
-
-  findByIdAndDelete(
-    id: any,
-    options?: {} | null | undefined
-  ): Promise<{} | null>
-
-  deleteOne(filter?: {} | undefined, options?: {} | undefined): Promise<{}>
-
-  deleteMany(filter?: {} | undefined, options?: {} | undefined): Promise<{}>
-
-  count(filter?: {} | undefined): Promise<number>
-
-  collectRaw(): {}
-
-  collectUnsaved(): {} & { _id: AppObjectId }
-
-  toClass(instance: {}): IAppRepository
-
-  save(instance?: {}): Promise<{}>
-
-  toObject(instance: {}): {} & { _id: AppObjectId }
-
-  populate<Paths = {}>(
-    instance: {},
-    path: string,
-    select?: string,
-    refInstance?: any
-  ): void
-
-  populateAll(
-    instanceArr: {}[],
-    path: string,
-    ref: string,
-    select: string,
-    refInstance?: any
-  ): Promise<void>
 }

@@ -6,6 +6,8 @@ import { TradeMove, TradeStatus } from './trade.enum'
 const create = Joi.object({
   investmentId: Joi.string().required(),
   pairId: Joi.string().required(),
+  stake: Joi.number().positive().required(),
+  profit: Joi.number().required(),
 })
 
 const update = Joi.object({

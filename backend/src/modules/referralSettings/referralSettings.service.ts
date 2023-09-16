@@ -8,13 +8,10 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
-import AppRepository from '@/modules/app/app.repository'
 
 @Service()
 class ReferralSettingsService implements IReferralSettingsService {
-  private referralSettingsRepository = new AppRepository<IReferralSettings>(
-    referralSettingsModel
-  )
+  private referralSettingsModel = referralSettingsModel
 
   public create = async (
     deposit: number,
@@ -24,15 +21,13 @@ class ReferralSettingsService implements IReferralSettingsService {
     completedPackageEarnings: number
   ): THttpResponse<{ referralSettings: IReferralSettings }> => {
     try {
-      const referralSettings = await this.referralSettingsRepository
-        .create({
-          deposit,
-          stake,
-          winnings,
-          investment,
-          completedPackageEarnings,
-        })
-        .save()
+      const referralSettings = await this.referralSettingsModel.create({
+        deposit,
+        stake,
+        winnings,
+        investment,
+        completedPackageEarnings,
+      })
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -55,7 +50,7 @@ class ReferralSettingsService implements IReferralSettingsService {
     completedPackageEarnings: number
   ): THttpResponse<{ referralSettings: IReferralSettings }> => {
     try {
-      await this.referralSettingsRepository.updateOne(
+      await this.referralSettingsModel.updateOne(
         {},
         {
           deposit,
@@ -84,11 +79,9 @@ class ReferralSettingsService implements IReferralSettingsService {
     }
   }
 
-  public get = async (): Promise<IReferralSettings | undefined> => {
+  public get = async (): Promise<IReferralSettings | null> => {
     try {
-      const referralSettings = await this.referralSettingsRepository
-        .findOne({})
-        .collect()
+      const referralSettings = await this.referralSettingsModel.findOne({})
 
       return referralSettings
     } catch (err: any) {

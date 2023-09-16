@@ -8,7 +8,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class WithdrawalController implements IAppController {
@@ -98,7 +98,7 @@ class WithdrawalController implements IAppController {
     ): Promise<Response | void> => {
       try {
         let response
-        const withdrawalId = req.params.withdrawalId as unknown as AppObjectId
+        const withdrawalId = req.params.withdrawalId as unknown as ObjectId
         if (isAdmin) {
           response = await this.withdrawalService.fetch(true, withdrawalId)
         } else {
@@ -159,7 +159,7 @@ class WithdrawalController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const withdrawalId = req.params.withdrawalId as unknown as AppObjectId
+      const withdrawalId = req.params.withdrawalId as unknown as ObjectId
       const response = await this.withdrawalService.delete(withdrawalId)
       res.status(200).json(response)
     } catch (err: any) {

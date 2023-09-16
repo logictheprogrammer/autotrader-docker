@@ -9,6 +9,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '../http/http.enum'
+import { ErrorCode } from '@/utils/enums/errorCodes.enum'
 
 @Service()
 class AuthController implements IAppController {
@@ -132,7 +133,7 @@ class AuthController implements IAppController {
       console.log(req.user.status)
       if (req.user.status !== UserStatus.ACTIVE)
         throw new HttpException(
-          403,
+          ErrorCode.FORBIDDEN,
           'Your account is under review, please check in later',
           HttpResponseStatus.INFO
         )

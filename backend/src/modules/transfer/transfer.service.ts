@@ -33,14 +33,13 @@ import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { ITransferSettingsService } from '@/modules/transferSettings/transferSettings.interface'
-import AppRepository from '../app/app.repository'
-import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class TransferService implements ITransferService {
-  private transferRepository = new AppRepository<ITransfer>(transferModel)
-  private userRepository = new AppRepository<IUser>(userModel)
+  private transferModel = transferModel
+  private userModel = userModel
 
   public constructor(
     @Inject(ServiceToken.TRANSFER_SETTINGS_SERVICE)
@@ -55,15 +54,20 @@ class TransferService implements ITransferService {
   ) {}
 
   private find = async (
-    transferId: AppObjectId,
+    transferId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<ITransfer> => {
-    const transfer = await this.transferRepository
-      .findOne({ _id: transferId }, fromAllAccounts, {
+    let transfer
+
+    if (fromAllAccounts) {
+      transfer = await this.transferModel.findOne({ _id: transferId })
+    } else {
+      transfer = await this.transferModel.findOne({
+        _id: transferId,
         $or: [{ fromUser: userId }, { toUser: userId }],
       })
-      .collect()
+    }
 
     if (!transfer)
       throw new HttpException(404, 'Transfer transaction not found')
@@ -72,7 +76,7 @@ class TransferService implements ITransferService {
   }
 
   public async _updateStatusTransaction(
-    transferId: AppObjectId,
+    transferId: ObjectId,
     status: TransferStatus
   ): TTransaction<ITransferObject, ITransfer> {
     const transfer = await this.find(transferId)
@@ -84,18 +88,14 @@ class TransferService implements ITransferService {
 
     transfer.status = status
 
-    const newTransfer = this.transferRepository.toClass(transfer)
-
-    const unsavedTransfer = newTransfer.collectUnsaved()
-
     return {
-      object: unsavedTransfer,
+      object: transfer.toObject({ getters: true }),
       instance: {
-        model: newTransfer,
-        onFailed: `Set the status of the transfer with an id of (${unsavedTransfer._id}) to (${oldStatus})`,
+        model: transfer,
+        onFailed: `Set the status of the transfer with an id of (${transfer._id}) to (${oldStatus})`,
         callback: async () => {
-          unsavedTransfer.status = oldStatus
-          await this.transferRepository.save(unsavedTransfer)
+          transfer.status = oldStatus
+          await transfer.save()
         },
       },
     }
@@ -109,26 +109,22 @@ class TransferService implements ITransferService {
     fee: number,
     amount: number
   ): TTransaction<ITransferObject, ITransfer> {
-    const transfer = this.transferRepository
-      .create({
-        fromUser: fromUser._id,
-        fromUserObject: fromUser,
-        toUser: toUser._id,
-        toUserObject: toUser,
-        account,
-        amount,
-        fee,
-        status,
-      })
-      .select('-fromUserObject -toUserObject')
-
-    const unsavedTransfer = transfer.collectUnsaved()
+    const transfer = new this.transferModel({
+      fromUser: fromUser._id,
+      fromUserObject: fromUser,
+      toUser: toUser._id,
+      toUserObject: toUser,
+      account,
+      amount,
+      fee,
+      status,
+    })
 
     return {
-      object: unsavedTransfer,
+      object: transfer.toObject({ getters: true }),
       instance: {
         model: transfer,
-        onFailed: `Delete the transfer with an id of (${unsavedTransfer._id})`,
+        onFailed: `Delete the transfer with an id of (${transfer._id})`,
         async callback() {
           await transfer.deleteOne()
         },
@@ -137,7 +133,7 @@ class TransferService implements ITransferService {
   }
 
   public create = async (
-    fromUserId: AppObjectId,
+    fromUserId: ObjectId,
     toUserUsername: string,
     account: UserAccount,
     amount: number
@@ -313,21 +309,7 @@ class TransferService implements ITransferService {
       // execute all transaction instances
       await this.transactionManagerService.execute(transactionInstances)
 
-      const rawTransfer = transferInstance.model.collectRaw()
-
-      await this.transferRepository.populate(
-        rawTransfer,
-        'toUser',
-        'username isDeleted',
-        this.userRepository
-      )
-
-      await this.transferRepository.populate(
-        rawTransfer,
-        'fromUser',
-        'username isDeleted',
-        this.userRepository
-      )
+      const rawTransfer = transferInstance.model
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -343,15 +325,15 @@ class TransferService implements ITransferService {
   }
 
   public async get(
-    transferId: AppObjectId,
+    transferId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<ITransferObject> {
     return (await this.find(transferId, fromAllAccounts, userId)).toObject()
   }
 
   public delete = async (
-    transferId: AppObjectId
+    transferId: ObjectId
   ): THttpResponse<{ transfer: ITransfer }> => {
     try {
       const transfer = await this.find(transferId)
@@ -374,7 +356,7 @@ class TransferService implements ITransferService {
   }
 
   public updateStatus = async (
-    transferId: AppObjectId,
+    transferId: ObjectId,
     status: TransferStatus
   ): THttpResponse<{ transfer: ITransfer }> => {
     try {
@@ -464,21 +446,7 @@ class TransferService implements ITransferService {
 
       await this.transactionManagerService.execute(transactionInstances)
 
-      const rawTransfer = transferInstance.model.collectRaw()
-
-      await this.transferRepository.populate(
-        rawTransfer,
-        'toUser',
-        'username isDeleted',
-        this.userRepository
-      )
-
-      await this.transferRepository.populate(
-        rawTransfer,
-        'fromUser',
-        'username isDeleted',
-        this.userRepository
-      )
+      const rawTransfer = transferInstance.model
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -495,8 +463,8 @@ class TransferService implements ITransferService {
 
   public fetch = async (
     fromAllAccounts: boolean,
-    transferId: AppObjectId,
-    userId?: AppObjectId
+    transferId: ObjectId,
+    userId?: ObjectId
   ): THttpResponse<{ transfer: ITransfer }> => {
     try {
       const transfer = await this.find(transferId, fromAllAccounts, userId)
@@ -504,7 +472,7 @@ class TransferService implements ITransferService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Transfer history fetched successfully',
-        data: { transfer: this.transferRepository.toObject(transfer) },
+        data: { transfer },
       }
     } catch (err: any) {
       throw new AppException(
@@ -516,37 +484,33 @@ class TransferService implements ITransferService {
 
   public fetchAll = async (
     allUsers: boolean,
-    userId: AppObjectId
+    userId: ObjectId
   ): THttpResponse<{ transfers: ITransfer[] }> => {
     try {
-      const transfers = await this.transferRepository
-        .find({}, allUsers, {
-          $or: [
-            { fromUser: userId },
-            { toUser: userId, status: TransferStatus.SUCCESSFUL },
-          ],
-        })
-        .sort({
-          updatedAt: -1,
-        })
-        .select('-fromUserObject -toUserObject')
-        .collectAll()
+      let transfers
 
-      await this.transferRepository.populateAll(
-        transfers,
-        'fromUser',
-        'fromUserObject',
-        'username isDeleted',
-        this.userRepository
-      )
-
-      await this.transferRepository.populateAll(
-        transfers,
-        'toUser',
-        'toUserObject',
-        'username isDeleted',
-        this.userRepository
-      )
+      if (allUsers) {
+        transfers = await this.transferModel
+          .find()
+          .sort({
+            updatedAt: -1,
+          })
+          .select('-fromUserObject -toUserObject')
+          .populate('toUser', 'username isDeleted')
+      } else {
+        transfers = await this.transferModel
+          .find({
+            $or: [
+              { fromUser: userId },
+              { toUser: userId, status: TransferStatus.SUCCESSFUL },
+            ],
+          })
+          .sort({
+            updatedAt: -1,
+          })
+          .select('-fromUserObject -toUserObject')
+          .populate('fromUser', 'username isDeleted')
+      }
 
       return {
         status: HttpResponseStatus.SUCCESS,

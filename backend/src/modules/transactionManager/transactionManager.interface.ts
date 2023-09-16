@@ -1,16 +1,13 @@
-import AppRepository from '@/modules/app/app.repository'
-import AppDocument from '../app/app.document'
+import { Document } from 'mongoose'
 
-export interface ITransactionInstance<
-  T extends AppDocument<any, any, any> = any
-> {
-  model: AppRepository<T>
+export interface ITransactionInstance<T extends Document<any, any, any> = any> {
+  model: T
   callback: () => Promise<void>
   onFailed: string
 }
 
 export interface ITransactionManagerService<
-  T extends AppDocument<any, any, any> = any
+  T extends Document<any, any, any> = any
 > {
   execute(transactionInstances: ITransactionInstance<T>[]): Promise<void>
 }

@@ -22,13 +22,13 @@ import renderFile from '@/utils/renderFile'
 import ParseString from '@/utils/parsers/parseString'
 import { SiteConstants } from '@/modules/config/config.constants'
 import FormatString from '@/utils/formats/formatString'
-import AppRepository from '../app/app.repository'
 import AppCrypto from '../app/app.crypto'
-import AppObjectId from '../app/app.objectId'
+import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class AuthService implements IAuthService {
-  private userRepository = new AppRepository<IUser>(userModel)
+  private userModel = userModel
 
   public constructor(
     @Inject(ServiceToken.MAIL_SERVICE) private mailService: IMailService,
@@ -81,42 +81,55 @@ class AuthService implements IAuthService {
     try {
       let referred
       if (invite) {
-        referred = await this.userRepository
-          .findOne({ refer: invite })
-          .collect()
-        if (!referred) throw new HttpException(422, 'Invalid referral code')
+        referred = await this.userModel.findOne({ refer: invite })
+        if (!referred)
+          throw new HttpException(
+            ErrorCode.BAD_REQUEST,
+            'Invalid referral code'
+          )
       }
 
       const refer = AppCrypto.generateCode({ length: 10 })[0]
 
-      await this.userRepository.ifExist({ email }, 'Email already exist')
-      await this.userRepository.ifExist({ username }, 'Username already exist')
+      const emailExist = await this.userModel.findOne({ email })
+
+      if (emailExist)
+        throw new HttpException(
+          ErrorCode.REQUEST_CONFLICT,
+          'Email already exist'
+        )
+
+      const usernameExist = await this.userModel.findOne({ username })
+
+      if (usernameExist)
+        throw new HttpException(
+          ErrorCode.REQUEST_CONFLICT,
+          'Username already exist'
+        )
 
       const key = AppCrypto.randomBytes(16).toString('hex')
 
-      const user = await this.userRepository
-        .create({
-          name,
-          email,
-          username,
-          country,
-          password: await AppCrypto.setHash(password),
-          role,
-          status,
-          refer,
-          mainBalance,
-          referralBalance,
-          demoBalance,
-          bonusBalance,
-          referred: referred?._id,
-          key,
-          verifield: false,
-          isDeleted: false,
-        })
-        .save()
+      const user = await this.userModel.create({
+        name,
+        email,
+        username,
+        country,
+        password: await AppCrypto.setHash(password),
+        role,
+        status,
+        refer,
+        mainBalance,
+        referralBalance,
+        demoBalance,
+        bonusBalance,
+        referred: referred?._id,
+        key,
+        verifield: false,
+        isDeleted: false,
+      })
 
       this.activityService.set(
-        this.userRepository.toObject(user),
+        user.toObject({ getters: true }),
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
         'your account was created'
@@ -135,11 +148,9 @@ class AuthService implements IAuthService {
     { email: string } | { accessToken: string; expiresIn: number }
   > {
     try {
-      const user = await this.userRepository
-        .findOne({
-          $or: [{ email: account }, { username: account }],
-        })
-        .collect()
+      const user = await this.userModel.findOne({
+        $or: [{ email: account }, { username: account }],
+      })
 
       if (!user)
         throw new HttpException(
@@ -159,9 +170,8 @@ class AuthService implements IAuthService {
       }
 
       if (user.verifield) {
-        const newUser = this.userRepository.toClass(user).collectUnsaved()
         this.activityService.set(
-          newUser,
+          user.toObject({ getters: true }),
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
           'you logged in to your account'
@@ -182,12 +192,12 @@ class AuthService implements IAuthService {
   }
 
   public async updatePassword(
-    userId: AppObjectId,
+    userId: ObjectId,
     password: string,
     oldPassword?: string
   ): THttpResponse<{ user: IUser }> {
     try {
-      const user = await this.userRepository.findById(userId).collect()
+      const user = await this.userModel.findById(userId)
 
       if (!user) throw new HttpException(404, 'User not found')
 
@@ -205,10 +215,10 @@ class AuthService implements IAuthService {
 
       user.password = await AppCrypto.setHash(password)
 
-      const newUser = await this.userRepository.save(user)
+      await user.save()
 
       this.activityService.set(
-        this.userRepository.toObject(newUser),
+        user.toObject({ getters: true }),
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
         'you updated your password'
@@ -228,11 +238,9 @@ class AuthService implements IAuthService {
     account: string
   ): THttpResponse<{ email: string }> {
     try {
-      const user = await this.userRepository
-        .findOne({
-          $or: [{ email: account }, { username: account }],
-        })
-        .collect()
+      const user = await this.userModel.findOne({
+        $or: [{ email: account }, { username: account }],
+      })
 
       if (!user)
         throw new HttpException(
@@ -265,19 +273,16 @@ class AuthService implements IAuthService {
     try {
       await this.resetPasswordService.verify(key, verifyToken)
 
-      const user = await this.userRepository
-        .findOne({ key })
-        .select('-password')
-        .collect()
+      const user = await this.userModel.findOne({ key }).select('-password')
 
       if (!user) throw new HttpException(404, 'User not found')
 
       user.password = password
 
-      const newUser = await this.userRepository.save(user)
+      await user.save()
 
       this.activityService.set(
-        this.userRepository.toObject(newUser),
+        user.toObject({ getters: true }),
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
         'you reset your password'
@@ -300,20 +305,18 @@ class AuthService implements IAuthService {
     try {
       await this.emailVerificationService.verify(key, verifyToken)
 
-      const user = await this.userRepository.findOne({ key }).collect()
+      const user = await this.userModel.findOne({ key })
 
       if (!user) throw new HttpException(404, 'User not found')
 
       user.verifield = true
 
-      const newUser = await this.userRepository.save(user)
+      await user.save()
 
-      const userObj = this.userRepository.toObject(newUser)
-
-      this.sendWelcomeMail(userObj)
+      this.sendWelcomeMail(user)
 
       this.activityService.set(
-        userObj,
+        user.toObject({ getters: true }),
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
         'you verifield your email address'

@@ -8,25 +8,20 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
-import AppRepository from '../app/app.repository'
 
 @Service()
 class TransferSettingsService implements ITransferSettingsService {
-  private transferSettingsRepository = new AppRepository<ITransferSettings>(
-    transferSettingsModel
-  )
+  private transferSettingsModel = transferSettingsModel
 
   public async create(
     approval: boolean,
     fee: number
   ): THttpResponse<{ transferSettings: ITransferSettings }> {
     try {
-      const transferSettings = await this.transferSettingsRepository
-        .create({
-          approval,
-          fee,
-        })
-        .save()
+      const transferSettings = await this.transferSettingsModel.create({
+        approval,
+        fee,
+      })
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -53,7 +48,7 @@ class TransferSettingsService implements ITransferSettingsService {
       transferSettings.approval = approval
       transferSettings.fee = fee
 
-      await this.transferSettingsRepository.save(transferSettings)
+      await transferSettings.save()
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -68,11 +63,9 @@ class TransferSettingsService implements ITransferSettingsService {
     }
   }
 
-  public get = async (): Promise<ITransferSettings | undefined> => {
+  public get = async (): Promise<ITransferSettings | null> => {
     try {
-      const transferSettings = await this.transferSettingsRepository
-        .findOne({})
-        .collect()
+      const transferSettings = await this.transferSettingsModel.findOne()
 
       return transferSettings
     } catch (err: any) {

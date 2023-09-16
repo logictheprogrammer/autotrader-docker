@@ -7,11 +7,9 @@ import { TTransaction } from '@/modules/transactionManager/transactionManager.ty
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
 import { TUpdateInvestmentStatus } from './investment.type'
-import AppRepository from '../app/app.repository'
-import AppDocument from '../app/app.document'
-import AppObjectId from '../app/app.objectId'
 import { TradeStatus } from '../trade/trade.enum'
 import { ITrade, ITradeObject } from '../trade/trade.interface'
+import { Document, ObjectId } from 'mongoose'
 
 export interface IInvestmentObject extends IAppObject {
   plan: IPlan['_id']
@@ -30,10 +28,7 @@ export interface IInvestmentObject extends IAppObject {
   manualMode: boolean
 }
 
-export interface IInvestment extends AppDocument {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
+export interface IInvestment extends Document {
   plan: IPlan['_id']
   planObject: IPlanObject
   user: IUser['_id']
@@ -60,18 +55,18 @@ export interface IInvestmentService {
   ): TTransaction<IInvestmentObject, IInvestment>
 
   _updateStatusTransaction(
-    investmentId: AppObjectId,
+    investmentId: ObjectId,
     status: InvestmentStatus
   ): TTransaction<IInvestmentObject, IInvestment>
 
   updateTradeDetailsTransaction(
-    investmentId: AppObjectId,
+    investmentId: ObjectId,
     trade: ITradeObject
   ): TTransaction<IInvestmentObject, IInvestment>
 
   create(
-    planId: AppObjectId,
-    userId: AppObjectId,
+    planId: ObjectId,
+    userId: ObjectId,
     amount: number,
     account: UserAccount,
     environment: UserEnvironment
@@ -80,29 +75,29 @@ export interface IInvestmentService {
   fetchAll(
     all: boolean,
     environment: UserEnvironment,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ investments: IInvestment[] }>
 
-  get(investmentId: AppObjectId): Promise<IInvestmentObject>
+  get(investmentId: ObjectId): Promise<IInvestmentObject>
 
-  delete(investmentId: AppObjectId): THttpResponse<{ investment: IInvestment }>
+  delete(investmentId: ObjectId): THttpResponse<{ investment: IInvestment }>
 
   updateStatus(
-    investmentId: AppObjectId,
+    investmentId: ObjectId,
     status: InvestmentStatus,
     sendNotice?: boolean
   ): Promise<{
-    model: AppRepository<IInvestment>
+    model: IInvestment
     instances: TUpdateInvestmentStatus
   }>
 
   forceFund(
-    investmentId: AppObjectId,
+    investmentId: ObjectId,
     amount: number
   ): THttpResponse<{ investment: IInvestment }>
 
   refill(
-    investmentId: AppObjectId,
+    investmentId: ObjectId,
     gas: number
   ): THttpResponse<{ investment: IInvestment }>
 }

@@ -1,6 +1,6 @@
 import { ReferralTypes } from '@/modules/referral/referral.enum'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
-import { Document, Types } from 'mongoose'
+import { Document, ObjectId } from 'mongoose'
 import { THttpResponse } from '@/modules/http/http.type'
 import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
 import { ITransaction } from '@/modules/transaction/transaction.interface'
@@ -19,9 +19,6 @@ export interface IReferralObject extends IAppObject {
 }
 
 export interface IReferral extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
   rate: number
   type: ReferralTypes
   referrer: IUser['_id']
@@ -34,12 +31,12 @@ export interface IReferral extends Document {
 export interface IReferralEarnings {
   user: {
     username: string
-    _id: Types.ObjectId
+    _id: ObjectId
     createdAt: Date
   }
   referrer: {
     username: string
-    _id: Types.ObjectId
+    _id: ObjectId
   }
   earnings: number
 }
@@ -47,7 +44,7 @@ export interface IReferralEarnings {
 export interface IReferralLeaderboard {
   user: {
     username: string
-    _id: Types.ObjectId
+    _id: ObjectId
     createdAt: Date
   }
   earnings: number
@@ -77,12 +74,12 @@ export interface IReferralService {
 
   fetchAll(
     fromAllAccounts: boolean,
-    userId?: Types.ObjectId
+    userId?: ObjectId
   ): THttpResponse<{ referralTransactions: IReferral[] }>
 
   earnings(
     fromAllAccounts: boolean,
-    userId?: Types.ObjectId
+    userId?: ObjectId
   ): THttpResponse<{ referralEarnings: IReferralEarnings[] }>
 
   leaderboard(): THttpResponse<{ referralLeaderboard: IReferralLeaderboard[] }>

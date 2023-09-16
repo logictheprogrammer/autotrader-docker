@@ -1,7 +1,6 @@
 import { IUser } from '@/modules/user/user.interface'
-import AppDocument from '../app/app.document'
 
-export interface IResetPassword extends AppDocument {
+export interface IResetPassword extends Document {
   key: string
   token: string
   expires: number

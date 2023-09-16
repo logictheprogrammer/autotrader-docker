@@ -19,25 +19,29 @@ import { ITransactionInstance } from '@/modules/transactionManager/transactionMa
 import { IAppObject } from '@/modules/app/app.interface'
 import { UserEnvironment } from '@/modules/user/user.enum'
 import { NotificationStatus } from './notification.type'
-import AppRepository from '../app/app.repository'
-import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class NotificationService implements INotificationService {
-  private notificationRepository = new AppRepository<INotification>(
-    notificationModel
-  )
-  private userRepository = new AppRepository<IUser>(userModel)
+  private notificationModel = notificationModel
+  private userModel = userModel
 
   private find = async (
-    notificationId: string | AppObjectId,
+    notificationId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<INotification> => {
-    const notification = await this.notificationRepository
-      .findById(notificationId, fromAllAccounts, userId)
-      .collect()
+    let notification
+
+    if (fromAllAccounts) {
+      notification = await this.notificationModel.findById(notificationId)
+    } else {
+      notification = await this.notificationModel.findOne({
+        _id: notificationId,
+        user: userId,
+      })
+    }
 
     if (!notification) throw new HttpException(404, 'Notification not found')
 
@@ -54,7 +58,7 @@ class NotificationService implements INotificationService {
     user?: IUserObject
   ): TTransaction<INotificationObject, INotification> {
     try {
-      const notification = this.notificationRepository.create({
+      const notification = new this.notificationModel({
         user: user ? user._id : undefined,
         userObject: user,
         message,
@@ -66,13 +70,11 @@ class NotificationService implements INotificationService {
         environment,
       })
 
-      const unsavedNotification = notification.collectUnsaved()
-
       return {
-        object: unsavedNotification,
+        object: notification.toObject({ getters: true }),
         instance: {
           model: notification,
-          onFailed: `Delete the notification with an id of (${unsavedNotification._id})`,
+          onFailed: `Delete the notification with an id of (${notification._id})`,
           async callback() {
             await notification.deleteOne()
           },
@@ -122,8 +124,8 @@ class NotificationService implements INotificationService {
 
   public delete = async (
     fromAllAccounts: boolean,
-    notificationId: AppObjectId,
-    userId?: AppObjectId
+    notificationId: ObjectId,
+    userId?: ObjectId
   ): THttpResponse<{ notification: INotification }> => {
     try {
       const notification = await this.find(
@@ -148,8 +150,8 @@ class NotificationService implements INotificationService {
   }
 
   public read = async (
-    notificationId: AppObjectId,
-    userId: AppObjectId
+    notificationId: ObjectId,
+    userId: ObjectId
   ): THttpResponse<{ notification: INotification }> => {
     try {
       const notification = await this.find(notificationId, false, userId)
@@ -173,8 +175,8 @@ class NotificationService implements INotificationService {
 
   public fetch = async (
     fromAllAccounts: boolean,
-    notificationId: AppObjectId,
-    userId: AppObjectId
+    notificationId: ObjectId,
+    userId: ObjectId
   ): THttpResponse<{ notification: INotification }> => {
     try {
       const notification = await this.find(
@@ -200,25 +202,27 @@ class NotificationService implements INotificationService {
     fromAllAccounts: boolean,
     environment: UserEnvironment,
     forWho: NotificationForWho,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ notifications: INotification[] }> => {
     try {
-      const notifications = await this.notificationRepository
-        .find({ environment, forWho }, fromAllAccounts, {
-          user: userId,
-        })
-        .sort({ createdAt: -1 })
-        .select('-userObject -categoryObject')
-        .collectAll()
+      let notifications
 
       if (fromAllAccounts && forWho === NotificationForWho.USER) {
-        await this.notificationRepository.populateAll(
-          notifications,
-          'user',
-          'userObject',
-          'username isDeleted',
-          this.userRepository
-        )
+        notifications = await this.notificationModel
+          .find({ environment, forWho })
+          .sort({ createdAt: -1 })
+          .select('-userObject -categoryObject')
+          .populate('user', 'username isDeleted')
+      } else if (fromAllAccounts) {
+        notifications = await this.notificationModel
+          .find({ environment, forWho })
+          .sort({ createdAt: -1 })
+          .select('-userObject -categoryObject')
+      } else {
+        notifications = await this.notificationModel
+          .find({ environment, forWho, user: userId })
+          .sort({ createdAt: -1 })
+          .select('-userObject -categoryObject')
       }
 
       return {

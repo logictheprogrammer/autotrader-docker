@@ -1,7 +1,7 @@
 import { THttpResponse } from '@/modules/http/http.type'
 import { IUser } from '@/modules/user/user.interface'
 import { UserRole, UserStatus } from '@/modules/user/user.enum'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId } from 'mongoose'
 
 export interface IAuthService {
   register(
@@ -27,7 +27,7 @@ export interface IAuthService {
   >
 
   updatePassword(
-    userId: AppObjectId,
+    userId: ObjectId,
     password: string,
     oldPassword?: string
   ): THttpResponse<{ user: IUser }>

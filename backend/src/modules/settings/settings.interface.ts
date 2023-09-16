@@ -1,3 +1,3 @@
-import AppDocument from '../app/app.document'
+import { Document } from 'mongoose'
 
-export interface ISettings extends AppDocument {}
+export interface ISettings extends Document {}

@@ -7,7 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class WithdrawalMethodController implements IAppController {
@@ -130,7 +130,7 @@ class WithdrawalMethodController implements IAppController {
   ): Promise<void> => {
     try {
       const withdrawalMethodId = req.params
-        .withdrawalMethodId as unknown as AppObjectId
+        .withdrawalMethodId as unknown as ObjectId
       const responce = await this.withdrawalMethodService.delete(
         withdrawalMethodId
       )

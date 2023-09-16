@@ -36,14 +36,13 @@ import HttpException from '@/modules/http/http.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import AppRepository from '../app/app.repository'
-import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class WithdrawalService implements IWithdrawalService {
-  private withdrawalRepository = new AppRepository<IWithdrawal>(withdrawalModel)
-  private userRepository = new AppRepository<IUser>(userModel)
+  private withdrawalModel = withdrawalModel
+  private userModel = userModel
 
   public constructor(
     @Inject(ServiceToken.WITHDRAWAL_METHOD_SERVICE)
@@ -58,13 +57,20 @@ class WithdrawalService implements IWithdrawalService {
   ) {}
 
   private find = async (
-    withdrawalId: AppObjectId,
+    withdrawalId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<IWithdrawal> => {
-    const withdrawal = await this.withdrawalRepository
-      .findById(withdrawalId, fromAllAccounts, userId)
-      .collect()
+    let withdrawal
+
+    if (fromAllAccounts) {
+      withdrawal = await this.withdrawalModel.findById(withdrawalId)
+    } else {
+      withdrawal = await this.withdrawalModel.findOne({
+        _id: withdrawalId,
+        user: userId,
+      })
+    }
 
     if (!withdrawal)
       throw new HttpException(404, 'Withdrawal transaction not found')
@@ -73,7 +79,7 @@ class WithdrawalService implements IWithdrawalService {
   }
 
   public async _updateStatusTransaction(
-    withdrawalId: AppObjectId,
+    withdrawalId: ObjectId,
     status: WithdrawalStatus
   ): TTransaction<IWithdrawalObject, IWithdrawal> {
     const withdrawal = await this.find(withdrawalId)
@@ -88,18 +94,14 @@ class WithdrawalService implements IWithdrawalService {
 
     withdrawal.status = status
 
-    const newWithdrawal = this.withdrawalRepository.toClass(withdrawal)
-
-    const unsavedWithdrawal = newWithdrawal.collectUnsaved()
-
     return {
-      object: unsavedWithdrawal,
+      object: withdrawal.toObject({ getters: true }),
       instance: {
-        model: newWithdrawal,
-        onFailed: `Set the status of the withdrawal with an id of (${unsavedWithdrawal._id}) to (${oldStatus})`,
+        model: withdrawal,
+        onFailed: `Set the status of the withdrawal with an id of (${withdrawal._id}) to (${oldStatus})`,
         callback: async () => {
-          unsavedWithdrawal.status = oldStatus
-          await this.withdrawalRepository.save(unsavedWithdrawal)
+          withdrawal.status = oldStatus
+          await withdrawal.save()
         },
       },
     }
@@ -112,7 +114,7 @@ class WithdrawalService implements IWithdrawalService {
     address: string,
     amount: number
   ): TTransaction<IWithdrawalObject, IWithdrawal> {
-    const withdrawal = this.withdrawalRepository.create({
+    const withdrawal = new this.withdrawalModel({
       withdrawalMethod: withdrawalMethod._id,
       withdrawalMethodObject: withdrawalMethod,
       user: user._id,
@@ -124,13 +126,11 @@ class WithdrawalService implements IWithdrawalService {
       status: WithdrawalStatus.PENDING,
     })
 
-    const unsavedWithdrawal = withdrawal.collectUnsaved()
-
     return {
-      object: unsavedWithdrawal,
+      object: withdrawal.toObject({ getters: true }),
       instance: {
         model: withdrawal,
-        onFailed: `Delete the withdrawal with an id of (${unsavedWithdrawal._id})`,
+        onFailed: `Delete the withdrawal with an id of (${withdrawal._id})`,
         async callback() {
           await withdrawal.deleteOne()
         },
@@ -139,8 +139,8 @@ class WithdrawalService implements IWithdrawalService {
   }
 
   public create = async (
-    withdrawalMethodId: AppObjectId,
-    userId: AppObjectId,
+    withdrawalMethodId: ObjectId,
+    userId: ObjectId,
     account: UserAccount,
     address: string,
     amount: number
@@ -207,7 +207,7 @@ class WithdrawalService implements IWithdrawalService {
 
       await this.transactionManagerService.execute(transactionInstances)
 
-      const rawWithdrawalIntance = withdrawalInstance.model.collectRaw()
+      const rawWithdrawalIntance = withdrawalInstance.model
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -223,15 +223,15 @@ class WithdrawalService implements IWithdrawalService {
   }
 
   public async get(
-    withdrawalId: AppObjectId,
+    withdrawalId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<IWithdrawalObject> {
     return (await this.find(withdrawalId, fromAllAccounts, userId)).toObject()
   }
 
   public delete = async (
-    withdrawalId: AppObjectId
+    withdrawalId: ObjectId
   ): THttpResponse<{ withdrawal: IWithdrawal }> => {
     try {
       const withdrawal = await this.find(withdrawalId)
@@ -254,7 +254,7 @@ class WithdrawalService implements IWithdrawalService {
   }
 
   public updateStatus = async (
-    withdrawalId: AppObjectId,
+    withdrawalId: ObjectId,
     status: WithdrawalStatus
   ): THttpResponse<{ withdrawal: IWithdrawal }> => {
     try {
@@ -303,14 +303,9 @@ class WithdrawalService implements IWithdrawalService {
 
       await this.transactionManagerService.execute(transactionInstances)
 
-      const rawWithdrawalIntance = withdrawalInstance.model.collectRaw()
+      const rawWithdrawalIntance = withdrawalInstance.model
 
-      await this.withdrawalRepository.populate(
-        rawWithdrawalIntance,
-        'user',
-        'username isDeleted',
-        this.userRepository
-      )
+      await rawWithdrawalIntance.populate('user', 'username isDeleted')
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -327,8 +322,8 @@ class WithdrawalService implements IWithdrawalService {
 
   public fetch = async (
     fromAllAccounts: boolean,
-    withdrawalId: AppObjectId,
-    userId?: AppObjectId
+    withdrawalId: ObjectId,
+    userId?: ObjectId
   ): THttpResponse<{ withdrawal: IWithdrawal }> => {
     try {
       const withdrawal = await this.find(withdrawalId, fromAllAccounts, userId)
@@ -348,24 +343,24 @@ class WithdrawalService implements IWithdrawalService {
 
   public fetchAll = async (
     all: boolean,
-    userId: AppObjectId
+    userId: ObjectId
   ): THttpResponse<{ withdrawals: IWithdrawal[] }> => {
     try {
-      const withdrawals = await this.withdrawalRepository
-        .find({}, all, {
-          user: userId,
-        })
-        .sort({ createdAt: -1 })
-        .select('-userObject -withdrawalMethod')
-        .collectAll()
-
-      await this.withdrawalRepository.populateAll(
-        withdrawals,
-        'user',
-        'userObject',
-        'username isDeleted',
-        this.userRepository
-      )
+      let withdrawals
+      if (all) {
+        withdrawals = await this.withdrawalModel
+          .find()
+          .sort({ createdAt: -1 })
+          .select('-userObject -withdrawalMethod')
+          .populate('user', 'username isDeleted')
+      } else {
+        withdrawals = await this.withdrawalModel
+          .find({
+            user: userId,
+          })
+          .sort({ createdAt: -1 })
+          .select('-userObject -withdrawalMethod')
+      }
 
       return {
         status: HttpResponseStatus.SUCCESS,

@@ -8,7 +8,7 @@ import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 import { PlanStatus } from '@/modules/plan/plan.enum'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class PlanController implements IAppController {
@@ -83,7 +83,7 @@ class PlanController implements IAppController {
         assetType,
       } = req.body
 
-      const assets = req.body.assets as AppObjectId[]
+      const assets = req.body.assets as ObjectId[]
 
       const response = await this.planService.create(
         'icon.png',
@@ -127,7 +127,7 @@ class PlanController implements IAppController {
         assetType,
       } = req.body
 
-      const assets = req.body.assets as AppObjectId[]
+      const assets = req.body.assets as ObjectId[]
 
       const response = await this.planService.update(
         planId,
@@ -175,7 +175,7 @@ class PlanController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const planId = req.params.planId as unknown as AppObjectId
+      const planId = req.params.planId as unknown as ObjectId
 
       const response = await this.planService.delete(planId)
 

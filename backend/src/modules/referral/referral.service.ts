@@ -31,14 +31,13 @@ import AppException from '@/modules/app/app.exception'
 import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import FormatString from '@/utils/formats/formatString'
-import AppRepository from '../app/app.repository'
-import AppObjectId from '../app/app.objectId'
 import userModel from '../user/user.model'
+import { ObjectId, isValidObjectId } from 'mongoose'
 
 @Service()
 class ReferralService implements IReferralService {
-  private referralRepository = new AppRepository<IReferral>(referralModel)
-  private userRepository = new AppRepository<IUser>(userModel)
+  private referralModel = referralModel
+  private userModel = userModel
 
   constructor(
     @Inject(ServiceToken.NOTIFICATION_SERVICE)
@@ -50,32 +49,26 @@ class ReferralService implements IReferralService {
     private transactionService: ITransactionService
   ) {}
 
-  private async find(
-    referralId: AppObjectId,
-    fromAllAccounts: boolean = true,
-    userId?: AppObjectId
-  ): Promise<IReferral> {
-    const referral = await this.referralRepository
-      .findById(referralId, fromAllAccounts, userId)
-      .save()
-
-    if (!referral) throw new HttpException(404, 'Referral not found')
-
-    return referral
-  }
-
-  private findAll(
+  private async findAll(
     fromAllAccounts: boolean,
-    userId?: AppObjectId
-  ): AppRepository<IReferral> {
+    userId?: ObjectId
+  ): Promise<IReferral[]> {
     try {
-      const referralTransactions = this.referralRepository.find(
-        {},
-        fromAllAccounts,
-        {
-          referrer: userId,
-        }
-      )
+      let referralTransactions
+
+      if (fromAllAccounts) {
+        referralTransactions = await this.referralModel
+          .find()
+          .select('-userObject -referrerObject')
+          .populate('user', 'username isDeleted createdAt')
+          .populate('referral', 'username isDeleted')
+      } else {
+        referralTransactions = await this.referralModel
+          .find({
+            referrer: userId,
+          })
+          .select('-userObject -referrerObject')
+      }
 
       return referralTransactions
     } catch (err: any) {
@@ -108,7 +101,7 @@ class ReferralService implements IReferralService {
     rate: number,
     earn: number
   ): TTransaction<IReferralObject, IReferral> {
-    const referral = this.referralRepository.create({
+    const referral = new this.referralModel({
       rate,
       type,
       referrer: referrer._id,
@@ -118,13 +111,11 @@ class ReferralService implements IReferralService {
       amount: earn,
     })
 
-    const unsavedReferral = referral.collectUnsaved()
-
     return {
-      object: unsavedReferral,
+      object: referral.toObject({ getters: true }),
       instance: {
         model: referral,
-        onFailed: `Delete Referral Transaction with an id of (${unsavedReferral._id})`,
+        onFailed: `Delete Referral Transaction with an id of (${referral._id})`,
         async callback() {
           await referral.deleteOne()
         },
@@ -140,8 +131,7 @@ class ReferralService implements IReferralService {
     try {
       const userReferrerId = user.referred
       try {
-        if (!userReferrerId) throw new HttpException(404, 'Referrer not found')
-        if (!AppObjectId.isValid(userReferrerId))
+        if (!userReferrerId || !isValidObjectId(userReferrerId))
           throw new HttpException(404, 'Referrer not found')
       } catch (error) {
         throw new AllowedException(error)
@@ -237,30 +227,10 @@ class ReferralService implements IReferralService {
 
   public fetchAll = async (
     fromAllAccounts: boolean,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ referralTransactions: IReferral[] }> => {
     try {
       const referralTransactions = await this.findAll(fromAllAccounts, userId)
-        .select('-userObject -referrerObject')
-        .collectAll()
-
-      await this.referralRepository.populateAll(
-        referralTransactions,
-        'user',
-        'userObject',
-        'username isDeleted',
-        this.userRepository
-      )
-
-      if (fromAllAccounts) {
-        await this.referralRepository.populateAll(
-          referralTransactions,
-          'referrer',
-          'referrerObject',
-          'username isDeleted',
-          this.userRepository
-        )
-      }
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -277,28 +247,10 @@ class ReferralService implements IReferralService {
 
   public earnings = async (
     fromAllAccounts: boolean,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ referralEarnings: IReferralEarnings[] }> => {
     try {
       const referralTransactions = await this.findAll(fromAllAccounts, userId)
-        .select('-userObject -referrerObject')
-        .collectAll()
-
-      await this.referralRepository.populateAll(
-        referralTransactions,
-        'user',
-        'userObject',
-        'username isDeleted createdAt',
-        this.userRepository
-      )
-
-      await this.referralRepository.populateAll(
-        referralTransactions,
-        'referrer',
-        'referrerObject',
-        'username isDeleted',
-        this.userRepository
-      )
 
       const referralEarnings: IReferralEarnings[] = []
 
@@ -342,16 +294,6 @@ class ReferralService implements IReferralService {
   }> {
     try {
       const referralTransactions = await this.findAll(true)
-        .select('-userObject -referrerObject -user')
-        .collectAll()
-
-      await this.referralRepository.populateAll(
-        referralTransactions,
-        'referrer',
-        'referrerObject',
-        'username isDeleted createdAt',
-        this.userRepository
-      )
 
       const referralLeaderboard: IReferralLeaderboard[] = []
 

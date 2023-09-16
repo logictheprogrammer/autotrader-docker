@@ -1,7 +1,7 @@
 import { IUser } from '@/modules/user/user.interface'
-import AppDocument from '../app/app.document'
+import { Document } from 'mongoose'
 
-export interface IEmailVerification extends AppDocument {
+export interface IEmailVerification extends Document {
   key: string
   token: string
   expires: number

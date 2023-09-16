@@ -10,30 +10,35 @@ import ServiceToken from '@/utils/enums/serviceToken'
 import { IAssetService } from '@/modules/asset/asset.interface'
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { UserRole } from '@/modules/user/user.enum'
-import AppRepository from '../app/app.repository'
-import AppObjectId from '../app/app.objectId'
 import Helpers from '@/utils/helpers/helpers'
 import { IPair } from '../pair/pair.interface'
 import pairModel from '../pair/pair.model'
+import { ObjectId } from 'mongoose'
+import { IInvestment } from '../investment/investment.interface'
 
 @Service()
 class PlanService implements IPlanService {
-  private planRepository = new AppRepository<IPlan>(planModel)
-  private pairRepository = new AppRepository<IPair>(pairModel)
+  private planModel = planModel
+  private pairModel = pairModel
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)
-    private assetService: IAssetService
+    private assetService: IAssetService,
+    @Inject(ServiceToken.INVESTMENT_SERVICE)
+    private investmentService: IInvestment
   ) {}
 
   private async find(
-    planId: AppObjectId,
+    planId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): Promise<IPlan> {
-    const plan = await this.planRepository
-      .findById(planId, fromAllAccounts, userId)
-      .collect()
+    let plan
+    if (fromAllAccounts) {
+      plan = await this.planModel.findById(planId)
+    } else {
+      plan = await this.planModel.findOne({ _id: planId, user: userId })
+    }
 
     if (!plan) throw new HttpException(404, 'Plan not found')
 
@@ -53,7 +58,7 @@ class PlanService implements IPlanService {
     gas: number,
     description: string,
     assetType: AssetType,
-    assets: AppObjectId[]
+    assets: ObjectId[]
   ): THttpResponse<{ plan: IPlan }> {
     try {
       for (const assetId of assets) {
@@ -66,23 +71,21 @@ class PlanService implements IPlanService {
           )
       }
 
-      const plan = await this.planRepository
-        .create({
-          icon,
-          name,
-          engine,
-          minAmount,
-          maxAmount,
-          minProfit,
-          maxProfit,
-          duration,
-          dailyTrades,
-          gas,
-          description,
-          assetType,
-          assets,
-        })
-        .save()
+      const plan = await this.planModel.create({
+        icon,
+        name,
+        engine,
+        minAmount,
+        maxAmount,
+        minProfit,
+        maxProfit,
+        duration,
+        dailyTrades,
+        gas,
+        description,
+        assetType,
+        assets,
+      })
 
       const assetsObj = []
 
@@ -106,74 +109,68 @@ class PlanService implements IPlanService {
     }
   }
 
-  public async autoTrade(): Promise<void> {
-    const runningPlans = await this.planRepository
-      .find({ investors: { $exists: true, $ne: [] } })
-      .collectAll()
+  // public async autoTrade(): Promise<void> {
+  //   const runningPlans = await this.planModel
+  //     .find({
+  //       investors: { $exists: true, $ne: [] },
+  //     })
+  //     .populate('pairs')
 
-    await this.planRepository.populateAll(
-      runningPlans,
-      'pairs',
-      'pairObject',
-      '*',
-      this.pairRepository
-    )
+  //   for (const plan of runningPlans) {
+  //     // get pair
+  //   }
 
-    for (const plan of runningPlans) {
-      // get pair
-    }
+  //   const investment = await this.investmentService.get(investmentId)
+  //   const pair = await this.pairService.get(pairId)
+  //   const user = await this.userService.get(investment.user)
 
-    const investment = await this.investmentService.get(investmentId)
-    const pair = await this.pairService.get(pairId)
-    const user = await this.userService.get(investment.user)
+  //   if (!pair) throw new HttpException(404, 'The selected pair no longer exist')
 
-    if (!pair) throw new HttpException(404, 'The selected pair no longer exist')
+  //   if (pair.assetType !== investment.planObject.assetType)
+  //     throw new HttpException(
+  //       400,
+  //       'The pair is not compatible with this investment plan'
+  //     )
 
-    if (pair.assetType !== investment.planObject.assetType)
-      throw new HttpException(
-        400,
-        'The pair is not compatible with this investment plan'
-      )
+  //   const minProfit =
+  //     investment.planObject.minProfit /
+  //     (investment.planObject.dailyTrades * investment.planObject.duration)
+  //   const maxProfit =
+  //     investment.planObject.maxProfit /
+  //     (investment.planObject.dailyTrades * investment.planObject.duration)
 
-    const minProfit =
-      investment.planObject.minProfit /
-      (investment.planObject.dailyTrades * investment.planObject.duration)
-    const maxProfit =
-      investment.planObject.maxProfit /
-      (investment.planObject.dailyTrades * investment.planObject.duration)
+  //   const stakeRate = Helpers.getRandomValue(
+  //     TradeService.minStakeRate,
+  //     TradeService.maxStakeRate
+  //   )
 
-    const stakeRate = Helpers.getRandomValue(
-      TradeService.minStakeRate,
-      TradeService.maxStakeRate
-    )
+  //   const spread = stakeRate * minProfit
 
-    const spread = stakeRate * minProfit
+  //   const breakpoint = spread * TradeService.profitBreakpoint
 
-    const breakpoint = spread * TradeService.profitBreakpoint
+  //   const investmentPercentage = this.mathService.dynamicRange(
+  //     minProfit,
+  //     maxProfit,
+  //     spread,
+  //     breakpoint,
+  //     TradeService.profitProbability
+  //   )
 
-    const investmentPercentage = this.mathService.dynamicRange(
-      minProfit,
-      maxProfit,
-      spread,
-      breakpoint,
-      TradeService.profitProbability
-    )
+  //   const { model: trade } = (
+  //     await this.create(user, investment, pair, stakeRate, investmentPercentage)
+  //   ).instance
 
-    const { model: trade } = (
-      await this.create(user, investment, pair, stakeRate, investmentPercentage)
-    ).instance
+  //   await trade.save()
 
-    await trade.save()
-
-    return {
-      status: HttpResponseStatus.SUCCESS,
-      message: 'Trade created successfully',
-      data: { trade: trade.collectRaw() },
-    }
-  }
+  //   return {
+  //     status: HttpResponseStatus.SUCCESS,
+  //     message: 'Trade created successfully',
+  //     data: { trade: trade.collectRaw() },
+  //   }
+  // }
 
   public async update(
-    planId: AppObjectId,
+    planId: ObjectId,
     icon: string,
     name: string,
     engine: string,
@@ -186,7 +183,7 @@ class PlanService implements IPlanService {
     gas: number,
     description: string,
     assetType: AssetType,
-    assets: AppObjectId[]
+    assets: ObjectId[]
   ): THttpResponse<{ plan: IPlan }> {
     try {
       for (const assetId of assets) {
@@ -224,7 +221,7 @@ class PlanService implements IPlanService {
 
       plan.assets = assetsObj
 
-      await this.planRepository.save(plan)
+      await plan.save()
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -240,7 +237,7 @@ class PlanService implements IPlanService {
   }
 
   public async updateStatus(
-    planId: AppObjectId,
+    planId: ObjectId,
     status: PlanStatus
   ): THttpResponse<{ plan: IPlan }> {
     try {
@@ -263,8 +260,8 @@ class PlanService implements IPlanService {
     }
   }
 
-  public async get(planId: AppObjectId): Promise<IPlanObject | null> {
-    const plan = await this.planRepository.findById(planId).collect()
+  public async get(planId: ObjectId): Promise<IPlanObject | null> {
+    const plan = await this.planModel.findById(planId)
 
     if (!plan) return null
 
@@ -277,12 +274,12 @@ class PlanService implements IPlanService {
 
     plan.assets = assetsObj
 
-    return this.planRepository.toObject(plan)
+    return plan.toObject({ getters: true })
   }
 
-  public async delete(planId: AppObjectId): THttpResponse<{ plan: IPlan }> {
+  public async delete(planId: ObjectId): THttpResponse<{ plan: IPlan }> {
     try {
-      const plan = await this.planRepository.findByIdAndDelete(planId)
+      const plan = await this.planModel.findByIdAndDelete(planId)
       if (!plan) throw new HttpException(404, 'Plan not found')
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -298,13 +295,11 @@ class PlanService implements IPlanService {
     try {
       let plans
       if (role > UserRole.USER) {
-        plans = await this.planRepository.find().collectAll()
+        plans = await this.planModel.find()
       } else {
-        plans = await this.planRepository
-          .find({
-            status: { $ne: PlanStatus.SUSPENDED },
-          })
-          .collectAll()
+        plans = await this.planModel.find({
+          status: { $ne: PlanStatus.SUSPENDED },
+        })
       }
 
       for (const plan of plans) {

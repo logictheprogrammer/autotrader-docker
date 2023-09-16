@@ -8,7 +8,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class TransferController implements IAppController {
@@ -98,7 +98,7 @@ class TransferController implements IAppController {
     ): Promise<Response | void> => {
       try {
         let response
-        const transferId = req.params.transferId as unknown as AppObjectId
+        const transferId = req.params.transferId as unknown as ObjectId
         if (isAdmin) {
           response = await this.transferService.fetch(true, transferId)
         } else {
@@ -154,7 +154,7 @@ class TransferController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const transferId = req.params.transferId as unknown as AppObjectId
+      const transferId = req.params.transferId as unknown as ObjectId
       const response = await this.transferService.delete(transferId)
       res.status(200).json(response)
     } catch (err: any) {

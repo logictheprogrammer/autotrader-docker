@@ -6,13 +6,9 @@ import {
 } from '@/modules/activity/activity.enum'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { THttpResponse } from '@/modules/http/http.type'
-import AppObjectId from '../app/app.objectId'
-import AppDocument from '../app/app.document'
+import { ObjectId } from 'mongoose'
 
-export interface IActivity extends AppDocument {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
+export interface IActivity extends Document {
   user: IUser['_id']
   userObject: IUserObject
   category: ActivityCategory
@@ -34,26 +30,26 @@ export interface IActivityService {
   fetchAll(
     role: UserRole,
     forWho: ActivityForWho,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ activities: IActivity[] }>
 
   hide(
-    userId: AppObjectId,
-    activityId: AppObjectId,
+    userId: ObjectId,
+    activityId: ObjectId,
     forWho: ActivityForWho
   ): THttpResponse<{ activity: IActivity }>
 
-  hideAll(userId: AppObjectId, forWho: ActivityForWho): THttpResponse
+  hideAll(userId: ObjectId, forWho: ActivityForWho): THttpResponse
 
   delete(
-    activityId: AppObjectId,
+    activityId: ObjectId,
     forWho: ActivityForWho,
-    userId?: AppObjectId
+    userId?: ObjectId
   ): THttpResponse<{ activity: IActivity }>
 
   deleteAll(
     allUsers: boolean,
     forWho: ActivityForWho,
-    userId: AppObjectId
+    userId: ObjectId
   ): THttpResponse
 }

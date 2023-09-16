@@ -7,7 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId } from 'mongoose'
 
 @Service()
 class TradeController implements IAppController {
@@ -100,10 +100,12 @@ class TradeController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const { investmentId, pairId } = req.body
+      const { investmentId, pairId, stake, profit } = req.body
       const response = await this.tradeService.createManual(
         investmentId,
-        pairId
+        pairId,
+        stake,
+        profit
       )
       res.status(201).json(response)
     } catch (err: any) {
@@ -169,7 +171,7 @@ class TradeController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const tradeId = req.params.tradeId as unknown as AppObjectId
+      const tradeId = req.params.tradeId as unknown as ObjectId
       const response = await this.tradeService.delete(tradeId)
       res.status(200).json(response)
     } catch (err: any) {

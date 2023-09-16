@@ -1,3 +1,4 @@
+import { withdrawalMethodA } from './__test__/withdrawalMethod.payload'
 import { IWithdrawalMethodObject } from './withdrawalMethod.interface'
 import { Inject, Service } from 'typedi'
 import {
@@ -12,14 +13,12 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
-import AppRepository from '../app/app.repository'
-import AppObjectId from '../app/app.objectId'
+import { ObjectId } from 'mongoose'
+import { ErrorCode } from '@/utils/enums/errorCodes.enum'
 
 @Service()
 class WithdrawalMethodService implements IWithdrawalMethodService {
-  private withdrawalMethodRepository = new AppRepository<IWithdrawalMethod>(
-    withdrawalMethodModel
-  )
+  private withdrawalMethodModel = withdrawalMethodModel
 
   public constructor(
     @Inject(ServiceToken.CURRENCY_SERVICE)
@@ -27,13 +26,22 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   ) {}
 
   private find = async (
-    withdrawalMethodId: AppObjectId,
+    withdrawalMethodId: ObjectId,
     fromAllAccounts: boolean = true,
-    userId?: AppObjectId | string
+    userId?: ObjectId | string
   ): Promise<IWithdrawalMethod> => {
-    const withdrawalMethod = await this.withdrawalMethodRepository
-      .findById(withdrawalMethodId, fromAllAccounts, userId)
-      .collect()
+    let withdrawalMethod
+
+    if (fromAllAccounts) {
+      withdrawalMethod = await this.withdrawalMethodModel.findById(
+        withdrawalMethodId
+      )
+    } else {
+      withdrawalMethod = await this.withdrawalMethodModel.findOne({
+        _id: withdrawalMethodId,
+        user: userId,
+      })
+    }
 
     if (!withdrawalMethod)
       throw new HttpException(404, 'Withdrawal method not found')
@@ -42,7 +50,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   }
 
   public create = async (
-    currencyId: AppObjectId,
+    currencyId: ObjectId,
     network: string,
     fee: number,
     minWithdrawal: number
@@ -56,23 +64,27 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
 
       const currency = await this.currencyService.get(currencyId)
 
-      await this.withdrawalMethodRepository.ifExist(
-        { name: currency.name, network },
-        'This withdrawal method already exist'
-      )
+      const withdrawalMethodExist = await this.withdrawalMethodModel.findOne({
+        name: currency.name,
+        network,
+      })
 
-      const withdrawalMethod = await this.withdrawalMethodRepository
-        .create({
-          currency: currency._id,
-          name: currency.name,
-          symbol: currency.symbol,
-          logo: currency.logo,
-          network,
-          fee,
-          minWithdrawal,
-          status: WithdrawalMethodStatus.ENABLED,
-        })
-        .save()
+      if (withdrawalMethodExist)
+        throw new HttpException(
+          ErrorCode.REQUEST_CONFLICT,
+          'This withdrawal method already exist'
+        )
+
+      const withdrawalMethod = await this.withdrawalMethodModel.create({
+        currency: currency._id,
+        name: currency.name,
+        symbol: currency.symbol,
+        logo: currency.logo,
+        network,
+        fee,
+        minWithdrawal,
+        status: WithdrawalMethodStatus.ENABLED,
+      })
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Withdrawal method added successfully',
@@ -87,8 +99,8 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   }
 
   public update = async (
-    withdrawalMethodId: AppObjectId,
-    currencyId: AppObjectId,
+    withdrawalMethodId: ObjectId,
+    currencyId: ObjectId,
     network: string,
     fee: number,
     minWithdrawal: number
@@ -104,10 +116,17 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
 
       const currency = await this.currencyService.get(currencyId)
 
-      await this.withdrawalMethodRepository.ifExist(
-        { name: currency.name, network, _id: { $ne: withdrawalMethod._id } },
-        'This withdrawal method already exist'
-      )
+      const withdrawalMethodExist = await this.withdrawalMethodModel.findOne({
+        name: currency.name,
+        network,
+        _id: { $ne: withdrawalMethod._id },
+      })
+
+      if (withdrawalMethodExist)
+        throw new HttpException(
+          ErrorCode.REQUEST_CONFLICT,
+          'This withdrawal method already exist'
+        )
 
       withdrawalMethod.currency = currency._id
       withdrawalMethod.name = currency.name
@@ -133,13 +152,13 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   }
 
   public async get(
-    withdrawalMethodId: AppObjectId
+    withdrawalMethodId: ObjectId
   ): Promise<IWithdrawalMethodObject> {
     return (await this.find(withdrawalMethodId)).toObject()
   }
 
   public delete = async (
-    withdrawalMethodId: AppObjectId
+    withdrawalMethodId: ObjectId
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }> => {
     try {
       const withdrawalMethod = await this.find(withdrawalMethodId)
@@ -159,7 +178,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   }
 
   public updateStatus = async (
-    withdrawalMethodId: AppObjectId,
+    withdrawalMethodId: ObjectId,
     status: WithdrawalMethodStatus
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }> => {
     try {
@@ -188,15 +207,11 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
       let withdrawalMethods: IWithdrawalMethod[]
 
       if (all) {
-        withdrawalMethods = await this.withdrawalMethodRepository
-          .find()
-          .collectAll()
+        withdrawalMethods = await this.withdrawalMethodModel.find()
       } else {
-        withdrawalMethods = await this.withdrawalMethodRepository
-          .find({
-            status: WithdrawalMethodStatus.ENABLED,
-          })
-          .collectAll()
+        withdrawalMethods = await this.withdrawalMethodModel.find({
+          status: WithdrawalMethodStatus.ENABLED,
+        })
       }
 
       return {

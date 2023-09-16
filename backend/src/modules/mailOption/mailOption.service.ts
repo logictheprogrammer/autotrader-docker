@@ -8,25 +8,11 @@ import { THttpResponse } from '@/modules/http/http.type'
 import AppException from '@/modules/app/app.exception'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import HttpException from '@/modules/http/http.exception'
-import AppRepository from '../app/app.repository'
+import { ErrorCode } from '@/utils/enums/errorCodes.enum'
 
 @Service()
 export default class MailOptionService implements IMailOptionService {
-  private mailOptionRepository = new AppRepository<IMailOption>(mailOptionModel)
-
-  private async find(
-    mailOptionId: string,
-    fromAllAccounts: boolean = true,
-    userId?: string
-  ): Promise<IMailOption> {
-    const mailOption = await this.mailOptionRepository
-      .findById(mailOptionId, fromAllAccounts, userId)
-      .collect()
-
-    if (!mailOption) throw new HttpException(404, 'Mail Option not found')
-
-    return mailOption
-  }
+  private mailOptionModel = mailOptionModel
 
   public create = async (
     name: string,
@@ -38,24 +24,25 @@ export default class MailOptionService implements IMailOptionService {
     password: string
   ): THttpResponse<{ mailOption: IMailOption }> => {
     try {
-      await this.mailOptionRepository.ifExist(
-        {
-          $or: [{ name }, { username }],
-        },
-        'Name or Username already exist'
-      )
+      const mailOptionExist = await this.mailOptionModel.findOne({
+        $or: [{ name }, { username }],
+      })
 
-      const mailOption = await this.mailOptionRepository
-        .create({
-          name,
-          host,
-          port,
-          tls,
-          secure,
-          username,
-          password,
-        })
-        .save()
+      if (mailOptionExist)
+        throw new HttpException(
+          ErrorCode.REQUEST_CONFLICT,
+          'Name or Username already exist'
+        )
+
+      const mailOption = await this.mailOptionModel.create({
+        name,
+        host,
+        port,
+        tls,
+        secure,
+        username,
+        password,
+      })
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -72,11 +59,9 @@ export default class MailOptionService implements IMailOptionService {
 
   public get = async (mailOptionName: string): Promise<IMailOption> => {
     try {
-      const mailOption = await this.mailOptionRepository
-        .findOne({
-          name: mailOptionName,
-        })
-        .collect()
+      const mailOption = await this.mailOptionModel.findOne({
+        name: mailOptionName,
+      })
 
       if (!mailOption) throw new HttpException(404, 'Mail Option not found')
 
@@ -88,7 +73,7 @@ export default class MailOptionService implements IMailOptionService {
 
   public async getAll(): Promise<IMailOption[]> {
     try {
-      const mailOptions = await this.mailOptionRepository.find().collectAll()
+      const mailOptions = await this.mailOptionModel.find()
       return mailOptions
     } catch (err: any) {
       throw new AppException(
