@@ -1,5 +1,4 @@
 import { IActivity } from './../activity.interface'
-import AppRepository from '../../app/app.repository'
 import Helpers from '../../../utils/helpers/helpers'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../../modules/http/http.enum'
@@ -21,10 +20,7 @@ import {
   ActivityStatus,
 } from '../activity.enum'
 import { IUser } from '../../user/user.interface'
-import AppObjectId from '../../app/app.objectId'
-
-const activityRepository = new AppRepository<IActivity>(activityModel)
-const userRepository = new AppRepository<IUser>(userModel)
+import { Types } from 'mongoose'
 
 describe('Activity', () => {
   const baseUrl = '/api/activity/'
@@ -34,14 +30,14 @@ describe('Activity', () => {
       it('should return a 401 Unauthorized', async () => {
         const { statusCode, body } = await request.get(url)
 
-        expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Unauthorized')
+        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(statusCode).toBe(401)
       })
     })
     describe('given user exist', () => {
       it('should return a 200 and an empty array of logged in user visible activity logs', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -55,39 +51,33 @@ describe('Activity', () => {
       })
 
       it('should return a 200 and an array of logged in user visible activity logs', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: user._id,
-            userObject: user,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-            status: ActivityStatus.HIDDEN,
-          })
-          .save()
+        await activityModel.create({
+          user: user._id,
+          userObject: user,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+          status: ActivityStatus.HIDDEN,
+        })
 
-        const userActivity = await activityRepository
-          .create({
-            user: user._id,
-            userObject: user,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        const userActivity = await activityModel.create({
+          user: user._id,
+          userObject: user,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -116,7 +106,7 @@ describe('Activity', () => {
     const url = baseUrl + 'users'
     describe('given current user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -130,7 +120,7 @@ describe('Activity', () => {
     })
     describe('given current user is an admin', () => {
       it('should return a 200 and an empty array of all users activity logs', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -145,51 +135,43 @@ describe('Activity', () => {
         })
       })
       it('should return a 200 and an array of all users activity logs', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await userRepository.create({ ...userA, _id: userA_id })
+        await userModel.create({ ...userA, _id: userA_id })
 
-        const userActivity1 = await activityRepository
-          .create({
-            user: userA_id,
-            userObject: userA,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        const userActivity1 = await activityModel.create({
+          user: userA_id,
+          userObject: userA,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        const userActivity2 = await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        const userActivity2 = await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        const userActivity3 = await activityRepository
-          .create({
-            user: userC_id,
-            userObject: userC,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-            status: ActivityStatus.HIDDEN,
-          })
-          .save()
+        const userActivity3 = await activityModel.create({
+          user: userC_id,
+          userObject: userC,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+          status: ActivityStatus.HIDDEN,
+        })
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -212,7 +194,7 @@ describe('Activity', () => {
           userActivity1.userObject.username
         )
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(4)
       })
@@ -222,8 +204,8 @@ describe('Activity', () => {
     // const url = baseUrl + 'user/:user'
     describe('given current user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const url = baseUrl + 'user/' + new AppObjectId().toString()
-        const user = await userRepository.create(userA).save()
+        const url = baseUrl + 'user/' + new Types.ObjectId().toString()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -237,19 +219,17 @@ describe('Activity', () => {
     })
     describe('given selected user those not exist', () => {
       it('should return an empty array', async () => {
-        const url = baseUrl + 'user/' + new AppObjectId().toString()
-        const admin = await userRepository.create(adminA).save()
+        const url = baseUrl + 'user/' + new Types.ObjectId().toString()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -263,27 +243,25 @@ describe('Activity', () => {
           activities: [],
         })
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(1)
       })
     })
     describe('given selected user exist', () => {
       it('should return a 200 and an empty array of the selected users activity logs', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const url = baseUrl + 'user/' + user._id
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -297,35 +275,31 @@ describe('Activity', () => {
           activities: [],
         })
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(1)
       })
       it('should return a 200 and an array of the selected users activity logs', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const url = baseUrl + 'user/' + user._id
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const userActivity = await activityRepository
-          .create({
-            user: user._id,
-            userObject: user,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        const userActivity = await activityModel.create({
+          user: user._id,
+          userObject: user,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -348,7 +322,7 @@ describe('Activity', () => {
           userActivity.userObject.username
         )
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(2)
       })
@@ -358,7 +332,7 @@ describe('Activity', () => {
     const url = baseUrl + 'admin'
     describe('given current user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -372,38 +346,32 @@ describe('Activity', () => {
     })
     describe('given current user is an admin', () => {
       it('should return a 200 and an empty array of the current admin activity logs', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -417,53 +385,45 @@ describe('Activity', () => {
           activities: [],
         })
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(3)
       })
       it('should return a 200 and not empty array of the current admin activity logs', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        const adminActivity = await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        const adminActivity = await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -486,7 +446,7 @@ describe('Activity', () => {
           adminActivity.userObject.username
         )
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(4)
       })
@@ -496,7 +456,7 @@ describe('Activity', () => {
     // const url = baseUrl + 'hide/:activityId'
     describe('given user is not logged in', () => {
       it('should return a 401 Unauthorized', async () => {
-        const url = baseUrl + 'hide/' + new AppObjectId().toString()
+        const url = baseUrl + 'hide/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request.patch(url)
 
@@ -507,20 +467,18 @@ describe('Activity', () => {
     })
     describe('given activity log those not exist', () => {
       it('should return a 404', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
-        await activityRepository
-          .create({
-            user: user._id,
-            userObject: user,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: user._id,
+          userObject: user,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        const url = baseUrl + 'hide/' + new AppObjectId().toString()
+        const url = baseUrl + 'hide/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .patch(url)
@@ -530,25 +488,23 @@ describe('Activity', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Activity not found')
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(1)
       })
     })
     describe('given activity log those not belongs to current user', () => {
       it('should return a 404', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
-        const anotherUserActivity = await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        const anotherUserActivity = await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const url = baseUrl + 'hide/' + anotherUserActivity._id
 
@@ -560,25 +516,23 @@ describe('Activity', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Activity not found')
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(1)
       })
     })
     describe('hide selected activity log', () => {
       it('should return a 200 and hide the selected activity log', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
-        const userActivity = await activityRepository
-          .create({
-            user: user._id,
-            userObject: user,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        const userActivity = await activityModel.create({
+          user: user._id,
+          userObject: user,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const url = baseUrl + 'hide/' + userActivity._id
 
@@ -616,30 +570,26 @@ describe('Activity', () => {
     })
     describe('given no visible activity log exist', () => {
       it('should return a 404', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
-        await activityRepository
-          .create({
-            user: user._id,
-            userObject: user,
-            category: ActivityCategory.PROFILE,
-            status: ActivityStatus.HIDDEN,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: user._id,
+          userObject: user,
+          category: ActivityCategory.PROFILE,
+          status: ActivityStatus.HIDDEN,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: user._id,
-            userObject: user,
-            category: ActivityCategory.PROFILE,
-            status: ActivityStatus.HIDDEN,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: user._id,
+          userObject: user,
+          category: ActivityCategory.PROFILE,
+          status: ActivityStatus.HIDDEN,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const { statusCode, body } = await request
           .patch(url)
@@ -649,35 +599,31 @@ describe('Activity', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('No Activity log found')
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(2)
       })
     })
     describe('hide all user activity logs', () => {
       it('should return a 200 and hide all activity logs of current user', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
-        await activityRepository
-          .create({
-            user: user._id,
-            userObject: user,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: user._id,
+          userObject: user,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: user._id,
-            userObject: user,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: user._id,
+          userObject: user,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const { statusCode, body } = await request
           .patch(url)
@@ -687,7 +633,7 @@ describe('Activity', () => {
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
         expect(body.message).toBe('Activity logs deleted successfully')
 
-        const activitiesCount = await activityRepository.count({
+        const activitiesCount = await activityModel.count({
           status: ActivityStatus.HIDDEN,
         })
 
@@ -699,10 +645,10 @@ describe('Activity', () => {
     // const url = baseUrl + 'delete/:activityId'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
-        const url = baseUrl + 'delete/' + new AppObjectId().toString()
+        const url = baseUrl + 'delete/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -715,20 +661,18 @@ describe('Activity', () => {
     })
     describe('given activity log those not exist', () => {
       it('should return a 404', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        const url = baseUrl + 'delete/' + new AppObjectId().toString()
+        const url = baseUrl + 'delete/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -738,25 +682,23 @@ describe('Activity', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Activity not found')
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(1)
       })
     })
     describe('delete selected activity log', () => {
       it('should return a 200 and hide the selected activity log', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const activity = await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        const activity = await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const url = baseUrl + 'delete/' + activity._id
 
@@ -778,7 +720,7 @@ describe('Activity', () => {
           },
         })
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(0)
       })
@@ -788,10 +730,10 @@ describe('Activity', () => {
     // const url = baseUrl + 'delete/user/:userId'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
-        const url = baseUrl + 'delete/user/' + new AppObjectId().toString()
+        const url = baseUrl + 'delete/user/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -804,10 +746,10 @@ describe('Activity', () => {
     })
     describe('given no activity log exist', () => {
       it('should return a 404', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const userId = new AppObjectId().toString()
+        const userId = new Types.ObjectId().toString()
 
         const url = baseUrl + 'delete/user/' + userId
 
@@ -822,50 +764,42 @@ describe('Activity', () => {
     })
     describe('delete all selected user activity logs', () => {
       it('should return a 200 and delete all activity logs of current user', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const url = baseUrl + 'delete/user/' + userC_id
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: userC_id,
-            userObject: userC,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userC_id,
+          userObject: userC,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: userC_id,
-            userObject: userC,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userC_id,
+          userObject: userC,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: userC_id,
-            userObject: userC,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: userC_id,
+          userObject: userC,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
         const { statusCode, body } = await request
           .delete(url)
@@ -875,9 +809,9 @@ describe('Activity', () => {
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
-        const userActiviesCount = await activityRepository.count({
+        const userActiviesCount = await activityModel.count({
           user: userC_id,
         })
 
@@ -890,7 +824,7 @@ describe('Activity', () => {
     const url = baseUrl + 'delete/all'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -904,28 +838,24 @@ describe('Activity', () => {
     })
     describe('given no activity log was found', () => {
       it('should return a 404', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
         const { statusCode, body } = await request
           .delete(url)
@@ -935,55 +865,47 @@ describe('Activity', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(2)
       })
     })
     describe('delete all usesr activity logs', () => {
       it('should return a 200 and delete all users', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const { statusCode, body } = await request
           .delete(url)
@@ -993,7 +915,7 @@ describe('Activity', () => {
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(2)
       })
@@ -1003,10 +925,10 @@ describe('Activity', () => {
     // const url = baseUrl + 'delete/admin/:activityId'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
-        const url = baseUrl + 'delete/admin/' + new AppObjectId().toString()
+        const url = baseUrl + 'delete/admin/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -1019,20 +941,18 @@ describe('Activity', () => {
     })
     describe('given activity log those not exist', () => {
       it('should return a 404', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        const url = baseUrl + 'delete/admin/' + new AppObjectId().toString()
+        const url = baseUrl + 'delete/admin/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -1042,35 +962,31 @@ describe('Activity', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(1)
       })
     })
     describe('given activity log those not belongs to current admin', () => {
       it('should return a 404', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const activity = await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        const activity = await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        const activity2 = await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        const activity2 = await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const url = baseUrl + 'delete/admin/' + activity._id
         const url2 = baseUrl + 'delete/admin/' + activity2._id
@@ -1091,45 +1007,39 @@ describe('Activity', () => {
         expect(statusCode2).toBe(404)
         expect(body2.status).toBe(HttpResponseStatus.ERROR)
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(2)
       })
     })
     describe('delete selected admin activity log', () => {
       it('should return a 200 and delete the selected admin activity log', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const activity = await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        const activity = await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const url = baseUrl + 'delete/admin/' + activity._id
 
@@ -1151,7 +1061,7 @@ describe('Activity', () => {
           },
         })
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(2)
       })
@@ -1161,7 +1071,7 @@ describe('Activity', () => {
     const url = baseUrl + 'delete/admin'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1175,28 +1085,24 @@ describe('Activity', () => {
     })
     describe('given no activity log exist', () => {
       it('should return a 404', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
-        await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.USER,
-          })
-          .save()
+        await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.USER,
+        })
 
         const { statusCode, body } = await request
           .delete(url)
@@ -1206,45 +1112,39 @@ describe('Activity', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(2)
       })
     })
     describe('delete all selected admin activity logs', () => {
       it('should return a 200 and delete all activity logs of current admin', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await activityRepository
-          .create({
-            user: userB_id,
-            userObject: userB,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: userB_id,
+          userObject: userB,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
-        await activityRepository
-          .create({
-            user: admin._id,
-            userObject: admin,
-            category: ActivityCategory.PROFILE,
-            message: 'message',
-            forWho: ActivityForWho.ADMIN,
-          })
-          .save()
+        await activityModel.create({
+          user: admin._id,
+          userObject: admin,
+          category: ActivityCategory.PROFILE,
+          message: 'message',
+          forWho: ActivityForWho.ADMIN,
+        })
 
         const { statusCode, body } = await request
           .delete(url)
@@ -1254,7 +1154,7 @@ describe('Activity', () => {
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
-        const activitiesCount = await activityRepository.count()
+        const activitiesCount = await activityModel.count()
 
         expect(activitiesCount).toBe(1)
       })

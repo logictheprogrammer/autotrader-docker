@@ -1,4 +1,3 @@
-import AppRepository from '../../app/app.repository'
 import { IDeposit } from '../deposit.interface'
 import depositModel from '../deposit.model'
 import DepositService from '../deposit.service'
@@ -10,10 +9,8 @@ import {
   depositModelReturn,
 } from './deposit.payload'
 
-const depositRepository = new AppRepository<IDeposit>(depositModel)
-
 export const depositInstance = {
-  model: depositRepository.toClass(depositModelReturn),
+  model: depositModelReturn,
   onFailed: 'delete deposit',
   async callback() {},
 }
@@ -23,7 +20,7 @@ export const createTransactionDepositMock = jest
   .mockResolvedValue({
     object: depositAObj,
     instance: {
-      model: depositRepository.toClass(depositModelReturn),
+      model: depositModelReturn,
       onFailed: 'delete deposit',
       async callback() {},
     },
@@ -36,7 +33,7 @@ export const updateStatusTransactionDepositMock = jest
       return Promise.resolve({
         object: depositAObj,
         instance: {
-          model: depositRepository.toClass(depositModelReturn),
+          model: depositModelReturn,
           onFailed: 'change deposit status to old status',
           async callback() {},
         },
@@ -46,7 +43,7 @@ export const updateStatusTransactionDepositMock = jest
       return Promise.resolve({
         object: depositBObj,
         instance: {
-          model: depositRepository.toClass(depositModelReturn),
+          model: depositModelReturn,
           onFailed: 'change deposit status to old status',
           async callback() {},
         },

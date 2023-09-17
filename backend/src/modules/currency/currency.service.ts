@@ -9,7 +9,7 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import HttpException from '@/modules/http/http.exception'
-import { ObjectId } from 'mongoose'
+import { ObjectId, Types } from 'mongoose'
 import { ErrorCode } from '@/utils/enums/errorCodes.enum'
 
 @Service()
@@ -17,7 +17,7 @@ class CurrencyService implements ICurrencyService {
   private currencyModel = currencyModel
 
   private find = async (
-    currencyId: ObjectId,
+    currencyId: ObjectId | Types.ObjectId,
     fromAllAccounts: boolean = true,
     userId?: ObjectId
   ): Promise<ICurrency> => {
@@ -72,7 +72,9 @@ class CurrencyService implements ICurrencyService {
     }
   }
 
-  public async get(currencyId: ObjectId): Promise<ICurrencyObject> {
+  public async get(
+    currencyId: ObjectId | Types.ObjectId
+  ): Promise<ICurrencyObject> {
     try {
       const currency = await this.find(currencyId)
 

@@ -7,7 +7,7 @@ import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import { Document, ObjectId } from 'mongoose'
+import { Document, ObjectId, Types } from 'mongoose'
 
 export interface IDepositObject extends IAppObject {
   depositMethod: IDepositMethod['_id']
@@ -20,6 +20,9 @@ export interface IDepositObject extends IAppObject {
 }
 
 export interface IDeposit extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   depositMethod: IDepositMethod['_id']
   depositMethodObject: IDepositMethodObject
   user: IUser['_id']
@@ -37,7 +40,7 @@ export interface IDepositService {
   ): TTransaction<IDepositObject, IDeposit>
 
   _updateStatusTransaction(
-    depositId: ObjectId,
+    depositId: ObjectId | Types.ObjectId,
     status: DepositStatus
   ): TTransaction<IDepositObject, IDeposit>
 

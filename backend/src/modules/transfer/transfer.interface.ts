@@ -4,7 +4,7 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserAccount } from '@/modules/user/user.enum'
-import { Document, ObjectId } from 'mongoose'
+import { Document, ObjectId, Types } from 'mongoose'
 
 export interface ITransferObject extends IAppObject {
   fromUser: IUser['_id']
@@ -42,7 +42,7 @@ export interface ITransferService {
   ): TTransaction<ITransferObject, ITransfer>
 
   _updateStatusTransaction(
-    transferId: ObjectId,
+    transferId: ObjectId | Types.ObjectId,
     status: TransferStatus
   ): TTransaction<ITransferObject, ITransfer>
 

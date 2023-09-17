@@ -9,7 +9,7 @@ import { AssetType } from '@/modules/asset/asset.enum'
 import { TUpdateInvestmentStatus } from './investment.type'
 import { TradeStatus } from '../trade/trade.enum'
 import { ITrade, ITradeObject } from '../trade/trade.interface'
-import { Document, ObjectId } from 'mongoose'
+import { Document, ObjectId, Types } from 'mongoose'
 
 export interface IInvestmentObject extends IAppObject {
   plan: IPlan['_id']
@@ -29,6 +29,9 @@ export interface IInvestmentObject extends IAppObject {
 }
 
 export interface IInvestment extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   plan: IPlan['_id']
   planObject: IPlanObject
   user: IUser['_id']
@@ -55,7 +58,7 @@ export interface IInvestmentService {
   ): TTransaction<IInvestmentObject, IInvestment>
 
   _updateStatusTransaction(
-    investmentId: ObjectId,
+    investmentId: ObjectId | Types.ObjectId,
     status: InvestmentStatus
   ): TTransaction<IInvestmentObject, IInvestment>
 

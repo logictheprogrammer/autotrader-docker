@@ -9,6 +9,9 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { ObjectId } from 'mongoose'
 
 export interface IActivity extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   user: IUser['_id']
   userObject: IUserObject
   category: ActivityCategory

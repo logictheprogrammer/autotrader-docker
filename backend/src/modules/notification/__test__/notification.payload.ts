@@ -1,15 +1,11 @@
 import notificationModel from '../../../modules/notification/notification.model'
 import { INotification } from '../../../modules/notification/notification.interface'
-import AppRepository from '../../app/app.repository'
 import { depositA, depositA_id } from '../../deposit/__test__/deposit.payload'
 import { DepositStatus } from '../../deposit/deposit.enum'
 import { userA, userA_id } from '../../user/__test__/user.payload'
 import { UserEnvironment } from '../../user/user.enum'
 import { NotificationCategory, NotificationForWho } from '../notification.enum'
 
-const notificationRepository = new AppRepository<INotification>(
-  notificationModel
-)
 // @ts-ignore
 export const notificationModelReturn: INotification = {
   save: jest.fn(),
@@ -47,13 +43,13 @@ export const notificationA = {
 }
 
 export const notificationInstance = {
-  model: notificationRepository.toClass(notificationModelReturn),
+  model: notificationModelReturn,
   onFailed: 'delete notification',
   async callback() {},
 }
 
 export const notificationInstanceFailedSave = {
-  model: notificationRepository.toClass(notificationModelReturnFailed),
+  model: notificationModelReturnFailed,
   onFailed: 'delete notification',
   async callback() {},
 }

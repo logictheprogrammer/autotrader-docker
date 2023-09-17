@@ -4,21 +4,12 @@ import { TradeStatus } from '@/modules/trade/trade.enum'
 
 const TradeSchema = new Schema(
   {
-    investment: {
+    plan: {
       type: Types.ObjectId,
-      ref: 'Investment',
+      ref: 'Plan',
       required: true,
     },
-    investmentObject: {
-      type: Object,
-      required: true,
-    },
-    user: {
-      type: Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    userObject: {
+    planObject: {
       type: Object,
       required: true,
     },
@@ -43,23 +34,7 @@ const TradeSchema = new Schema(
     move: {
       type: String,
     },
-    stake: {
-      type: Number,
-      required: true,
-    },
     outcome: {
-      type: Number,
-      required: true,
-    },
-    profit: {
-      type: Number,
-      required: true,
-    },
-    percentage: {
-      type: Number,
-      required: true,
-    },
-    investmentPercentage: {
       type: Number,
       required: true,
     },
@@ -69,9 +44,13 @@ const TradeSchema = new Schema(
     closingPrice: {
       type: Number,
     },
+    change: {
+      type: Number,
+    },
     runTime: {
       type: Number,
       required: true,
+      default: 0,
     },
     timeStamps: {
       type: [Number],
@@ -79,15 +58,6 @@ const TradeSchema = new Schema(
     },
     startTime: {
       type: Date,
-    },
-    environment: {
-      type: String,
-      required: true,
-    },
-    manualUpdateAmount: {
-      type: Boolean,
-      required: true,
-      default: false,
     },
     manualMode: {
       type: Boolean,

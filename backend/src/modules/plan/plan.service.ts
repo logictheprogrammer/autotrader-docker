@@ -23,9 +23,7 @@ class PlanService implements IPlanService {
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)
-    private assetService: IAssetService,
-    @Inject(ServiceToken.INVESTMENT_SERVICE)
-    private investmentService: IInvestment
+    private assetService: IAssetService
   ) {}
 
   private async find(

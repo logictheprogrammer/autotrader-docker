@@ -17,9 +17,9 @@ import {
 } from '../../user/__test__/user.payload'
 import { WithdrawalStatus } from '../withdrawal.enum'
 import { UserAccount } from '../../user/user.enum'
-import AppObjectId from '../../app/app.objectId'
+import { Types } from 'mongoose'
 
-export const withdrawalA_id = new AppObjectId('1145de5d5b1f5b3a5c1b539a')
+export const withdrawalA_id = new Types.ObjectId('1145de5d5b1f5b3a5c1b539a')
 
 export const withdrawalA = {
   withdrawalMethod: withdrawalMethodA_id,
@@ -33,7 +33,7 @@ export const withdrawalA = {
   status: WithdrawalStatus.PENDING,
 }
 
-export const withdrawalB_id = new AppObjectId('1145de5d5b1f5b3a5c1b539b')
+export const withdrawalB_id = new Types.ObjectId('1145de5d5b1f5b3a5c1b539b')
 
 export const withdrawalB = {
   withdrawalMethod: withdrawalMethodB_id,
@@ -47,7 +47,7 @@ export const withdrawalB = {
   status: WithdrawalStatus.PENDING,
 }
 
-export const withdrawalC_id = new AppObjectId('1145de5d5b1f5b3a5c1b539c')
+export const withdrawalC_id = new Types.ObjectId('1145de5d5b1f5b3a5c1b539c')
 
 export const withdrawalC = {
   withdrawalMethod: withdrawalMethodC_id,

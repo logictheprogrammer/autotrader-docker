@@ -6,9 +6,9 @@ import {
 } from '../../asset/__test__/asset.payload'
 import { AssetType } from '../../asset/asset.enum'
 import { PlanStatus } from '../plan.enum'
-import AppObjectId from '../../app/app.objectId'
+import { Types } from 'mongoose'
 
-export const planA_id = new AppObjectId('6145de5d5c4f5b3abc1b539a')
+export const planA_id = new Types.ObjectId('6145de5d5c4f5b3abc1b539a')
 // @ts-ignore
 export const planA: IPlanObject = {
   name: 'plana',
@@ -27,7 +27,7 @@ export const planA: IPlanObject = {
   status: PlanStatus.ACTIVE,
 }
 
-export const planB_id = new AppObjectId('6145de5d5c4f5b3abc1b539b')
+export const planB_id = new Types.ObjectId('6145de5d5c4f5b3abc1b539b')
 // @ts-ignore
 export const planB: IPlanObject = {
   name: 'planb',
@@ -46,7 +46,7 @@ export const planB: IPlanObject = {
   status: PlanStatus.ACTIVE,
 }
 
-export const planC_id = new AppObjectId('6145de5d5c4f5b3abc1b539c')
+export const planC_id = new Types.ObjectId('6145de5d5c4f5b3abc1b539c')
 // @ts-ignore
 export const planC: IPlanObject = {
   name: 'planc',

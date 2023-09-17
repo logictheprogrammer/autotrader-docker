@@ -1,4 +1,3 @@
-import AppRepository from '../../app/app.repository'
 import { IWithdrawal } from '../withdrawal.interface'
 import withdrawalModel from '../withdrawal.model'
 import WithdrawalService from '../withdrawal.service'
@@ -11,14 +10,12 @@ import {
   withdrawalModelReturn,
 } from './withdrawal.payload'
 
-const withdrawalRepository = new AppRepository<IWithdrawal>(withdrawalModel)
-
 export const createTransactionWithdrawalMock = jest
   .spyOn(WithdrawalService.prototype, '_createTransaction')
   .mockResolvedValue({
     object: withdrawalAObj,
     instance: {
-      model: withdrawalRepository.toClass(withdrawalModelReturn),
+      model: withdrawalModelReturn,
       onFailed: 'delete withdrawal',
       async callback() {},
     },
@@ -31,7 +28,7 @@ export const updateStatusTransactionWithdrawalMock = jest
       return Promise.resolve({
         object: withdrawalAObj,
         instance: {
-          model: withdrawalRepository.toClass(withdrawalModelReturn),
+          model: withdrawalModelReturn,
           onFailed: 'change withdrawal status to old status',
           async callback() {},
         },
@@ -41,7 +38,7 @@ export const updateStatusTransactionWithdrawalMock = jest
       return Promise.resolve({
         object: withdrawalBObj,
         instance: {
-          model: withdrawalRepository.toClass(withdrawalModelReturn),
+          model: withdrawalModelReturn,
           onFailed: 'change withdrawal status to old status',
           async callback() {},
         },

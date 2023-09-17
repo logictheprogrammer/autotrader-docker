@@ -64,7 +64,9 @@ class WithdrawalService implements IWithdrawalService {
     let withdrawal
 
     if (fromAllAccounts) {
-      withdrawal = await this.withdrawalModel.findById(withdrawalId)
+      withdrawal = await this.withdrawalModel
+        .findById(withdrawalId)
+        .populate('user', 'username isDeleted')
     } else {
       withdrawal = await this.withdrawalModel.findOne({
         _id: withdrawalId,
@@ -304,8 +306,6 @@ class WithdrawalService implements IWithdrawalService {
       await this.transactionManagerService.execute(transactionInstances)
 
       const rawWithdrawalIntance = withdrawalInstance.model
-
-      await rawWithdrawalIntance.populate('user', 'username isDeleted')
 
       return {
         status: HttpResponseStatus.SUCCESS,

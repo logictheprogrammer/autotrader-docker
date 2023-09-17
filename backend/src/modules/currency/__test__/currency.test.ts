@@ -5,12 +5,8 @@ import userModel from '../../user/user.model'
 import { currencyA, currencyB } from './currency.payload'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
-import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
 import { ICurrency } from '../currency.interface'
-
-const userRepository = new AppRepository<IUser>(userModel)
-const currencyRepository = new AppRepository<ICurrency>(currencyModel)
 
 describe('currency', () => {
   const baseUrl = '/api/currency/'
@@ -18,7 +14,7 @@ describe('currency', () => {
     const url = baseUrl + 'create'
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -33,7 +29,7 @@ describe('currency', () => {
     })
     describe('given payload is not valid', () => {
       it('it should throw a 400 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -48,10 +44,10 @@ describe('currency', () => {
     })
     describe('given currency already exist', () => {
       it('should throw a 409', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await currencyRepository.create(currencyA).save()
+        await currencyModel.create(currencyA)
 
         const { statusCode, body } = await request
           .post(url)
@@ -62,17 +58,17 @@ describe('currency', () => {
         expect(statusCode).toBe(409)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const currencyCount = await currencyRepository.count()
+        const currencyCount = await currencyModel.count()
 
         expect(currencyCount).toBe(1)
       })
     })
     describe('successful entry', () => {
       it('should return a 200 and currency payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        await currencyRepository.create(currencyB).save()
+        await currencyModel.create(currencyB)
 
         const { statusCode, body } = await request
           .post(url)
@@ -93,7 +89,7 @@ describe('currency', () => {
           },
         })
 
-        const currencyCount = await currencyRepository.count()
+        const currencyCount = await currencyModel.count()
 
         expect(currencyCount).toBe(2)
       })
@@ -104,7 +100,7 @@ describe('currency', () => {
     const url = baseUrl
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -118,7 +114,7 @@ describe('currency', () => {
     })
     describe('given no currencycurrencies available', () => {
       it('should return an empty array of currency', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -136,10 +132,10 @@ describe('currency', () => {
     })
     describe('successful entry', () => {
       it('should return a 200 and currencies payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const currency = await currencyRepository.create(currencyA).save()
+        const currency = await currencyModel.create(currencyA)
 
         const { statusCode, body } = await request
           .get(url)

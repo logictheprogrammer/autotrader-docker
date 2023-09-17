@@ -8,10 +8,7 @@ import { sendMailMock, setSenderMock } from '../../mail/__test__/mail.mock'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { SiteConstants } from '../../config/config.constants'
-import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
-
-const userRepository = new AppRepository<IUser>(userModel)
 
 describe('send mail', () => {
   const baseUrl = '/api/send-email'
@@ -21,7 +18,7 @@ describe('send mail', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -42,7 +39,7 @@ describe('send mail', () => {
           heading: 'heading',
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -65,7 +62,7 @@ describe('send mail', () => {
           content: 'content',
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request

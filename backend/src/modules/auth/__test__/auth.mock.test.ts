@@ -7,10 +7,7 @@ import { sendMailMock } from '../../mail/__test__/mail.mock'
 import { existingUser } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { SiteConstants } from '../../config/config.constants'
-import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
-
-const userRepository = new AppRepository<IUser>(userModel)
 
 describe('authentication', () => {
   describe('sendEmailVerificationMail', () => {
@@ -73,7 +70,7 @@ describe('authentication', () => {
     it('should send a welcome email', async () => {
       request
 
-      const user = await userRepository.create(existingUser).save()
+      const user = await userModel.create(existingUser)
 
       await authService.sendWelcomeMail(user)
 

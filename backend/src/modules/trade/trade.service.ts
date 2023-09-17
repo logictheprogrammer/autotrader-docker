@@ -11,7 +11,7 @@ import {
 import tradeModel from '@/modules/trade/trade.model'
 import ServiceToken from '@/utils/enums/serviceToken'
 import { TradeMove, TradeStatus } from '@/modules/trade/trade.enum'
-import { IPlanService } from '@/modules/plan/plan.interface'
+import { IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
 import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
@@ -45,6 +45,7 @@ class TradeService implements ITradeService {
   private tradeModel = tradeModel
   private userModel = userModel
 
+  public static dailyTrades = 0.1
   public static minStakeRate = 0.1
   public static maxStakeRate = 0.25
   public static profitBreakpoint = 3
@@ -68,18 +69,8 @@ class TradeService implements ITradeService {
     private transactionManagerService: ITransactionManagerService<any>
   ) {}
 
-  private async find(
-    tradeId: ObjectId,
-    fromAllAccounts: boolean = true,
-    userId?: string
-  ): Promise<ITrade> {
-    let trade
-
-    if (fromAllAccounts) {
-      trade = await this.tradeModel.findById(tradeId)
-    } else {
-      trade = await this.tradeModel.findOne({ _id: tradeId, user: userId })
-    }
+  private async find(tradeId: ObjectId): Promise<ITrade> {
+    const trade = await this.tradeModel.findById(tradeId)
 
     if (!trade) throw new HttpException(404, 'Trade not found')
 
@@ -87,31 +78,18 @@ class TradeService implements ITradeService {
   }
 
   public async _createTransaction(
-    user: IUserObject,
-    investment: IInvestmentObject,
+    plan: IPlanObject,
     pair: IPairObject,
-    stake: number,
-    outcome: number,
-    profit: number,
-    percentage: number,
-    investmentPercentage: number,
-    environment: UserEnvironment
+    outcome: number
   ): TTransaction<ITradeObject, ITrade> {
     const trade = new this.tradeModel({
-      investment: investment._id,
-      investmentObject: investment,
-      user: user._id,
-      userObject: user,
+      plan: plan._id,
+      planObject: plan,
       pair: pair._id,
       pairObject: pair,
       market: pair.assetType,
-      stake,
       outcome,
-      profit,
-      percentage,
-      investmentPercentage,
-      environment,
-      manualMode: investment.manualMode,
+      manualMode: plan.manualMode,
     })
 
     return {
@@ -190,59 +168,21 @@ class TradeService implements ITradeService {
     }
   }
 
-  public async create(
-    user: IUserObject,
-    investment: IInvestmentObject,
-    pair: IPairObject,
-    stakeRate: number,
-    investmentPercentage: number
-  ): TTransaction<ITradeObject, ITrade> {
-    const amount = investment.amount
-    const environment = investment.environment
-
-    const stake = stakeRate * amount
-
-    const profit = (investmentPercentage / 100) * amount
-
-    const outcome = stake + profit
-
-    const percentage = (profit * 100) / stake
-
-    return await this._createTransaction(
-      user,
-      investment,
-      pair,
-      stake,
-      outcome,
-      profit,
-      percentage,
-      investmentPercentage,
-      environment
-    )
-  }
-
-  public async createAuto(
-    investmentId: ObjectId,
-    pairId: ObjectId
-  ): Promise<void> {
-    const investment = await this.investmentService.get(investmentId)
+  public async autoCreate(planId: ObjectId, pairId: ObjectId): Promise<void> {
+    const plan = await this.planService.get(planId)
     const pair = await this.pairService.get(pairId)
-    const user = await this.userService.get(investment.user)
 
+    if (!plan) throw new HttpException(404, 'The plan no longer exist')
     if (!pair) throw new HttpException(404, 'The selected pair no longer exist')
 
-    if (pair.assetType !== investment.planObject.assetType)
+    if (pair.assetType !== plan.assetType)
       throw new HttpException(
         400,
-        'The pair is not compatible with this investment plan'
+        'The pair is not compatible with this plan plan'
       )
 
-    const minProfit =
-      investment.planObject.minProfit /
-      (investment.planObject.dailyTrades * investment.planObject.duration)
-    const maxProfit =
-      investment.planObject.maxProfit /
-      (investment.planObject.dailyTrades * investment.planObject.duration)
+    const minProfit = plan.minProfit / (plan.dailyTrades * plan.duration)
+    const maxProfit = plan.maxProfit / (plan.dailyTrades * plan.duration)
 
     const stakeRate = Helpers.getRandomValue(
       TradeService.minStakeRate,
@@ -253,7 +193,7 @@ class TradeService implements ITradeService {
 
     const breakpoint = spread * TradeService.profitBreakpoint
 
-    const investmentPercentage = this.mathService.dynamicRange(
+    const outcome = this.mathService.dynamicRange(
       minProfit,
       maxProfit,
       spread,
@@ -262,55 +202,33 @@ class TradeService implements ITradeService {
     )
 
     const { model: trade } = (
-      await this.create(user, investment, pair, stakeRate, investmentPercentage)
+      await this._createTransaction(plan, pair, outcome)
     ).instance
 
     await trade.save()
-
-    // return {
-    //   status: HttpResponseStatus.SUCCESS,
-    //   message: 'Trade created successfully',
-    //   data: { trade: trade.collectRaw() },
-    // }
   }
 
-  public async createManual(
-    investmentId: ObjectId,
+  public async manualCreate(
+    planId: ObjectId,
     pairId: ObjectId,
-    stake: number,
-    profit: number
+    outcome: number
   ): THttpResponse<{ trade: ITrade }> {
     try {
-      const investment = await this.investmentService.get(investmentId)
+      const plan = await this.planService.get(planId)
       const pair = await this.pairService.get(pairId)
-      const user = await this.userService.get(investment.user)
 
+      if (!plan) throw new HttpException(404, 'The plan no longer exist')
       if (!pair)
         throw new HttpException(404, 'The selected pair no longer exist')
 
-      if (pair.assetType !== investment.planObject.assetType)
+      if (pair.assetType !== plan.assetType)
         throw new HttpException(
           400,
-          'The pair is not compatible with this investment plan'
+          'The pair is not compatible with this plan plan'
         )
-
-      const environment = investment.environment
-      const outcome = stake + profit
-      const percentage = (profit * 100) / stake
-      const investmentPercentage = (profit * 100) / investment.amount
 
       const { model: trade } = (
-        await this._createTransaction(
-          user,
-          investment,
-          pair,
-          stake,
-          outcome,
-          profit,
-          percentage,
-          investmentPercentage,
-          environment
-        )
+        await this._createTransaction(plan, pair, outcome)
       ).instance
 
       await trade.save()
@@ -328,16 +246,12 @@ class TradeService implements ITradeService {
     }
   }
 
-  public async updateManual(
+  public async manualUpdate(
     tradeId: ObjectId,
     pairId: ObjectId,
-    move: TradeMove,
-    stake: number,
-    profit: number,
-    openingPrice?: number | undefined,
-    closingPrice?: number | undefined,
-    startTime?: Date | undefined,
-    stopTime?: Date | undefined
+    outcome: number,
+    status: TradeStatus,
+    move?: TradeMove
   ): THttpResponse<{ trade: ITrade }> {
     try {
       const trade = await this.find(tradeId)
@@ -352,17 +266,8 @@ class TradeService implements ITradeService {
         )
 
       trade.move = move
-      trade.stake = stake
-      trade.profit = profit
-      trade.openingPrice = openingPrice ?? trade.openingPrice
-      trade.closingPrice = closingPrice ?? trade.openingPrice
-      trade.startTime = startTime ?? trade.startTime
-
-      trade.outcome = profit + stake
-      trade.percentage = (profit * 100) / stake
-      trade.investmentPercentage =
-        (profit * 100) / trade.investmentObject.amount
-
+      trade.outcome = outcome
+      trade.status = status
       trade.manualMode = true
 
       await trade.save()
@@ -380,174 +285,20 @@ class TradeService implements ITradeService {
     }
   }
 
-  public async updateInvestmentStatus(
-    investmentId: ObjectId,
-    investmentStatus: InvestmentStatus
-  ): Promise<{
-    model: IInvestment
-    instances: TUpdateInvestmentStatus
-  }> {
-    const { instances, model } = await this.investmentService.updateStatus(
-      investmentId,
-      investmentStatus
-    )
-
-    // When the status stops the investment
-    if (
-      investmentStatus === InvestmentStatus.SUSPENDED ||
-      investmentStatus === InvestmentStatus.INSUFFICIENT_GAS ||
-      investmentStatus === InvestmentStatus.ON_MAINTAINACE ||
-      investmentStatus === InvestmentStatus.REFILLING
-    ) {
-      const tradeStillRunning = await this.tradeModel.findOne({
-        investment: investmentId,
-        status: TradeStatus.RUNNING,
-      })
-
-      // stop the trade if it's still running..
-      if (tradeStillRunning) {
-        const { instance: tradeInstance } = await this._updateStatusTransaction(
-          tradeStillRunning._id,
-          TradeStatus.ON_HOLD
-        )
-
-        instances.push(tradeInstance)
-      }
-    } else if (investmentStatus === InvestmentStatus.RUNNING) {
-      const tradeOnHold = await this.tradeModel.findOne({
-        investment: investmentId,
-        status: TradeStatus.ON_HOLD,
-      })
-
-      // prepare trade if trade is on hold
-      if (tradeOnHold) {
-        const { instance: tradeInstance } = await this._updateStatusTransaction(
-          tradeOnHold._id,
-          TradeStatus.PREPARING
-        )
-
-        instances.push(tradeInstance)
-      }
-    }
-
-    return { model, instances }
-  }
-
-  public async forceUpdateInvestmentStatus(
-    investmentId: ObjectId,
-    status: InvestmentStatus
-  ): THttpResponse<{ investment: IInvestment }> {
-    try {
-      const result = await this.updateInvestmentStatus(investmentId, status)
-
-      await this.transactionManagerService.execute(result.instances)
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Status updated successfully',
-        data: { investment: result.model },
-      }
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to update this investment  status, please try again'
-      )
-    }
-  }
-
   public async updateStatus(
     tradeId: ObjectId,
-    status: TradeStatus,
-    move?: TradeMove
+    status: TradeStatus
   ): Promise<{ model: ITrade; instances: TUpdateTradeStatus }> {
     const transactionInstances: TUpdateTradeStatus = []
 
-    const { object: trade, instance: tradeInstance } =
-      await this._updateStatusTransaction(tradeId, status, move)
+    const { instance: tradeInstance } = await this._updateStatusTransaction(
+      tradeId,
+      status
+    )
 
     transactionInstances.push(tradeInstance)
 
-    const user = await this.userService.get(trade.user)
-
-    const { instance: investmentInstance } =
-      await this.investmentService.updateTradeDetailsTransaction(
-        trade.investment,
-        trade
-      )
-    transactionInstances.push(investmentInstance)
-
-    if (status === TradeStatus.SETTLED) {
-      const transactionInstance = await this.transactionService.updateAmount(
-        trade._id,
-        status,
-        trade.outcome
-      )
-      transactionInstances.push(transactionInstance)
-    }
-
-    let notificationMessage
-    switch (status) {
-      case TradeStatus.RUNNING:
-        notificationMessage = 'is now running'
-        break
-      case TradeStatus.MARKET_CLOSED:
-        notificationMessage = 'market has closed'
-        break
-      case TradeStatus.ON_HOLD:
-        notificationMessage = 'is currently on hold'
-        break
-      case TradeStatus.SETTLED:
-        notificationMessage = 'has been settled'
-        break
-    }
-
-    if (notificationMessage) {
-      const notificationInstance = await this.notificationService.create(
-        `Your investment current trade ${notificationMessage}`,
-        NotificationCategory.TRADE,
-        trade,
-        NotificationForWho.USER,
-        status,
-        trade.environment,
-        user
-      )
-
-      transactionInstances.push(notificationInstance)
-    }
-
     return { model: tradeInstance.model, instances: transactionInstances }
-  }
-
-  public async updateAmount(
-    tradeId: ObjectId,
-    stake: number,
-    profit: number
-  ): THttpResponse<{ trade: ITrade }> {
-    try {
-      const trade = await this.find(tradeId)
-
-      trade.stake = stake
-      trade.profit = profit
-      trade.outcome = profit + stake
-      trade.percentage = (profit * 100) / stake
-      trade.investmentPercentage =
-        (profit * 100) / trade.investmentObject.amount
-
-      trade.manualUpdateAmount = true
-
-      await trade.save()
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Trade updated successfully',
-        data: { trade },
-      }
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to update this trade, please try again'
-      )
-    }
   }
 
   public async delete(tradeId: ObjectId): THttpResponse<{ trade: ITrade }> {
@@ -571,37 +322,23 @@ class TradeService implements ITradeService {
     }
   }
 
-  public async fetchAll(
-    all: boolean,
-    environment: UserEnvironment,
-    userId: string
-  ): THttpResponse<{ trades: ITrade[] }> {
+  public async fetchAll(planId: ObjectId): THttpResponse<{ trades: ITrade[] }> {
     try {
       let trades
 
-      if (all) {
-        trades = await this.tradeModel
-          .find({ environment })
-          .select('-investmentObject -userObject -pair')
-          .populate('investment', 'name icon')
-          .populate('user', 'username isDeleted')
-      } else {
-        trades = await this.tradeModel
-          .find({ environment, user: userId })
-          .select('-investmentObject -userObject -pair')
-          .populate('investment', 'name icon')
-      }
+      trades = await this.tradeModel
+        .find({ plan: planId })
+        .select('-planObject -pairObject')
+        .populate('plan')
+        .populate('pair')
 
       return {
         status: HttpResponseStatus.SUCCESS,
-        message: 'Trade history fetched successfully',
+        message: 'Trade fetched successfully',
         data: { trades },
       }
     } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to fetch trade history, please try again'
-      )
+      throw new AppException(err, 'Failed to fetch trade, please try again')
     }
   }
 }

@@ -61,13 +61,15 @@ class ReferralService implements IReferralService {
           .find()
           .select('-userObject -referrerObject')
           .populate('user', 'username isDeleted createdAt')
-          .populate('referral', 'username isDeleted')
+          .populate('referrer', 'username isDeleted')
       } else {
         referralTransactions = await this.referralModel
           .find({
             referrer: userId,
           })
           .select('-userObject -referrerObject')
+          .populate('user', 'username isDeleted createdAt')
+          .populate('referrer', 'username isDeleted')
       }
 
       return referralTransactions

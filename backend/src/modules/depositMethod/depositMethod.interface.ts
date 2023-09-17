@@ -1,7 +1,7 @@
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
 import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
-import { Document, ObjectId } from 'mongoose'
+import { Document, ObjectId, Types } from 'mongoose'
 
 export interface IDepositMethodObject extends IAppObject {
   currency: ObjectId
@@ -18,6 +18,9 @@ export interface IDepositMethodObject extends IAppObject {
 }
 
 export interface IDepositMethod extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   currency: ObjectId
   name: string
   symbol: string
@@ -49,7 +52,7 @@ export interface IDepositMethodService {
     minDeposit: number
   ): THttpResponse<{ depositMethod: IDepositMethod }>
 
-  get(depositMethodId: ObjectId): Promise<IDepositMethodObject>
+  get(depositMethodId: ObjectId | Types.ObjectId): Promise<IDepositMethodObject>
 
   fetchAll(all: boolean): THttpResponse<{ depositMethods: IDepositMethod[] }>
 

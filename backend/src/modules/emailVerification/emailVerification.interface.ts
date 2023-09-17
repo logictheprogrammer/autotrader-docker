@@ -2,6 +2,9 @@ import { IUser } from '@/modules/user/user.interface'
 import { Document } from 'mongoose'
 
 export interface IEmailVerification extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   key: string
   token: string
   expires: number

@@ -10,6 +10,7 @@ import {
 
 export const getPlanMock = jest
   .spyOn(PlanService.prototype, 'get')
+  // @ts-ignore
   .mockImplementation((key) => {
     if (key.toString() === planA_id.toString()) {
       return Promise.resolve({

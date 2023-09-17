@@ -10,6 +10,7 @@ import {
 
 export const getAssetMock = jest
   .spyOn(AssetService.prototype, 'get')
+  // @ts-ignore
   .mockImplementation((assetId, assetType) => {
     if (assetId.toString() === assetA_id.toString()) {
       return Promise.resolve({

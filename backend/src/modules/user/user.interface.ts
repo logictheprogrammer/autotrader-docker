@@ -24,6 +24,9 @@ export interface IUserObject extends IAppObject {
 }
 
 export interface IUser extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   key: string
   email: string
   username: string

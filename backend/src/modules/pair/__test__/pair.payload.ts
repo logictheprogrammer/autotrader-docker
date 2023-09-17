@@ -1,4 +1,4 @@
-import AppObjectId from '../../app/app.objectId'
+import { Types } from 'mongoose'
 import {
   assetA,
   assetA_id,
@@ -10,7 +10,7 @@ import {
 import { AssetType } from '../../asset/asset.enum'
 import { IPairObject } from '../pair.interface'
 
-export const pairA_id = new AppObjectId('2345de5d5c4f5b3a5c1b539a')
+export const pairA_id = new Types.ObjectId('2345de5d5c4f5b3a5c1b539a')
 // @ts-ignore
 export const pairA: IPairObject = {
   assetType: AssetType.CRYPTO,
@@ -20,7 +20,7 @@ export const pairA: IPairObject = {
   quoteAssetObject: assetB,
 }
 
-export const pairB_id = new AppObjectId('2345de5d5c4f5b3a5c1b539b')
+export const pairB_id = new Types.ObjectId('2345de5d5c4f5b3a5c1b539b')
 // @ts-ignore
 export const pairB: IPairObject = {
   assetType: AssetType.CRYPTO,
@@ -30,7 +30,7 @@ export const pairB: IPairObject = {
   quoteAssetObject: assetC,
 }
 
-export const pairC_id = new AppObjectId('2345de5d5c4f5b3a5c1b539c')
+export const pairC_id = new Types.ObjectId('2345de5d5c4f5b3a5c1b539c')
 // @ts-ignore
 export const pairC: IPairObject = {
   assetType: AssetType.FOREX,

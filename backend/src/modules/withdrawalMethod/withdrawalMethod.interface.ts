@@ -1,7 +1,7 @@
 import { WithdrawalMethodStatus } from '@/modules/withdrawalMethod/withdrawalMethod.enum'
 import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
-import { ObjectId, Document } from 'mongoose'
+import { ObjectId, Document, Types } from 'mongoose'
 
 export interface IWithdrawalMethodObject extends IAppObject {
   currency: ObjectId
@@ -44,7 +44,9 @@ export interface IWithdrawalMethodService {
     minWithdrawal: number
   ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }>
 
-  get(withdrawalMethodId: ObjectId): Promise<IWithdrawalMethodObject>
+  get(
+    withdrawalMethodId: ObjectId | Types.ObjectId
+  ): Promise<IWithdrawalMethodObject>
 
   fetchAll(
     all: boolean

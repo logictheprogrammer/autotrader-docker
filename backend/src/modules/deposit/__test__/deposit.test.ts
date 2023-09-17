@@ -53,7 +53,6 @@ import {
 } from '../../referral/__test__/referral.payoad'
 import { ReferralStatus, ReferralTypes } from '../../referral/referral.enum'
 import FormatString from '../../../utils/formats/formatString'
-import AppRepository from '../../app/app.repository'
 import { IDeposit } from '../deposit.interface'
 import { INotification } from '../../notification/notification.interface'
 import notificationModel from '../../notification/notification.model'
@@ -62,15 +61,7 @@ import referralModel from '../../referral/referral.model'
 import { ITransaction } from '../../transaction/transaction.interface'
 import transactionModel from '../../transaction/transaction.model'
 import { IUser } from '../../user/user.interface'
-import AppObjectId from '../../app/app.objectId'
-
-const depositRepository = new AppRepository<IDeposit>(depositModel)
-const notificationRepository = new AppRepository<INotification>(
-  notificationModel
-)
-const referralRepository = new AppRepository<IReferral>(referralModel)
-const transactionRepository = new AppRepository<ITransaction>(transactionModel)
-const userRepository = new AppRepository<IUser>(userModel)
+import { Types } from 'mongoose'
 
 describe('deposit', () => {
   const baseUrl = '/api/deposit/'
@@ -92,7 +83,7 @@ describe('deposit', () => {
           depositMethodId: depositMethodA_id,
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -107,13 +98,13 @@ describe('deposit', () => {
     })
     describe('given deposit method those not exits', () => {
       it('should throw a 404 error', async () => {
-        const id = new AppObjectId().toString()
+        const id = new Types.ObjectId().toString()
         const payload = {
           depositMethodId: id,
           amount: 30,
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -138,7 +129,7 @@ describe('deposit', () => {
           amount: 30,
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -167,7 +158,7 @@ describe('deposit', () => {
           amount: 40,
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const { password: _, ...userA1 } = userA
 
         const token = Encryption.createToken(user)
@@ -219,19 +210,19 @@ describe('deposit', () => {
         )
 
         const depositInstance = {
-          model: depositRepository.toClass(depositModelReturn),
+          model: depositModelReturn,
           onFailed: 'delete deposit',
           async callback() {},
         }
 
         const transactionInstance = {
-          model: transactionRepository.toClass(transactionModelReturn),
+          model: transactionModelReturn,
           onFailed: 'delete transaction',
           async callback() {},
         }
 
         const notificationInstance = {
-          model: notificationRepository.toClass(notificationModelReturn),
+          model: notificationModelReturn,
           onFailed: 'delete notification',
           async callback() {},
         }
@@ -256,7 +247,7 @@ describe('deposit', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const payload = {
@@ -277,7 +268,7 @@ describe('deposit', () => {
 
     describe('given payload is not valid', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -299,19 +290,16 @@ describe('deposit', () => {
     describe('given all validations passed', () => {
       describe('given status was cancelled', () => {
         it('should execute 3 transactions', async () => {
-          const admin = await userRepository.create(adminA).save()
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          const admin = await userModel.create(adminA)
+          const user = await userModel.create({ ...userA, _id: userA_id })
+
           const token = Encryption.createToken(admin)
 
-          const deposit = await depositRepository
-            .create({
-              ...depositA,
-              _id: depositA_id,
-              user: user._id,
-            })
-            .save()
+          const deposit = await depositModel.create({
+            ...depositA,
+            _id: depositA_id,
+            user: user._id,
+          })
 
           const status = DepositStatus.CANCELLED
 
@@ -367,19 +355,19 @@ describe('deposit', () => {
           )
 
           const depositInstance = {
-            model: depositRepository.toClass(depositModelReturn),
+            model: depositModelReturn,
             onFailed: 'change deposit status to old status',
             async callback() {},
           }
 
           const transactionInstance = {
-            model: transactionRepository.toClass(transactionModelReturn),
+            model: transactionModelReturn,
             onFailed: 'change transaction status to old status',
             async callback() {},
           }
 
           const notificationInstance = {
-            model: notificationRepository.toClass(notificationModelReturn),
+            model: notificationModelReturn,
             onFailed: 'delete notification',
             async callback() {},
           }
@@ -399,15 +387,13 @@ describe('deposit', () => {
       })
       describe('given status was approved but no referrer', () => {
         it('should return a 200 and the deposit payload', async () => {
-          const admin = await userRepository.create(adminA).save()
+          const admin = await userModel.create(adminA)
           const token = Encryption.createToken(admin)
 
-          const deposit = await depositRepository
-            .create({
-              ...depositA,
-              _id: depositA_id,
-            })
-            .save()
+          const deposit = await depositModel.create({
+            ...depositA,
+            _id: depositA_id,
+          })
 
           const status = DepositStatus.APPROVED
 
@@ -469,25 +455,25 @@ describe('deposit', () => {
           )
 
           const depositInstance = {
-            model: depositRepository.toClass(depositModelReturn),
+            model: depositModelReturn,
             onFailed: 'change deposit status to old status',
             async callback() {},
           }
 
           const userInstance = {
-            model: userRepository.toClass(userModelReturn),
+            model: userModelReturn,
             onFailed: 'return deposit',
             async callback() {},
           }
 
           const transactionInstance = {
-            model: transactionRepository.toClass(transactionModelReturn),
+            model: transactionModelReturn,
             onFailed: 'change transaction status to old status',
             async callback() {},
           }
 
           const notificationInstance = {
-            model: notificationRepository.toClass(notificationModelReturn),
+            model: notificationModelReturn,
             onFailed: 'delete notification',
             async callback() {},
           }
@@ -508,15 +494,13 @@ describe('deposit', () => {
       })
       describe('given status was approved and there is a referrer', () => {
         it('should return a 200 and the deposit payload', async () => {
-          const admin = await userRepository.create(adminA).save()
+          const admin = await userModel.create(adminA)
           const token = Encryption.createToken(admin)
 
-          const deposit = await depositRepository
-            .create({
-              ...depositB,
-              _id: depositB_id,
-            })
-            .save()
+          const deposit = await depositModel.create({
+            ...depositB,
+            _id: depositB_id,
+          })
 
           const status = DepositStatus.APPROVED
 
@@ -633,55 +617,55 @@ describe('deposit', () => {
           ])
 
           const depositInstance = {
-            model: depositRepository.toClass(depositModelReturn),
+            model: depositModelReturn,
             onFailed: 'change deposit status to old status',
             async callback() {},
           }
 
           const userInstance = {
-            model: userRepository.toClass(userModelReturn),
+            model: userModelReturn,
             onFailed: 'return deposit',
             async callback() {},
           }
 
           const userReferrerInstance = {
-            model: userRepository.toClass(userModelReturn),
+            model: userModelReturn,
             onFailed: 'return deposit',
             async callback() {},
           }
 
           const transactionInstance = {
-            model: transactionRepository.toClass(transactionModelReturn),
+            model: transactionModelReturn,
             onFailed: 'change transaction status to old status',
             async callback() {},
           }
 
           const userReferrerTransactionInstance = {
-            model: transactionRepository.toClass(transactionModelReturn),
+            model: transactionModelReturn,
             onFailed: 'delete transaction',
             async callback() {},
           }
 
           const referralTransactionInstance = {
-            model: referralRepository.toClass(referralModelReturn),
+            model: referralModelReturn,
             onFailed: 'delete referral',
             async callback() {},
           }
 
           const notificationInstance = {
-            model: notificationRepository.toClass(notificationModelReturn),
+            model: notificationModelReturn,
             onFailed: 'delete notification',
             async callback() {},
           }
 
           const userReferrerNotificationInstance = {
-            model: notificationRepository.toClass(notificationModelReturn),
+            model: notificationModelReturn,
             onFailed: 'delete notification',
             async callback() {},
           }
 
           const adminNotificationInstance = {
-            model: notificationRepository.toClass(notificationModelReturn),
+            model: notificationModelReturn,
             onFailed: 'delete notification',
             async callback() {},
           }
@@ -712,7 +696,7 @@ describe('deposit', () => {
     // const url = baseUrl + `delete/:depositId`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const url = baseUrl + `delete/depositId`
@@ -729,10 +713,10 @@ describe('deposit', () => {
 
     describe('given deposit id those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const url = baseUrl + `delete/${new AppObjectId().toString()}`
+        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -746,10 +730,10 @@ describe('deposit', () => {
 
     describe('given deposit has not been settled', () => {
       it('should return a 400 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const deposit = await depositRepository.create(depositA).save()
+        const deposit = await depositModel.create(depositA)
 
         const url = baseUrl + `delete/${deposit._id}`
 
@@ -765,15 +749,13 @@ describe('deposit', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the deposit payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const deposit = await depositRepository
-          .create({
-            ...depositA,
-            status: DepositStatus.APPROVED,
-          })
-          .save()
+        const deposit = await depositModel.create({
+          ...depositA,
+          status: DepositStatus.APPROVED,
+        })
 
         const url = baseUrl + `delete/${deposit._id}`
 
@@ -793,7 +775,7 @@ describe('deposit', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -808,7 +790,7 @@ describe('deposit', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of deposit payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -822,14 +804,18 @@ describe('deposit', () => {
           deposits: [],
         })
 
-        const depositCounts = await depositRepository.count()
+        const depositCounts = await depositModel.count()
 
         expect(depositCounts).toBe(0)
       })
       it('should return a 200 and an array of deposit payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(admin)
-        const deposit = await depositRepository.create(depositA).save()
+        const deposit = await depositModel.create({
+          ...depositA,
+          user: user._id,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -850,7 +836,7 @@ describe('deposit', () => {
           deposit.userObject.username
         )
 
-        const depositCounts = await depositRepository.count()
+        const depositCounts = await depositModel.count()
 
         expect(depositCounts).toBe(1)
       })
@@ -872,9 +858,9 @@ describe('deposit', () => {
 
     describe('given deposit those not exist', () => {
       it('should throw a 404 error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const url = baseUrl + new AppObjectId().toString()
+        const url = baseUrl + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .get(url)
@@ -888,9 +874,9 @@ describe('deposit', () => {
 
     describe('given deposit those not belongs to logged in user', () => {
       it('should throw a 404 error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const deposit = await depositRepository.create(depositA).save()
+        const deposit = await depositModel.create(depositA)
 
         const url = baseUrl + deposit._id
 
@@ -902,7 +888,7 @@ describe('deposit', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const depositCounts = await depositRepository.count()
+        const depositCounts = await depositModel.count()
 
         expect(depositCounts).toBe(1)
       })
@@ -910,14 +896,12 @@ describe('deposit', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the deposit payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const deposit = await depositRepository
-          .create({
-            ...depositA,
-            user: user._id,
-          })
-          .save()
+        const deposit = await depositModel.create({
+          ...depositA,
+          user: user._id,
+        })
 
         const url = baseUrl + deposit._id
 
@@ -935,7 +919,7 @@ describe('deposit', () => {
           deposit.depositMethodObject.address
         )
 
-        const depositCounts = await depositRepository.count()
+        const depositCounts = await depositModel.count()
 
         expect(depositCounts).toBe(1)
       })
@@ -946,9 +930,9 @@ describe('deposit', () => {
     // const url = baseUrl + `master/:deposit`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const url = baseUrl + `master/${new AppObjectId().toString()}`
+        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -962,9 +946,9 @@ describe('deposit', () => {
 
     describe('given deposit those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
-        const url = baseUrl + `master/${new AppObjectId().toString()}`
+        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -978,9 +962,9 @@ describe('deposit', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the deposit payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
-        const deposit = await depositRepository.create(depositA).save()
+        const deposit = await depositModel.create(depositA)
         const url = baseUrl + `master/${deposit._id}`
 
         const { statusCode, body } = await request
@@ -1015,7 +999,7 @@ describe('deposit', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the an empty array of deposit payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1029,14 +1013,12 @@ describe('deposit', () => {
       })
 
       it('should return a 200 and the an array of deposit payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const deposit = await depositRepository
-          .create({
-            ...depositA,
-            user: user._id,
-          })
-          .save()
+        const deposit = await depositModel.create({
+          ...depositA,
+          user: user._id,
+        })
 
         const { statusCode, body } = await request
           .get(url)

@@ -18,6 +18,9 @@ export interface IFailedTransactionObject extends IAppObject {
 }
 
 export interface IFailedTransaction extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   collectionName: string
   message: string
   status: FailedTransactionStatus

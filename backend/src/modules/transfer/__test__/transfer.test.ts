@@ -21,6 +21,7 @@ import {
   userA_id,
   userB,
   userBObj,
+  userB_id,
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 
@@ -46,16 +47,9 @@ import {
   transferSettingsA,
   transferSettingsB,
 } from '../../transferSettings/__test__/transferSettings.payload'
-import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
 import { ITransfer } from '../transfer.interface'
-import AppObjectId from '../../app/app.objectId'
-
-const userRepository = new AppRepository<IUser>(userModel)
-const transferRepository = new AppRepository<ITransfer>(transferModel)
-const transferSettingsRepository = new AppRepository<ITransferSettings>(
-  transferSettingsModel
-)
+import { Types } from 'mongoose'
 
 describe('transfer', () => {
   const baseUrl = '/api/transfer/'
@@ -79,7 +73,7 @@ describe('transfer', () => {
           // amount: 1000,
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -100,11 +94,9 @@ describe('transfer', () => {
           amount: 1000,
         }
 
-        await transferSettingsRepository.create(transferSettingsA).save()
+        await transferSettingsModel.create(transferSettingsA)
 
-        const user = await userRepository
-          .create({ ...userA, _id: userA_id })
-          .save()
+        const user = await userModel.create({ ...userA, _id: userA_id })
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -127,11 +119,9 @@ describe('transfer', () => {
           amount: 1000,
         }
 
-        await transferSettingsRepository.create(transferSettingsA).save()
+        await transferSettingsModel.create(transferSettingsA)
 
-        const user = await userRepository
-          .create({ ...userA, _id: userA_id })
-          .save()
+        const user = await userModel.create({ ...userA, _id: userA_id })
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -154,13 +144,12 @@ describe('transfer', () => {
             amount: 1000,
           }
 
-          await transferSettingsRepository.create(transferSettingsA).save()
+          await transferSettingsModel.create(transferSettingsA)
 
           const status = TransferStatus.SUCCESSFUL
 
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          const user = await userModel.create({ ...userA, _id: userA_id })
+
           const fromUser = userAObj
           const toUser = userBObj
 
@@ -195,7 +184,7 @@ describe('transfer', () => {
           expect(createTransactionTransactionMock.mock.calls[0]).toEqual([
             expect.objectContaining(fromUser),
             status,
-            TransactionCategory.TRANSFER,
+            TransactionCategory.TRANSFER_OUT,
             expect.any(Object),
             payload.amount,
             UserEnvironment.LIVE,
@@ -204,7 +193,7 @@ describe('transfer', () => {
           expect(createTransactionTransactionMock.mock.calls[1]).toEqual([
             expect.objectContaining(toUser),
             status,
-            TransactionCategory.TRANSFER,
+            TransactionCategory.TRANSFER_IN,
             expect.any(Object),
             payload.amount,
             UserEnvironment.LIVE,
@@ -264,14 +253,13 @@ describe('transfer', () => {
             amount: 1000,
           }
 
-          await transferSettingsRepository.create(transferSettingsB).save()
+          await transferSettingsModel.create(transferSettingsB)
 
           const status = TransferStatus.PENDING
 
-          await userRepository.create(userB).save()
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          await userModel.create(userB)
+          const user = await userModel.create({ ...userA, _id: userA_id })
+
           const fromUser = userAObj
           const toUser = userBObj
 
@@ -300,7 +288,7 @@ describe('transfer', () => {
           expect(createTransactionTransactionMock.mock.calls[0]).toEqual([
             expect.objectContaining(fromUser),
             status,
-            TransactionCategory.TRANSFER,
+            TransactionCategory.TRANSFER_OUT,
             expect.any(Object),
             payload.amount,
             UserEnvironment.LIVE,
@@ -347,7 +335,7 @@ describe('transfer', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const payload = {
@@ -368,7 +356,7 @@ describe('transfer', () => {
 
     describe('given payload is not valid', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -390,19 +378,16 @@ describe('transfer', () => {
     describe('given all validations passed', () => {
       describe('given status was reversed', () => {
         it('should execute 3 transactions', async () => {
-          const admin = await userRepository.create(adminA).save()
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          const admin = await userModel.create(adminA)
+          const user = await userModel.create({ ...userA, _id: userA_id })
+
           const token = Encryption.createToken(admin)
 
-          const transfer = await transferRepository
-            .create({
-              ...transferA,
-              _id: transferA_id,
-              fromUser: user._id,
-            })
-            .save()
+          const transfer = await transferModel.create({
+            ...transferA,
+            _id: transferA_id,
+            fromUser: user._id,
+          })
 
           const status = TransferStatus.REVERSED
 
@@ -472,19 +457,15 @@ describe('transfer', () => {
       })
       describe('given status was successful', () => {
         it('should return a 200 and the transfer payload', async () => {
-          const admin = await userRepository.create(adminA).save()
+          const admin = await userModel.create(adminA)
           const token = Encryption.createToken(admin)
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          const user = await userModel.create({ ...userA, _id: userA_id })
 
-          const transfer = await transferRepository
-            .create({
-              ...transferA,
-              _id: transferA_id,
-              fromUser: user._id,
-            })
-            .save()
+          const transfer = await transferModel.create({
+            ...transferA,
+            _id: transferA_id,
+            fromUser: user._id,
+          })
 
           const status = TransferStatus.SUCCESSFUL
 
@@ -566,7 +547,7 @@ describe('transfer', () => {
     // const url = baseUrl + `delete/:transferId`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const url = baseUrl + `delete/transferId`
@@ -583,10 +564,10 @@ describe('transfer', () => {
 
     describe('given transfer id those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const url = baseUrl + `delete/${new AppObjectId().toString()}`
+        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -600,10 +581,10 @@ describe('transfer', () => {
 
     describe('given transfer has not been settled', () => {
       it('should return a 400', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const transfer = await transferRepository.create(transferA).save()
+        const transfer = await transferModel.create(transferA)
 
         const url = baseUrl + `delete/${transfer._id}`
 
@@ -618,15 +599,13 @@ describe('transfer', () => {
     })
     describe('given all validations passed', () => {
       it('should return a 200 and the transfer payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const transfer = await transferRepository
-          .create({
-            ...transferA,
-            status: TransferStatus.SUCCESSFUL,
-          })
-          .save()
+        const transfer = await transferModel.create({
+          ...transferA,
+          status: TransferStatus.SUCCESSFUL,
+        })
 
         const url = baseUrl + `delete/${transfer._id}`
 
@@ -646,7 +625,7 @@ describe('transfer', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -661,7 +640,7 @@ describe('transfer', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of transfer payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -675,14 +654,17 @@ describe('transfer', () => {
           transfers: [],
         })
 
-        const transferCounts = await transferRepository.count()
+        const transferCounts = await transferModel.count()
 
         expect(transferCounts).toBe(0)
       })
       it('should return a 200 and an array of transfer payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
-        const transfer = await transferRepository.create(transferA).save()
+
+        await userModel.create({ ...userA, _id: userA_id })
+        await userModel.create({ ...userB, _id: userB_id })
+        const transfer = await transferModel.create(transferA)
 
         const { statusCode, body } = await request
           .get(url)
@@ -709,7 +691,7 @@ describe('transfer', () => {
           transfer.toUserObject.username
         )
 
-        const transferCounts = await transferRepository.count()
+        const transferCounts = await transferModel.count()
 
         expect(transferCounts).toBe(1)
       })
@@ -731,9 +713,9 @@ describe('transfer', () => {
 
     describe('given transfer those not exist', () => {
       it('should throw a 404 error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const url = baseUrl + new AppObjectId().toString()
+        const url = baseUrl + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .get(url)
@@ -747,9 +729,9 @@ describe('transfer', () => {
 
     describe('given transfer those not belongs to logged in user', () => {
       it('should throw a 404 error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const transfer = await transferRepository.create(transferA).save()
+        const transfer = await transferModel.create(transferA)
 
         const url = baseUrl + transfer._id
 
@@ -761,7 +743,7 @@ describe('transfer', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const transferCounts = await transferRepository.count()
+        const transferCounts = await transferModel.count()
 
         expect(transferCounts).toBe(1)
       })
@@ -770,14 +752,12 @@ describe('transfer', () => {
     describe('given all validations passed', () => {
       describe('given from user', () => {
         it('should return a 200 and the transfer payload', async () => {
-          const user = await userRepository.create(userA).save()
+          const user = await userModel.create(userA)
           const token = Encryption.createToken(user)
-          const transfer = await transferRepository
-            .create({
-              ...transferA,
-              fromUser: user._id,
-            })
-            .save()
+          const transfer = await transferModel.create({
+            ...transferA,
+            fromUser: user._id,
+          })
 
           const url = baseUrl + transfer._id
 
@@ -788,25 +768,26 @@ describe('transfer', () => {
           expect(body.message).toBe('Transfer history fetched successfully')
           expect(statusCode).toBe(200)
           expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+
+          body.data.transfer.id = transfer._id.toString()
+
           expect(Helpers.deepClone(body.data.transfer)).toEqual(
-            Helpers.deepClone(transferRepository.toObject(transfer))
+            Helpers.deepClone(transfer.toObject({ getters: true }))
           )
 
-          const transferCounts = await transferRepository.count()
+          const transferCounts = await transferModel.count()
 
           expect(transferCounts).toBe(1)
         })
       })
       describe('given to user', () => {
         it('should return a 200 and the transfer payload', async () => {
-          const user = await userRepository.create(userA).save()
+          const user = await userModel.create(userA)
           const token = Encryption.createToken(user)
-          const transfer = await transferRepository
-            .create({
-              ...transferA,
-              toUser: user._id,
-            })
-            .save()
+          const transfer = await transferModel.create({
+            ...transferA,
+            toUser: user._id,
+          })
 
           const url = baseUrl + transfer._id
 
@@ -817,11 +798,13 @@ describe('transfer', () => {
           expect(body.message).toBe('Transfer history fetched successfully')
           expect(statusCode).toBe(200)
           expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+
+          body.data.transfer.id = transfer._id.toString()
           expect(Helpers.deepClone(body.data.transfer)).toEqual(
-            Helpers.deepClone(transferRepository.toObject(transfer))
+            Helpers.deepClone(transfer.toObject({ getters: true }))
           )
 
-          const transferCounts = await transferRepository.count()
+          const transferCounts = await transferModel.count()
 
           expect(transferCounts).toBe(1)
         })
@@ -833,9 +816,9 @@ describe('transfer', () => {
     // const url = baseUrl + `master/:transfer`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const url = baseUrl + `master/${new AppObjectId().toString()}`
+        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -849,9 +832,9 @@ describe('transfer', () => {
 
     describe('given transfer those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
-        const url = baseUrl + `master/${new AppObjectId().toString()}`
+        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -865,9 +848,9 @@ describe('transfer', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the transfer payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
-        const transfer = await transferRepository.create(transferA).save()
+        const transfer = await transferModel.create(transferA)
         const url = baseUrl + `master/${transfer._id}`
 
         const { statusCode, body } = await request
@@ -878,9 +861,11 @@ describe('transfer', () => {
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
+        body.data.transfer.id = transfer._id.toString()
+
         expect(Helpers.deepClone(body.data)).toEqual(
           Helpers.deepClone({
-            transfer: transferRepository.toObject(transfer),
+            transfer: transfer.toObject({ getters: true }),
           })
         )
       })
@@ -901,7 +886,7 @@ describe('transfer', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the an empty array of transfer payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -915,32 +900,33 @@ describe('transfer', () => {
       })
 
       it('should return a 200 and the an array of transfer payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        await transferRepository
-          .create({
-            ...transferA,
-            fromUser: user._id,
-          })
-          .save()
-        await transferRepository
-          .create({
-            ...transferA,
-            toUser: user._id,
-          })
-          .save()
-        await transferRepository
-          .create({
-            ...transferA,
-            fromUser: new AppObjectId().toString(),
-          })
-          .save()
-        await transferRepository
-          .create({
-            ...transferA,
-            toUser: new AppObjectId().toString(),
-          })
-          .save()
+        await transferModel.create({
+          ...transferA,
+          fromUser: user._id,
+        })
+
+        await transferModel.create({
+          ...transferA,
+          toUser: user._id,
+        })
+
+        await transferModel.create({
+          ...transferA,
+          toUser: user._id,
+          status: TransferStatus.SUCCESSFUL,
+        })
+
+        await transferModel.create({
+          ...transferA,
+          fromUser: new Types.ObjectId().toString(),
+        })
+
+        await transferModel.create({
+          ...transferA,
+          toUser: new Types.ObjectId().toString(),
+        })
 
         const { statusCode, body } = await request
           .get(url)

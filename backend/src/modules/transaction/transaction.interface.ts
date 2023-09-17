@@ -7,7 +7,7 @@ import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '../transactionManager/transactionManager.type'
 import { UserEnvironment } from '../user/user.enum'
 import { TransactionStatus } from './transaction.type'
-import { Document, ObjectId } from 'mongoose'
+import { Document, ObjectId, Types } from 'mongoose'
 
 export interface ITransactionObject extends IAppObject {
   user: IUser['_id']
@@ -48,12 +48,12 @@ export interface ITransactionService {
   ): TTransaction<ITransactionObject, ITransaction>
 
   _updateStatusTransaction(
-    categoryId: ObjectId,
+    categoryId: ObjectId | Types.ObjectId,
     status: TransactionStatus
   ): TTransaction<ITransactionObject, ITransaction>
 
   _updateAmountTransaction(
-    categoryId: ObjectId,
+    categoryId: ObjectId | Types.ObjectId,
     status: TransactionStatus,
     amount: number
   ): TTransaction<ITransactionObject, ITransaction>

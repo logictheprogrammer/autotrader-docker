@@ -274,7 +274,7 @@ class InvestmentService implements IInvestmentService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Investment has been registered successfully',
-        data: { investment: investmentInstance.model.collectRaw() },
+        data: { investment: investmentInstance.model },
       }
     } catch (err: any) {
       throw new AppException(

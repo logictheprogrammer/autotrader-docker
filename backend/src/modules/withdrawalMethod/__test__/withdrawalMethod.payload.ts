@@ -1,5 +1,5 @@
+import { Types } from 'mongoose'
 import { WithdrawalMethodStatus } from '../../../modules/withdrawalMethod/withdrawalMethod.enum'
-import AppObjectId from '../../app/app.objectId'
 import {
   currencyA_id,
   currencyB_id,
@@ -12,10 +12,12 @@ export const withdrawalMethodUpdated = {
   minWithdrawal: 70,
 }
 
-export const withdrawalMethodA_id = new AppObjectId('6245de5d5b1f5b3a5c1b539a')
+export const withdrawalMethodA_id = new Types.ObjectId(
+  '6245de5d5b1f5b3a5c1b539a'
+)
 
 export const withdrawalMethodA = {
-  currency: currencyA_id.toString(),
+  currency: currencyA_id,
   name: 'bitcoin',
   symbol: 'btc',
   logo: 'btc.svg',
@@ -25,10 +27,12 @@ export const withdrawalMethodA = {
   status: WithdrawalMethodStatus.ENABLED,
 }
 
-export const withdrawalMethodB_id = new AppObjectId('6245de5d5b1f5b3a5c1b539b')
+export const withdrawalMethodB_id = new Types.ObjectId(
+  '6245de5d5b1f5b3a5c1b539b'
+)
 
 export const withdrawalMethodB = {
-  currency: currencyB_id.toString(),
+  currency: currencyB_id,
   name: 'ethereum',
   symbol: 'eth',
   logo: 'eth.svg',
@@ -38,10 +42,12 @@ export const withdrawalMethodB = {
   status: WithdrawalMethodStatus.ENABLED,
 }
 
-export const withdrawalMethodC_id = new AppObjectId('6245de5d5b1f5b3a5c1b539c')
+export const withdrawalMethodC_id = new Types.ObjectId(
+  '6245de5d5b1f5b3a5c1b539c'
+)
 
 export const withdrawalMethodC = {
-  currency: currencyC_id.toString(),
+  currency: currencyC_id,
   name: 'litecoin',
   symbol: 'ltc',
   logo: 'ltc.svg',

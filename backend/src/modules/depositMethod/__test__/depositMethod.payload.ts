@@ -1,5 +1,5 @@
+import { Types } from 'mongoose'
 import { DepositMethodStatus } from '../../../modules/depositMethod/depositMethod.enum'
-import AppObjectId from '../../app/app.objectId'
 import {
   currencyA_id,
   currencyB_id,
@@ -13,7 +13,7 @@ export const depositMethodUpdated = {
   minDeposit: 70,
 }
 
-export const depositMethodA_id = new AppObjectId('6245de5d5b1f5b3a5c1b539a')
+export const depositMethodA_id = new Types.ObjectId('6245de5d5b1f5b3a5c1b539a')
 
 export const depositMethodA = {
   currency: currencyA_id.toString(),
@@ -29,7 +29,7 @@ export const depositMethodA = {
   autoUpdate: true,
 }
 
-export const depositMethodB_id = new AppObjectId('6245de5d5b1f5b3a5c1b539b')
+export const depositMethodB_id = new Types.ObjectId('6245de5d5b1f5b3a5c1b539b')
 
 export const depositMethodB = {
   currency: currencyB_id.toString(),
@@ -45,7 +45,7 @@ export const depositMethodB = {
   autoUpdate: true,
 }
 
-export const depositMethodC_id = new AppObjectId('6245de5d5b1f5b3a5c1b539c')
+export const depositMethodC_id = new Types.ObjectId('6245de5d5b1f5b3a5c1b539c')
 
 export const depositMethodC = {
   currency: currencyC_id.toString(),

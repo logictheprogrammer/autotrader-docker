@@ -8,7 +8,7 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { IAppObject } from '@/modules/app/app.interface'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { UserAccount } from '@/modules/user/user.enum'
-import { Document, ObjectId } from 'mongoose'
+import { Document, ObjectId, Types } from 'mongoose'
 
 export interface IWithdrawalObject extends IAppObject {
   withdrawalMethod: IWithdrawalMethod['_id']
@@ -47,7 +47,7 @@ export interface IWithdrawalService {
   ): TTransaction<IWithdrawalObject, IWithdrawal>
 
   _updateStatusTransaction(
-    withdrawalId: ObjectId,
+    withdrawalId: ObjectId | Types.ObjectId,
     status: WithdrawalStatus
   ): TTransaction<IWithdrawalObject, IWithdrawal>
 

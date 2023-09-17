@@ -10,11 +10,8 @@ import { transferService } from '../../../setup'
 import transferModel from '../transfer.model'
 import { transferA } from './transfer.payload'
 import { UserAccount } from '../../user/user.enum'
-import AppRepository from '../../app/app.repository'
 import { ITransfer } from '../transfer.interface'
-import AppObjectId from '../../app/app.objectId'
-
-const transferRepository = new AppRepository<ITransfer>(transferModel)
+import { Types } from 'mongoose'
 
 describe('transfer', () => {
   describe('_createTransaction', () => {
@@ -56,7 +53,7 @@ describe('transfer', () => {
 
         await expect(
           transferService._updateStatusTransaction(
-            new AppObjectId(),
+            new Types.ObjectId(),
             TransferStatus.SUCCESSFUL
           )
         ).rejects.toThrow('Transfer transaction not found')
@@ -65,12 +62,10 @@ describe('transfer', () => {
     describe('given the status has already been settle', () => {
       it('should throw a 400 error', async () => {
         request
-        const transfer = await transferRepository
-          .create({
-            ...transferA,
-            status: TransferStatus.SUCCESSFUL,
-          })
-          .save()
+        const transfer = await transferModel.create({
+          ...transferA,
+          status: TransferStatus.SUCCESSFUL,
+        })
 
         expect(transfer.status).toBe(TransferStatus.SUCCESSFUL)
 
@@ -85,7 +80,7 @@ describe('transfer', () => {
     describe('given transfer was reversed', () => {
       it('should return a transfer transaction instance with reversed status', async () => {
         request
-        const transfer = await transferRepository.create(transferA).save()
+        const transfer = await transferModel.create(transferA)
 
         expect(transfer.status).toBe(TransferStatus.PENDING)
 
@@ -97,16 +92,14 @@ describe('transfer', () => {
         expect(transferInstance.object.status).toBe(TransferStatus.REVERSED)
 
         expect(transferInstance.instance.onFailed).toContain(
-          `Set the status of the transfer with an id of (${
-            transferInstance.instance.model.collectUnsaved()._id
-          }) to (${TransferStatus.PENDING})`
+          `Set the status of the transfer with an id of (${transferInstance.instance.model._id}) to (${TransferStatus.PENDING})`
         )
       })
     })
     describe('given transfer was approved', () => {
       it('should return a transfer transaction instance with successful status', async () => {
         request
-        const transfer = await transferRepository.create(transferA).save()
+        const transfer = await transferModel.create(transferA)
 
         expect(transfer.status).toBe(TransferStatus.PENDING)
 
@@ -118,9 +111,7 @@ describe('transfer', () => {
         expect(transferInstance.object.status).toBe(TransferStatus.SUCCESSFUL)
 
         expect(transferInstance.instance.onFailed).toContain(
-          `Set the status of the transfer with an id of (${
-            transferInstance.instance.model.collectUnsaved()._id
-          }) to (${TransferStatus.PENDING})`
+          `Set the status of the transfer with an id of (${transferInstance.instance.model._id}) to (${TransferStatus.PENDING})`
         )
       })
     })

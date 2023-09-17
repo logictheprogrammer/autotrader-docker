@@ -4,7 +4,7 @@ import { PlanStatus } from '@/modules/plan/plan.enum'
 import { UserRole } from '@/modules/user/user.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
 import { IInvestment } from '../investment/investment.interface'
-import { Document, ObjectId } from 'mongoose'
+import { Document, ObjectId, Types } from 'mongoose'
 import { IAsset } from '../asset/asset.interface'
 
 export interface IPlanObject extends IAppObject {
@@ -28,6 +28,9 @@ export interface IPlanObject extends IAppObject {
 }
 
 export interface IPlan extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   icon: string
   name: string
   engine: string
@@ -90,7 +93,7 @@ export interface IPlanService {
     status: PlanStatus
   ): THttpResponse<{ plan: IPlan }>
 
-  get(planId: ObjectId): Promise<IPlanObject | null>
+  get(planId: ObjectId | Types.ObjectId): Promise<IPlanObject | null>
 
   delete(planId: ObjectId): THttpResponse<{ plan: IPlan }>
 

@@ -1,5 +1,4 @@
 import HttpException from '../../../modules/http/http.exception'
-import AppRepository from '../../app/app.repository'
 import { IInvestment } from '../investment.interface'
 import investmentModel from '../investment.model'
 import InvestmentService from '../investment.service'
@@ -15,10 +14,9 @@ import {
   investmentC_id,
 } from './investment.payload'
 
-const investmentRepository = new AppRepository<IInvestment>(investmentModel)
-
 export const getInvestmentMock = jest
   .spyOn(InvestmentService.prototype, 'get')
+  // @ts-ignore
   .mockImplementation((key) => {
     if (key.toString() === investmentA_id.toString()) {
       return Promise.resolve({
@@ -54,22 +52,22 @@ export const createTransactionInvestmentMock = jest
   .mockResolvedValue({
     object: investmentAObj,
     instance: {
-      model: investmentRepository.toClass(investmentModelReturn),
+      model: investmentModelReturn,
       onFailed: 'delete investment',
       async callback() {},
     },
   })
 
-export const fundTransactionInvestmentMock = jest
-  .spyOn(InvestmentService.prototype, '_fundTransaction')
-  .mockResolvedValue({
-    object: investmentAObj,
-    instance: {
-      model: investmentRepository.toClass(investmentModelReturn),
-      onFailed: 'delete investment',
-      async callback() {},
-    },
-  })
+// export const fundTransactionInvestmentMock = jest
+//   .spyOn(InvestmentService.prototype, '_fundTransaction')
+//   .mockResolvedValue({
+//     object: investmentAObj,
+//     instance: {
+//       model: investmentModelReturn,
+//       onFailed: 'delete investment',
+//       async callback() {},
+//     },
+//   })
 
 export const updateStatusTransactionInvestmentMock = jest
   .spyOn(InvestmentService.prototype, '_updateStatusTransaction')
@@ -78,7 +76,7 @@ export const updateStatusTransactionInvestmentMock = jest
       return Promise.resolve({
         object: { ...investmentAObj, status },
         instance: {
-          model: investmentRepository.toClass(investmentModelReturn),
+          model: investmentModelReturn,
           onFailed: 'change investment status to old status',
           async callback() {},
         },
@@ -88,7 +86,7 @@ export const updateStatusTransactionInvestmentMock = jest
       return Promise.resolve({
         object: { ...investmentBObj, status },
         instance: {
-          model: investmentRepository.toClass(investmentModelReturn),
+          model: investmentModelReturn,
           onFailed: 'change investment status to old status',
           async callback() {},
         },

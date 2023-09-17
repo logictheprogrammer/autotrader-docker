@@ -269,7 +269,7 @@ class TransferService implements ITransferService {
         const fromUserTransaction = await this.transactionService.create(
           fromUser,
           status,
-          TransactionCategory.TRANSFER_REVERSED,
+          TransactionCategory.TRANSFER_OUT,
           transfer,
           amount,
           UserEnvironment.LIVE
@@ -497,6 +497,7 @@ class TransferService implements ITransferService {
           })
           .select('-fromUserObject -toUserObject')
           .populate('toUser', 'username isDeleted')
+          .populate('fromUser', 'username isDeleted')
       } else {
         transfers = await this.transferModel
           .find({
@@ -509,6 +510,7 @@ class TransferService implements ITransferService {
             updatedAt: -1,
           })
           .select('-fromUserObject -toUserObject')
+          .populate('toUser', 'username isDeleted')
           .populate('fromUser', 'username isDeleted')
       }
 

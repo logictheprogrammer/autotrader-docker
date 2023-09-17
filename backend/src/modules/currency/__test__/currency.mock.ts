@@ -11,6 +11,7 @@ import {
 
 export const getCurrencyMock = jest
   .spyOn(CurrencyService.prototype, 'get')
+  // @ts-ignore
   .mockImplementation((key) => {
     if (key.toString() === currencyA_id.toString()) {
       return Promise.resolve({

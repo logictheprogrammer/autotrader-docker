@@ -48,15 +48,10 @@ import { planA, planA_id } from '../../plan/__test__/plan.payload'
 import { getPlanMock } from '../../plan/__test__/plan.mock'
 import FormatNumber from '../../../utils/formats/formatNumber'
 import transactionModel from '../../transaction/transaction.model'
-import AppRepository from '../../app/app.repository'
 import { IInvestment } from '../investment.interface'
 import { IUser } from '../../user/user.interface'
 import { ITransaction } from '../../transaction/transaction.interface'
-import AppObjectId from '../../app/app.objectId'
-
-const userRepository = new AppRepository<IUser>(userModel)
-const transactionRepository = new AppRepository<ITransaction>(transactionModel)
-const investmentRepository = new AppRepository<IInvestment>(investmentModel)
+import { Types } from 'mongoose'
 
 describe('investment', () => {
   const baseUrl = '/api/investment/'
@@ -78,7 +73,7 @@ describe('investment', () => {
           planId: planA_id,
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -93,14 +88,14 @@ describe('investment', () => {
     })
     describe('given plan those not exits', () => {
       it('should throw a 404 error', async () => {
-        const id = new AppObjectId().toString()
+        const id = new Types.ObjectId().toString()
         const payload = {
           planId: id,
           account: UserAccount.MAIN_BALANCE,
           amount: investmentA.amount,
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -126,7 +121,7 @@ describe('investment', () => {
           amount: planA.minAmount - 10,
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -157,9 +152,8 @@ describe('investment', () => {
             account: UserAccount.MAIN_BALANCE,
           }
 
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          const user = await userModel.create({ ...userA, _id: userA_id })
+
           const { password: _, ...userA1 } = userA
 
           const token = Encryption.createToken(user)
@@ -254,9 +248,8 @@ describe('investment', () => {
             account: UserAccount.MAIN_BALANCE,
           }
 
-          const user = await userRepository
-            .create({ ...userB, _id: userB_id })
-            .save()
+          const user = await userModel.create({ ...userB, _id: userB_id })
+
           const { password: _, ...userA1 } = userA
 
           const token = Encryption.createToken(user)
@@ -363,7 +356,7 @@ describe('investment', () => {
             amount: planA.minAmount,
           }
 
-          const user = await userRepository.create(userA).save()
+          const user = await userModel.create(userA)
           const token = Encryption.createToken(user)
 
           const { statusCode, body } = await request
@@ -384,9 +377,8 @@ describe('investment', () => {
             account: UserAccount.DEMO_BALANCE,
           }
 
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          const user = await userModel.create({ ...userA, _id: userA_id })
+
           const { password: _, ...userA1 } = userA
 
           const token = Encryption.createToken(user)
@@ -481,7 +473,7 @@ describe('investment', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const payload = {
@@ -502,7 +494,7 @@ describe('investment', () => {
 
     describe('given payload is not valid', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -524,20 +516,17 @@ describe('investment', () => {
     describe('given all validations passed', () => {
       describe('given status was suspended', () => {
         it('should execute 2 transactions', async () => {
-          const admin = await userRepository.create(adminA).save()
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          const admin = await userModel.create(adminA)
+          const user = await userModel.create({ ...userA, _id: userA_id })
+
           // const { password: _, ...userA1 } = userA
           const token = Encryption.createToken(admin)
 
-          const investment = await investmentRepository
-            .create({
-              ...investmentA,
-              _id: investmentA_id,
-              user: user._id,
-            })
-            .save()
+          const investment = await investmentModel.create({
+            ...investmentA,
+            _id: investmentA_id,
+            user: user._id,
+          })
 
           const status = InvestmentStatus.SUSPENDED
 
@@ -573,9 +562,7 @@ describe('investment', () => {
 
           expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
           expect(createTransactionNotificationMock.mock.calls[0][0]).toBe(
-            `Your investment of ${formatNumber.toDollar(
-              investmentAObj.amount
-            )} has been ${status}`
+            `Your investment package has been ${status}`
           )
           expect(createTransactionNotificationMock.mock.calls[0][1]).toBe(
             NotificationCategory.INVESTMENT
@@ -594,29 +581,25 @@ describe('investment', () => {
       })
       describe('given status was set to completed but no referrer', () => {
         it('should return a 200 and the investment payload', async () => {
-          const admin = await userRepository.create(adminA).save()
+          const admin = await userModel.create(adminA)
           const token = Encryption.createToken(admin)
 
-          const investment = await investmentRepository
-            .create({
-              ...investmentA,
-              _id: investmentA_id,
-            })
-            .save()
+          const investment = await investmentModel.create({
+            ...investmentA,
+            _id: investmentA_id,
+          })
 
-          await transactionRepository
-            .create({
-              user: investment.user,
-              userObject: investment.userObject,
-              status: InvestmentStatus.RUNNING,
-              category: investment._id,
-              categoryName: TransactionCategory.INVESTMENT,
-              categoryObject: investment,
-              amount: investment.amount,
-              stake: investment.amount,
-              environment: investment.environment,
-            })
-            .save()
+          await transactionModel.create({
+            user: investment.user,
+            userObject: investment.userObject,
+            status: InvestmentStatus.RUNNING,
+            category: investment._id,
+            categoryName: TransactionCategory.INVESTMENT,
+            categoryObject: investment,
+            amount: investment.amount,
+            stake: investment.amount,
+            environment: investment.environment,
+          })
 
           const status = InvestmentStatus.COMPLETED
 
@@ -669,9 +652,7 @@ describe('investment', () => {
           expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
           investmentAObj.status = status
           expect(createTransactionNotificationMock).toHaveBeenCalledWith(
-            `Your investment of ${formatNumber.toDollar(
-              investmentAObj.amount
-            )} has been ${status}`,
+            `Your investment package has been ${status}`,
             NotificationCategory.INVESTMENT,
             investmentAObj,
             NotificationForWho.USER,
@@ -687,29 +668,25 @@ describe('investment', () => {
       })
       describe('given status was set to completed but there is a referrer', () => {
         it('should return a 200 and the investment payload', async () => {
-          const admin = await userRepository.create(adminA).save()
+          const admin = await userModel.create(adminA)
           const token = Encryption.createToken(admin)
 
-          const investment = await investmentRepository
-            .create({
-              ...investmentB,
-              _id: investmentB_id,
-            })
-            .save()
+          const investment = await investmentModel.create({
+            ...investmentB,
+            _id: investmentB_id,
+          })
 
-          await transactionRepository
-            .create({
-              user: investment.user,
-              userObject: investment.userObject,
-              status: InvestmentStatus.RUNNING,
-              category: investment._id,
-              categoryName: TransactionCategory.INVESTMENT,
-              categoryObject: investment,
-              amount: investment.amount,
-              stake: investment.amount,
-              environment: investment.environment,
-            })
-            .save()
+          await transactionModel.create({
+            user: investment.user,
+            userObject: investment.userObject,
+            status: InvestmentStatus.RUNNING,
+            category: investment._id,
+            categoryName: TransactionCategory.INVESTMENT,
+            categoryObject: investment,
+            amount: investment.amount,
+            stake: investment.amount,
+            environment: investment.environment,
+          })
 
           const status = InvestmentStatus.COMPLETED
 
@@ -776,9 +753,7 @@ describe('investment', () => {
           investmentBObj.status = status
           expect(createTransactionNotificationMock).toHaveBeenNthCalledWith(
             3,
-            `Your investment of ${formatNumber.toDollar(
-              investmentBObj.amount
-            )} has been ${status}`,
+            `Your investment package has been ${status}`,
             NotificationCategory.INVESTMENT,
             investmentBObj,
             NotificationForWho.USER,
@@ -801,7 +776,7 @@ describe('investment', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -817,10 +792,10 @@ describe('investment', () => {
     describe('given inputs are incorrect', () => {
       it('should return a 400 error', async () => {
         const payload = {
-          investmentId: new AppObjectId().toString(),
+          investmentId: new Types.ObjectId().toString(),
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -836,11 +811,11 @@ describe('investment', () => {
     describe('given investment those not exist', () => {
       it('should return a 404 error', async () => {
         const payload = {
-          investmentId: new AppObjectId().toString(),
+          investmentId: new Types.ObjectId().toString(),
           amount: 100,
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -855,14 +830,14 @@ describe('investment', () => {
     })
     describe('on success', () => {
       it('should return a 200 and an investment payload', async () => {
-        const investment = await investmentRepository.create(investmentA).save()
+        const investment = await investmentModel.create(investmentA)
 
         const payload = {
           investmentId: investment._id,
           amount: 100,
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -887,7 +862,7 @@ describe('investment', () => {
     // const url = baseUrl + `delete/:investmentId`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const url = baseUrl + `delete/investmentId`
@@ -904,10 +879,10 @@ describe('investment', () => {
 
     describe('given investment id those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const url = baseUrl + `delete/${new AppObjectId().toString()}`
+        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -921,10 +896,10 @@ describe('investment', () => {
 
     describe('given investment has not been settled', () => {
       it('should return a 400 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const investment = await investmentRepository.create(investmentA).save()
+        const investment = await investmentModel.create(investmentA)
 
         const url = baseUrl + `delete/${investment._id}`
 
@@ -940,15 +915,13 @@ describe('investment', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the investment payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const investment = await investmentRepository
-          .create({
-            ...investmentA,
-            status: InvestmentStatus.COMPLETED,
-          })
-          .save()
+        const investment = await investmentModel.create({
+          ...investmentA,
+          status: InvestmentStatus.COMPLETED,
+        })
 
         const url = baseUrl + `delete/${investment._id}`
 
@@ -968,7 +941,7 @@ describe('investment', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -983,7 +956,7 @@ describe('investment', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of investment payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -997,14 +970,18 @@ describe('investment', () => {
           investments: [],
         })
 
-        const investmentCounts = await investmentRepository.count()
+        const investmentCounts = await investmentModel.count()
 
         expect(investmentCounts).toBe(0)
       })
       it('should return a 200 and an array of investment payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(admin)
-        const investment = await investmentRepository.create(investmentA).save()
+        const investment = await investmentModel.create({
+          ...investmentA,
+          user: user._id,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -1017,7 +994,9 @@ describe('investment', () => {
         expect(body.data.investments[0].environment).toBe(
           investment.environment
         )
-        expect(body.data.investments[0].name).toBe(investment.name)
+        expect(body.data.investments[0].planObject.name).toBe(
+          investment.planObject.name
+        )
         expect(body.data.investments[0].balance).toBe(investment.balance)
         expect(body.data.investments[0].status).toBe(investment.status)
         expect(body.data.investments[0].user._id).toBe(
@@ -1027,7 +1006,7 @@ describe('investment', () => {
           investment.userObject.username
         )
 
-        const investmentCounts = await investmentRepository.count()
+        const investmentCounts = await investmentModel.count()
 
         expect(investmentCounts).toBe(1)
       })
@@ -1039,7 +1018,7 @@ describe('investment', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1054,7 +1033,7 @@ describe('investment', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of investment payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -1068,19 +1047,19 @@ describe('investment', () => {
           investments: [],
         })
 
-        const investmentCounts = await investmentRepository.count()
+        const investmentCounts = await investmentModel.count()
 
         expect(investmentCounts).toBe(0)
       })
       it('should return a 200 and an array of investment payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(admin)
-        const investment = await investmentRepository
-          .create({
-            ...investmentA,
-            environment: UserEnvironment.DEMO,
-          })
-          .save()
+        const investment = await investmentModel.create({
+          ...investmentA,
+          user: user._id,
+          environment: UserEnvironment.DEMO,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -1093,7 +1072,9 @@ describe('investment', () => {
         expect(body.data.investments[0].environment).toBe(
           investment.environment
         )
-        expect(body.data.investments[0].name).toBe(investment.name)
+        expect(body.data.investments[0].planObject.name).toBe(
+          investment.planObject.name
+        )
         expect(body.data.investments[0].balance).toBe(investment.balance)
         expect(body.data.investments[0].status).toBe(investment.status)
         expect(body.data.investments[0].user._id).toBe(
@@ -1103,7 +1084,7 @@ describe('investment', () => {
           investment.userObject.username
         )
 
-        const investmentCounts = await investmentRepository.count()
+        const investmentCounts = await investmentModel.count()
 
         expect(investmentCounts).toBe(1)
       })
@@ -1125,7 +1106,7 @@ describe('investment', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of investment payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1139,20 +1120,18 @@ describe('investment', () => {
           investments: [],
         })
 
-        const investmentCounts = await investmentRepository.count()
+        const investmentCounts = await investmentModel.count()
 
         expect(investmentCounts).toBe(0)
       })
       it('should return a 200 and an array of investment payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        await investmentRepository.create(investmentB).save()
-        const investment = await investmentRepository
-          .create({
-            ...investmentA,
-            user: user._id,
-          })
-          .save()
+        await investmentModel.create(investmentB)
+        const investment = await investmentModel.create({
+          ...investmentA,
+          user: user._id,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -1165,17 +1144,13 @@ describe('investment', () => {
         expect(body.data.investments[0].environment).toBe(
           investment.environment
         )
-        expect(body.data.investments[0].name).toBe(investment.name)
+        expect(body.data.investments[0].planObject.name).toBe(
+          investment.planObject.name
+        )
         expect(body.data.investments[0].balance).toBe(investment.balance)
         expect(body.data.investments[0].status).toBe(investment.status)
-        expect(body.data.investments[0].user._id).toBe(
-          investment.user.toString()
-        )
-        expect(body.data.investments[0].user.username).toBe(
-          investment.userObject.username
-        )
-
-        const investmentCounts = await investmentRepository.count()
+        expect(body.data.investments[0].user).toBe(investment.user.toString())
+        const investmentCounts = await investmentModel.count()
 
         expect(investmentCounts).toBe(2)
       })
@@ -1197,7 +1172,7 @@ describe('investment', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of investment payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -1211,23 +1186,19 @@ describe('investment', () => {
           investments: [],
         })
 
-        const investmentCounts = await investmentRepository.count()
+        const investmentCounts = await investmentModel.count()
 
         expect(investmentCounts).toBe(0)
       })
       it('should return a 200 and an array of investment payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        await investmentRepository
-          .create({ ...investmentB, user: user._id })
-          .save()
-        const investment = await investmentRepository
-          .create({
-            ...investmentA,
-            user: user._id,
-            environment: UserEnvironment.DEMO,
-          })
-          .save()
+        await investmentModel.create({ ...investmentB, user: user._id })
+        const investment = await investmentModel.create({
+          ...investmentA,
+          user: user._id,
+          environment: UserEnvironment.DEMO,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -1240,17 +1211,14 @@ describe('investment', () => {
         expect(body.data.investments[0].environment).toBe(
           investment.environment
         )
-        expect(body.data.investments[0].name).toBe(investment.name)
+        expect(body.data.investments[0].planObject.name).toBe(
+          investment.planObject.name
+        )
         expect(body.data.investments[0].balance).toBe(investment.balance)
         expect(body.data.investments[0].status).toBe(investment.status)
-        expect(body.data.investments[0].user._id).toBe(
-          investment.user.toString()
-        )
-        expect(body.data.investments[0].user.username).toBe(
-          investment.userObject.username
-        )
+        expect(body.data.investments[0].user).toBe(investment.user.toString())
 
-        const investmentCounts = await investmentRepository.count()
+        const investmentCounts = await investmentModel.count()
 
         expect(investmentCounts).toBe(2)
       })

@@ -1,6 +1,9 @@
 import { IUser } from '@/modules/user/user.interface'
 
 export interface IResetPassword extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   key: string
   token: string
   expires: number

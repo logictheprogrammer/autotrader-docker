@@ -62,12 +62,16 @@ class DepositService implements IDepositService {
     let deposit
 
     if (fromAllAccounts) {
-      deposit = await this.depositModel.findById(depositId)
+      deposit = await this.depositModel
+        .findById(depositId)
+        .populate('user', 'username isDeleted')
     } else {
-      deposit = await this.depositModel.findById({
-        _id: depositId,
-        user: userId,
-      })
+      deposit = await this.depositModel
+        .findOne({
+          _id: depositId,
+          user: userId,
+        })
+        .populate('user', 'username isDeleted')
     }
 
     if (!deposit) throw new HttpException(404, 'Deposit transaction not found')
@@ -182,7 +186,7 @@ class DepositService implements IDepositService {
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Deposit has been registered successfully',
-        data: { deposit: depositInstance.model.collectRaw() },
+        data: { deposit: depositInstance.model },
       }
     } catch (err: any) {
       throw new AppException(
@@ -276,10 +280,7 @@ class DepositService implements IDepositService {
 
       await this.transactionManagerService.execute(transactionInstances)
 
-      const rawDepositIntance = await depositInstance.model.populate(
-        'user',
-        'username isDeleted'
-      )
+      const rawDepositIntance = await depositInstance.model
 
       return {
         status: HttpResponseStatus.SUCCESS,

@@ -6,15 +6,9 @@ import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { failedTransactionA } from './failedTransaction.payload'
 import { FailedTransactionStatus } from '../failedTransaction.enum'
-import AppRepository from '../../app/app.repository'
 import { IFailedTransaction } from '../failedTransaction.interface'
 import { IUser } from '../../user/user.interface'
-import AppObjectId from '../../app/app.objectId'
-
-const userRepository = new AppRepository<IUser>(userModel)
-const failedTransactionRepository = new AppRepository<IFailedTransaction>(
-  failedTransactionModel
-)
+import { Types } from 'mongoose'
 
 describe('failed transaction', () => {
   const baseUrl = '/api/failed-transaction/'
@@ -23,7 +17,7 @@ describe('failed transaction', () => {
       it('should return a 401 Unauthorized error', async () => {
         const url = `${baseUrl}${'anyId'}`
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -37,9 +31,9 @@ describe('failed transaction', () => {
     })
     describe('given provded id those not exist', () => {
       it('should return a 404', async () => {
-        const url = `${baseUrl}${new AppObjectId().toString()}`
+        const url = `${baseUrl}${new Types.ObjectId().toString()}`
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -53,11 +47,11 @@ describe('failed transaction', () => {
     })
     describe('given the valid details', () => {
       it('should return a failed transaction payload', async () => {
-        const failedTransaction = await failedTransactionRepository
-          .create(failedTransactionA)
-          .save()
+        const failedTransaction = await failedTransactionModel.create(
+          failedTransactionA
+        )
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const url = `${baseUrl}${failedTransaction._id}`
@@ -90,7 +84,7 @@ describe('failed transaction', () => {
     const url = `${baseUrl}all`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -104,7 +98,7 @@ describe('failed transaction', () => {
     })
     describe('given the valid details', () => {
       it('should return an empty array of failed transactions', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -120,11 +114,11 @@ describe('failed transaction', () => {
     })
     describe('given the valid details', () => {
       it('should return an array of failed transactions', async () => {
-        const failedTransaction = await failedTransactionRepository
-          .create(failedTransactionA)
-          .save()
+        const failedTransaction = await failedTransactionModel.create(
+          failedTransactionA
+        )
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -155,7 +149,7 @@ describe('failed transaction', () => {
       it('should return a 401 Unauthorized error', async () => {
         const url = `${baseUrl}update-status/${'anyId'}`
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -169,11 +163,11 @@ describe('failed transaction', () => {
     })
     describe('given provided status those not exsit', () => {
       it('should return a 400', async () => {
-        const failedTransaction = await failedTransactionRepository
-          .create(failedTransactionA)
-          .save()
+        const failedTransaction = await failedTransactionModel.create(
+          failedTransactionA
+        )
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const url = `${baseUrl}update-status/${failedTransaction._id}`
@@ -194,10 +188,10 @@ describe('failed transaction', () => {
     })
     describe('given provded id those not exist', () => {
       it('should return a 404', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const url = `${baseUrl}update-status/${'anyId'}`
+        const url = `${baseUrl}update-status/${new Types.ObjectId().toHexString()}`
 
         const payload = {
           status: FailedTransactionStatus.SUCCESS,
@@ -215,11 +209,11 @@ describe('failed transaction', () => {
     })
     describe('given the valid details', () => {
       it('should return a failed transaction payload', async () => {
-        const failedTransaction = await failedTransactionRepository
-          .create(failedTransactionA)
-          .save()
+        const failedTransaction = await failedTransactionModel.create(
+          failedTransactionA
+        )
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const url = `${baseUrl}update-status/${failedTransaction._id}`
@@ -250,7 +244,7 @@ describe('failed transaction', () => {
       it('should return a 401 Unauthorized error', async () => {
         const url = `${baseUrl}delete/${'anyId'}`
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -264,9 +258,9 @@ describe('failed transaction', () => {
     })
     describe('given provded id those not exist', () => {
       it('should return a 404', async () => {
-        const url = `${baseUrl}delete/${new AppObjectId().toString()}`
+        const url = `${baseUrl}delete/${new Types.ObjectId().toString()}`
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -280,11 +274,11 @@ describe('failed transaction', () => {
     })
     describe('given the valid details', () => {
       it('should return a failed transaction payload', async () => {
-        const failedTransaction = await failedTransactionRepository
-          .create(failedTransactionA)
-          .save()
+        const failedTransaction = await failedTransactionModel.create(
+          failedTransactionA
+        )
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const url = `${baseUrl}delete/${failedTransaction._id}`

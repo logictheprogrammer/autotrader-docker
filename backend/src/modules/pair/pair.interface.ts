@@ -2,7 +2,7 @@ import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { AssetType } from '@/modules/asset/asset.enum'
 import { IAsset, IAssetObject } from '@/modules/asset/asset.interface'
-import { Document, ObjectId } from 'mongoose'
+import { Document, ObjectId, Types } from 'mongoose'
 
 export interface IPairObject extends IAppObject {
   assetType: AssetType
@@ -30,7 +30,7 @@ export interface IPairService {
     quoteAssetId: ObjectId
   ): THttpResponse<{ pair: IPair }>
 
-  get(pairId: ObjectId): Promise<IPairObject | null>
+  get(pairId: ObjectId | Types.ObjectId): Promise<IPairObject | null>
 
   getByBase(baseId: ObjectId): Promise<IPairObject[]>
 

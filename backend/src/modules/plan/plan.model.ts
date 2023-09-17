@@ -58,10 +58,12 @@ const PlanSchema = new Schema(
       type: String,
       required: true,
     },
-    pairs: {
-      type: Types.ObjectId,
-      ref: 'Pair',
-    },
+    assets: [
+      {
+        type: Types.ObjectId,
+        ref: 'Asset',
+      },
+    ],
     manualMode: {
       type: Boolean,
       required: true,

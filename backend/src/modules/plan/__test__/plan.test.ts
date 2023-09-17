@@ -7,13 +7,9 @@ import { HttpResponseStatus } from '../../http/http.enum'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { planA, planA_id, planB, planC } from './plan.payload'
-import AppRepository from '../../app/app.repository'
 import { IPlan } from '../plan.interface'
 import { IUser } from '../../user/user.interface'
-import AppObjectId from '../../app/app.objectId'
-
-const userRepository = new AppRepository<IUser>(userModel)
-const planRepository = new AppRepository<IPlan>(planModel)
+import { Types } from 'mongoose'
 
 describe('plan', () => {
   const baseUrl = '/api/plans'
@@ -23,7 +19,7 @@ describe('plan', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -43,7 +39,7 @@ describe('plan', () => {
           name: '',
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -60,10 +56,13 @@ describe('plan', () => {
       it('should return a 404', async () => {
         const payload = {
           ...planA,
-          assets: [new AppObjectId().toString(), new AppObjectId().toString()],
+          assets: [
+            new Types.ObjectId().toString(),
+            new Types.ObjectId().toString(),
+          ],
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -82,7 +81,7 @@ describe('plan', () => {
           ...planA,
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -106,7 +105,7 @@ describe('plan', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -127,7 +126,7 @@ describe('plan', () => {
           name: '',
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -147,7 +146,7 @@ describe('plan', () => {
           ...planB,
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -165,10 +164,13 @@ describe('plan', () => {
         const payload = {
           planId: planA_id,
           ...planB,
-          assets: [new AppObjectId().toString(), new AppObjectId().toString()],
+          assets: [
+            new Types.ObjectId().toString(),
+            new Types.ObjectId().toString(),
+          ],
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -183,13 +185,13 @@ describe('plan', () => {
     })
     describe('on success', () => {
       it('should return a 200 and payload', async () => {
-        const plan = await planRepository.create(planA).save()
+        const plan = await planModel.create(planA)
         const payload = {
           planId: plan._id,
           ...planB,
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -217,7 +219,7 @@ describe('plan', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -237,7 +239,7 @@ describe('plan', () => {
           status: 'unknown',
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -259,7 +261,7 @@ describe('plan', () => {
           status: PlanStatus.SUSPENDED,
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -274,13 +276,13 @@ describe('plan', () => {
     })
     describe('on success', () => {
       it('should return a 200 and payload', async () => {
-        const plan = await planRepository.create(planA).save()
+        const plan = await planModel.create(planA)
         const payload = {
           planId: plan._id,
           status: PlanStatus.SUSPENDED,
         }
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -302,7 +304,7 @@ describe('plan', () => {
       it('should return a 401 Unauthorized error', async () => {
         const url = `${baseUrl}/delete/${planA_id}`
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -318,7 +320,7 @@ describe('plan', () => {
       it('should return a 404', async () => {
         const url = `${baseUrl}/delete/${planA_id}`
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -332,12 +334,12 @@ describe('plan', () => {
     })
     describe('on success', () => {
       it('should return a 200 and payload', async () => {
-        const plan = await planRepository.create(planA).save()
+        const plan = await planModel.create(planA)
         const url = `${baseUrl}/delete/${plan._id}`
 
         console.log(plan)
 
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -349,7 +351,7 @@ describe('plan', () => {
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
         expect(body.data.plan._id).toBe(plan._id.toString())
 
-        const planCount = await planRepository.count()
+        const planCount = await planModel.count()
 
         expect(planCount).toBe(0)
       })
@@ -360,7 +362,7 @@ describe('plan', () => {
     const url = `${baseUrl}/master`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -374,18 +376,15 @@ describe('plan', () => {
     })
     describe('on success', () => {
       it('should return a 200 and payload', async () => {
-        await planRepository.create(planA).save()
-        await planRepository
-          .create({ ...planB, status: PlanStatus.SUSPENDED })
-          .save()
-        await planRepository
-          .create({
-            ...planC,
-            status: PlanStatus.ON_MAINTENANCE,
-          })
-          .save()
+        await planModel.create(planA)
+        await planModel.create({ ...planB, status: PlanStatus.SUSPENDED })
 
-        const admin = await userRepository.create(adminA).save()
+        await planModel.create({
+          ...planC,
+          status: PlanStatus.ON_MAINTENANCE,
+        })
+
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -414,18 +413,15 @@ describe('plan', () => {
     })
     describe('on success', () => {
       it('should return a 200 and payload', async () => {
-        await planRepository.create(planA).save()
-        await planRepository
-          .create({ ...planB, status: PlanStatus.SUSPENDED })
-          .save()
-        await planRepository
-          .create({
-            ...planC,
-            status: PlanStatus.ON_MAINTENANCE,
-          })
-          .save()
+        await planModel.create(planA)
+        await planModel.create({ ...planB, status: PlanStatus.SUSPENDED })
 
-        const user = await userRepository.create(userA).save()
+        await planModel.create({
+          ...planC,
+          status: PlanStatus.ON_MAINTENANCE,
+        })
+
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request

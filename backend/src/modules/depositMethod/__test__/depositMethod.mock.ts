@@ -11,6 +11,7 @@ import {
 
 export const getDepositMethodMock = jest
   .spyOn(DepositMethodService.prototype, 'get')
+  // @ts-ignore
   .mockImplementation((key) => {
     if (key.toString() === depositMethodA_id.toString()) {
       return Promise.resolve({

@@ -4,7 +4,6 @@ import {
   IReferral,
   IReferralObject,
 } from '../../../modules/referral/referral.interface'
-import AppRepository from '../../app/app.repository'
 import { depositA } from '../../deposit/__test__/deposit.payload'
 import {
   userA,
@@ -12,8 +11,6 @@ import {
   userB,
   userB_id,
 } from '../../user/__test__/user.payload'
-
-const referralRepository = new AppRepository<IReferral>(referralModel)
 
 // @ts-ignore
 export const referralModelReturn: IReferral = {
@@ -45,13 +42,13 @@ export const referralAObj: IReferralObject = {
 }
 
 export const referralInstance = {
-  model: referralRepository.toClass(referralModelReturn),
+  model: referralModelReturn,
   onFailed: 'delete referral',
   async callback() {},
 }
 
 export const referralInstanceOnFailed = {
-  model: referralRepository.toClass(referralModelReturn),
+  model: referralModelReturn,
   onFailed: 'delete referral',
   async callback() {
     throw new Error('onFailed Error')

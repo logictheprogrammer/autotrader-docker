@@ -251,7 +251,7 @@ class UserService implements IUserService {
       if (emailExist)
         throw new HttpException(
           ErrorCode.REQUEST_CONFLICT,
-          'EmailVerificationServicemail already exist'
+          'Email already exist'
         )
 
       const user = await this.find(userId)

@@ -11,6 +11,7 @@ import {
 
 export const getWithdrawalMethodMock = jest
   .spyOn(WithdrawalMethodService.prototype, 'get')
+  // @ts-ignore
   .mockImplementation((key) => {
     if (key.toString() === withdrawalMethodA_id.toString()) {
       return Promise.resolve({

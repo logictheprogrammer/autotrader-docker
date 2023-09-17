@@ -44,21 +44,13 @@ import { fundTransactionUserMock } from '../../user/__test__/user.mock'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
 
 import Helpers from '../../../utils/helpers/helpers'
-import AppRepository from '../../app/app.repository'
 import { IUser } from '../../user/user.interface'
 import { IWithdrawal } from '../withdrawal.interface'
 import { ITransaction } from '../../transaction/transaction.interface'
 import transactionModel from '../../transaction/transaction.model'
 import { INotification } from '../../notification/notification.interface'
 import notificationModel from '../../notification/notification.model'
-import AppObjectId from '../../app/app.objectId'
-
-const userRepository = new AppRepository<IUser>(userModel)
-const withdrawalRepository = new AppRepository<IWithdrawal>(withdrawalModel)
-const transactionRepository = new AppRepository<ITransaction>(transactionModel)
-const notificationRepository = new AppRepository<INotification>(
-  notificationModel
-)
+import { Types } from 'mongoose'
 
 describe('withdrawal', () => {
   const baseUrl = '/api/withdrawal/'
@@ -82,7 +74,7 @@ describe('withdrawal', () => {
           address: '--updated wallet address--',
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -97,7 +89,7 @@ describe('withdrawal', () => {
     })
     describe('given withdrawal method those not exits', () => {
       it('should throw a 404 error', async () => {
-        const id = new AppObjectId().toString()
+        const id = new Types.ObjectId().toString()
         const payload = {
           withdrawalMethodId: id,
           account: UserAccount.MAIN_BALANCE,
@@ -105,7 +97,7 @@ describe('withdrawal', () => {
           amount: 30,
         }
 
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -132,9 +124,7 @@ describe('withdrawal', () => {
           amount: 30,
         }
 
-        const user = await userRepository
-          .create({ ...userA, _id: userA_id })
-          .save()
+        const user = await userModel.create({ ...userA, _id: userA_id })
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -167,9 +157,7 @@ describe('withdrawal', () => {
           amount: 40,
         }
 
-        const user = await userRepository
-          .create({ ...userA, _id: userA_id })
-          .save()
+        const user = await userModel.create({ ...userA, _id: userA_id })
         const { password: _, ...userA1 } = userA
 
         const token = Encryption.createToken(user)
@@ -266,7 +254,7 @@ describe('withdrawal', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const payload = {
@@ -287,7 +275,7 @@ describe('withdrawal', () => {
 
     describe('given payload is not valid', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -309,19 +297,16 @@ describe('withdrawal', () => {
     describe('given all validations passed', () => {
       describe('given status was cancelled', () => {
         it('should execute 3 transactions', async () => {
-          const admin = await userRepository.create(adminA).save()
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          const admin = await userModel.create(adminA)
+          const user = await userModel.create({ ...userA, _id: userA_id })
+
           const token = Encryption.createToken(admin)
 
-          const withdrawal = await withdrawalRepository
-            .create({
-              ...withdrawalA,
-              _id: withdrawalA_id,
-              user: user._id,
-            })
-            .save()
+          const withdrawal = await withdrawalModel.create({
+            ...withdrawalA,
+            _id: withdrawalA_id,
+            user: user._id,
+          })
 
           const status = WithdrawalStatus.CANCELLED
 
@@ -391,19 +376,15 @@ describe('withdrawal', () => {
       })
       describe('given status was approved', () => {
         it('should return a 200 and the withdrawal payload', async () => {
-          const admin = await userRepository.create(adminA).save()
+          const admin = await userModel.create(adminA)
           const token = Encryption.createToken(admin)
-          const user = await userRepository
-            .create({ ...userA, _id: userA_id })
-            .save()
+          const user = await userModel.create({ ...userA, _id: userA_id })
 
-          const withdrawal = await withdrawalRepository
-            .create({
-              ...withdrawalA,
-              _id: withdrawalA_id,
-              user: user._id,
-            })
-            .save()
+          const withdrawal = await withdrawalModel.create({
+            ...withdrawalA,
+            _id: withdrawalA_id,
+            user: user._id,
+          })
 
           const status = WithdrawalStatus.APPROVED
 
@@ -457,19 +438,19 @@ describe('withdrawal', () => {
           )
 
           const withdrawalInstance = {
-            model: withdrawalRepository.toClass(withdrawalModelReturn),
+            model: withdrawalModelReturn,
             onFailed: 'change withdrawal status to old status',
             async callback() {},
           }
 
           const transactionInstance = {
-            model: transactionRepository.toClass(transactionModelReturn),
+            model: transactionModelReturn,
             onFailed: 'change transaction status to old status',
             async callback() {},
           }
 
           const notificationInstance = {
-            model: notificationRepository.toClass(notificationModelReturn),
+            model: notificationModelReturn,
             onFailed: 'delete notification',
             async callback() {},
           }
@@ -494,7 +475,7 @@ describe('withdrawal', () => {
     // const url = baseUrl + `delete/:withdrawalId`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const url = baseUrl + `delete/withdrawalId`
@@ -511,10 +492,10 @@ describe('withdrawal', () => {
 
     describe('given withdrawal id those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const url = baseUrl + `delete/${new AppObjectId().toString()}`
+        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -528,10 +509,10 @@ describe('withdrawal', () => {
 
     describe('given deposit has not been settled', () => {
       it('should return a 400', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const withdrawal = await withdrawalRepository.create(withdrawalA).save()
+        const withdrawal = await withdrawalModel.create(withdrawalA)
 
         const url = baseUrl + `delete/${withdrawal._id}`
 
@@ -546,15 +527,13 @@ describe('withdrawal', () => {
     })
     describe('given all validations passed', () => {
       it('should return a 200 and the withdrawal payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const withdrawal = await withdrawalRepository
-          .create({
-            ...withdrawalA,
-            status: WithdrawalStatus.APPROVED,
-          })
-          .save()
+        const withdrawal = await withdrawalModel.create({
+          ...withdrawalA,
+          status: WithdrawalStatus.APPROVED,
+        })
 
         const url = baseUrl + `delete/${withdrawal._id}`
 
@@ -574,7 +553,7 @@ describe('withdrawal', () => {
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -589,7 +568,7 @@ describe('withdrawal', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of withdrawal payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -603,14 +582,15 @@ describe('withdrawal', () => {
           withdrawals: [],
         })
 
-        const withdrawalCounts = await withdrawalRepository.count()
+        const withdrawalCounts = await withdrawalModel.count()
 
         expect(withdrawalCounts).toBe(0)
       })
       it('should return a 200 and an array of withdrawal payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
-        const withdrawal = await withdrawalRepository.create(withdrawalA).save()
+        await userModel.create({ ...userA, _id: userA_id })
+        const withdrawal = await withdrawalModel.create(withdrawalA)
 
         const { statusCode, body } = await request
           .get(url)
@@ -626,7 +606,7 @@ describe('withdrawal', () => {
         expect(body.data.withdrawals[0].user._id).toBe(userA_id.toString())
         expect(body.data.withdrawals[0].user.username).toBe(userA.username)
 
-        const withdrawalCounts = await withdrawalRepository.count()
+        const withdrawalCounts = await withdrawalModel.count()
 
         expect(withdrawalCounts).toBe(1)
       })
@@ -648,9 +628,9 @@ describe('withdrawal', () => {
 
     describe('given withdrawal those not exist', () => {
       it('should throw a 404 error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const url = baseUrl + new AppObjectId().toString()
+        const url = baseUrl + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .get(url)
@@ -664,9 +644,9 @@ describe('withdrawal', () => {
 
     describe('given withdrawal those not belongs to logged in user', () => {
       it('should throw a 404 error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const withdrawal = await withdrawalRepository.create(withdrawalA).save()
+        const withdrawal = await withdrawalModel.create(withdrawalA)
 
         const url = baseUrl + withdrawal._id
 
@@ -678,7 +658,7 @@ describe('withdrawal', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const withdrawalCounts = await withdrawalRepository.count()
+        const withdrawalCounts = await withdrawalModel.count()
 
         expect(withdrawalCounts).toBe(1)
       })
@@ -686,14 +666,12 @@ describe('withdrawal', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the withdrawal payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const withdrawal = await withdrawalRepository
-          .create({
-            ...withdrawalA,
-            user: user._id,
-          })
-          .save()
+        const withdrawal = await withdrawalModel.create({
+          ...withdrawalA,
+          user: user._id,
+        })
 
         const url = baseUrl + withdrawal._id
 
@@ -708,7 +686,7 @@ describe('withdrawal', () => {
           Helpers.deepClone(withdrawal.toObject())
         )
 
-        const withdrawalCounts = await withdrawalRepository.count()
+        const withdrawalCounts = await withdrawalModel.count()
 
         expect(withdrawalCounts).toBe(1)
       })
@@ -719,9 +697,9 @@ describe('withdrawal', () => {
     // const url = baseUrl + `master/:withdrawal`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const url = baseUrl + `master/${new AppObjectId().toString()}`
+        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -735,9 +713,9 @@ describe('withdrawal', () => {
 
     describe('given withdrawal those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
-        const url = baseUrl + `master/${new AppObjectId().toString()}`
+        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .get(url)
@@ -751,9 +729,9 @@ describe('withdrawal', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the withdrawal payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
-        const withdrawal = await withdrawalRepository.create(withdrawalA).save()
+        const withdrawal = await withdrawalModel.create(withdrawalA)
         const url = baseUrl + `master/${withdrawal._id}`
 
         const { statusCode, body } = await request
@@ -764,6 +742,7 @@ describe('withdrawal', () => {
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
+        body.data.withdrawal.user = withdrawal.user.toString()
         expect(Helpers.deepClone(body.data)).toEqual(
           Helpers.deepClone({
             withdrawal: withdrawal.toObject(),
@@ -787,7 +766,7 @@ describe('withdrawal', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the an empty array of withdrawal payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -801,14 +780,12 @@ describe('withdrawal', () => {
       })
 
       it('should return a 200 and the an array of withdrawal payload', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
-        const withdrawal = await withdrawalRepository
-          .create({
-            ...withdrawalA,
-            user: user._id,
-          })
-          .save()
+        const withdrawal = await withdrawalModel.create({
+          ...withdrawalA,
+          user: user._id,
+        })
 
         const { statusCode, body } = await request
           .get(url)
@@ -821,8 +798,7 @@ describe('withdrawal', () => {
         expect(body.data.withdrawals[0].account).toBe(withdrawal.account)
         expect(body.data.withdrawals[0].amount).toBe(withdrawal.amount)
         expect(body.data.withdrawals[0].status).toBe(withdrawal.status)
-        expect(body.data.withdrawals[0].user._id).toBe(user._id.toString())
-        expect(body.data.withdrawals[0].user.username).toBe(userA.username)
+        expect(body.data.withdrawals[0].user).toBe(user._id.toString())
       })
     })
   })

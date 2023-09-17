@@ -19,6 +19,9 @@ export interface IReferralObject extends IAppObject {
 }
 
 export interface IReferral extends Document {
+  __v: number
+  updatedAt: Date
+  createdAt: Date
   rate: number
   type: ReferralTypes
   referrer: IUser['_id']

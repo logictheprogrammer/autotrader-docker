@@ -1,3 +1,4 @@
+import assetModel from '../../../modules/asset/asset.model'
 import pairModel from '../../pair/pair.model'
 import { request } from '../../../test'
 import { adminA, userA } from '../../user/__test__/user.payload'
@@ -6,14 +7,15 @@ import { pairA, pairB } from './pair.payload'
 import Encryption from '../../../utils/encryption'
 import { HttpResponseStatus } from '../../http/http.enum'
 import { getAssetMock } from '../../asset/__test__/asset.mock'
-import { assetA_id, assetB_id } from '../../asset/__test__/asset.payload'
-import AppRepository from '../../app/app.repository'
+import {
+  assetA,
+  assetA_id,
+  assetB,
+  assetB_id,
+} from '../../asset/__test__/asset.payload'
 import { IUser } from '../../user/user.interface'
 import { IPair } from '../pair.interface'
-import AppObjectId from '../../app/app.objectId'
-
-const userRepository = new AppRepository<IUser>(userModel)
-const pairRepository = new AppRepository<IPair>(pairModel)
+import { Types } from 'mongoose'
 
 describe('pair', () => {
   const baseUrl = '/api/pair/'
@@ -21,7 +23,7 @@ describe('pair', () => {
     const url = baseUrl + 'create'
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const payload = {
@@ -42,7 +44,7 @@ describe('pair', () => {
     })
     describe('given payload is not valid', () => {
       it('it should throw a 400 error', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -63,7 +65,7 @@ describe('pair', () => {
     })
     describe('given pair already exist', () => {
       it('should throw a 409', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -72,7 +74,7 @@ describe('pair', () => {
           quoteAssetId: pairA.quoteAsset,
         }
 
-        await pairRepository.create(pairA).save()
+        await pairModel.create(pairA)
 
         const { statusCode, body } = await request
           .post(url)
@@ -85,14 +87,14 @@ describe('pair', () => {
 
         expect(getAssetMock).toHaveBeenCalledTimes(2)
 
-        const pairCount = await pairRepository.count()
+        const pairCount = await pairModel.count()
 
         expect(pairCount).toBe(1)
       })
     })
     describe('successful entry', () => {
       it('should return a 200 and pair payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const payload = {
@@ -101,7 +103,7 @@ describe('pair', () => {
           quoteAssetId: pairA.quoteAsset,
         }
 
-        await pairRepository.create(pairB).save()
+        await pairModel.create(pairB)
 
         const { statusCode, body } = await request
           .post(url)
@@ -128,7 +130,7 @@ describe('pair', () => {
           },
         })
 
-        const pairCount = await pairRepository.count()
+        const pairCount = await pairModel.count()
 
         expect(pairCount).toBe(2)
       })
@@ -140,9 +142,9 @@ describe('pair', () => {
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
         const payload = {
-          pairId: new AppObjectId().toString(),
+          pairId: new Types.ObjectId().toString(),
         }
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -158,10 +160,10 @@ describe('pair', () => {
     describe('given payload is not valid', () => {
       it('it should throw a 400 error', async () => {
         const payload = {
-          pairId: new AppObjectId().toString(),
+          pairId: new Types.ObjectId().toString(),
           assetType: '',
         }
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -176,14 +178,14 @@ describe('pair', () => {
     })
     describe('given pair those not exist', () => {
       it('should throw a 404 not found', async () => {
-        await pairRepository.create(pairA).save()
+        await pairModel.create(pairA)
         const payload = {
-          pairId: new AppObjectId().toString(),
+          pairId: new Types.ObjectId().toString(),
           assetType: pairB.assetType,
           baseAssetId: pairB.baseAsset,
           quoteAssetId: pairB.quoteAsset,
         }
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -195,22 +197,22 @@ describe('pair', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        const pairCount = await pairRepository.count()
+        const pairCount = await pairModel.count()
 
         expect(pairCount).toBe(1)
       })
     })
     describe('given pair already exist', () => {
       it('should throw a 409 not found', async () => {
-        await pairRepository.create(pairB).save()
-        const pair = await pairRepository.create(pairA).save()
+        await pairModel.create(pairB)
+        const pair = await pairModel.create(pairA)
         const payload = {
           pairId: pair._id,
           assetType: pairB.assetType,
           baseAssetId: pairB.baseAsset,
           quoteAssetId: pairB.quoteAsset,
         }
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -225,14 +227,14 @@ describe('pair', () => {
     })
     describe('successful entry', () => {
       it('should return a 200 and pair payload', async () => {
-        const pair = await pairRepository.create(pairA).save()
+        const pair = await pairModel.create(pairA)
         const payload = {
           pairId: pair._id,
           assetType: pairB.assetType,
           baseAssetId: pairB.baseAsset,
           quoteAssetId: pairB.quoteAsset,
         }
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -260,7 +262,7 @@ describe('pair', () => {
           },
         })
 
-        const pairCount = await pairRepository.count()
+        const pairCount = await pairModel.count()
 
         expect(pairCount).toBe(1)
       })
@@ -271,7 +273,7 @@ describe('pair', () => {
     const url = baseUrl
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
-        const user = await userRepository.create(userA).save()
+        const user = await userModel.create(userA)
         const token = Encryption.createToken(user)
 
         const { statusCode, body } = await request
@@ -285,7 +287,7 @@ describe('pair', () => {
     })
     describe('given no pair available', () => {
       it('should return an empty array of pair', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const { statusCode, body } = await request
@@ -303,10 +305,13 @@ describe('pair', () => {
     })
     describe('successful entry', () => {
       it('should return a 200 and pairs payload', async () => {
-        const admin = await userRepository.create(adminA).save()
+        const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const pair = await pairRepository.create(pairA).save()
+        const baseAsset = await assetModel.create(assetA)
+        const quoteAsset = await assetModel.create(assetB)
+
+        const pair = await pairModel.create({ ...pairA, baseAsset, quoteAsset })
 
         const { statusCode, body } = await request
           .get(url)
@@ -320,10 +325,13 @@ describe('pair', () => {
           pairs: [
             {
               assetType: pair.assetType,
-              baseAsset: { ...pair.baseAssetObject, _id: assetA_id.toString() },
+              baseAsset: {
+                ...pair.baseAssetObject,
+                _id: baseAsset._id.toString(),
+              },
               quoteAsset: {
                 ...pair.quoteAssetObject,
-                _id: assetB_id.toString(),
+                _id: quoteAsset._id.toString(),
               },
               __v: expect.any(Number),
               _id: expect.any(String),

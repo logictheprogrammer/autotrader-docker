@@ -18,7 +18,7 @@ class App {
     public controllers: IAppController[],
     public port: number,
     private httpMiddleware: HttpMiddleware,
-    private enabledCsrf: boolean,
+    private notTest: boolean,
     private database?: {
       mogodb?: string
     }
@@ -50,7 +50,7 @@ class App {
     this.express.use(express.urlencoded({ extended: false }))
     this.express.use(compression())
     this.express.use(cookieParser())
-    if (this.enabledCsrf) this.express.use(doubleCsrfProtection)
+    if (this.notTest) this.express.use(doubleCsrfProtection)
     this.express.get('/api/token', (req, res, next) => {
       res.json({ token: req.csrfToken && req.csrfToken() })
     })
@@ -81,11 +81,11 @@ class App {
   private async beforeStart(): Promise<void> {
     await this.initialiseDatabaseConnection()
     const transferSettings = await transferSettingsService.get()
-    if (!transferSettings) {
+    if (!transferSettings && this.notTest) {
       await transferSettingsService.create(false, 0)
     }
     const referralSettings = await referralSettingsService.get()
-    if (!referralSettings) {
+    if (!referralSettings && this.notTest) {
       await referralSettingsService.create(10, 5, 15, 10, 10)
     }
   }
