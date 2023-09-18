@@ -1,29 +1,48 @@
-import { TradeMove, TradeStatus } from '@/modules/trade/trade.enum'
-import { IPlan, IPlanObject } from '@/modules/plan/plan.interface'
+import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
+import { ForecastMove, ForecastStatus } from '@/modules/forecast/forecast.enum'
+import {
+  IInvestment,
+  IInvestmentObject,
+} from '@/modules/investment/investment.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { IAppObject } from '@/modules/app/app.interface'
 import { THttpResponse } from '@/modules/http/http.type'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import { AssetType } from '@/modules/asset/asset.enum'
-import { IPair, IPairObject } from '@/modules/pair/pair.interface'
-import { TUpdateTradeStatus } from '@/modules/trade/trade.type'
+import { UserEnvironment } from '@/modules/user/user.enum'
+import { AssetType } from '../asset/asset.enum'
+import { IPair, IPairObject } from '../pair/pair.interface'
+import { TUpdateTradeStatus } from './trade.type'
+import { InvestmentStatus } from '../investment/investment.enum'
+import { TUpdateInvestmentStatus } from '../investment/investment.type'
 import { Document, ObjectId, Types } from 'mongoose'
+import { IForecast, IForecastObject } from '../forecast/forecast.interface'
+import { IReferral } from '../referral/referral.interface'
+import { ITransaction } from '../transaction/transaction.interface'
+import { INotification } from '../notification/notification.interface'
 
 export interface ITradeObject extends IAppObject {
-  plan: IPlan['_id']
-  planObject: IPlanObject
+  investment: IInvestment['_id']
+  investmentObject: IInvestmentObject
+  forecast: IForecast['_id']
+  forecastObject: IForecastObject
+  user: IUser['_id']
+  userObject: IUserObject
   pair: IPair['_id']
   pairObject: IPairObject
   market: AssetType
-  status: TradeStatus
-  move?: TradeMove
+  status: ForecastStatus
+  move?: ForecastMove
+  stake: number
   outcome: number
+  profit: number
+  percentage: number
+  percentageProfit: number
   openingPrice?: number
   closingPrice?: number
-  change?: number
   runTime: number
   timeStamps: number[]
   startTime?: Date
-  manualUpdateAmount: boolean
+  environment: UserEnvironment
   manualMode: boolean
 }
 
@@ -31,58 +50,65 @@ export interface ITrade extends Document {
   __v: number
   updatedAt: Date
   createdAt: Date
-  plan: IPlan['_id']
-  planObject: IPlanObject
+  investment: IInvestment['_id']
+  investmentObject: IInvestmentObject
+  forecast: IForecast['_id']
+  forecastObject: IForecastObject
+  user: IUser['_id']
+  userObject: IUserObject
   pair: IPair['_id']
   pairObject: IPairObject
   market: AssetType
-  status: TradeStatus
-  move?: TradeMove
+  status: ForecastStatus
+  move?: ForecastMove
+  stake: number
   outcome: number
+  profit: number
+  percentage: number
+  percentageProfit: number
   openingPrice?: number
   closingPrice?: number
-  change?: number
   runTime: number
   timeStamps: number[]
   startTime?: Date
+  environment: UserEnvironment
   manualMode: boolean
 }
 
 export interface ITradeService {
   _createTransaction(
-    plan: IPlanObject,
-    pair: IPairObject,
-    outcome: number
+    user: IUserObject,
+    investment: IInvestmentObject,
+    forecast: IForecastObject,
+    stake: number,
+    outcome: number,
+    profit: number,
+    percentage: number,
+    environment: UserEnvironment,
+    manualMode: boolean
   ): TTransaction<ITradeObject, ITrade>
 
   _updateStatusTransaction(
-    tradeId: ObjectId | Types.ObjectId,
-    status: TradeStatus,
-    move?: TradeMove
+    investment: IInvestmentObject,
+    forecast: IForecastObject
   ): TTransaction<ITradeObject, ITrade>
 
-  autoCreate(planId: ObjectId, pairId: ObjectId): Promise<void>
-
-  manualCreate(
-    planId: ObjectId,
-    pairId: ObjectId,
-    outcome: number
-  ): THttpResponse<{ trade: ITrade }>
-
-  manualUpdate(
-    tradeId: ObjectId,
-    pairId: ObjectId,
-    outcome: number,
-    status: TradeStatus,
-    move?: TradeMove
-  ): THttpResponse<{ trade: ITrade }>
+  create(
+    user: IUserObject,
+    investment: IInvestmentObject,
+    forecast: IForecastObject
+  ): Promise<ITransactionInstance<ITransaction | INotification | ITrade>[]>
 
   updateStatus(
-    tradeId: ObjectId,
-    status: TradeStatus
-  ): Promise<{ model: ITrade; instances: TUpdateTradeStatus }>
+    investment: IInvestmentObject,
+    forecast: IForecastObject
+  ): Promise<ITransactionInstance<ITransaction | INotification | ITrade>[]>
 
-  fetchAll(planId: ObjectId): THttpResponse<{ trades: ITrade[] }>
+  fetchAll(
+    all: boolean,
+    environment: UserEnvironment,
+    userId?: string
+  ): THttpResponse<{ trades: ITrade[] }>
 
   delete(tradeId: ObjectId): THttpResponse<{ trade: ITrade }>
 }

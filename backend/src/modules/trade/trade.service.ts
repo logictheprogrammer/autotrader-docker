@@ -10,12 +10,18 @@ import {
 } from '@/modules/trade/trade.interface'
 import tradeModel from '@/modules/trade/trade.model'
 import ServiceToken from '@/utils/enums/serviceToken'
-import { TradeMove, TradeStatus } from '@/modules/trade/trade.enum'
-import { IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
+import { ForecastMove, ForecastStatus } from '@/modules/forecast/forecast.enum'
+import { IPlanService } from '@/modules/plan/plan.interface'
 import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
-import { ITransactionService } from '@/modules/transaction/transaction.interface'
+import {
+  ITransaction,
+  ITransactionService,
+} from '@/modules/transaction/transaction.interface'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
-import { INotificationService } from '@/modules/notification/notification.interface'
+import {
+  INotification,
+  INotificationService,
+} from '@/modules/notification/notification.interface'
 import {
   NotificationCategory,
   NotificationForWho,
@@ -39,6 +45,9 @@ import { TUpdateTradeStatus } from './trade.type'
 import userModel from '../user/user.model'
 import { TUpdateInvestmentStatus } from '../investment/investment.type'
 import { ObjectId } from 'mongoose'
+import { IForecastObject } from '../forecast/forecast.interface'
+import { ReferralTypes } from '../referral/referral.enum'
+import { IReferral, IReferralService } from '../referral/referral.interface'
 
 @Service()
 class TradeService implements ITradeService {
@@ -52,25 +61,25 @@ class TradeService implements ITradeService {
   public static profitProbability = 0.5
 
   public constructor(
-    @Inject(ServiceToken.PLAN_SERVICE)
-    private planService: IPlanService,
-    @Inject(ServiceToken.PAIR_SERVICE)
-    private pairService: IPairService,
-    @Inject(ServiceToken.MATH_SERVICE)
-    private mathService: IMathService,
     @Inject(ServiceToken.USER_SERVICE) private userService: IUserService,
-    @Inject(ServiceToken.INVESTMENT_SERVICE)
-    private investmentService: IInvestmentService,
     @Inject(ServiceToken.TRANSACTION_SERVICE)
     private transactionService: ITransactionService,
     @Inject(ServiceToken.NOTIFICATION_SERVICE)
-    private notificationService: INotificationService,
-    @Inject(ServiceToken.TRANSACTION_MANAGER_SERVICE)
-    private transactionManagerService: ITransactionManagerService<any>
+    private notificationService: INotificationService
   ) {}
 
-  private async find(tradeId: ObjectId): Promise<ITrade> {
-    const trade = await this.tradeModel.findById(tradeId)
+  private async find(
+    tradeId: ObjectId,
+    fromAllAccounts: boolean = true,
+    userId?: string
+  ): Promise<ITrade> {
+    let trade
+
+    if (fromAllAccounts) {
+      trade = await this.tradeModel.findById(tradeId)
+    } else {
+      trade = await this.tradeModel.findOne({ _id: tradeId, user: userId })
+    }
 
     if (!trade) throw new HttpException(404, 'Trade not found')
 
@@ -78,18 +87,33 @@ class TradeService implements ITradeService {
   }
 
   public async _createTransaction(
-    plan: IPlanObject,
-    pair: IPairObject,
-    outcome: number
+    user: IUserObject,
+    investment: IInvestmentObject,
+    forecast: IForecastObject,
+    stake: number,
+    outcome: number,
+    profit: number,
+    percentage: number,
+    environment: UserEnvironment,
+    manualMode: boolean
   ): TTransaction<ITradeObject, ITrade> {
     const trade = new this.tradeModel({
-      plan: plan._id,
-      planObject: plan,
-      pair: pair._id,
-      pairObject: pair,
-      market: pair.assetType,
+      investment: investment._id,
+      investmentObject: investment,
+      user: user._id,
+      userObject: user,
+      forecast: forecast._id,
+      forecastObject: forecast,
+      pair: forecast.pair._id,
+      pairObject: forecast.pair,
+      market: forecast.pair.assetType,
+      stake,
       outcome,
-      manualMode: plan.manualMode,
+      profit,
+      percentage,
+      percentageProfit: forecast.percentageProfit,
+      environment,
+      manualMode,
     })
 
     return {
@@ -105,48 +129,28 @@ class TradeService implements ITradeService {
   }
 
   public async _updateStatusTransaction(
-    tradeId: ObjectId,
-    status: TradeStatus,
-    move?: TradeMove
+    investment: IInvestmentObject,
+    forecast: IForecastObject
   ): TTransaction<ITradeObject, ITrade> {
-    const trade = await this.find(tradeId)
+    const trade = await this.tradeModel.findOne({
+      investment: investment._id,
+      forecast: forecast._id,
+    })
+
+    if (!trade)
+      throw new HttpException(
+        400,
+        `The trade with a forecast of (${forecast._id}) could not be found`
+      )
 
     const oldStatus = trade.status
+    const oldStartTime = trade.startTime
+    const oldTimeStamps = trade.timeStamps.slice()
+    const oldRuntime = trade.runTime
+    const oldMove = trade.move
 
-    if (oldStatus === TradeStatus.SETTLED)
+    if (oldStatus === ForecastStatus.SETTLED)
       throw new HttpException(400, 'This trade has already been settled')
-
-    let startTime: Date | undefined,
-      runtime: number,
-      oldTimeStamps: number[] = []
-    switch (status) {
-      case TradeStatus.MARKET_CLOSED:
-      case TradeStatus.ON_HOLD:
-        startTime = trade.startTime
-        runtime =
-          new Date().getTime() - (startTime?.getTime() || new Date().getTime())
-
-        oldTimeStamps = trade.timeStamps.slice()
-        if (runtime) trade.timeStamps = [...oldTimeStamps, runtime]
-        trade.startTime = undefined
-        break
-
-      case TradeStatus.RUNNING:
-        trade.startTime = new Date()
-
-      case TradeStatus.SETTLED:
-        startTime = trade.startTime
-        runtime =
-          new Date().getTime() - (startTime?.getTime() || new Date().getTime())
-
-        oldTimeStamps = trade.timeStamps.slice()
-        if (runtime) trade.timeStamps = [...oldTimeStamps, runtime]
-        trade.runTime = trade.timeStamps.reduce((acc, curr) => (acc += curr), 0)
-        trade.startTime = undefined
-        trade.move = move
-    }
-
-    trade.status = status
 
     return {
       object: trade.toObject({ getters: true }),
@@ -154,158 +158,140 @@ class TradeService implements ITradeService {
         model: trade,
         onFailed: `Set the status of the trade with an id of (${
           trade._id
-        }) to (${oldStatus}) and startTime to (${startTime}) and timeStamps to (${JSON.stringify(
+        }) to (${oldStatus}) and startTime to (${oldStartTime}) and timeStamps to (${JSON.stringify(
           oldTimeStamps
-        )}) and move to undefined`,
+        )}) and move to (${oldMove}) and runtime to (${oldRuntime})`,
         callback: async () => {
           trade.status = oldStatus
-          trade.startTime = startTime
+          trade.startTime = oldStartTime
           trade.timeStamps = oldTimeStamps
-          trade.move = undefined
+          trade.move = oldMove
+          trade.runTime = oldRuntime
           await trade.save()
         },
       },
     }
   }
 
-  public async autoCreate(planId: ObjectId, pairId: ObjectId): Promise<void> {
-    const plan = await this.planService.get(planId)
-    const pair = await this.pairService.get(pairId)
+  public async create(
+    user: IUserObject,
+    investment: IInvestmentObject,
+    forecast: IForecastObject
+  ): Promise<ITransactionInstance<ITransaction | INotification | ITrade>[]> {
+    const transactionInstances: ITransactionInstance<
+      ITransaction | INotification | ITrade
+    >[] = []
 
-    if (!plan) throw new HttpException(404, 'The plan no longer exist')
-    if (!pair) throw new HttpException(404, 'The selected pair no longer exist')
+    const amount = investment.amount
+    const stake = forecast.stakeRate * amount
+    const profit = (forecast.percentageProfit / 100) * amount
+    const outcome = stake + profit
+    const percentage = (profit * 100) / stake
 
-    if (pair.assetType !== plan.assetType)
-      throw new HttpException(
-        400,
-        'The pair is not compatible with this plan plan'
+    const { instance: tradeTransactionInstance, object: tradeObject } =
+      await this._createTransaction(
+        user,
+        investment,
+        forecast,
+        stake,
+        outcome,
+        profit,
+        percentage,
+        investment.environment,
+        investment.manualMode
       )
 
-    const minProfit = plan.minProfit / (plan.dailyTrades * plan.duration)
-    const maxProfit = plan.maxProfit / (plan.dailyTrades * plan.duration)
+    transactionInstances.push(tradeTransactionInstance)
 
-    const stakeRate = Helpers.getRandomValue(
-      TradeService.minStakeRate,
-      TradeService.maxStakeRate
+    const transactionInstance = await this.transactionService.create(
+      user,
+      tradeObject.status,
+      TransactionCategory.TRADE,
+      tradeObject,
+      stake,
+      tradeObject.environment,
+      stake
     )
 
-    const spread = stakeRate * minProfit
+    transactionInstances.push(transactionInstance)
 
-    const breakpoint = spread * TradeService.profitBreakpoint
-
-    const outcome = this.mathService.dynamicRange(
-      minProfit,
-      maxProfit,
-      spread,
-      breakpoint,
-      TradeService.profitProbability
+    const userNotificationInstance = await this.notificationService.create(
+      `Your ${tradeObject.investmentObject.planObject.name} investment plan now has a pending trade to be placed`,
+      NotificationCategory.TRADE,
+      tradeObject,
+      NotificationForWho.USER,
+      tradeObject.status,
+      tradeObject.environment,
+      user
     )
 
-    const { model: trade } = (
-      await this._createTransaction(plan, pair, outcome)
-    ).instance
+    transactionInstances.push(userNotificationInstance)
 
-    await trade.save()
-  }
-
-  public async manualCreate(
-    planId: ObjectId,
-    pairId: ObjectId,
-    outcome: number
-  ): THttpResponse<{ trade: ITrade }> {
-    try {
-      const plan = await this.planService.get(planId)
-      const pair = await this.pairService.get(pairId)
-
-      if (!plan) throw new HttpException(404, 'The plan no longer exist')
-      if (!pair)
-        throw new HttpException(404, 'The selected pair no longer exist')
-
-      if (pair.assetType !== plan.assetType)
-        throw new HttpException(
-          400,
-          'The pair is not compatible with this plan plan'
-        )
-
-      const { model: trade } = (
-        await this._createTransaction(plan, pair, outcome)
-      ).instance
-
-      await trade.save()
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Trade created successfully',
-        data: { trade: trade },
-      }
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to create this trade, please try again'
-      )
-    }
-  }
-
-  public async manualUpdate(
-    tradeId: ObjectId,
-    pairId: ObjectId,
-    outcome: number,
-    status: TradeStatus,
-    move?: TradeMove
-  ): THttpResponse<{ trade: ITrade }> {
-    try {
-      const trade = await this.find(tradeId)
-      const pair = await this.pairService.get(pairId)
-      if (!pair)
-        throw new HttpException(404, 'The selected pair no longer exist')
-
-      if (pair.assetType !== trade.market)
-        throw new HttpException(
-          400,
-          'The pair is not compatible with this trade'
-        )
-
-      trade.move = move
-      trade.outcome = outcome
-      trade.status = status
-      trade.manualMode = true
-
-      await trade.save()
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Trade updated successfully',
-        data: { trade },
-      }
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to update this trade, please try again'
-      )
-    }
+    return transactionInstances
   }
 
   public async updateStatus(
-    tradeId: ObjectId,
-    status: TradeStatus
-  ): Promise<{ model: ITrade; instances: TUpdateTradeStatus }> {
-    const transactionInstances: TUpdateTradeStatus = []
+    investment: IInvestmentObject,
+    forecast: IForecastObject
+  ): Promise<ITransactionInstance<ITransaction | INotification | ITrade>[]> {
+    const transactionInstances: ITransactionInstance<
+      ITransaction | INotification | ITrade
+    >[] = []
 
-    const { instance: tradeInstance } = await this._updateStatusTransaction(
-      tradeId,
-      status
-    )
+    const { object: trade, instance: tradeInstance } =
+      await this._updateStatusTransaction(investment, forecast)
 
     transactionInstances.push(tradeInstance)
 
-    return { model: tradeInstance.model, instances: transactionInstances }
+    const user = await this.userService.get(trade.user)
+
+    if (trade.status === ForecastStatus.SETTLED) {
+      const transactionInstance = await this.transactionService.updateAmount(
+        trade._id,
+        trade.status,
+        trade.outcome
+      )
+      transactionInstances.push(transactionInstance)
+    }
+
+    let notificationMessage
+    switch (trade.status) {
+      case ForecastStatus.RUNNING:
+        notificationMessage = 'is now running'
+        break
+      case ForecastStatus.MARKET_CLOSED:
+        notificationMessage = 'market has closed'
+        break
+      case ForecastStatus.ON_HOLD:
+        notificationMessage = 'is currently on hold'
+        break
+      case ForecastStatus.SETTLED:
+        notificationMessage = 'has been settled'
+        break
+    }
+
+    if (notificationMessage) {
+      const notificationInstance = await this.notificationService.create(
+        `Your ${trade.investmentObject.planObject.name} investment plan current trade ${notificationMessage}`,
+        NotificationCategory.TRADE,
+        trade,
+        NotificationForWho.USER,
+        trade.status,
+        trade.environment,
+        user
+      )
+
+      transactionInstances.push(notificationInstance)
+    }
+
+    return transactionInstances
   }
 
   public async delete(tradeId: ObjectId): THttpResponse<{ trade: ITrade }> {
     try {
       const trade = await this.find(tradeId)
 
-      if (trade.status !== TradeStatus.SETTLED)
+      if (trade.status !== ForecastStatus.SETTLED)
         throw new HttpException(400, 'Trade has not been settled yet')
 
       await trade.deleteOne()
@@ -322,23 +308,37 @@ class TradeService implements ITradeService {
     }
   }
 
-  public async fetchAll(planId: ObjectId): THttpResponse<{ trades: ITrade[] }> {
+  public async fetchAll(
+    all: boolean,
+    environment: UserEnvironment,
+    userId: string
+  ): THttpResponse<{ trades: ITrade[] }> {
     try {
       let trades
 
-      trades = await this.tradeModel
-        .find({ plan: planId })
-        .select('-planObject -pairObject')
-        .populate('plan')
-        .populate('pair')
+      if (all) {
+        trades = await this.tradeModel
+          .find({ environment })
+          .select('-investmentObject -userObject -pair')
+          .populate('investment', 'name icon')
+          .populate('user', 'username isDeleted')
+      } else {
+        trades = await this.tradeModel
+          .find({ environment, user: userId })
+          .select('-investmentObject -userObject -pair')
+          .populate('investment', 'name icon')
+      }
 
       return {
         status: HttpResponseStatus.SUCCESS,
-        message: 'Trade fetched successfully',
+        message: 'Trade history fetched successfully',
         data: { trades },
       }
     } catch (err: any) {
-      throw new AppException(err, 'Failed to fetch trade, please try again')
+      throw new AppException(
+        err,
+        'Failed to fetch trade history, please try again'
+      )
     }
   }
 }

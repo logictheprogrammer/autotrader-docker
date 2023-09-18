@@ -76,9 +76,9 @@ import PairService from '@/modules/pair/pair.service'
 import PairController from '@/modules/pair/pair.controller'
 import { IMathService } from '@/modules/math/math.interface'
 import MathService from '@/modules/math/math.service'
-import { ITradeService } from '@/modules/trade/trade.interface'
-import TradeService from '@/modules/trade/trade.service'
-import TradeController from '@/modules/trade/trade.controller'
+import { ITradeService } from '@/modules/forecast/trade.interface'
+import TradeService from '@/modules/forecast/trade.service'
+import TradeController from '@/modules/forecast/trade.controller'
 
 export const mathService = Container.get<IMathService>(MathService)
 

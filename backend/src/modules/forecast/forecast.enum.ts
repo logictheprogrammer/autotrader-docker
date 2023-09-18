@@ -1,4 +1,4 @@
-export enum TradeStatus {
+export enum ForecastStatus {
   PREPARING = 'preparing',
   RUNNING = 'running',
   ON_HOLD = 'on hold',
@@ -6,7 +6,7 @@ export enum TradeStatus {
   SETTLED = 'settled',
 }
 
-export enum TradeMove {
+export enum ForecastMove {
   LONG = 'long',
   SHORT = 'short',
 }

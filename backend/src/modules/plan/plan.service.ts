@@ -15,11 +15,14 @@ import { IPair } from '../pair/pair.interface'
 import pairModel from '../pair/pair.model'
 import { ObjectId } from 'mongoose'
 import { IInvestment } from '../investment/investment.interface'
+import { IForecastObject } from '../forecast/forecast.interface'
+import { TTransaction } from '../transactionManager/transactionManager.type'
+import { ITransactionInstance } from '../transactionManager/transactionManager.interface'
+import { ForecastStatus } from '../forecast/forecast.enum'
 
 @Service()
 class PlanService implements IPlanService {
   private planModel = planModel
-  private pairModel = pairModel
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)
@@ -43,16 +46,51 @@ class PlanService implements IPlanService {
     return plan
   }
 
+  public async _updateForecastDetails(
+    planId: ObjectId,
+    status: ForecastStatus,
+    timeStamps: number[],
+    startTime?: Date
+  ): TTransaction<IPlanObject, IPlan> {
+    const plan = await this.find(planId)
+
+    const oldStatus = plan.forecastStatus
+    const oldTimeStamps = plan.forecastTimeStamps.slice()
+    const oldStartTime = plan.forecastStartTime
+
+    plan.forecastStatus = status
+    plan.forecastTimeStamps = timeStamps
+    plan.forecastStartTime = startTime
+
+    return {
+      object: plan.toObject({ getters: true }),
+      instance: {
+        model: plan,
+        onFailed: `Set the plan with an id of (${
+          plan._id
+        }) forecastStartTime to (${oldStartTime}) and forecastTimeStamps to (${JSON.stringify(
+          oldTimeStamps
+        )}) and ForecastStatus to (${oldStartTime})`,
+        callback: async () => {
+          plan.forecastStatus = oldStatus
+          plan.forecastTimeStamps = oldTimeStamps
+          plan.forecastStartTime = oldStartTime
+          await plan.save()
+        },
+      },
+    }
+  }
+
   public async create(
     icon: string,
     name: string,
     engine: string,
     minAmount: number,
     maxAmount: number,
-    minProfit: number,
-    maxProfit: number,
+    minPercentageProfit: number,
+    maxPercentageProfit: number,
     duration: number,
-    dailyTrades: number,
+    dailyForecasts: number,
     gas: number,
     description: string,
     assetType: AssetType,
@@ -75,10 +113,10 @@ class PlanService implements IPlanService {
         engine,
         minAmount,
         maxAmount,
-        minProfit,
-        maxProfit,
+        minPercentageProfit,
+        maxPercentageProfit,
         duration,
-        dailyTrades,
+        dailyForecasts,
         gas,
         description,
         assetType,
@@ -107,66 +145,6 @@ class PlanService implements IPlanService {
     }
   }
 
-  // public async autoTrade(): Promise<void> {
-  //   const runningPlans = await this.planModel
-  //     .find({
-  //       investors: { $exists: true, $ne: [] },
-  //     })
-  //     .populate('pairs')
-
-  //   for (const plan of runningPlans) {
-  //     // get pair
-  //   }
-
-  //   const investment = await this.investmentService.get(investmentId)
-  //   const pair = await this.pairService.get(pairId)
-  //   const user = await this.userService.get(investment.user)
-
-  //   if (!pair) throw new HttpException(404, 'The selected pair no longer exist')
-
-  //   if (pair.assetType !== investment.planObject.assetType)
-  //     throw new HttpException(
-  //       400,
-  //       'The pair is not compatible with this investment plan'
-  //     )
-
-  //   const minProfit =
-  //     investment.planObject.minProfit /
-  //     (investment.planObject.dailyTrades * investment.planObject.duration)
-  //   const maxProfit =
-  //     investment.planObject.maxProfit /
-  //     (investment.planObject.dailyTrades * investment.planObject.duration)
-
-  //   const stakeRate = Helpers.getRandomValue(
-  //     TradeService.minStakeRate,
-  //     TradeService.maxStakeRate
-  //   )
-
-  //   const spread = stakeRate * minProfit
-
-  //   const breakpoint = spread * TradeService.profitBreakpoint
-
-  //   const investmentPercentage = this.mathService.dynamicRange(
-  //     minProfit,
-  //     maxProfit,
-  //     spread,
-  //     breakpoint,
-  //     TradeService.profitProbability
-  //   )
-
-  //   const { model: trade } = (
-  //     await this.create(user, investment, pair, stakeRate, investmentPercentage)
-  //   ).instance
-
-  //   await trade.save()
-
-  //   return {
-  //     status: HttpResponseStatus.SUCCESS,
-  //     message: 'Trade created successfully',
-  //     data: { trade: trade.collectRaw() },
-  //   }
-  // }
-
   public async update(
     planId: ObjectId,
     icon: string,
@@ -174,10 +152,10 @@ class PlanService implements IPlanService {
     engine: string,
     minAmount: number,
     maxAmount: number,
-    minProfit: number,
-    maxProfit: number,
+    minPercentageProfit: number,
+    maxPercentageProfit: number,
     duration: number,
-    dailyTrades: number,
+    dailyForecasts: number,
     gas: number,
     description: string,
     assetType: AssetType,
@@ -201,10 +179,10 @@ class PlanService implements IPlanService {
       plan.engine = engine
       plan.minAmount = minAmount
       plan.maxAmount = maxAmount
-      plan.minProfit = minProfit
-      plan.maxProfit = maxProfit
+      plan.minPercentageProfit = minPercentageProfit
+      plan.maxPercentageProfit = maxPercentageProfit
       plan.duration = duration
-      plan.dailyTrades = dailyTrades
+      plan.dailyForecasts = dailyForecasts
       plan.gas = gas
       plan.description = description
       plan.assetType = assetType
@@ -258,6 +236,17 @@ class PlanService implements IPlanService {
     }
   }
 
+  public async updateForecastDetails(
+    planId: ObjectId,
+    status: ForecastStatus,
+    timeStamps: number[],
+    startTime?: Date
+  ): Promise<ITransactionInstance<IPlan>> {
+    return (
+      await this._updateForecastDetails(planId, status, timeStamps, startTime)
+    ).instance
+  }
+
   public async get(planId: ObjectId): Promise<IPlanObject | null> {
     const plan = await this.planModel.findById(planId)
 
@@ -273,6 +262,26 @@ class PlanService implements IPlanService {
     plan.assets = assetsObj
 
     return plan.toObject({ getters: true })
+  }
+
+  public async getAllAuto(): Promise<IPlanObject[]> {
+    const plans = await this.planModel.find({ manualMode: false })
+
+    for (let index = 0; index < plans.length; index++) {
+      const plan = plans[index]
+      const assetsObj = []
+
+      for (const assetId of plan.assets) {
+        const asset = await this.assetService.get(assetId, plan.assetType)
+        if (asset) assetsObj.push(asset)
+      }
+
+      plan.assets = assetsObj
+
+      plan.toObject({ getters: true })
+    }
+
+    return plans
   }
 
   public async delete(planId: ObjectId): THttpResponse<{ plan: IPlan }> {

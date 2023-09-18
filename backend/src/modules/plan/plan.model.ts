@@ -30,11 +30,11 @@ const PlanSchema = new Schema(
       type: Number,
       required: true,
     },
-    minProfit: {
+    minPercentageProfit: {
       type: Number,
       required: true,
     },
-    maxProfit: {
+    maxPercentageProfit: {
       type: Number,
       required: true,
     },
@@ -42,7 +42,7 @@ const PlanSchema = new Schema(
       type: Number,
       required: true,
     },
-    dailyTrades: {
+    dailyForecasts: {
       type: Number,
       required: true,
     },
@@ -79,6 +79,15 @@ const PlanSchema = new Schema(
       type: Number,
       required: true,
       default: 0,
+    },
+    forecastTimeStamps: [
+      {
+        type: Number,
+        required: true,
+      },
+    ],
+    forecastStartTime: {
+      type: Date,
     },
   },
   { timestamps: true }

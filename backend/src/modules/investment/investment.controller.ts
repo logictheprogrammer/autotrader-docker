@@ -7,7 +7,7 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import { ITradeService } from '../trade/trade.interface'
+import { ITradeService } from '../forecast/trade.interface'
 import { ObjectId } from 'mongoose'
 
 @Service()

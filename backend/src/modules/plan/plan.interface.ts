@@ -6,6 +6,10 @@ import { AssetType } from '@/modules/asset/asset.enum'
 import { IInvestment } from '../investment/investment.interface'
 import { Document, ObjectId, Types } from 'mongoose'
 import { IAsset } from '../asset/asset.interface'
+import { ITransactionInstance } from '../transactionManager/transactionManager.interface'
+import { IForecastObject } from '../forecast/forecast.interface'
+import { TTransaction } from '../transactionManager/transactionManager.type'
+import { ForecastStatus } from '../forecast/forecast.enum'
 
 export interface IPlanObject extends IAppObject {
   icon: string
@@ -13,10 +17,10 @@ export interface IPlanObject extends IAppObject {
   engine: string
   minAmount: number
   maxAmount: number
-  minProfit: number
-  maxProfit: number
+  minPercentageProfit: number
+  maxPercentageProfit: number
   duration: number
-  dailyTrades: number
+  dailyForecasts: number
   gas: number
   description: string
   assetType: AssetType
@@ -25,6 +29,9 @@ export interface IPlanObject extends IAppObject {
   manualMode: boolean
   investors: IInvestment['_id'][]
   dummyInvestors: number
+  forecastStatus?: ForecastStatus
+  forecastTimeStamps: number[]
+  forecastStartTime?: Date
 }
 
 export interface IPlan extends Document {
@@ -36,10 +43,10 @@ export interface IPlan extends Document {
   engine: string
   minAmount: number
   maxAmount: number
-  minProfit: number
-  maxProfit: number
+  minPercentageProfit: number
+  maxPercentageProfit: number
   duration: number
-  dailyTrades: number
+  dailyForecasts: number
   gas: number
   description: string
   assetType: AssetType
@@ -48,19 +55,29 @@ export interface IPlan extends Document {
   manualMode: boolean
   investors: IInvestment['_id'][]
   dummyInvestors: number
+  forecastStatus?: ForecastStatus
+  forecastTimeStamps: number[]
+  forecastStartTime?: Date
 }
 
 export interface IPlanService {
+  _updateForecastDetails(
+    planId: ObjectId,
+    status: ForecastStatus,
+    timeStamps: number[],
+    startTime?: Date
+  ): TTransaction<IPlanObject, IPlan>
+
   create(
     icon: string,
     name: string,
     engine: string,
     minAmount: number,
     maxAmount: number,
-    minProfit: number,
-    maxProfit: number,
+    minPercentageProfit: number,
+    maxPercentageProfit: number,
     duration: number,
-    dailyTrades: number,
+    dailyForecasts: number,
     gas: number,
     description: string,
     assetType: AssetType,
@@ -74,26 +91,31 @@ export interface IPlanService {
     engine: string,
     minAmount: number,
     maxAmount: number,
-    minProfit: number,
-    maxProfit: number,
+    minPercentageProfit: number,
+    maxPercentageProfit: number,
     duration: number,
-    dailyTrades: number,
+    dailyForecasts: number,
     gas: number,
     description: string,
     assetType: AssetType,
     assets: ObjectId[]
   ): THttpResponse<{ plan: IPlan }>
 
-  // autoTrade(): Promise<void>
-
-  // manualTrade(): Promise<void>
-
   updateStatus(
     planId: ObjectId,
     status: PlanStatus
   ): THttpResponse<{ plan: IPlan }>
 
+  updateForecastDetails(
+    planId: ObjectId,
+    status: ForecastStatus,
+    timeStamps: number[],
+    startTime?: Date
+  ): Promise<ITransactionInstance<IPlan>>
+
   get(planId: ObjectId | Types.ObjectId): Promise<IPlanObject | null>
+
+  getAllAuto(): Promise<IPlanObject[]>
 
   delete(planId: ObjectId): THttpResponse<{ plan: IPlan }>
 

@@ -37,4 +37,6 @@ describe('plan', () => {
       })
     })
   })
+
+  test.todo('get all auto plans')
 })

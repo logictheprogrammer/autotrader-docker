@@ -1,5 +1,9 @@
 import tradeModel from '@/modules/trade/trade.model'
-import { ITrade, ITradeObject } from '@/modules/trade/trade.interface'
+import {
+  ITrade,
+  ITradeObject,
+  ITradeService,
+} from '@/modules/trade/trade.interface'
 import { Inject, Service } from 'typedi'
 import {
   IInvestment,
@@ -43,18 +47,21 @@ import { TTransaction } from '@/modules/transactionManager/transactionManager.ty
 import FormatNumber from '@/utils/formats/formatNumber'
 import { TUpdateInvestmentStatus } from './investment.type'
 import userModel from '../user/user.model'
-import { TradeStatus } from '../trade/trade.enum'
-import { ObjectId } from 'mongoose'
+import { ForecastStatus } from '../forecast/forecast.enum'
+import { ObjectId, Schema } from 'mongoose'
+import { IForecastObject } from '../forecast/forecast.interface'
+import { Types } from 'mongoose'
+import { ErrorCode } from '@/utils/enums/errorCodes.enum'
 
 @Service()
 class InvestmentService implements IInvestmentService {
   private investmentModel = investmentModel
-  private tradeModel = tradeModel
   private userModel = userModel
 
   public constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
     private planService: IPlanService,
+    @Inject(ServiceToken.TRADE_SERVICE) private tradeService: ITradeService,
     @Inject(ServiceToken.USER_SERVICE) private userService: IUserService,
     @Inject(ServiceToken.TRANSACTION_SERVICE)
     private transactionService: ITransactionService,
@@ -85,6 +92,42 @@ class InvestmentService implements IInvestmentService {
     if (!investment) throw new HttpException(404, 'Investment plan not found')
 
     return investment
+  }
+
+  public async getAllAutoAwaiting(
+    planId: ObjectId
+  ): Promise<IInvestmentObject[]> {
+    const investments = await this.investmentModel.find({
+      manualMode: false,
+      status: InvestmentStatus.AWAITING_TRADE,
+      plan: planId,
+      tradeStatus: { $or: [ForecastStatus.SETTLED, undefined] },
+    })
+
+    for (let index = 0; index < investments.length; index++) {
+      const investment = investments[index]
+      investment.toObject({ getters: true })
+    }
+
+    return investments
+  }
+
+  public async getAllAutoRunning(
+    planId: ObjectId
+  ): Promise<IInvestmentObject[]> {
+    const investments = await this.investmentModel.find({
+      manualMode: false,
+      status: InvestmentStatus.RUNNING,
+      plan: planId,
+      tradeStatus: ForecastStatus.RUNNING,
+    })
+
+    for (let index = 0; index < investments.length; index++) {
+      const investment = investments[index]
+      investment.toObject({ getters: true })
+    }
+
+    return investments
   }
 
   public async get(investmentId: ObjectId): Promise<IInvestmentObject> {
@@ -151,36 +194,102 @@ class InvestmentService implements IInvestmentService {
     }
   }
 
-  public async updateTradeDetailsTransaction(
+  public async _updateTradeStatus(
     investmentId: ObjectId,
-    trade: ITradeObject
+    tradeStatus: ForecastStatus
   ): TTransaction<IInvestmentObject, IInvestment> {
     const investment = await this.find(investmentId)
 
+    const oldStatus = investment.status
     const oldTradeStatus = investment.tradeStatus
-    const oldTradeStart = investment.tradeStart
-    const oldBalance = investment.balance
 
-    investment.tradeStatus = trade.status
-    investment.tradeStart = trade.startTime
+    investment.tradeStatus = tradeStatus
 
-    if (trade.status === TradeStatus.SETTLED) {
-      investment.balance += trade.profit
+    switch (tradeStatus) {
+      case ForecastStatus.MARKET_CLOSED:
+      case ForecastStatus.ON_HOLD:
+      case ForecastStatus.SETTLED:
+        investment.status = InvestmentStatus.AWAITING_TRADE
+        break
+      case ForecastStatus.PREPARING:
+      case ForecastStatus.RUNNING:
+        investment.status = InvestmentStatus.RUNNING
+        break
+      default:
+        throw new HttpException(ErrorCode.BAD_REQUEST, 'Invalid forcast status')
     }
 
     return {
       object: investment.toObject({ getters: true }),
       instance: {
         model: investment,
-        onFailed: `Set the tradeStatus of the investment with an id of (${investment._id}) to (${oldTradeStatus}) and the tradeStart to (${oldTradeStart}) and the balance to (${oldBalance})`,
+        onFailed: `Set the tradeStatus of the investment with an id of (${investment._id}) to (${oldTradeStatus})`,
         callback: async () => {
+          investment.status = oldStatus
           investment.tradeStatus = oldTradeStatus
-          investment.tradeStart = oldTradeStart
-          investment.balance = oldBalance
           await investment.save()
         },
       },
     }
+  }
+
+  public async setTrade(
+    investmentId: ObjectId,
+    forecast: IForecastObject
+  ): Promise<
+    ITransactionInstance<
+      IReferral | ITransaction | INotification | IInvestment | ITrade | IUser
+    >[]
+  > {
+    const transactionInstances: ITransactionInstance<
+      IReferral | ITransaction | INotification | IInvestment | ITrade | IUser
+    >[] = []
+
+    const {
+      object: investmentObject,
+      instance: investmentTransactionInstance,
+    } = await this._updateTradeStatus(investmentId, forecast.status)
+
+    transactionInstances.push(investmentTransactionInstance)
+
+    const user = await this.userService.get(investmentObject.user)
+
+    const tradeInstances = await this.tradeService.create(
+      user,
+      investmentObject,
+      forecast
+    )
+
+    tradeInstances.map((instance) => transactionInstances.push(instance))
+
+    return transactionInstances
+  }
+
+  public async setTradeStatus(
+    investmentId: ObjectId,
+    forecast: IForecastObject
+  ): Promise<
+    ITransactionInstance<ITransaction | INotification | IInvestment | ITrade>[]
+  > {
+    const transactionInstances: ITransactionInstance<
+      ITransaction | INotification | IInvestment | ITrade
+    >[] = []
+
+    const {
+      object: investmentObject,
+      instance: investmentTransactionInstance,
+    } = await this._updateTradeStatus(investmentId, forecast.status)
+
+    transactionInstances.push(investmentTransactionInstance)
+
+    const tradeInstances = await this.tradeService.updateStatus(
+      investmentObject,
+      forecast
+    )
+
+    tradeInstances.map((instance) => transactionInstances.push(instance))
+
+    return transactionInstances
   }
 
   public create = async (
@@ -446,7 +555,7 @@ class InvestmentService implements IInvestmentService {
 
       await this.investmentModel.deleteOne({ _id: investment._id })
 
-      await this.tradeModel.deleteMany({ investment: investmentId })
+      // await this.tradeModel.deleteMany({ investment: investmentId })
 
       return {
         status: HttpResponseStatus.SUCCESS,

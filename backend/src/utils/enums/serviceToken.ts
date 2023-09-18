@@ -26,6 +26,7 @@ enum ServiceToken {
   INVESTMENT_SERVICE = 'investmentService',
   PAIR_SERVICE = 'pairService',
   TRADE_SERVICE = 'tradeService',
+  FORECAST_SERVICE = 'forecastService',
   MATH_SERVICE = 'mathService',
 }
 

@@ -1,7 +1,7 @@
-import { ITradeService } from '@/modules/trade/trade.interface'
+import { IForecastService } from '@/modules/forecast/forecast.interface'
 import { Inject, Service } from 'typedi'
 import { Router, Request, Response, NextFunction } from 'express'
-import validate from '@/modules/trade/trade.validation'
+import validate from '@/modules/forecast/forecast.validation'
 import ServiceToken from '@/utils/enums/serviceToken'
 import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
@@ -10,13 +10,13 @@ import HttpException from '@/modules/http/http.exception'
 import { ObjectId } from 'mongoose'
 
 @Service()
-class TradeController implements IAppController {
-  public path = '/trade'
+class ForecastController implements IAppController {
+  public path = '/forecast'
   public router = Router()
 
   constructor(
-    @Inject(ServiceToken.TRADE_SERVICE)
-    private tradeService: ITradeService
+    @Inject(ServiceToken.FORECAST_SERVICE)
+    private forecastService: IForecastService
   ) {
     this.intialiseRoutes()
   }
@@ -44,7 +44,7 @@ class TradeController implements IAppController {
     )
 
     this.router.delete(
-      `${this.path}/delete/:tradeId`,
+      `${this.path}/delete/:forecastId`,
       HttpMiddleware.authenticate(UserRole.ADMIN),
       this.delete
     )
@@ -83,7 +83,7 @@ class TradeController implements IAppController {
     ): Promise<Response | void> => {
       try {
         const userId = req.user._id
-        const response = await this.tradeService.fetchAll(
+        const response = await this.forecastService.fetchAll(
           all,
           environment,
           userId
@@ -101,7 +101,7 @@ class TradeController implements IAppController {
   ): Promise<Response | void> => {
     try {
       const { investmentId, pairId, stake, profit } = req.body
-      const response = await this.tradeService.createManual(
+      const response = await this.forecastService.createManual(
         investmentId,
         pairId,
         stake,
@@ -120,7 +120,7 @@ class TradeController implements IAppController {
   ): Promise<Response | void> => {
     try {
       const {
-        tradeId,
+        forecastId,
         pairId,
         move,
         stake,
@@ -130,8 +130,8 @@ class TradeController implements IAppController {
         startTime,
         stopTime,
       } = req.body
-      const response = await this.tradeService.updateManual(
-        tradeId,
+      const response = await this.forecastService.updateManual(
+        forecastId,
         pairId,
         move,
         stake,
@@ -153,9 +153,9 @@ class TradeController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const { tradeId, stake, profit } = req.body
-      const response = await this.tradeService.updateAmount(
-        tradeId,
+      const { forecastId, stake, profit } = req.body
+      const response = await this.forecastService.updateAmount(
+        forecastId,
         stake,
         profit
       )
@@ -171,8 +171,8 @@ class TradeController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const tradeId = req.params.tradeId as unknown as ObjectId
-      const response = await this.tradeService.delete(tradeId)
+      const forecastId = req.params.forecastId as unknown as ObjectId
+      const response = await this.forecastService.delete(forecastId)
       res.status(200).json(response)
     } catch (err: any) {
       next(new HttpException(err.status, err.message, err.statusStrength))
@@ -180,4 +180,4 @@ class TradeController implements IAppController {
   }
 }
 
-export default TradeController
+export default ForecastController

@@ -7,9 +7,14 @@ import { TTransaction } from '@/modules/transactionManager/transactionManager.ty
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
 import { TUpdateInvestmentStatus } from './investment.type'
-import { TradeStatus } from '../trade/trade.enum'
-import { ITrade, ITradeObject } from '../trade/trade.interface'
+import { ForecastStatus } from '../forecast/forecast.enum'
+import { IForecast, IForecastObject } from '../forecast/forecast.interface'
 import { Document, ObjectId, Types } from 'mongoose'
+import { INotification } from '../notification/notification.interface'
+import { ITransaction } from '../transaction/transaction.interface'
+import { IReferral } from '../referral/referral.interface'
+import { ITransactionInstance } from '../transactionManager/transactionManager.interface'
+import { ITrade } from '../trade/trade.interface'
 
 export interface IInvestmentObject extends IAppObject {
   plan: IPlan['_id']
@@ -19,7 +24,7 @@ export interface IInvestmentObject extends IAppObject {
   timeLeft: number
   gas: number
   status: InvestmentStatus
-  tradeStatus?: TradeStatus
+  tradeStatus?: ForecastStatus
   amount: number
   balance: number
   tradeStart?: Date
@@ -39,7 +44,7 @@ export interface IInvestment extends Document {
   timeLeft: number
   gas: number
   status: InvestmentStatus
-  tradeStatus?: TradeStatus
+  tradeStatus?: ForecastStatus
   amount: number
   balance: number
   tradeStart?: Date
@@ -62,9 +67,9 @@ export interface IInvestmentService {
     status: InvestmentStatus
   ): TTransaction<IInvestmentObject, IInvestment>
 
-  updateTradeDetailsTransaction(
-    investmentId: ObjectId,
-    trade: ITradeObject
+  _updateTradeStatus(
+    investmentId: ObjectId | Types.ObjectId,
+    tradeStatus: ForecastStatus
   ): TTransaction<IInvestmentObject, IInvestment>
 
   create(
@@ -75,11 +80,31 @@ export interface IInvestmentService {
     environment: UserEnvironment
   ): THttpResponse<{ investment: IInvestment }>
 
+  setTrade(
+    investmentId: ObjectId,
+    forcast: IForecastObject
+  ): Promise<
+    ITransactionInstance<
+      IReferral | ITransaction | INotification | IInvestment | ITrade | IUser
+    >[]
+  >
+
+  setTradeStatus(
+    investmentId: ObjectId,
+    forcast: IForecastObject
+  ): Promise<
+    ITransactionInstance<ITransaction | INotification | IInvestment | ITrade>[]
+  >
+
   fetchAll(
     all: boolean,
     environment: UserEnvironment,
     userId?: ObjectId
   ): THttpResponse<{ investments: IInvestment[] }>
+
+  getAllAutoAwaiting(planId: ObjectId): Promise<IInvestmentObject[]>
+
+  getAllAutoRunning(planId: ObjectId): Promise<IInvestmentObject[]>
 
   get(investmentId: ObjectId): Promise<IInvestmentObject>
 
