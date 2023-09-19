@@ -1,5 +1,5 @@
 import { ITrade } from '../../../modules/trade/trade.interface'
-import { TradeStatus } from '../../trade/trade.enum'
+import { ForecastStatus } from '../../forecast/forecast.enum'
 import { request } from '../../../test'
 import { userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
@@ -53,12 +53,12 @@ describe('trade', () => {
         request
         const trade = await tradeModel.create(tradeA)
 
-        expect(trade.status).toBe(TradeStatus.PREPARING)
+        expect(trade.status).toBe(ForecastStatus.PREPARING)
 
         await expect(
           tradeService._updateStatusTransaction(
             new Types.ObjectId(),
-            TradeStatus.RUNNING
+            ForecastStatus.RUNNING
           )
         ).rejects.toThrow('Trade not found')
       })
@@ -68,13 +68,16 @@ describe('trade', () => {
         request
         const trade = await tradeModel.create({
           ...tradeA,
-          status: TradeStatus.SETTLED,
+          status: ForecastStatus.SETTLED,
         })
 
-        expect(trade.status).toBe(TradeStatus.SETTLED)
+        expect(trade.status).toBe(ForecastStatus.SETTLED)
 
         await expect(
-          tradeService._updateStatusTransaction(trade._id, TradeStatus.ON_HOLD)
+          tradeService._updateStatusTransaction(
+            trade._id,
+            ForecastStatus.ON_HOLD
+          )
         ).rejects.toThrow('This trade has already been settled')
       })
     })
@@ -83,17 +86,17 @@ describe('trade', () => {
         request
         const trade = await tradeModel.create(tradeA)
 
-        expect(trade.status).toBe(TradeStatus.PREPARING)
+        expect(trade.status).toBe(ForecastStatus.PREPARING)
 
         const tradeInstance = await tradeService._updateStatusTransaction(
           trade._id,
-          TradeStatus.ON_HOLD
+          ForecastStatus.ON_HOLD
         )
 
-        expect(tradeInstance.object.status).toBe(TradeStatus.ON_HOLD)
+        expect(tradeInstance.object.status).toBe(ForecastStatus.ON_HOLD)
 
         expect(tradeInstance.instance.onFailed).toContain(
-          `Set the status of the trade with an id of (${tradeInstance.instance.model._id}) to (${TradeStatus.PREPARING})`
+          `Set the status of the trade with an id of (${tradeInstance.instance.model._id}) to (${ForecastStatus.PREPARING})`
         )
       })
     })

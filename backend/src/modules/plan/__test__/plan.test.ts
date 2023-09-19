@@ -7,8 +7,6 @@ import { HttpResponseStatus } from '../../http/http.enum'
 import { adminA, userA } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { planA, planA_id, planB, planC } from './plan.payload'
-import { IPlan } from '../plan.interface'
-import { IUser } from '../../user/user.interface'
 import { Types } from 'mongoose'
 
 describe('plan', () => {
@@ -206,7 +204,9 @@ describe('plan', () => {
         expect(body.data.plan.name).toBe(payload.name)
         expect(body.data.plan.icon).toBe(payload.icon)
         expect(body.data.plan.engine).toBe(payload.engine)
-        expect(body.data.plan.minProfit).toBe(payload.minProfit)
+        expect(body.data.plan.minPercentageProfit).toBe(
+          payload.minPercentageProfit
+        )
 
         expect(getAssetMock).toHaveBeenCalledTimes(4)
       })

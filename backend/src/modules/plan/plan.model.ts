@@ -3,7 +3,7 @@ import { IPlan } from '@/modules/plan/plan.interface'
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { Types } from 'mongoose'
 
-const PlanSchema = new Schema(
+const PlanSchema = new Schema<IPlan>(
   {
     status: {
       type: String,
@@ -79,6 +79,18 @@ const PlanSchema = new Schema(
       type: Number,
       required: true,
       default: 0,
+    },
+    runTime: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    forecastStatus: {
+      type: String,
+    },
+    currentForecast: {
+      type: Types.ObjectId,
+      ref: 'Forecast',
     },
     forecastTimeStamps: [
       {

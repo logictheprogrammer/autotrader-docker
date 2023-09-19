@@ -1,4 +1,7 @@
-import { TradeMove, TradeStatus } from '../../../modules/trade/trade.enum'
+import {
+  ForecastMove,
+  ForecastStatus,
+} from '../../../modules/forecast/forecast.enum'
 import {
   investmentA,
   investmentA_id,
@@ -35,8 +38,8 @@ export const tradeA = {
   pair: pairA_id,
   pairObject: pairA,
   market: investmentA.planObject.assetType,
-  status: TradeStatus.PREPARING,
-  move: TradeMove.LONG,
+  status: ForecastStatus.PREPARING,
+  move: ForecastMove.LONG,
   stake: 10,
   outcome: 15,
   profit: 5,
@@ -57,8 +60,8 @@ export const tradeB = {
   pair: pairB_id,
   pairObject: pairB,
   market: investmentB.planObject.assetType,
-  status: TradeStatus.PREPARING,
-  move: TradeMove.LONG,
+  status: ForecastStatus.PREPARING,
+  move: ForecastMove.LONG,
   stake: 10,
   outcome: 15,
   profit: 5,
@@ -79,8 +82,8 @@ export const tradeC = {
   pair: pairC_id,
   pairObject: pairC,
   market: investmentC.planObject.assetType,
-  status: TradeStatus.PREPARING,
-  move: TradeMove.LONG,
+  status: ForecastStatus.PREPARING,
+  move: ForecastMove.LONG,
   stake: 10,
   outcome: 15,
   profit: 5,

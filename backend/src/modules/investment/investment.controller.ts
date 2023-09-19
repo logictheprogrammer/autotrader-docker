@@ -7,7 +7,6 @@ import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
-import { ITradeService } from '../forecast/trade.interface'
 import { ObjectId } from 'mongoose'
 
 @Service()
@@ -17,8 +16,7 @@ class InvestmentController implements IAppController {
 
   constructor(
     @Inject(ServiceToken.INVESTMENT_SERVICE)
-    private investmentService: IInvestmentService,
-    @Inject(ServiceToken.TRADE_SERVICE) private tradeService: ITradeService
+    private investmentService: IInvestmentService
   ) {
     this.intialiseRoutes()
   }
@@ -133,7 +131,7 @@ class InvestmentController implements IAppController {
   ): Promise<Response | void> => {
     try {
       const { investmentId, status } = req.body
-      const response = await this.tradeService.forceUpdateInvestmentStatus(
+      const response = await this.investmentService.forceUpdateStatus(
         investmentId,
         status
       )

@@ -13,7 +13,7 @@ import {
 import { UserEnvironment } from '../../user/user.enum'
 import { DepositStatus } from '../../deposit/deposit.enum'
 import { InvestmentStatus } from '../../investment/investment.enum'
-import { TradeStatus } from '../../trade/trade.enum'
+import { ForecastStatus } from '../../forecast/forecast.enum'
 import { IUser } from '../../user/user.interface'
 import { ITransaction } from '../transaction.interface'
 import { Types } from 'mongoose'
@@ -127,7 +127,7 @@ describe('transaction', () => {
         await expect(
           transactionService._updateAmountTransaction(
             new Types.ObjectId(),
-            TradeStatus.SETTLED,
+            ForecastStatus.SETTLED,
             1000
           )
         ).rejects.toThrow('Transaction not found')
@@ -146,11 +146,11 @@ describe('transaction', () => {
         const transactionInstance =
           await transactionService._updateAmountTransaction(
             depositA_id,
-            TradeStatus.SETTLED,
+            ForecastStatus.SETTLED,
             1000
           )
 
-        expect(transactionInstance.object.status).toBe(TradeStatus.SETTLED)
+        expect(transactionInstance.object.status).toBe(ForecastStatus.SETTLED)
 
         expect(transactionInstance.instance.onFailed).toContain(
           `Set the status of the transaction with an id of (${

@@ -1,0 +1,3 @@
+1. add transaction file to each service
+2. add utill file to each service
+3. add trade ref to all trades

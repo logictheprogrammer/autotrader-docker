@@ -48,19 +48,27 @@ class PlanService implements IPlanService {
 
   public async _updateForecastDetails(
     planId: ObjectId,
-    status: ForecastStatus,
-    timeStamps: number[],
-    startTime?: Date
+    forecastObject: IForecastObject
   ): TTransaction<IPlanObject, IPlan> {
     const plan = await this.find(planId)
 
+    const oldCurrentForecast = plan.currentForecast
     const oldStatus = plan.forecastStatus
     const oldTimeStamps = plan.forecastTimeStamps.slice()
     const oldStartTime = plan.forecastStartTime
+    const oldRuntime = plan.runTime
 
-    plan.forecastStatus = status
-    plan.forecastTimeStamps = timeStamps
-    plan.forecastStartTime = startTime
+    plan.currentForecast = forecastObject._id
+    plan.forecastStatus = forecastObject.status
+    plan.forecastTimeStamps = forecastObject.timeStamps.slice()
+    plan.forecastStartTime = forecastObject.startTime
+
+    if (forecastObject.status === ForecastStatus.SETTLED) {
+      plan.forecastStatus = undefined
+      plan.forecastStartTime = undefined
+      plan.currentForecast = undefined
+      plan.runTime += forecastObject.runTime
+    }
 
     return {
       object: plan.toObject({ getters: true }),
@@ -70,11 +78,14 @@ class PlanService implements IPlanService {
           plan._id
         }) forecastStartTime to (${oldStartTime}) and forecastTimeStamps to (${JSON.stringify(
           oldTimeStamps
-        )}) and ForecastStatus to (${oldStartTime})`,
+        )}) and ForecastStatus to (${oldStartTime}) and currentForecast to (${oldCurrentForecast}) and runTime = (${oldRuntime})`,
         callback: async () => {
+          plan.currentForecast = oldCurrentForecast
           plan.forecastStatus = oldStatus
           plan.forecastTimeStamps = oldTimeStamps
           plan.forecastStartTime = oldStartTime
+          plan.runTime = oldRuntime
+
           await plan.save()
         },
       },
@@ -238,13 +249,9 @@ class PlanService implements IPlanService {
 
   public async updateForecastDetails(
     planId: ObjectId,
-    status: ForecastStatus,
-    timeStamps: number[],
-    startTime?: Date
+    forecastObject: IForecastObject
   ): Promise<ITransactionInstance<IPlan>> {
-    return (
-      await this._updateForecastDetails(planId, status, timeStamps, startTime)
-    ).instance
+    return (await this._updateForecastDetails(planId, forecastObject)).instance
   }
 
   public async get(planId: ObjectId): Promise<IPlanObject | null> {
@@ -264,8 +271,42 @@ class PlanService implements IPlanService {
     return plan.toObject({ getters: true })
   }
 
-  public async getAllAuto(): Promise<IPlanObject[]> {
-    const plans = await this.planModel.find({ manualMode: false })
+  public async getAllAutoIdled(): Promise<IPlanObject[]> {
+    const plans = await this.planModel.find({
+      manualMode: false,
+      status: PlanStatus.ACTIVE,
+      forecastStatus: { $or: [ForecastStatus.SETTLED, undefined] },
+    })
+
+    for (let index = 0; index < plans.length; index++) {
+      const plan = plans[index]
+      const assetsObj = []
+
+      for (const assetId of plan.assets) {
+        const asset = await this.assetService.get(assetId, plan.assetType)
+        if (asset) assetsObj.push(asset)
+      }
+
+      plan.assets = assetsObj
+
+      plan.toObject({ getters: true })
+    }
+
+    return plans
+  }
+
+  public async getAllAutoRunning(): Promise<IPlanObject[]> {
+    const plans = await this.planModel.find({
+      manualMode: false,
+      status: PlanStatus.ACTIVE,
+      forecastStatus: {
+        $or: [
+          ForecastStatus.PREPARING,
+          ForecastStatus.RUNNING,
+          ForecastStatus.MARKET_CLOSED,
+        ],
+      },
+    })
 
     for (let index = 0; index < plans.length; index++) {
       const plan = plans[index]

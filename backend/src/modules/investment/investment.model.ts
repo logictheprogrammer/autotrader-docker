@@ -1,7 +1,7 @@
 import { IInvestment } from '@/modules/investment/investment.interface'
 import { Schema, Types, model } from 'mongoose'
 
-const InvestmentSchema = new Schema(
+const InvestmentSchema = new Schema<IInvestment>(
   {
     plan: {
       type: Types.ObjectId,
@@ -29,9 +29,6 @@ const InvestmentSchema = new Schema(
       type: String,
       required: true,
     },
-    tradeStatus: {
-      type: String,
-    },
     status: {
       type: String,
       required: true,
@@ -52,13 +49,31 @@ const InvestmentSchema = new Schema(
       type: Number,
       required: true,
     },
-    tradeStart: {
-      type: Date,
-    },
     manualMode: {
       type: Boolean,
       required: true,
       default: false,
+    },
+    runTime: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    tradeStatus: {
+      type: String,
+    },
+    currentTrade: {
+      type: Types.ObjectId,
+      ref: 'Trade',
+    },
+    tradeTimeStamps: [
+      {
+        type: Number,
+        required: true,
+      },
+    ],
+    tradeStartTime: {
+      type: Date,
     },
   },
   { timestamps: true }

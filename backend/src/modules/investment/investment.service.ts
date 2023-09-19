@@ -1,4 +1,3 @@
-import tradeModel from '@/modules/trade/trade.model'
 import {
   ITrade,
   ITradeObject,
@@ -46,22 +45,18 @@ import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import FormatNumber from '@/utils/formats/formatNumber'
 import { TUpdateInvestmentStatus } from './investment.type'
-import userModel from '../user/user.model'
 import { ForecastStatus } from '../forecast/forecast.enum'
-import { ObjectId, Schema } from 'mongoose'
+import { ObjectId } from 'mongoose'
 import { IForecastObject } from '../forecast/forecast.interface'
-import { Types } from 'mongoose'
 import { ErrorCode } from '@/utils/enums/errorCodes.enum'
 
 @Service()
 class InvestmentService implements IInvestmentService {
   private investmentModel = investmentModel
-  private userModel = userModel
 
   public constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
     private planService: IPlanService,
-    @Inject(ServiceToken.TRADE_SERVICE) private tradeService: ITradeService,
     @Inject(ServiceToken.USER_SERVICE) private userService: IUserService,
     @Inject(ServiceToken.TRANSACTION_SERVICE)
     private transactionService: ITransactionService,
@@ -194,11 +189,13 @@ class InvestmentService implements IInvestmentService {
     }
   }
 
-  public async _updateTradeStatus(
+  public async _updateTradeDetails(
     investmentId: ObjectId,
-    tradeStatus: ForecastStatus
+    tradeObject: ITradeObject
   ): TTransaction<IInvestmentObject, IInvestment> {
     const investment = await this.find(investmentId)
+
+    const tradeStatus = tradeObject.status
 
     const oldStatus = investment.status
     const oldTradeStatus = investment.tradeStatus
@@ -212,11 +209,16 @@ class InvestmentService implements IInvestmentService {
         investment.status = InvestmentStatus.AWAITING_TRADE
         break
       case ForecastStatus.PREPARING:
+        investment.status = InvestmentStatus.PROCESSING_TRADE
+        break
       case ForecastStatus.RUNNING:
         investment.status = InvestmentStatus.RUNNING
         break
       default:
         throw new HttpException(ErrorCode.BAD_REQUEST, 'Invalid forcast status')
+    }
+
+    if (tradeStatus === ForecastStatus.SETTLED) {
     }
 
     return {
@@ -233,63 +235,33 @@ class InvestmentService implements IInvestmentService {
     }
   }
 
-  public async setTrade(
+  public async _fundTransaction(
     investmentId: ObjectId,
-    forecast: IForecastObject
-  ): Promise<
-    ITransactionInstance<
-      IReferral | ITransaction | INotification | IInvestment | ITrade | IUser
-    >[]
-  > {
-    const transactionInstances: ITransactionInstance<
-      IReferral | ITransaction | INotification | IInvestment | ITrade | IUser
-    >[] = []
+    amount: number
+  ): TTransaction<IInvestmentObject, IInvestment> {
+    const investment = await this.find(investmentId)
 
-    const {
-      object: investmentObject,
-      instance: investmentTransactionInstance,
-    } = await this._updateTradeStatus(investmentId, forecast.status)
+    investment.balance += amount
 
-    transactionInstances.push(investmentTransactionInstance)
+    const onFailed = `${amount > 0 ? 'substract' : 'add'} ${
+      amount > 0
+        ? FormatNumber.toDollar(amount)
+        : FormatNumber.toDollar(-amount)
+    } ${amount > 0 ? 'from' : 'to'} the investment with an id of (${
+      investment._id
+    })`
 
-    const user = await this.userService.get(investmentObject.user)
-
-    const tradeInstances = await this.tradeService.create(
-      user,
-      investmentObject,
-      forecast
-    )
-
-    tradeInstances.map((instance) => transactionInstances.push(instance))
-
-    return transactionInstances
-  }
-
-  public async setTradeStatus(
-    investmentId: ObjectId,
-    forecast: IForecastObject
-  ): Promise<
-    ITransactionInstance<ITransaction | INotification | IInvestment | ITrade>[]
-  > {
-    const transactionInstances: ITransactionInstance<
-      ITransaction | INotification | IInvestment | ITrade
-    >[] = []
-
-    const {
-      object: investmentObject,
-      instance: investmentTransactionInstance,
-    } = await this._updateTradeStatus(investmentId, forecast.status)
-
-    transactionInstances.push(investmentTransactionInstance)
-
-    const tradeInstances = await this.tradeService.updateStatus(
-      investmentObject,
-      forecast
-    )
-
-    tradeInstances.map((instance) => transactionInstances.push(instance))
-
-    return transactionInstances
+    return {
+      object: investment.toObject({ getters: true }),
+      instance: {
+        model: investment,
+        onFailed,
+        callback: async () => {
+          investment.balance -= amount
+          await investment.save()
+        },
+      },
+    }
   }
 
   public create = async (
@@ -393,6 +365,13 @@ class InvestmentService implements IInvestmentService {
     }
   }
 
+  public async updateTradeDetails(
+    investmentId: ObjectId,
+    tradeObject: ITradeObject
+  ): Promise<ITransactionInstance<IInvestment>> {
+    return (await this._updateTradeDetails(investmentId, tradeObject)).instance
+  }
+
   public async updateStatus(
     investmentId: ObjectId,
     status: InvestmentStatus,
@@ -494,6 +473,35 @@ class InvestmentService implements IInvestmentService {
       model: investmentInstance.model,
       instances: transactionInstances,
     }
+  }
+
+  public forceUpdateStatus = async (
+    investmentId: ObjectId,
+    status: InvestmentStatus
+  ): THttpResponse<{ investment: IInvestment }> => {
+    try {
+      const result = await this.updateStatus(investmentId, status)
+
+      await this.transactionManagerService.execute(result.instances)
+
+      return {
+        status: HttpResponseStatus.SUCCESS,
+        message: 'Status updated successfully',
+        data: { investment: result.model },
+      }
+    } catch (err: any) {
+      throw new AppException(
+        err,
+        'Failed to update this investment  status, please try again'
+      )
+    }
+  }
+
+  public async fund(
+    investmentId: ObjectId,
+    amount: number
+  ): TTransaction<IInvestmentObject, IInvestment> {
+    return await this._fundTransaction(investmentId, amount)
   }
 
   public async forceFund(

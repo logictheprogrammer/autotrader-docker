@@ -88,21 +88,39 @@ export interface ITradeService {
     manualMode: boolean
   ): TTransaction<ITradeObject, ITrade>
 
+  _updateTransaction(
+    investment: IInvestmentObject,
+    forecast: IForecastObject,
+    stake: number,
+    outcome: number,
+    profit: number,
+    percentage: number
+  ): TTransaction<ITradeObject, ITrade>
+
   _updateStatusTransaction(
     investment: IInvestmentObject,
     forecast: IForecastObject
   ): TTransaction<ITradeObject, ITrade>
 
   create(
-    user: IUserObject,
+    userId: ObjectId,
     investment: IInvestmentObject,
     forecast: IForecastObject
-  ): Promise<ITransactionInstance<ITransaction | INotification | ITrade>[]>
+  ): Promise<
+    ITransactionInstance<ITransaction | INotification | ITrade | IInvestment>[]
+  >
+
+  update(
+    investment: IInvestmentObject,
+    forecast: IForecastObject
+  ): Promise<ITransactionInstance<ITrade | IInvestment>[]>
 
   updateStatus(
     investment: IInvestmentObject,
     forecast: IForecastObject
-  ): Promise<ITransactionInstance<ITransaction | INotification | ITrade>[]>
+  ): Promise<
+    ITransactionInstance<ITransaction | INotification | ITrade | IInvestment>[]
+  >
 
   fetchAll(
     all: boolean,

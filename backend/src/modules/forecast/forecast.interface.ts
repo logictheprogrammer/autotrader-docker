@@ -23,7 +23,6 @@ export interface IForecastObject extends IAppObject {
   runTime: number
   timeStamps: number[]
   startTime?: Date
-  manualUpdateAmount: boolean
   manualMode: boolean
 }
 
@@ -56,11 +55,23 @@ export interface IForecastService {
     stakeRate: number
   ): TTransaction<IForecastObject, IForecast>
 
+  _updateTransaction(
+    forecastId: ObjectId,
+    pair: IPairObject,
+    percentageProfit: number,
+    stakeRate: number,
+    move?: ForecastMove,
+    openingPrice?: number,
+    closingPrice?: number
+  ): TTransaction<IForecastObject, IForecast>
+
   _updateStatusTransaction(
     forecastId: ObjectId | Types.ObjectId,
     status: ForecastStatus,
     move?: ForecastMove
   ): TTransaction<IForecastObject, IForecast>
+
+  getTodaysTotalForecast(planObject: IPlanObject): Promise<number>
 
   create(
     plan: IPlanObject,
@@ -78,12 +89,14 @@ export interface IForecastService {
     stakeRate: number
   ): THttpResponse<{ forecast: IForecast }>
 
-  manualUpdate(
+  update(
     forecastId: ObjectId,
     pairId: ObjectId,
     percentageProfit: number,
-    status: ForecastStatus,
-    move?: ForecastMove
+    stakeRate: number,
+    move?: ForecastMove,
+    openingPrice?: number,
+    closingPrice?: number
   ): THttpResponse<{ forecast: IForecast }>
 
   updateStatus(forecastId: ObjectId, status: ForecastStatus): Promise<IForecast>

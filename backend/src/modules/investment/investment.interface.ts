@@ -14,7 +14,7 @@ import { INotification } from '../notification/notification.interface'
 import { ITransaction } from '../transaction/transaction.interface'
 import { IReferral } from '../referral/referral.interface'
 import { ITransactionInstance } from '../transactionManager/transactionManager.interface'
-import { ITrade } from '../trade/trade.interface'
+import { ITrade, ITradeObject } from '../trade/trade.interface'
 
 export interface IInvestmentObject extends IAppObject {
   plan: IPlan['_id']
@@ -24,13 +24,16 @@ export interface IInvestmentObject extends IAppObject {
   timeLeft: number
   gas: number
   status: InvestmentStatus
-  tradeStatus?: ForecastStatus
   amount: number
   balance: number
-  tradeStart?: Date
   account: UserAccount
   environment: UserEnvironment
   manualMode: boolean
+  currentTrade?: ITrade['_id']
+  runTime: number
+  tradeStatus?: ForecastStatus
+  tradeTimeStamps: number[]
+  tradeStartTime?: Date
 }
 
 export interface IInvestment extends Document {
@@ -44,13 +47,16 @@ export interface IInvestment extends Document {
   timeLeft: number
   gas: number
   status: InvestmentStatus
-  tradeStatus?: ForecastStatus
   amount: number
   balance: number
-  tradeStart?: Date
   account: UserAccount
   environment: UserEnvironment
   manualMode: boolean
+  runTime: number
+  currentTrade?: ITrade['_id']
+  tradeStatus?: ForecastStatus
+  tradeTimeStamps: number[]
+  tradeStartTime?: Date
 }
 
 export interface IInvestmentService {
@@ -67,10 +73,20 @@ export interface IInvestmentService {
     status: InvestmentStatus
   ): TTransaction<IInvestmentObject, IInvestment>
 
-  _updateTradeStatus(
-    investmentId: ObjectId | Types.ObjectId,
-    tradeStatus: ForecastStatus
+  _fundTransaction(
+    investmentId: ObjectId,
+    amount: number
   ): TTransaction<IInvestmentObject, IInvestment>
+
+  _updateTradeDetails(
+    investmentId: ObjectId | Types.ObjectId,
+    tradeObject: ITradeObject
+  ): TTransaction<IInvestmentObject, IInvestment>
+
+  updateTradeDetails(
+    investmentId: ObjectId | Types.ObjectId,
+    tradeObject: ITradeObject
+  ): Promise<ITransactionInstance<IInvestment>>
 
   create(
     planId: ObjectId,
@@ -80,21 +96,26 @@ export interface IInvestmentService {
     environment: UserEnvironment
   ): THttpResponse<{ investment: IInvestment }>
 
-  setTrade(
-    investmentId: ObjectId,
-    forcast: IForecastObject
-  ): Promise<
-    ITransactionInstance<
-      IReferral | ITransaction | INotification | IInvestment | ITrade | IUser
-    >[]
-  >
+  // setTrade(
+  //   investmentId: ObjectId,
+  //   forecast: IForecastObject
+  // ): Promise<
+  //   ITransactionInstance<
+  //     IReferral | ITransaction | INotification | IInvestment | ITrade | IUser
+  //   >[]
+  // >
 
-  setTradeStatus(
-    investmentId: ObjectId,
-    forcast: IForecastObject
-  ): Promise<
-    ITransactionInstance<ITransaction | INotification | IInvestment | ITrade>[]
-  >
+  // updateTrade(
+  //   investmentId: ObjectId,
+  //   forecast: IForecastObject
+  // ): Promise<ITransactionInstance<ITrade>[]>
+
+  // setTradeStatus(
+  //   investmentId: ObjectId,
+  //   forecast: IForecastObject
+  // ): Promise<
+  //   ITransactionInstance<ITransaction | INotification | IInvestment | ITrade>[]
+  // >
 
   fetchAll(
     all: boolean,
@@ -118,6 +139,11 @@ export interface IInvestmentService {
     model: IInvestment
     instances: TUpdateInvestmentStatus
   }>
+
+  forceUpdateStatus(
+    investmentId: ObjectId,
+    status: InvestmentStatus
+  ): THttpResponse<{ investment: IInvestment }>
 
   forceFund(
     investmentId: ObjectId,

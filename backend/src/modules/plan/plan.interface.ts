@@ -7,7 +7,7 @@ import { IInvestment } from '../investment/investment.interface'
 import { Document, ObjectId, Types } from 'mongoose'
 import { IAsset } from '../asset/asset.interface'
 import { ITransactionInstance } from '../transactionManager/transactionManager.interface'
-import { IForecastObject } from '../forecast/forecast.interface'
+import { IForecast, IForecastObject } from '../forecast/forecast.interface'
 import { TTransaction } from '../transactionManager/transactionManager.type'
 import { ForecastStatus } from '../forecast/forecast.enum'
 
@@ -29,6 +29,8 @@ export interface IPlanObject extends IAppObject {
   manualMode: boolean
   investors: IInvestment['_id'][]
   dummyInvestors: number
+  runTime: number
+  currentForecast?: IForecast['_id']
   forecastStatus?: ForecastStatus
   forecastTimeStamps: number[]
   forecastStartTime?: Date
@@ -55,6 +57,8 @@ export interface IPlan extends Document {
   manualMode: boolean
   investors: IInvestment['_id'][]
   dummyInvestors: number
+  runTime: number
+  currentForecast?: IForecast['_id']
   forecastStatus?: ForecastStatus
   forecastTimeStamps: number[]
   forecastStartTime?: Date
@@ -63,9 +67,7 @@ export interface IPlan extends Document {
 export interface IPlanService {
   _updateForecastDetails(
     planId: ObjectId,
-    status: ForecastStatus,
-    timeStamps: number[],
-    startTime?: Date
+    forecastObject: IForecastObject
   ): TTransaction<IPlanObject, IPlan>
 
   create(
@@ -108,14 +110,14 @@ export interface IPlanService {
 
   updateForecastDetails(
     planId: ObjectId,
-    status: ForecastStatus,
-    timeStamps: number[],
-    startTime?: Date
+    forecastObject: IForecastObject
   ): Promise<ITransactionInstance<IPlan>>
 
   get(planId: ObjectId | Types.ObjectId): Promise<IPlanObject | null>
 
-  getAllAuto(): Promise<IPlanObject[]>
+  getAllAutoIdled(): Promise<IPlanObject[]>
+
+  getAllAutoRunning(): Promise<IPlanObject[]>
 
   delete(planId: ObjectId): THttpResponse<{ plan: IPlan }>
 

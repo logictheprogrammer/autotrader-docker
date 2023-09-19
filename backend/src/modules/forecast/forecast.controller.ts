@@ -36,13 +36,6 @@ class ForecastController implements IAppController {
       this.update
     )
 
-    this.router.patch(
-      `${this.path}/update-amount`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateAmount),
-      this.updateAmount
-    )
-
     this.router.delete(
       `${this.path}/delete/:forecastId`,
       HttpMiddleware.authenticate(UserRole.ADMIN),
@@ -50,49 +43,25 @@ class ForecastController implements IAppController {
     )
 
     this.router.get(
-      `${this.path}/master/demo`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO)
-    )
-
-    this.router.get(
-      `${this.path}/demo`,
-      HttpMiddleware.authenticate(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.DEMO)
-    )
-
-    this.router.get(
-      `${this.path}/master`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.LIVE)
-    )
-
-    this.router.get(
       `${this.path}`,
       HttpMiddleware.authenticate(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.LIVE)
+      this.fetchAll
     )
   }
 
-  private fetchAll =
-    (all: boolean, environment: UserEnvironment) =>
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<Response | void> => {
-      try {
-        const userId = req.user._id
-        const response = await this.forecastService.fetchAll(
-          all,
-          environment,
-          userId
-        )
-        res.status(200).json(response)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
-      }
+  private fetchAll = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> => {
+    try {
+      const { planId } = req.body
+      const response = await this.forecastService.fetchAll(planId)
+      res.status(200).json(response)
+    } catch (err: any) {
+      next(new HttpException(err.status, err.message, err.statusStrength))
     }
+  }
 
   private create = async (
     req: Request,
@@ -140,24 +109,6 @@ class ForecastController implements IAppController {
         closingPrice,
         startTime,
         stopTime
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
-
-  private updateAmount = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { forecastId, stake, profit } = req.body
-      const response = await this.forecastService.updateAmount(
-        forecastId,
-        stake,
-        profit
       )
       res.status(200).json(response)
     } catch (err: any) {

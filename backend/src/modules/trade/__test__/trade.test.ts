@@ -16,7 +16,7 @@ import {
 } from '../../notification/notification.enum'
 import formatNumber from '../../../utils/formats/formatNumber'
 import { TransactionCategory } from '../../transaction/transaction.enum'
-import { TradeMove, TradeStatus } from '../../trade/trade.enum'
+import { ForecastMove, ForecastStatus } from '../../forecast/forecast.enum'
 import { request } from '../../../test'
 import { adminA, userA, userA_id } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
@@ -244,7 +244,7 @@ describe('trade', () => {
 
         expect(randomPickFromArrayMock).toHaveBeenCalledTimes(1)
         expect(randomPickFromArrayMock).toHaveBeenCalledWith(
-          Object.values(TradeMove)
+          Object.values(ForecastMove)
         )
 
         expect(getRandomValueMock).toHaveBeenCalledTimes(1)
@@ -253,28 +253,28 @@ describe('trade', () => {
           TradeService.maxStakeRate
         )
 
-        const minProfit =
-          investmentA.planObject.minProfit / TradeService.dailyTrades
+        const minPercentageProfit =
+          investmentA.planObject.minPercentageProfit / TradeService.dailyTrades
 
-        const maxProfit =
-          investmentA.planObject.maxProfit / TradeService.dailyTrades
+        const maxPercentageProfit =
+          investmentA.planObject.maxPercentageProfit / TradeService.dailyTrades
 
         const stake = investmentA.amount * TradeService.minStakeRate
 
-        const spread = minProfit * TradeService.minStakeRate
+        const spread = minPercentageProfit * TradeService.minStakeRate
 
         const breakpoint = spread * TradeService.profitBreakpoint
 
         expect(dynamicRangeMock).toHaveBeenCalledTimes(1)
         expect(dynamicRangeMock).toHaveBeenCalledWith(
-          minProfit,
-          maxProfit,
+          minPercentageProfit,
+          maxPercentageProfit,
           spread,
           breakpoint,
           TradeService.profitProbability
         )
 
-        const investmentPercentage = minProfit
+        const investmentPercentage = minPercentageProfit
 
         const profit = (investmentPercentage / 100) * investmentA.amount
 
@@ -296,7 +296,9 @@ describe('trade', () => {
         expect(createTransactionTradeMock.mock.calls[0][2]._id.toString()).toBe(
           pairA_id.toString()
         )
-        expect(createTransactionTradeMock.mock.calls[0][3]).toBe(TradeMove.LONG)
+        expect(createTransactionTradeMock.mock.calls[0][3]).toBe(
+          ForecastMove.LONG
+        )
         expect(createTransactionTradeMock.mock.calls[0][4]).toBe(stake)
         expect(createTransactionTradeMock.mock.calls[0][5]).toBe(outcome)
         expect(createTransactionTradeMock.mock.calls[0][6]).toBe(profit)
@@ -363,7 +365,7 @@ describe('trade', () => {
 
         const payload = {
           tradeId: new Types.ObjectId(),
-          status: TradeStatus.ON_HOLD,
+          status: ForecastStatus.ON_HOLD,
         }
 
         const { statusCode, body } = await request
@@ -388,7 +390,7 @@ describe('trade', () => {
 
         const payload = {
           tradeId: trade._id,
-          status: TradeStatus.PREPARING,
+          status: ForecastStatus.PREPARING,
         }
 
         const { statusCode, body } = await request
@@ -413,14 +415,14 @@ describe('trade', () => {
         })
 
         const statuses = [
-          TradeStatus.PREPARING,
-          TradeStatus.ON_HOLD,
-          TradeStatus.RUNNING,
-          TradeStatus.MARKET_CLOSED,
-          TradeStatus.SETTLED,
+          ForecastStatus.PREPARING,
+          ForecastStatus.ON_HOLD,
+          ForecastStatus.RUNNING,
+          ForecastStatus.MARKET_CLOSED,
+          ForecastStatus.SETTLED,
         ]
 
-        for (const status of Object.values(TradeStatus)) {
+        for (const status of Object.values(ForecastStatus)) {
           const payload = {
             tradeId: trade._id,
             status: status,
@@ -441,7 +443,7 @@ describe('trade', () => {
     })
 
     describe('given all validations passed', () => {
-      for (const status of Object.values(TradeStatus)) {
+      for (const status of Object.values(ForecastStatus)) {
         it(`should executes trade with ${status} status`, async () => {
           const admin = await userModel.create(adminA)
           const user = await userModel.create({ ...userA, _id: userA_id })
@@ -459,7 +461,7 @@ describe('trade', () => {
           let statusCode: any
           let body: any
           switch (status) {
-            case TradeStatus.ON_HOLD:
+            case ForecastStatus.ON_HOLD:
               payload = {
                 tradeId: trade._id,
                 status,
@@ -508,7 +510,7 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.RUNNING:
+            case ForecastStatus.RUNNING:
               payload = {
                 tradeId: trade._id,
                 status,
@@ -557,7 +559,7 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.PREPARING:
+            case ForecastStatus.PREPARING:
               trade.manualMode = true
               await trade.save()
 
@@ -596,7 +598,7 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.PREPARING:
+            case ForecastStatus.PREPARING:
               trade.manualMode = true
               await trade.save()
 
@@ -626,7 +628,7 @@ describe('trade', () => {
               expect(createTransactionTransactionMock).toHaveBeenCalledTimes(1)
               expect(createTransactionTransactionMock).toHaveBeenCalledWith(
                 expect.objectContaining(userA1),
-                TradeStatus.PREPARING,
+                ForecastStatus.PREPARING,
                 TransactionCategory.TRADE,
                 tradeAObj,
                 trade.stake,
@@ -654,7 +656,7 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.MARKET_CLOSED:
+            case ForecastStatus.MARKET_CLOSED:
               trade.manualMode = true
               await trade.save()
 
@@ -709,7 +711,7 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.RUNNING:
+            case ForecastStatus.RUNNING:
               trade.manualMode = true
               await trade.save()
 
@@ -761,7 +763,7 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.SETTLED:
+            case ForecastStatus.SETTLED:
               trade.manualMode = true
               await trade.save()
 
@@ -856,7 +858,7 @@ describe('trade', () => {
         const payload = {
           tradeId: '123',
           pairId: '123',
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
         }
 
@@ -878,7 +880,7 @@ describe('trade', () => {
         const payload = {
           tradeId: new Types.ObjectId().toString(),
           pairId: '123',
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
           profit: 50,
         }
@@ -904,7 +906,7 @@ describe('trade', () => {
         const payload = {
           tradeId: trade._id,
           pairId: new Types.ObjectId().toString(),
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
           profit: 50,
         }
@@ -931,7 +933,7 @@ describe('trade', () => {
         const payload = {
           tradeId: trade._id,
           pairId: pairC_id,
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
           profit: 50,
         }
@@ -957,7 +959,7 @@ describe('trade', () => {
         const payload = {
           tradeId: trade._id,
           pairId: pairA_id,
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
           profit: 50,
         }
@@ -1249,7 +1251,7 @@ describe('trade', () => {
       it('should return a 200 with a payload', async () => {
         const trade = await tradeModel.create({
           ...tradeA,
-          status: TradeStatus.SETTLED,
+          status: ForecastStatus.SETTLED,
         })
 
         const url = `${baseUrl}delete/${trade._id}`

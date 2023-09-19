@@ -9,14 +9,14 @@ import {
   createTransactionTransactionMock,
   updateAmountTransactionTransactionMock,
 } from '../../transaction/__test__/transaction.mock'
-import tradeModel from '../../trade/trade.model'
+import forecastModel from '../../forecast/forecast.model'
 import {
   NotificationCategory,
   NotificationForWho,
 } from '../../notification/notification.enum'
 import formatNumber from '../../../utils/formats/formatNumber'
 import { TransactionCategory } from '../../transaction/transaction.enum'
-import { TradeMove, TradeStatus } from '../../trade/trade.enum'
+import { ForecastMove, ForecastStatus } from '../../forecast/forecast.enum'
 import { request } from '../../../test'
 import { adminA, userA, userA_id } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
@@ -24,13 +24,13 @@ import { Types } from 'mongoose'
 
 import { executeTransactionManagerMock } from '../../transactionManager/__test__/transactionManager.mock'
 import {
-  tradeA,
-  tradeA_id,
-  tradeModelReturn,
-  tradeAObj,
-  tradeB,
-} from './trade.payload'
-import { createTransactionTradeMock } from './trade.mock'
+  forecastA,
+  forecastA_id,
+  forecastModelReturn,
+  forecastAObj,
+  forecastB,
+} from './forecast.payload'
+import { createTransactionForecastMock } from './forecast.mock'
 import { HttpResponseStatus } from '../../http/http.enum'
 import Encryption from '../../../utils/encryption'
 import { UserEnvironment } from '../../user/user.enum'
@@ -48,16 +48,16 @@ import {
   getRandomValueMock,
   randomPickFromArrayMock,
 } from '../../../utils/helpers/__test__/helpers.mock'
-import TradeService from '../trade.service'
+import ForecastService from '../forecast.service'
 import { dynamicRangeMock } from '../../math/__test__/math.mock'
 import { InvestmentStatus } from '../../investment/investment.enum'
 import { IUser } from '../../user/user.interface'
-import { ITrade } from '../trade.interface'
+import { IForecast } from '../forecast.interface'
 import investmentModel from '../../investment/investment.model'
 
-describe('trade', () => {
-  const baseUrl = '/api/trade/'
-  describe('create trade on live mode and demo', () => {
+describe('forecast', () => {
+  const baseUrl = '/api/forecast/'
+  describe('create forecast on live mode and demo', () => {
     const url = baseUrl + 'create'
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized', async () => {
@@ -102,8 +102,8 @@ describe('trade', () => {
         const payload = {
           investmentId,
           pairId,
-          stake: tradeA.stake,
-          profit: tradeA.profit,
+          stake: forecastA.stake,
+          profit: forecastA.profit,
         }
 
         const admin = await userModel.create(adminA)
@@ -121,7 +121,7 @@ describe('trade', () => {
         expect(getInvestmentMock).toHaveBeenCalledTimes(1)
         expect(getInvestmentMock).toHaveBeenCalledWith(investmentId)
 
-        expect(createTransactionTradeMock).toHaveBeenCalledTimes(0)
+        expect(createTransactionForecastMock).toHaveBeenCalledTimes(0)
       })
     })
     describe('given user those not exits', () => {
@@ -129,8 +129,8 @@ describe('trade', () => {
         const payload = {
           investmentId: investmentA_id,
           pairId: new Types.ObjectId().toString(),
-          stake: tradeA.stake,
-          profit: tradeA.profit,
+          stake: forecastA.stake,
+          profit: forecastA.profit,
         }
 
         const admin = await userModel.create(adminA)
@@ -145,7 +145,7 @@ describe('trade', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        expect(createTransactionTradeMock).toHaveBeenCalledTimes(0)
+        expect(createTransactionForecastMock).toHaveBeenCalledTimes(0)
       })
     })
     describe('given pair those not exits', () => {
@@ -153,8 +153,8 @@ describe('trade', () => {
         const payload = {
           investmentId: investmentA_id,
           pairId: new Types.ObjectId().toString(),
-          stake: tradeA.stake,
-          profit: tradeA.profit,
+          stake: forecastA.stake,
+          profit: forecastA.profit,
         }
 
         await userModel.create({ ...userA, _id: userA_id })
@@ -174,7 +174,7 @@ describe('trade', () => {
         expect(getPairMock).toHaveBeenCalledTimes(1)
         expect(getPairMock).toHaveBeenCalledWith(payload.pairId)
 
-        expect(createTransactionTradeMock).toHaveBeenCalledTimes(0)
+        expect(createTransactionForecastMock).toHaveBeenCalledTimes(0)
       })
     })
     describe('given pair is not compatible', () => {
@@ -183,8 +183,8 @@ describe('trade', () => {
         const payload = {
           investmentId: investmentA_id,
           pairId,
-          stake: tradeA.stake,
-          profit: tradeA.profit,
+          stake: forecastA.stake,
+          profit: forecastA.profit,
         }
         await userModel.create({ ...userA, _id: userA_id })
 
@@ -202,16 +202,16 @@ describe('trade', () => {
         expect(statusCode).toBe(400)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
-        expect(createTransactionTradeMock).toHaveBeenCalledTimes(0)
+        expect(createTransactionForecastMock).toHaveBeenCalledTimes(0)
       })
     })
     describe('given all validations passed', () => {
-      it('should return a 201 and the trade payload', async () => {
+      it('should return a 201 and the forecast payload', async () => {
         const payload = {
           investmentId: investmentA_id,
           pairId: pairA_id,
-          stake: tradeA.stake,
-          profit: tradeA.profit,
+          stake: forecastA.stake,
+          profit: forecastA.profit,
         }
 
         await userModel.create({ ...userA, _id: userA_id })
@@ -224,14 +224,14 @@ describe('trade', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Trade created successfully')
+        expect(body.message).toBe('Forecast created successfully')
         expect(statusCode).toBe(201)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
 
-        expect(tradeModelReturn.save).toHaveBeenCalledTimes(1)
+        expect(forecastModelReturn.save).toHaveBeenCalledTimes(1)
 
         expect(body.data).toMatchObject({
-          trade: { _id: tradeModelReturn._id },
+          forecast: { _id: forecastModelReturn._id },
         })
 
         expect(getInvestmentMock).toHaveBeenCalledTimes(1)
@@ -244,26 +244,26 @@ describe('trade', () => {
 
         expect(randomPickFromArrayMock).toHaveBeenCalledTimes(1)
         expect(randomPickFromArrayMock).toHaveBeenCalledWith(
-          Object.values(TradeMove)
+          Object.values(ForecastMove)
         )
 
         expect(getRandomValueMock).toHaveBeenCalledTimes(1)
         expect(getRandomValueMock).toHaveBeenCalledWith(
-          TradeService.minStakeRate,
-          TradeService.maxStakeRate
+          ForecastService.minStakeRate,
+          ForecastService.maxStakeRate
         )
 
         const minProfit =
-          investmentA.planObject.minProfit / TradeService.dailyTrades
+          investmentA.planObject.minProfit / ForecastService.dailyForecasts
 
         const maxProfit =
-          investmentA.planObject.maxProfit / TradeService.dailyTrades
+          investmentA.planObject.maxProfit / ForecastService.dailyForecasts
 
-        const stake = investmentA.amount * TradeService.minStakeRate
+        const stake = investmentA.amount * ForecastService.minStakeRate
 
-        const spread = minProfit * TradeService.minStakeRate
+        const spread = minProfit * ForecastService.minStakeRate
 
-        const breakpoint = spread * TradeService.profitBreakpoint
+        const breakpoint = spread * ForecastService.profitBreakpoint
 
         expect(dynamicRangeMock).toHaveBeenCalledTimes(1)
         expect(dynamicRangeMock).toHaveBeenCalledWith(
@@ -271,7 +271,7 @@ describe('trade', () => {
           maxProfit,
           spread,
           breakpoint,
-          TradeService.profitProbability
+          ForecastService.profitProbability
         )
 
         const investmentPercentage = minProfit
@@ -282,37 +282,39 @@ describe('trade', () => {
 
         const percentage = (profit * 100) / stake
 
-        expect(createTransactionTradeMock).toHaveBeenCalledTimes(1)
+        expect(createTransactionForecastMock).toHaveBeenCalledTimes(1)
 
         // @ts-ignore
-        expect(createTransactionTradeMock.mock.calls[0][0]._id.toString()).toBe(
-          userA_id.toString()
-        )
+        expect(
+          createTransactionForecastMock.mock.calls[0][0]._id.toString()
+        ).toBe(userA_id.toString())
         // @ts-ignore
-        expect(createTransactionTradeMock.mock.calls[0][1]._id.toString()).toBe(
-          investmentA_id.toString()
-        )
+        expect(
+          createTransactionForecastMock.mock.calls[0][1]._id.toString()
+        ).toBe(investmentA_id.toString())
         // @ts-ignore
-        expect(createTransactionTradeMock.mock.calls[0][2]._id.toString()).toBe(
-          pairA_id.toString()
+        expect(
+          createTransactionForecastMock.mock.calls[0][2]._id.toString()
+        ).toBe(pairA_id.toString())
+        expect(createTransactionForecastMock.mock.calls[0][3]).toBe(
+          ForecastMove.LONG
         )
-        expect(createTransactionTradeMock.mock.calls[0][3]).toBe(TradeMove.LONG)
-        expect(createTransactionTradeMock.mock.calls[0][4]).toBe(stake)
-        expect(createTransactionTradeMock.mock.calls[0][5]).toBe(outcome)
-        expect(createTransactionTradeMock.mock.calls[0][6]).toBe(profit)
-        expect(createTransactionTradeMock.mock.calls[0][7]).toBe(percentage)
-        expect(createTransactionTradeMock.mock.calls[0][8]).toBe(
+        expect(createTransactionForecastMock.mock.calls[0][4]).toBe(stake)
+        expect(createTransactionForecastMock.mock.calls[0][5]).toBe(outcome)
+        expect(createTransactionForecastMock.mock.calls[0][6]).toBe(profit)
+        expect(createTransactionForecastMock.mock.calls[0][7]).toBe(percentage)
+        expect(createTransactionForecastMock.mock.calls[0][8]).toBe(
           investmentPercentage
         )
-        // expect(createTransactionTradeMock.mock.calls[0][9]).toBe(
+        // expect(createTransactionForecastMock.mock.calls[0][9]).toBe(
         //   investmentA.environment
         // )
-        // expect(createTransactionTradeMock.mock.calls[0][10]).toBe(true)
+        // expect(createTransactionForecastMock.mock.calls[0][10]).toBe(true)
       })
     })
   })
 
-  describe('update trade status', () => {
+  describe('update forecast status', () => {
     const url = baseUrl + 'update-status'
 
     describe('given user is not an admin', () => {
@@ -321,7 +323,7 @@ describe('trade', () => {
         const token = Encryption.createToken(user)
 
         const payload = {
-          tradeId: '',
+          forecastId: '',
           status: '',
         }
 
@@ -342,7 +344,7 @@ describe('trade', () => {
         const token = Encryption.createToken(admin)
 
         const payload = {
-          tradeId: '',
+          forecastId: '',
           status: '',
         }
 
@@ -351,19 +353,19 @@ describe('trade', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('"tradeId" is not allowed to be empty')
+        expect(body.message).toBe('"forecastId" is not allowed to be empty')
         expect(statusCode).toBe(400)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
-    describe('given trade was not found', () => {
+    describe('given forecast was not found', () => {
       it('should throw a 404 error', async () => {
         const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
         const payload = {
-          tradeId: new Types.ObjectId(),
-          status: TradeStatus.ON_HOLD,
+          forecastId: new Types.ObjectId(),
+          status: ForecastStatus.ON_HOLD,
         }
 
         const { statusCode, body } = await request
@@ -371,24 +373,24 @@ describe('trade', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Trade not found')
+        expect(body.message).toBe('Forecast not found')
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
-    describe('given trade status is not allowed', () => {
+    describe('given forecast status is not allowed', () => {
       it('should throw a 400 error', async () => {
         const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const trade = await tradeModel.create({
-          ...tradeA,
-          _id: tradeA_id,
+        const forecast = await forecastModel.create({
+          ...forecastA,
+          _id: forecastA_id,
         })
 
         const payload = {
-          tradeId: trade._id,
-          status: TradeStatus.PREPARING,
+          forecastId: forecast._id,
+          status: ForecastStatus.PREPARING,
         }
 
         const { statusCode, body } = await request
@@ -402,27 +404,27 @@ describe('trade', () => {
       })
     })
 
-    describe('given trade status is not allowed for auto trades', () => {
+    describe('given forecast status is not allowed for auto forecasts', () => {
       it('should throw a 400 error', async () => {
         const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
 
-        const trade = await tradeModel.create({
-          ...tradeA,
-          _id: tradeA_id,
+        const forecast = await forecastModel.create({
+          ...forecastA,
+          _id: forecastA_id,
         })
 
         const statuses = [
-          TradeStatus.PREPARING,
-          TradeStatus.ON_HOLD,
-          TradeStatus.RUNNING,
-          TradeStatus.MARKET_CLOSED,
-          TradeStatus.SETTLED,
+          ForecastStatus.PREPARING,
+          ForecastStatus.ON_HOLD,
+          ForecastStatus.RUNNING,
+          ForecastStatus.MARKET_CLOSED,
+          ForecastStatus.SETTLED,
         ]
 
-        for (const status of Object.values(TradeStatus)) {
+        for (const status of Object.values(ForecastStatus)) {
           const payload = {
-            tradeId: trade._id,
+            forecastId: forecast._id,
             status: status,
           }
 
@@ -441,17 +443,17 @@ describe('trade', () => {
     })
 
     describe('given all validations passed', () => {
-      for (const status of Object.values(TradeStatus)) {
-        it(`should executes trade with ${status} status`, async () => {
+      for (const status of Object.values(ForecastStatus)) {
+        it(`should executes forecast with ${status} status`, async () => {
           const admin = await userModel.create(adminA)
           const user = await userModel.create({ ...userA, _id: userA_id })
 
           const { password: _, ...userA1 } = userA
           const token = Encryption.createToken(admin)
 
-          const trade = await tradeModel.create({
-            ...tradeA,
-            _id: tradeA_id,
+          const forecast = await forecastModel.create({
+            ...forecastA,
+            _id: forecastA_id,
             user: user._id,
           })
 
@@ -459,9 +461,9 @@ describe('trade', () => {
           let statusCode: any
           let body: any
           switch (status) {
-            case TradeStatus.ON_HOLD:
+            case ForecastStatus.ON_HOLD:
               payload = {
-                tradeId: trade._id,
+                forecastId: forecast._id,
                 status,
               }
               ;({ statusCode, body } = await request
@@ -473,9 +475,9 @@ describe('trade', () => {
               expect(statusCode).toBe(200)
               expect(body.status).toBe(HttpResponseStatus.SUCCESS)
               expect(body.data).toEqual({
-                trade: {
-                  _id: tradeModelReturn._id,
-                  collection: tradeModelReturn.collection,
+                forecast: {
+                  _id: forecastModelReturn._id,
+                  collection: forecastModelReturn.collection,
                 },
               })
 
@@ -491,12 +493,12 @@ describe('trade', () => {
               expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
 
               expect(createTransactionNotificationMock).toHaveBeenCalledWith(
-                `Your investment trade is currently on hold`,
-                NotificationCategory.TRADE,
-                tradeAObj,
+                `Your investment forecast is currently on hold`,
+                NotificationCategory.FORECAST,
+                forecastAObj,
                 NotificationForWho.USER,
                 status,
-                tradeA.environment,
+                forecastA.environment,
                 expect.objectContaining(userA1)
               )
 
@@ -508,9 +510,9 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.RUNNING:
+            case ForecastStatus.RUNNING:
               payload = {
-                tradeId: trade._id,
+                forecastId: forecast._id,
                 status,
               }
               ;({ statusCode, body } = await request
@@ -522,9 +524,9 @@ describe('trade', () => {
               expect(statusCode).toBe(200)
               expect(body.status).toBe(HttpResponseStatus.SUCCESS)
               expect(body.data).toEqual({
-                trade: {
-                  _id: tradeModelReturn._id,
-                  collection: tradeModelReturn.collection,
+                forecast: {
+                  _id: forecastModelReturn._id,
+                  collection: forecastModelReturn.collection,
                 },
               })
 
@@ -540,12 +542,12 @@ describe('trade', () => {
               expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
 
               expect(createTransactionNotificationMock).toHaveBeenCalledWith(
-                `Your investment trade is now running`,
-                NotificationCategory.TRADE,
-                tradeAObj,
+                `Your investment forecast is now running`,
+                NotificationCategory.FORECAST,
+                forecastAObj,
                 NotificationForWho.USER,
                 status,
-                tradeA.environment,
+                forecastA.environment,
                 expect.objectContaining(userA1)
               )
 
@@ -557,12 +559,12 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.PREPARING:
-              trade.manualMode = true
-              await trade.save()
+            case ForecastStatus.PREPARING:
+              forecast.manualMode = true
+              await forecast.save()
 
               payload = {
-                tradeId: trade._id,
+                forecastId: forecast._id,
                 status,
               }
               ;({ statusCode, body } = await request
@@ -574,9 +576,9 @@ describe('trade', () => {
               expect(statusCode).toBe(200)
               expect(body.status).toBe(HttpResponseStatus.SUCCESS)
               expect(body.data).toEqual({
-                trade: {
-                  _id: tradeModelReturn._id,
-                  collection: tradeModelReturn.collection,
+                forecast: {
+                  _id: forecastModelReturn._id,
+                  collection: forecastModelReturn.collection,
                 },
               })
 
@@ -596,12 +598,12 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.PREPARING:
-              trade.manualMode = true
-              await trade.save()
+            case ForecastStatus.PREPARING:
+              forecast.manualMode = true
+              await forecast.save()
 
               payload = {
-                tradeId: trade._id,
+                forecastId: forecast._id,
                 status,
               }
               ;({ statusCode, body } = await request
@@ -613,9 +615,9 @@ describe('trade', () => {
               expect(statusCode).toBe(200)
               expect(body.status).toBe(HttpResponseStatus.SUCCESS)
               expect(body.data).toEqual({
-                trade: {
-                  _id: tradeModelReturn._id,
-                  collection: tradeModelReturn.collection,
+                forecast: {
+                  _id: forecastModelReturn._id,
+                  collection: forecastModelReturn.collection,
                 },
               })
 
@@ -626,23 +628,23 @@ describe('trade', () => {
               expect(createTransactionTransactionMock).toHaveBeenCalledTimes(1)
               expect(createTransactionTransactionMock).toHaveBeenCalledWith(
                 expect.objectContaining(userA1),
-                TradeStatus.PREPARING,
-                TransactionCategory.TRADE,
-                tradeAObj,
-                trade.stake,
-                trade.environment,
-                trade.stake
+                ForecastStatus.PREPARING,
+                TransactionCategory.FORECAST,
+                forecastAObj,
+                forecast.stake,
+                forecast.environment,
+                forecast.stake
               )
 
               expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
 
               expect(createTransactionNotificationMock).toHaveBeenCalledWith(
-                `Your investment trade just kick started`,
-                NotificationCategory.TRADE,
-                tradeAObj,
+                `Your investment forecast just kick started`,
+                NotificationCategory.FORECAST,
+                forecastAObj,
                 NotificationForWho.USER,
                 status,
-                tradeA.environment,
+                forecastA.environment,
                 expect.objectContaining(userA1)
               )
 
@@ -654,12 +656,12 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.MARKET_CLOSED:
-              trade.manualMode = true
-              await trade.save()
+            case ForecastStatus.MARKET_CLOSED:
+              forecast.manualMode = true
+              await forecast.save()
 
               payload = {
-                tradeId: trade._id,
+                forecastId: forecast._id,
                 status,
               }
               ;({ statusCode, body } = await request
@@ -671,9 +673,9 @@ describe('trade', () => {
               expect(statusCode).toBe(200)
               expect(body.status).toBe(HttpResponseStatus.SUCCESS)
               expect(body.data).toEqual({
-                trade: {
-                  _id: tradeModelReturn._id,
-                  collection: tradeModelReturn.collection,
+                forecast: {
+                  _id: forecastModelReturn._id,
+                  collection: forecastModelReturn.collection,
                 },
               })
 
@@ -684,7 +686,7 @@ describe('trade', () => {
                 updateStatusTransactionInvestmentMock
               ).toHaveBeenCalledWith(
                 investmentA_id,
-                InvestmentStatus.AWAITING_TRADE
+                InvestmentStatus.AWAITING_FORECAST
               )
 
               expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
@@ -697,7 +699,7 @@ describe('trade', () => {
                 { ...investmentAObj, status },
                 NotificationForWho.USER,
                 status,
-                tradeA.environment,
+                forecastA.environment,
                 expect.objectContaining(userA1)
               )
 
@@ -709,12 +711,12 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.RUNNING:
-              trade.manualMode = true
-              await trade.save()
+            case ForecastStatus.RUNNING:
+              forecast.manualMode = true
+              await forecast.save()
 
               payload = {
-                tradeId: trade._id,
+                forecastId: forecast._id,
                 status,
               }
               ;({ statusCode, body } = await request
@@ -726,9 +728,9 @@ describe('trade', () => {
               expect(statusCode).toBe(200)
               expect(body.status).toBe(HttpResponseStatus.SUCCESS)
               expect(body.data).toEqual({
-                trade: {
-                  _id: tradeModelReturn._id,
-                  collection: tradeModelReturn.collection,
+                forecast: {
+                  _id: forecastModelReturn._id,
+                  collection: forecastModelReturn.collection,
                 },
               })
 
@@ -749,7 +751,7 @@ describe('trade', () => {
                 { ...investmentAObj, status },
                 NotificationForWho.USER,
                 status,
-                tradeA.environment,
+                forecastA.environment,
                 expect.objectContaining(userA1)
               )
 
@@ -761,12 +763,12 @@ describe('trade', () => {
 
               break
 
-            case TradeStatus.SETTLED:
-              trade.manualMode = true
-              await trade.save()
+            case ForecastStatus.SETTLED:
+              forecast.manualMode = true
+              await forecast.save()
 
               payload = {
-                tradeId: trade._id,
+                forecastId: forecast._id,
                 status,
               }
               ;({ statusCode, body } = await request
@@ -778,9 +780,9 @@ describe('trade', () => {
               expect(statusCode).toBe(200)
               expect(body.status).toBe(HttpResponseStatus.SUCCESS)
               expect(body.data).toEqual({
-                trade: {
-                  _id: tradeModelReturn._id,
-                  collection: tradeModelReturn.collection,
+                forecast: {
+                  _id: forecastModelReturn._id,
+                  collection: forecastModelReturn.collection,
                 },
               })
 
@@ -792,7 +794,7 @@ describe('trade', () => {
 
               // expect(fundTransactionInvestmentMock).toHaveBeenCalledWith(
               //   investmentA_id,
-              //   trade.outcome
+              //   forecast.outcome
               // )
 
               expect(
@@ -802,20 +804,20 @@ describe('trade', () => {
               expect(
                 updateAmountTransactionTransactionMock
               ).toHaveBeenCalledWith(
-                trade._id.toString(),
+                forecast._id.toString(),
                 status,
-                trade.outcome
+                forecast.outcome
               )
 
               expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
 
               expect(createTransactionNotificationMock).toHaveBeenCalledWith(
-                `Your investment trade has been settled`,
-                NotificationCategory.TRADE,
-                tradeAObj,
+                `Your investment forecast has been settled`,
+                NotificationCategory.FORECAST,
+                forecastAObj,
                 NotificationForWho.USER,
                 status,
-                tradeA.environment,
+                forecastA.environment,
                 expect.objectContaining(userA1)
               )
 
@@ -832,7 +834,7 @@ describe('trade', () => {
     })
   })
 
-  describe('update trade', () => {
+  describe('update forecast', () => {
     const url = `${baseUrl}update`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
@@ -854,9 +856,9 @@ describe('trade', () => {
     describe('given inputs are incorrect', () => {
       it('should return a 400 error', async () => {
         const payload = {
-          tradeId: '123',
+          forecastId: '123',
           pairId: '123',
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
         }
 
@@ -873,12 +875,12 @@ describe('trade', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
-    describe('given trade those not exist', () => {
+    describe('given forecast those not exist', () => {
       it('should return a 404 error', async () => {
         const payload = {
-          tradeId: new Types.ObjectId().toString(),
+          forecastId: new Types.ObjectId().toString(),
           pairId: '123',
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
           profit: 50,
         }
@@ -891,7 +893,7 @@ describe('trade', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Trade not found')
+        expect(body.message).toBe('Forecast not found')
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
@@ -900,11 +902,11 @@ describe('trade', () => {
     })
     describe('given pair those not exist', () => {
       it('should return a 404 error', async () => {
-        const trade = await tradeModel.create(tradeA)
+        const forecast = await forecastModel.create(forecastA)
         const payload = {
-          tradeId: trade._id,
+          forecastId: forecast._id,
           pairId: new Types.ObjectId().toString(),
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
           profit: 50,
         }
@@ -927,11 +929,11 @@ describe('trade', () => {
     })
     describe('given pair is not compatible', () => {
       it('should return a 400 error', async () => {
-        const trade = await tradeModel.create(tradeA)
+        const forecast = await forecastModel.create(forecastA)
         const payload = {
-          tradeId: trade._id,
+          forecastId: forecast._id,
           pairId: pairC_id,
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
           profit: 50,
         }
@@ -944,7 +946,9 @@ describe('trade', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('The pair is not compatible with this trade')
+        expect(body.message).toBe(
+          'The pair is not compatible with this forecast'
+        )
         expect(statusCode).toBe(400)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
 
@@ -953,11 +957,11 @@ describe('trade', () => {
     })
     describe('on success entry', () => {
       it('should return a 200 and payload', async () => {
-        const trade = await tradeModel.create(tradeA)
+        const forecast = await forecastModel.create(forecastA)
         const payload = {
-          tradeId: trade._id,
+          forecastId: forecast._id,
           pairId: pairA_id,
-          move: TradeMove.LONG,
+          move: ForecastMove.LONG,
           stake: 100,
           profit: 50,
         }
@@ -970,22 +974,22 @@ describe('trade', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Trade updated successfully')
+        expect(body.message).toBe('Forecast updated successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.data.trade._id).toBe(payload.tradeId.toString())
-        expect(body.data.trade.stake).toBe(payload.stake)
+        expect(body.data.forecast._id).toBe(payload.forecastId.toString())
+        expect(body.data.forecast.stake).toBe(payload.stake)
 
         expect(getPairMock).toHaveBeenCalledTimes(1)
 
-        const updatedTrade = await tradeModel.findById(payload.tradeId)
+        const updatedForecast = await forecastModel.findById(payload.forecastId)
 
-        expect(updatedTrade?.stake).toBe(payload.stake)
+        expect(updatedForecast?.stake).toBe(payload.stake)
       })
     })
   })
 
-  describe('get All live trades', () => {
+  describe('get All live forecasts', () => {
     const url = `${baseUrl}master`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
@@ -1003,9 +1007,9 @@ describe('trade', () => {
     })
 
     describe('on successfull entry', () => {
-      it('should return an array of all users trades', async () => {
-        const trade1 = await tradeModel.create(tradeA)
-        const trade2 = await tradeModel.create(tradeB)
+      it('should return an array of all users forecasts', async () => {
+        const forecast1 = await forecastModel.create(forecastA)
+        const forecast2 = await forecastModel.create(forecastB)
         await userModel.create({ ...userA, _id: userA_id })
         await userModel.create({ ...userB, _id: userB_id })
         await investmentModel.create({ ...investmentA, _id: investmentA_id })
@@ -1018,26 +1022,26 @@ describe('trade', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Trade history fetched successfully')
+        expect(body.message).toBe('Forecast history fetched successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.data.trades.length).toBe(2)
-        expect(body.data.trades[0].environment).toBe(trade1.environment)
-        expect(body.data.trades[0].stake).toBe(trade1.stake)
-        expect(body.data.trades[0].profit).toBe(trade1.profit)
-        expect(body.data.trades[0].status).toBe(trade1.status)
-        expect(body.data.trades[0].user._id).toBe(trade1.user.toString())
-        expect(body.data.trades[0].user.username).toBe(
-          trade1.userObject.username
+        expect(body.data.forecasts.length).toBe(2)
+        expect(body.data.forecasts[0].environment).toBe(forecast1.environment)
+        expect(body.data.forecasts[0].stake).toBe(forecast1.stake)
+        expect(body.data.forecasts[0].profit).toBe(forecast1.profit)
+        expect(body.data.forecasts[0].status).toBe(forecast1.status)
+        expect(body.data.forecasts[0].user._id).toBe(forecast1.user.toString())
+        expect(body.data.forecasts[0].user.username).toBe(
+          forecast1.userObject.username
         )
-        expect(body.data.trades[0].investment._id).toBe(
-          trade1.investment.toString()
+        expect(body.data.forecasts[0].investment._id).toBe(
+          forecast1.investment.toString()
         )
       })
     })
   })
 
-  describe('get All demo trades', () => {
+  describe('get All demo forecasts', () => {
     const url = `${baseUrl}master/demo`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
@@ -1055,21 +1059,21 @@ describe('trade', () => {
     })
 
     describe('on successfull entry', () => {
-      it('should return an array of all users trades', async () => {
-        await tradeModel.create(tradeA)
-        await tradeModel.create(tradeB)
+      it('should return an array of all users forecasts', async () => {
+        await forecastModel.create(forecastA)
+        await forecastModel.create(forecastB)
         await userModel.create({ ...userA, _id: userA_id })
         await userModel.create({ ...userB, _id: userB_id })
         await investmentModel.create({ ...investmentA, _id: investmentA_id })
         await investmentModel.create({ ...investmentB, _id: investmentB_id })
 
-        const trade1 = await tradeModel.create({
-          ...tradeA,
+        const forecast1 = await forecastModel.create({
+          ...forecastA,
           environment: UserEnvironment.DEMO,
         })
 
-        await tradeModel.create({
-          ...tradeB,
+        await forecastModel.create({
+          ...forecastB,
           environment: UserEnvironment.DEMO,
         })
 
@@ -1080,26 +1084,26 @@ describe('trade', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Trade history fetched successfully')
+        expect(body.message).toBe('Forecast history fetched successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.data.trades.length).toBe(2)
-        expect(body.data.trades[0].environment).toBe(trade1.environment)
-        expect(body.data.trades[0].stake).toBe(trade1.stake)
-        expect(body.data.trades[0].profit).toBe(trade1.profit)
-        expect(body.data.trades[0].status).toBe(trade1.status)
-        expect(body.data.trades[0].user._id).toBe(trade1.user.toString())
-        expect(body.data.trades[0].user.username).toBe(
-          trade1.userObject.username
+        expect(body.data.forecasts.length).toBe(2)
+        expect(body.data.forecasts[0].environment).toBe(forecast1.environment)
+        expect(body.data.forecasts[0].stake).toBe(forecast1.stake)
+        expect(body.data.forecasts[0].profit).toBe(forecast1.profit)
+        expect(body.data.forecasts[0].status).toBe(forecast1.status)
+        expect(body.data.forecasts[0].user._id).toBe(forecast1.user.toString())
+        expect(body.data.forecasts[0].user.username).toBe(
+          forecast1.userObject.username
         )
-        expect(body.data.trades[0].investment._id).toBe(
-          trade1.investment.toString()
+        expect(body.data.forecasts[0].investment._id).toBe(
+          forecast1.investment.toString()
         )
       })
     })
   })
 
-  describe('get current user live trades', () => {
+  describe('get current user live forecasts', () => {
     const url = `${baseUrl}`
     describe('given user is not logged in', () => {
       it('should return a 401 Unauthorized error', async () => {
@@ -1112,9 +1116,9 @@ describe('trade', () => {
     })
 
     describe('on successfull entry', () => {
-      it('should return an array of current users trades', async () => {
-        const trade1 = await tradeModel.create(tradeA)
-        await tradeModel.create(tradeB)
+      it('should return an array of current users forecasts', async () => {
+        const forecast1 = await forecastModel.create(forecastA)
+        await forecastModel.create(forecastB)
         await investmentModel.create({ ...investmentA, _id: investmentA_id })
         await investmentModel.create({ ...investmentB, _id: investmentB_id })
 
@@ -1125,23 +1129,23 @@ describe('trade', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Trade history fetched successfully')
+        expect(body.message).toBe('Forecast history fetched successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.data.trades.length).toBe(1)
-        expect(body.data.trades[0].environment).toBe(trade1.environment)
-        expect(body.data.trades[0].stake).toBe(trade1.stake)
-        expect(body.data.trades[0].profit).toBe(trade1.profit)
-        expect(body.data.trades[0].status).toBe(trade1.status)
-        expect(body.data.trades[0].user).toBe(trade1.user.toString())
-        expect(body.data.trades[0].investment._id).toBe(
-          trade1.investment.toString()
+        expect(body.data.forecasts.length).toBe(1)
+        expect(body.data.forecasts[0].environment).toBe(forecast1.environment)
+        expect(body.data.forecasts[0].stake).toBe(forecast1.stake)
+        expect(body.data.forecasts[0].profit).toBe(forecast1.profit)
+        expect(body.data.forecasts[0].status).toBe(forecast1.status)
+        expect(body.data.forecasts[0].user).toBe(forecast1.user.toString())
+        expect(body.data.forecasts[0].investment._id).toBe(
+          forecast1.investment.toString()
         )
       })
     })
   })
 
-  describe('get current user demo trades', () => {
+  describe('get current user demo forecasts', () => {
     const url = `${baseUrl}demo`
     describe('given user is not logged in', () => {
       it('should return a 401 Unauthorized error', async () => {
@@ -1156,19 +1160,19 @@ describe('trade', () => {
     })
 
     describe('on successfull entry', () => {
-      it('should return an array of current user trades', async () => {
-        await tradeModel.create(tradeA)
-        await tradeModel.create(tradeB)
+      it('should return an array of current user forecasts', async () => {
+        await forecastModel.create(forecastA)
+        await forecastModel.create(forecastB)
         await investmentModel.create({ ...investmentA, _id: investmentA_id })
         await investmentModel.create({ ...investmentB, _id: investmentB_id })
 
-        const trade1 = await tradeModel.create({
-          ...tradeA,
+        const forecast1 = await forecastModel.create({
+          ...forecastA,
           environment: UserEnvironment.DEMO,
         })
 
-        const trade2 = await tradeModel.create({
-          ...tradeB,
+        const forecast2 = await forecastModel.create({
+          ...forecastB,
           environment: UserEnvironment.DEMO,
         })
 
@@ -1179,23 +1183,23 @@ describe('trade', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Trade history fetched successfully')
+        expect(body.message).toBe('Forecast history fetched successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.data.trades.length).toBe(1)
-        expect(body.data.trades[0].environment).toBe(trade1.environment)
-        expect(body.data.trades[0].stake).toBe(trade1.stake)
-        expect(body.data.trades[0].profit).toBe(trade1.profit)
-        expect(body.data.trades[0].status).toBe(trade1.status)
-        expect(body.data.trades[0].user).toBe(trade1.user.toString())
-        expect(body.data.trades[0].investment._id).toBe(
-          trade1.investment.toString()
+        expect(body.data.forecasts.length).toBe(1)
+        expect(body.data.forecasts[0].environment).toBe(forecast1.environment)
+        expect(body.data.forecasts[0].stake).toBe(forecast1.stake)
+        expect(body.data.forecasts[0].profit).toBe(forecast1.profit)
+        expect(body.data.forecasts[0].status).toBe(forecast1.status)
+        expect(body.data.forecasts[0].user).toBe(forecast1.user.toString())
+        expect(body.data.forecasts[0].investment._id).toBe(
+          forecast1.investment.toString()
         )
       })
     })
   })
 
-  describe('delete trade', () => {
+  describe('delete forecast', () => {
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
         const url = `${baseUrl}delete/${new Types.ObjectId().toString()}`
@@ -1212,7 +1216,7 @@ describe('trade', () => {
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
-    describe('given trade those not exist', () => {
+    describe('given forecast those not exist', () => {
       it('should return a 404 error', async () => {
         const url = `${baseUrl}delete/${new Types.ObjectId().toString()}`
 
@@ -1223,15 +1227,15 @@ describe('trade', () => {
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Trade not found')
+        expect(body.message).toBe('Forecast not found')
         expect(statusCode).toBe(404)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
-    describe('given trade has not been settled', () => {
+    describe('given forecast has not been settled', () => {
       it('should return a 400 error', async () => {
-        const trade = await tradeModel.create(tradeA)
-        const url = `${baseUrl}delete/${trade._id}`
+        const forecast = await forecastModel.create(forecastA)
+        const url = `${baseUrl}delete/${forecast._id}`
 
         const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
@@ -1240,19 +1244,19 @@ describe('trade', () => {
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Trade has not been settled yet')
+        expect(body.message).toBe('Forecast has not been settled yet')
         expect(statusCode).toBe(400)
         expect(body.status).toBe(HttpResponseStatus.ERROR)
       })
     })
     describe('on success entry', () => {
       it('should return a 200 with a payload', async () => {
-        const trade = await tradeModel.create({
-          ...tradeA,
-          status: TradeStatus.SETTLED,
+        const forecast = await forecastModel.create({
+          ...forecastA,
+          status: ForecastStatus.SETTLED,
         })
 
-        const url = `${baseUrl}delete/${trade._id}`
+        const url = `${baseUrl}delete/${forecast._id}`
 
         const admin = await userModel.create(adminA)
         const token = Encryption.createToken(admin)
@@ -1261,12 +1265,12 @@ describe('trade', () => {
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Trade deleted successfully')
+        expect(body.message).toBe('Forecast deleted successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.data.trade._id).toBe(trade._id.toString())
+        expect(body.data.forecast._id).toBe(forecast._id.toString())
 
-        expect(await tradeModel.count()).toBe(0)
+        expect(await forecastModel.count()).toBe(0)
       })
     })
   })

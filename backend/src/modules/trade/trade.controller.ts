@@ -22,26 +22,26 @@ class TradeController implements IAppController {
   }
 
   private intialiseRoutes(): void {
-    this.router.post(
-      `${this.path}/create`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.create),
-      this.create
-    )
+    // this.router.post(
+    //   `${this.path}/create`,
+    //   HttpMiddleware.authenticate(UserRole.ADMIN),
+    //   HttpMiddleware.validate(validate.create),
+    //   this.create
+    // )
 
-    this.router.put(
-      `${this.path}/update`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.update),
-      this.update
-    )
+    // this.router.put(
+    //   `${this.path}/update`,
+    //   HttpMiddleware.authenticate(UserRole.ADMIN),
+    //   HttpMiddleware.validate(validate.update),
+    //   this.update
+    // )
 
-    this.router.patch(
-      `${this.path}/update-amount`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateAmount),
-      this.updateAmount
-    )
+    // this.router.patch(
+    //   `${this.path}/update-amount`,
+    //   HttpMiddleware.authenticate(UserRole.ADMIN),
+    //   HttpMiddleware.validate(validate.updateAmount),
+    //   this.updateAmount
+    // )
 
     this.router.delete(
       `${this.path}/delete/:tradeId`,
@@ -94,76 +94,76 @@ class TradeController implements IAppController {
       }
     }
 
-  private create = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { investmentId, pairId, stake, profit } = req.body
-      const response = await this.tradeService.createManual(
-        investmentId,
-        pairId,
-        stake,
-        profit
-      )
-      res.status(201).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  // private create = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<Response | void> => {
+  //   try {
+  //     const { investmentId, pairId, stake, profit } = req.body
+  //     const response = await this.tradeService.createManual(
+  //       investmentId,
+  //       pairId,
+  //       stake,
+  //       profit
+  //     )
+  //     res.status(201).json(response)
+  //   } catch (err: any) {
+  //     next(new HttpException(err.status, err.message, err.statusStrength))
+  //   }
+  // }
 
-  private update = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const {
-        tradeId,
-        pairId,
-        move,
-        stake,
-        profit,
-        openingPrice,
-        closingPrice,
-        startTime,
-        stopTime,
-      } = req.body
-      const response = await this.tradeService.updateManual(
-        tradeId,
-        pairId,
-        move,
-        stake,
-        profit,
-        openingPrice,
-        closingPrice,
-        startTime,
-        stopTime
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  // private update = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<Response | void> => {
+  //   try {
+  //     const {
+  //       tradeId,
+  //       pairId,
+  //       move,
+  //       stake,
+  //       profit,
+  //       openingPrice,
+  //       closingPrice,
+  //       startTime,
+  //       stopTime,
+  //     } = req.body
+  //     const response = await this.tradeService.updateManual(
+  //       tradeId,
+  //       pairId,
+  //       move,
+  //       stake,
+  //       profit,
+  //       openingPrice,
+  //       closingPrice,
+  //       startTime,
+  //       stopTime
+  //     )
+  //     res.status(200).json(response)
+  //   } catch (err: any) {
+  //     next(new HttpException(err.status, err.message, err.statusStrength))
+  //   }
+  // }
 
-  private updateAmount = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { tradeId, stake, profit } = req.body
-      const response = await this.tradeService.updateAmount(
-        tradeId,
-        stake,
-        profit
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  // private updateAmount = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<Response | void> => {
+  //   try {
+  //     const { tradeId, stake, profit } = req.body
+  //     const response = await this.tradeService.updateAmount(
+  //       tradeId,
+  //       stake,
+  //       profit
+  //     )
+  //     res.status(200).json(response)
+  //   } catch (err: any) {
+  //     next(new HttpException(err.status, err.message, err.statusStrength))
+  //   }
+  // }
 
   private delete = async (
     req: Request,

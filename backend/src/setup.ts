@@ -76,29 +76,27 @@ import PairService from '@/modules/pair/pair.service'
 import PairController from '@/modules/pair/pair.controller'
 import { IMathService } from '@/modules/math/math.interface'
 import MathService from '@/modules/math/math.service'
-import { ITradeService } from '@/modules/forecast/trade.interface'
-import TradeService from '@/modules/forecast/trade.service'
-import TradeController from '@/modules/forecast/trade.controller'
+import { ITradeService } from '@/modules/trade/trade.interface'
+import TradeService from '@/modules/trade/trade.service'
+import TradeController from '@/modules/trade/trade.controller'
+import { IForecastService } from '@/modules/forecast/forecast.interface'
+import ForecastService from '@/modules/forecast/forecast.service'
 
 export const mathService = Container.get<IMathService>(MathService)
-
 Container.set<IMathService>(ServiceToken.MATH_SERVICE, mathService)
 
 export const notificationService =
   Container.get<INotificationService>(NotificationService)
-
 Container.set<INotificationService>(
   ServiceToken.NOTIFICATION_SERVICE,
   notificationService
 )
 
 export const activityService = Container.get<IActivityService>(ActivityService)
-
 Container.set<IActivityService>(ServiceToken.ACTIVITY_SERVICE, activityService)
 
 export const resetPasswordService =
   Container.get<IResetPasswordService>(ResetPasswordService)
-
 Container.set<IResetPasswordService>(
   ServiceToken.RESET_PASSWORD_SERVICE,
   resetPasswordService
@@ -106,48 +104,39 @@ Container.set<IResetPasswordService>(
 
 export const emailVerificationService =
   Container.get<IEmailVerificationService>(EmailVerificationService)
-
 Container.set<IEmailVerificationService>(
   ServiceToken.EMAIL_VERIFICATION_SERVICE,
   emailVerificationService
 )
 
 export const currencyService = Container.get<ICurrencyService>(CurrencyService)
-
 Container.set<ICurrencyService>(ServiceToken.CURRENCY_SERVICE, currencyService)
 
 export const assetService = Container.get<IAssetService>(AssetService)
-
 Container.set<IAssetService>(ServiceToken.ASSET_SERVICE, assetService)
 
 export const mailOptionService =
   Container.get<IMailOptionService>(MailOptionService)
-
 Container.set<IMailOptionService>(
   ServiceToken.MAIL_OPTION_SERVICE,
   mailOptionService
 )
 
 export const mailService = Container.get<IMailService>(MailService)
-
 Container.set<IMailService>(ServiceToken.MAIL_SERVICE, mailService)
 
 export const sendMailService = Container.get<ISendMailService>(SendMailService)
-
 Container.set<ISendMailService>(ServiceToken.SEND_MAIL_SERVICE, sendMailService)
 
 export const pairService = Container.get<IPairService>(PairService)
-
 Container.set<IPairService>(ServiceToken.PAIR_SERVICE, pairService)
 
 export const planService = Container.get<IPlanService>(PlanService)
-
 Container.set<IPlanService>(ServiceToken.PLAN_SERVICE, planService)
 
 export const referralSettingsService = Container.get<IReferralSettingsService>(
   ReferralSettingsService
 )
-
 Container.set<IReferralSettingsService>(
   ServiceToken.REFERRAL_SETTINGS_SERVICE,
   referralSettingsService
@@ -156,7 +145,6 @@ Container.set<IReferralSettingsService>(
 export const transferSettingsService = Container.get<ITransferSettingsService>(
   TransferSettingsService
 )
-
 Container.set<ITransferSettingsService>(
   ServiceToken.TRANSFER_SETTINGS_SERVICE,
   transferSettingsService
@@ -164,7 +152,6 @@ Container.set<ITransferSettingsService>(
 
 export const failedTransactionService =
   Container.get<IFailedTransactionService>(FailedTransactionService)
-
 Container.set<IFailedTransactionService>(
   ServiceToken.FAILED_TRANSACTION_SERVICE,
   failedTransactionService
@@ -172,7 +159,6 @@ Container.set<IFailedTransactionService>(
 
 export const transactionService =
   Container.get<ITransactionService>(TransactionService)
-
 Container.set<ITransactionService>(
   ServiceToken.TRANSACTION_SERVICE,
   transactionService
@@ -180,7 +166,6 @@ Container.set<ITransactionService>(
 
 export const depositMethodService =
   Container.get<IDepositMethodService>(DepositMethodService)
-
 Container.set<IDepositMethodService>(
   ServiceToken.DEPOSIT_METHOD_SERVICE,
   depositMethodService
@@ -189,7 +174,6 @@ Container.set<IDepositMethodService>(
 export const withdrawalMethodService = Container.get<IWithdrawalMethodService>(
   WithdrawalMethodService
 )
-
 Container.set<IWithdrawalMethodService>(
   ServiceToken.WITHDRAWAL_METHOD_SERVICE,
   withdrawalMethodService
@@ -197,31 +181,25 @@ Container.set<IWithdrawalMethodService>(
 
 export const transactionManagerService =
   Container.get<ITransactionManagerService>(TransactionManagerService)
-
 Container.set<ITransactionManagerService>(
   ServiceToken.TRANSACTION_MANAGER_SERVICE,
   transactionManagerService
 )
 
 export const userService = Container.get<IUserService>(UserService)
-
 Container.set<IUserService>(ServiceToken.USER_SERVICE, userService)
 
 export const referralService = Container.get<IReferralService>(ReferralService)
-
 Container.set<IReferralService>(ServiceToken.REFERRAL_SERVICE, referralService)
 
 export const transferService = Container.get<ITransferService>(TransferService)
-
 Container.set<ITransferService>(ServiceToken.TRANSFER_SERVICE, transferService)
 
 export const depositService = Container.get<IDepositService>(DepositService)
-
 Container.set<IDepositService>(ServiceToken.DEPOSIT_SERVICE, depositService)
 
 export const withdrawalService =
   Container.get<IWithdrawalService>(WithdrawalService)
-
 Container.set<IWithdrawalService>(
   ServiceToken.WITHDRAWAL_SERVICE,
   withdrawalService
@@ -229,18 +207,18 @@ Container.set<IWithdrawalService>(
 
 export const investmentService =
   Container.get<IInvestmentService>(InvestmentService)
-
 Container.set<IInvestmentService>(
   ServiceToken.INVESTMENT_SERVICE,
   investmentService
 )
 
 export const tradeService = Container.get<ITradeService>(TradeService)
-
 Container.set<ITradeService>(ServiceToken.TRADE_SERVICE, tradeService)
 
-export const authService = Container.get<IAuthService>(AuthService)
+export const forecastService = Container.get<IForecastService>(ForecastService)
+Container.set<IForecastService>(ServiceToken.FORECAST_SERVICE, forecastService)
 
+export const authService = Container.get<IAuthService>(AuthService)
 Container.set<IAuthService>(ServiceToken.AUTH_SERVICE, authService)
 
 const sendMailController = Container.get(SendMailController)
