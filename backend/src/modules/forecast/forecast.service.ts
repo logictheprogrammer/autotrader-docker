@@ -33,6 +33,7 @@ import { ISendMailService } from '../sendMail/sendMail.interface'
 import { ITrade, ITradeService } from '../trade/trade.interface'
 import { IReferral } from '../referral/referral.interface'
 import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import InvestmentService from '../investment/investment.service'
 
 @Service()
 class ForecastService implements IForecastService {
@@ -40,8 +41,11 @@ class ForecastService implements IForecastService {
 
   public static minStakeRate = 0.1
   public static maxStakeRate = 0.25
-  public static minDailyForecastWaitTime = 2 * 60 * 60 * 1000
-  public static maxDailyForecastWaitTime = 6 * 60 * 60 * 1000
+  public static minDailyWaitTime =
+    InvestmentService.minWaitHour * 60 * 60 * 1000
+  public static maxDailyWaitTime =
+    InvestmentService.minWaitHour * 60 * 60 * 1000
+  public static profitProbability = 0.5
 
   public constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
@@ -68,14 +72,21 @@ class ForecastService implements IForecastService {
     return forecast
   }
 
+  private getForecastWaitTime(dailyForcast: number, duration: number): number {
+    const min = ForecastService.minDailyWaitTime / dailyForcast
+    const max = ForecastService.maxDailyWaitTime / dailyForcast
+    return this.mathService.quickDynamicRange(
+      min,
+      max,
+      dailyForcast * duration,
+      1
+    )
+  }
+
   private getDurationTime(plan: IPlanObject): number {
     return (
       plan.duration * 24 * 60 * 60 * 1000 -
-      this.mathService.quickDynamicRange(
-        ForecastService.minDailyForecastWaitTime,
-        ForecastService.maxDailyForecastWaitTime,
-        plan.dailyForecasts * plan.duration
-      ) *
+      this.getForecastWaitTime(plan.dailyForecasts, plan.duration) *
         plan.duration
     )
   }
@@ -327,12 +338,8 @@ class ForecastService implements IForecastService {
       const startOfDayTime = new Date().setHours(0, 0, 0, 0)
       const endOfDayTime = new Date().setHours(23, 59, 59, 999)
       const currentTime =
-        new Date().getTime() +
-        this.mathService.quickDynamicRange(
-          ForecastService.minDailyForecastWaitTime,
-          ForecastService.maxDailyForecastWaitTime,
-          totalForecast
-        )
+        new Date().getTime() -
+        this.getForecastWaitTime(plan.dailyForecasts, plan.duration)
 
       const timeRate =
         (startOfDayTime - currentTime) / (startOfDayTime - endOfDayTime)
@@ -384,7 +391,8 @@ class ForecastService implements IForecastService {
       const percentageProfit = this.mathService.quickDynamicRange(
         minPercentageProfit,
         maxPercentageProfit,
-        totalForecast
+        totalForecast,
+        ForecastService.profitProbability
       )
 
       await this.create(plan, pair, percentageProfit, stakeRate)
@@ -468,6 +476,8 @@ class ForecastService implements IForecastService {
       )
 
       transactionInstances.push(updateForecastTransactionInstance)
+
+      await this.transactionManagerService.execute(transactionInstances)
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -553,7 +563,7 @@ class ForecastService implements IForecastService {
       const forecastStartTime = plan.forecastStartTime
 
       const runTime =
-        new Date().getTime() +
+        new Date().getTime() -
         (forecastStartTime?.getTime() || new Date().getTime())
 
       forecastTimeStamps.push(runTime)
@@ -620,6 +630,19 @@ class ForecastService implements IForecastService {
     }
   }
 
+  public async manualUpdateStatus(
+    forecastId: ObjectId,
+    status: ForecastStatus
+  ): THttpResponse<{ forecast: IForecast }> {
+    const forecast = await this.updateStatus(forecastId, status)
+
+    return {
+      status: HttpResponseStatus.SUCCESS,
+      message: 'Forecast created successfully',
+      data: { forecast },
+    }
+  }
+
   public async delete(
     forecastId: ObjectId
   ): THttpResponse<{ forecast: IForecast }> {
@@ -629,7 +652,8 @@ class ForecastService implements IForecastService {
       if (forecast.status !== ForecastStatus.SETTLED)
         throw new HttpException(400, 'Forecast has not been settled yet')
 
-      await forecast.deleteOne()
+      await this.forecastModel.deleteOne({ _id: forecast._id })
+
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Forecast deleted successfully',

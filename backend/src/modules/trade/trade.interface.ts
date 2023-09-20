@@ -11,12 +11,8 @@ import { TTransaction } from '@/modules/transactionManager/transactionManager.ty
 import { UserEnvironment } from '@/modules/user/user.enum'
 import { AssetType } from '../asset/asset.enum'
 import { IPair, IPairObject } from '../pair/pair.interface'
-import { TUpdateTradeStatus } from './trade.type'
-import { InvestmentStatus } from '../investment/investment.enum'
-import { TUpdateInvestmentStatus } from '../investment/investment.type'
-import { Document, ObjectId, Types } from 'mongoose'
+import { Document, ObjectId } from 'mongoose'
 import { IForecast, IForecastObject } from '../forecast/forecast.interface'
-import { IReferral } from '../referral/referral.interface'
 import { ITransaction } from '../transaction/transaction.interface'
 import { INotification } from '../notification/notification.interface'
 

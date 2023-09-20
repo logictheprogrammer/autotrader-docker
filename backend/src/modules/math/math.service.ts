@@ -29,8 +29,10 @@ class MathService implements IMathService {
     probability: number
   ): number {
     // validating input
-    if (probability > 1 || probability < 0)
-      throw new Error('probability aguement should be between 0 to 1')
+    if (probability > 1 || probability <= 0)
+      throw new Error(
+        'probability aguement should be greater than 0 and lesser than or equal to 1'
+      )
     if (minValue > maxValue)
       throw new Error(
         'minValue aguement should be lesser than the maxValue aguement'
@@ -126,39 +128,73 @@ class MathService implements IMathService {
     return randomValues[choosenIndex]
   }
 
-  public quickDynamicRange(
+  public breakpointCalculator(
     minValue: number,
     maxValue: number,
     total: number
-  ): number {
-    const breakpoint = 2.5 * (maxValue - minValue) * (total / 10)
-    const spread = (minValue / 1.5) * (total / 10)
+  ) {
+    return 0.75 * (maxValue - minValue) * ((total - 1) / 10)
+  }
 
-    return this.dynamicRange(minValue, maxValue, spread, breakpoint, 0.5)
+  public spreadCalculator(minValue: number, maxValue: number, total: number) {
+    return (((maxValue - minValue) * 1.5) / 10) * ((total - 1) / 10) + 1
+  }
+
+  public quickDynamicRange(
+    minValue: number,
+    maxValue: number,
+    total: number,
+    probability: number
+  ): number {
+    if (total < 1) throw new Error('Total Should be greater than 1')
+    const breakpoint = this.breakpointCalculator(minValue, maxValue, total)
+    const spread = this.spreadCalculator(minValue, maxValue, total)
+
+    return this.dynamicRange(
+      minValue,
+      maxValue,
+      spread,
+      breakpoint,
+      probability
+    )
   }
 }
 
 export default MathService
 
-// const mathService = new MathService()
+const mathService = new MathService()
 
-// const total = 10
-// const min = 50
-// const max = 75
+const total = 20
+const min = 1
+const max = 2
 
-// const breakpoint = 2.5 * (max - min) * (total / 10)
-// const spread = (min / 1.5) * (total / 10)
+const breakpoint = mathService.breakpointCalculator(min, max, total)
+const spread = mathService.spreadCalculator(min, max, total)
 
-// let sum = 0
-// for (let x = 0; x < total; x++) {
-//   const curr = mathService.dynamicRange(min, max, spread, breakpoint, 0.5)
-//   sum += curr
-//   console.log(curr)
-// }
+const expectedMin = min - spread * min
+const expectedMax = max + spread * min
 
-// console.log('Final: ', sum / total)
+let sum = 0
+let finalMin = max
+let finalMax = min
 
-////////////
+for (let x = 0; x < total; x++) {
+  const curr = mathService.quickDynamicRange(min, max, total, 0.5)
+  sum += curr
+  if (curr > finalMax) finalMax = curr
+  if (curr < finalMin) finalMin = curr
+}
+
+console.log('Breakpoint: ', breakpoint)
+console.log('Spread: ', spread)
+console.log('Min: ', expectedMin)
+console.log('Max: ', expectedMax)
+console.log('Average Min: ', finalMin)
+console.log('Average Max: ', finalMax)
+console.log('Average: ', sum / total)
+
+////////////////////////////////////
+///////////////////////////////////
 // testing breakpoint to be ((3) * (maxValue - minValue)) * total/10
 // and spread to be (minValue / (3)) * total/10
 

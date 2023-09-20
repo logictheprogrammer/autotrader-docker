@@ -5,7 +5,6 @@ import { THttpResponse } from '@/modules/http/http.type'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { AssetType } from '@/modules/asset/asset.enum'
 import { IPair, IPairObject } from '@/modules/pair/pair.interface'
-import { TUpdateForecastStatus } from '@/modules/forecast/forecast.type'
 import { Document, ObjectId, Types } from 'mongoose'
 
 export interface IForecastObject extends IAppObject {
@@ -102,6 +101,11 @@ export interface IForecastService {
   updateStatus(forecastId: ObjectId, status: ForecastStatus): Promise<IForecast>
 
   autoUpdateStatus(): Promise<void>
+
+  manualUpdateStatus(
+    forecastId: ObjectId,
+    status: ForecastStatus
+  ): THttpResponse<{ forecast: IForecast }>
 
   fetchAll(planId: ObjectId): THttpResponse<{ forecasts: IForecast[] }>
 

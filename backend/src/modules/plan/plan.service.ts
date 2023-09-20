@@ -19,10 +19,12 @@ import { IForecastObject } from '../forecast/forecast.interface'
 import { TTransaction } from '../transactionManager/transactionManager.type'
 import { ITransactionInstance } from '../transactionManager/transactionManager.interface'
 import { ForecastStatus } from '../forecast/forecast.enum'
+import forecastModel from '../forecast/forecast.model'
 
 @Service()
 class PlanService implements IPlanService {
   private planModel = planModel
+  private forecastModel = forecastModel
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)
@@ -52,8 +54,8 @@ class PlanService implements IPlanService {
   ): TTransaction<IPlanObject, IPlan> {
     const plan = await this.find(planId)
 
-    const oldCurrentForecast = plan.currentForecast
     const oldStatus = plan.forecastStatus
+    const oldCurrentForecast = plan.currentForecast
     const oldTimeStamps = plan.forecastTimeStamps.slice()
     const oldStartTime = plan.forecastStartTime
     const oldRuntime = plan.runTime
@@ -329,6 +331,8 @@ class PlanService implements IPlanService {
     try {
       const plan = await this.planModel.findByIdAndDelete(planId)
       if (!plan) throw new HttpException(404, 'Plan not found')
+
+      await this.forecastModel.deleteMany({ plan: plan._id })
       return {
         status: HttpResponseStatus.SUCCESS,
         message: 'Plan has been deleted successfully',

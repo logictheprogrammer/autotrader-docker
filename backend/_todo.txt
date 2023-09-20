@@ -1,3 +1,16 @@
 1. add transaction file to each service
 2. add utill file to each service
 3. add trade ref to all trades
+4. make the all files naming convention same
+5. use thesame patterns in the APIs
+6. rework on the transaction manager class
+7. rework on the exception service
+8. add an api file to each service
+9. add a toJSON property and an Interface to each models
+10. make all class methods non arrow functions
+11. create an methods param Interfaces to all modules
+12. add Interface to all service validations
+13. create a constant file for each modules if necessary
+
+* ASAP
+✔ 1. impliment the forecast min/max daily wait time with the right logic

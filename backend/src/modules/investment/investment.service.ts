@@ -1,8 +1,4 @@
-import {
-  ITrade,
-  ITradeObject,
-  ITradeService,
-} from '@/modules/trade/trade.interface'
+import { ITradeObject } from '@/modules/trade/trade.interface'
 import { Inject, Service } from 'typedi'
 import {
   IInvestment,
@@ -13,20 +9,11 @@ import investmentModel from '@/modules/investment/investment.model'
 import ServiceToken from '@/utils/enums/serviceToken'
 import { InvestmentStatus } from '@/modules/investment/investment.enum'
 import { IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
-import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
-import {
-  ITransaction,
-  ITransactionService,
-} from '@/modules/transaction/transaction.interface'
+import { IUserObject, IUserService } from '@/modules/user/user.interface'
+import { ITransactionService } from '@/modules/transaction/transaction.interface'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
-import {
-  IReferral,
-  IReferralService,
-} from '@/modules/referral/referral.interface'
-import {
-  INotification,
-  INotificationService,
-} from '@/modules/notification/notification.interface'
+import { IReferralService } from '@/modules/referral/referral.interface'
+import { INotificationService } from '@/modules/notification/notification.interface'
 import formatNumber from '@/utils/formats/formatNumber'
 import {
   NotificationCategory,
@@ -47,12 +34,17 @@ import FormatNumber from '@/utils/formats/formatNumber'
 import { TUpdateInvestmentStatus } from './investment.type'
 import { ForecastStatus } from '../forecast/forecast.enum'
 import { ObjectId } from 'mongoose'
-import { IForecastObject } from '../forecast/forecast.interface'
 import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import tradeModel from '../trade/trade.model'
+import { IMathService } from '../math/math.interface'
 
 @Service()
 class InvestmentService implements IInvestmentService {
   private investmentModel = investmentModel
+  private tradeModel = tradeModel
+
+  public static minWaitHour = 4
+  public static maxWaitHour = 8
 
   public constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
@@ -64,6 +56,8 @@ class InvestmentService implements IInvestmentService {
     private notificationService: INotificationService,
     @Inject(ServiceToken.REFERRAL_SERVICE)
     private referralService: IReferralService,
+    @Inject(ServiceToken.MATH_SERVICE)
+    private mathService: IMathService,
     @Inject(ServiceToken.TRANSACTION_MANAGER_SERVICE)
     private transactionManagerService: ITransactionManagerService<any>
   ) {}
@@ -141,7 +135,18 @@ class InvestmentService implements IInvestmentService {
       planObject: plan,
       user: user._id,
       userObject: user,
-      timeLeft: plan.duration * 1000 * 60 * 60 * 24,
+      minRunTime:
+        plan.duration *
+        1000 *
+        60 *
+        60 *
+        (24 -
+          this.mathService.quickDynamicRange(
+            InvestmentService.minWaitHour,
+            InvestmentService.maxWaitHour,
+            1,
+            1
+          )),
       gas: plan.gas,
       amount,
       balance: amount,
@@ -195,14 +200,20 @@ class InvestmentService implements IInvestmentService {
   ): TTransaction<IInvestmentObject, IInvestment> {
     const investment = await this.find(investmentId)
 
-    const tradeStatus = tradeObject.status
-
     const oldStatus = investment.status
     const oldTradeStatus = investment.tradeStatus
+    const oldCurrentTrade = investment.currentTrade
+    const oldTimeStamps = investment.tradeTimeStamps.slice()
+    const oldStartTime = investment.tradeStartTime
+    const oldRuntime = investment.runTime
+    const oldBalance = investment.balance
 
-    investment.tradeStatus = tradeStatus
+    investment.currentTrade = tradeObject._id
+    investment.tradeStatus = tradeObject.status
+    investment.tradeTimeStamps = tradeObject.timeStamps.slice()
+    investment.tradeStartTime = tradeObject.startTime
 
-    switch (tradeStatus) {
+    switch (tradeObject.status) {
       case ForecastStatus.MARKET_CLOSED:
       case ForecastStatus.ON_HOLD:
       case ForecastStatus.SETTLED:
@@ -218,17 +229,40 @@ class InvestmentService implements IInvestmentService {
         throw new HttpException(ErrorCode.BAD_REQUEST, 'Invalid forcast status')
     }
 
-    if (tradeStatus === ForecastStatus.SETTLED) {
+    if (tradeObject.status === ForecastStatus.SETTLED) {
+      investment.currentTrade = undefined
+      investment.tradeStatus = undefined
+      investment.tradeTimeStamps = []
+      investment.tradeStartTime = undefined
+      investment.runTime += tradeObject.runTime
+      investment.balance += tradeObject.profit
+
+      if (investment.runTime >= investment.minRunTime) {
+        investment.status = InvestmentStatus.FINALIZING
+      }
     }
 
     return {
       object: investment.toObject({ getters: true }),
       instance: {
         model: investment,
-        onFailed: `Set the tradeStatus of the investment with an id of (${investment._id}) to (${oldTradeStatus})`,
+        onFailed: `Set the investment with an id of (${investment._id}) to the following: 
+        \n status = (${oldStatus}),
+        \n tradeStatus = (${oldTradeStatus}),
+        \n currentTrade = (${oldCurrentTrade}),
+        \n tradeTimeStamps = (${oldTimeStamps}),
+        \n tradeStartTime = (${oldStartTime}),
+        \n runTime = (${oldRuntime}),
+        \n balance = (${oldBalance}),
+        `,
         callback: async () => {
           investment.status = oldStatus
           investment.tradeStatus = oldTradeStatus
+          investment.currentTrade = oldCurrentTrade
+          investment.tradeTimeStamps = oldTimeStamps
+          investment.tradeStartTime = oldStartTime
+          investment.runTime = oldRuntime
+          investment.balance = oldBalance
           await investment.save()
         },
       },
@@ -287,16 +321,17 @@ class InvestmentService implements IInvestmentService {
 
       const transactionInstances: ITransactionInstance<any>[] = []
 
+      // User Transaction Instance
       const { instance: userInstance, object: user } =
-        await this.userService.fund(userId, account, amount)
-
+        await this.userService.fund(userId, account, -amount)
       transactionInstances.push(userInstance)
 
+      // Investment Transaction Instance
       const { instance: investmentInstance, object: investment } =
         await this._createTransaction(user, plan, amount, account, environment)
-
       transactionInstances.push(investmentInstance)
 
+      // Referral Transaction Instance
       if (environment === UserEnvironment.LIVE) {
         const referralInstances = await this.referralService.create(
           ReferralTypes.INVESTMENT,
@@ -309,6 +344,7 @@ class InvestmentService implements IInvestmentService {
         })
       }
 
+      // Transaction Transaction Instance
       const transactionInstance = await this.transactionService.create(
         user,
         investment.status,
@@ -318,9 +354,9 @@ class InvestmentService implements IInvestmentService {
         environment,
         amount
       )
-
       transactionInstances.push(transactionInstance)
 
+      // Notification Transaction Instance
       const userNotificationInstance = await this.notificationService.create(
         `Your investment of ${formatNumber.toDollar(amount)} on the ${
           plan.name
@@ -332,9 +368,9 @@ class InvestmentService implements IInvestmentService {
         environment,
         user
       )
-
       transactionInstances.push(userNotificationInstance)
 
+      // Admin Notification Transaction Instance
       const adminNotificationInstance = await this.notificationService.create(
         `${user.username} just invested in the ${
           plan.name
@@ -347,7 +383,6 @@ class InvestmentService implements IInvestmentService {
         investment.status,
         environment
       )
-
       transactionInstances.push(adminNotificationInstance)
 
       await this.transactionManagerService.execute(transactionInstances)
@@ -382,16 +417,23 @@ class InvestmentService implements IInvestmentService {
   }> {
     const transactionInstances: TUpdateInvestmentStatus = []
 
+    // Investment Transaction Instance
     const { object: investment, instance: investmentInstance } =
       await this._updateStatusTransaction(investmentId, status)
-
     transactionInstances.push(investmentInstance)
 
     let user
     if (status === InvestmentStatus.COMPLETED) {
+      // User Transaction Instance
+
+      const account =
+        investment.account === UserAccount.DEMO_BALANCE
+          ? UserAccount.DEMO_BALANCE
+          : UserAccount.MAIN_BALANCE
+
       const userTransaction = await this.userService.fund(
         investment.user,
-        UserAccount.MAIN_BALANCE,
+        account,
         investment.balance
       )
 
@@ -400,14 +442,15 @@ class InvestmentService implements IInvestmentService {
 
       transactionInstances.push(userInstance)
 
+      // Transaction Transaction Instance
       const transactionInstance = await this.transactionService.updateAmount(
         investment._id,
         investment.status,
         investment.balance
       )
-
       transactionInstances.push(transactionInstance)
 
+      // Referral Transaction Instance
       if (investment.environment === UserEnvironment.LIVE) {
         const referralInstances = await this.referralService.create(
           ReferralTypes.COMPLETED_PACKAGE_EARNINGS,
@@ -443,13 +486,14 @@ class InvestmentService implements IInvestmentService {
           notificationMessage = 'is corrently on maintance'
           break
         case InvestmentStatus.AWAITING_TRADE:
-          notificationMessage = 'is awaiting the current trade'
+          notificationMessage = 'is awaiting the trade'
           break
         case InvestmentStatus.PROCESSING_TRADE:
           notificationMessage = 'is processing the next trade'
           break
       }
 
+      // Notification Transaction Instance
       if (notificationMessage) {
         const receiver = user
           ? user
@@ -509,11 +553,9 @@ class InvestmentService implements IInvestmentService {
     amount: number
   ): THttpResponse<{ investment: IInvestment }> {
     try {
-      const investment = await this.find(investmentId)
-
-      investment.balance += amount
-
-      await investment.save()
+      const {
+        instance: { model: investment },
+      } = await this.fund(investmentId, amount)
 
       return {
         status: HttpResponseStatus.SUCCESS,
@@ -530,12 +572,12 @@ class InvestmentService implements IInvestmentService {
 
   public async refill(
     investmentId: ObjectId,
-    gass: number
+    gas: number
   ): THttpResponse<{ investment: IInvestment }> {
     try {
       const investment = await this.find(investmentId)
 
-      investment.gas += gass
+      investment.gas += gas
 
       await investment.save()
 
@@ -562,8 +604,7 @@ class InvestmentService implements IInvestmentService {
         throw new HttpException(400, 'Investment has not been settled yet')
 
       await this.investmentModel.deleteOne({ _id: investment._id })
-
-      // await this.tradeModel.deleteMany({ investment: investmentId })
+      await this.tradeModel.deleteMany({ investment: investmentId })
 
       return {
         status: HttpResponseStatus.SUCCESS,

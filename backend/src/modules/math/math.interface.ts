@@ -7,5 +7,10 @@ export interface IMathService {
     accuracy: number
   ): number
 
-  quickDynamicRange(minValue: number, maxValue: number, total: number): number
+  quickDynamicRange(
+    minValue: number,
+    maxValue: number,
+    total: number,
+    probability: number
+  ): number
 }

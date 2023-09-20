@@ -5,7 +5,7 @@ import validate from '@/modules/forecast/forecast.validation'
 import ServiceToken from '@/utils/enums/serviceToken'
 import { IAppController } from '@/modules/app/app.interface'
 import HttpMiddleware from '@/modules/http/http.middleware'
-import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
+import { UserRole } from '@/modules/user/user.enum'
 import HttpException from '@/modules/http/http.exception'
 import { ObjectId } from 'mongoose'
 
@@ -34,6 +34,13 @@ class ForecastController implements IAppController {
       HttpMiddleware.authenticate(UserRole.ADMIN),
       HttpMiddleware.validate(validate.update),
       this.update
+    )
+
+    this.router.put(
+      `${this.path}/update-status`,
+      HttpMiddleware.authenticate(UserRole.ADMIN),
+      HttpMiddleware.validate(validate.updateStatus),
+      this.updateStatus
     )
 
     this.router.delete(
@@ -69,12 +76,12 @@ class ForecastController implements IAppController {
     next: NextFunction
   ): Promise<Response | void> => {
     try {
-      const { investmentId, pairId, stake, profit } = req.body
-      const response = await this.forecastService.createManual(
-        investmentId,
+      const { planId, pairId, percentageProfit, stakeRate } = req.body
+      const response = await this.forecastService.manualCreate(
+        planId,
         pairId,
-        stake,
-        profit
+        percentageProfit,
+        stakeRate
       )
       res.status(201).json(response)
     } catch (err: any) {
@@ -91,24 +98,37 @@ class ForecastController implements IAppController {
       const {
         forecastId,
         pairId,
+        percentageProfit,
+        stakeRate,
         move,
-        stake,
-        profit,
         openingPrice,
         closingPrice,
-        startTime,
-        stopTime,
       } = req.body
-      const response = await this.forecastService.updateManual(
+      const response = await this.forecastService.update(
         forecastId,
         pairId,
+        percentageProfit,
+        stakeRate,
         move,
-        stake,
-        profit,
         openingPrice,
-        closingPrice,
-        startTime,
-        stopTime
+        closingPrice
+      )
+      res.status(200).json(response)
+    } catch (err: any) {
+      next(new HttpException(err.status, err.message, err.statusStrength))
+    }
+  }
+
+  private updateStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> => {
+    try {
+      const { forecastId, status } = req.body
+      const response = await this.forecastService.manualUpdateStatus(
+        forecastId,
+        status
       )
       res.status(200).json(response)
     } catch (err: any) {

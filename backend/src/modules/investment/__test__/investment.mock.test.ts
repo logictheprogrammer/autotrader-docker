@@ -132,6 +132,4 @@ describe('investment', () => {
       })
     })
   })
-
-  test.todo('setTrade')
 })

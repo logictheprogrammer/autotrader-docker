@@ -40,12 +40,6 @@ import { IForecastObject } from '../forecast/forecast.interface'
 class TradeService implements ITradeService {
   private tradeModel = tradeModel
 
-  public static dailyTrades = 0.1
-  public static minStakeRate = 0.1
-  public static maxStakeRate = 0.25
-  public static profitBreakpoint = 3
-  public static profitProbability = 0.5
-
   public constructor(
     @Inject(ServiceToken.USER_SERVICE) private userService: IUserService,
     @Inject(ServiceToken.INVESTMENT_SERVICE)
@@ -164,17 +158,18 @@ class TradeService implements ITradeService {
       instance: {
         model: trade,
         onFailed: `Set the trade with an id of (${trade._id}) to the following:
-        \npair = (${oldPair}),
-        \npairObject = (${oldPairObject}),
-        \nmarket = (${oldMarket}),
-        \nmove = (${oldMove}),
-        \npercentageProfit = (${oldPercentageProfit}),
-        \nopeningPrice = (${oldOpeningPrice}),
-        \nclosingPrice = (${oldClosingPrice}),
-        \nstake = (${oldStake}),
-        \noutcome = (${oldOutcome}),
-        \nprofit = (${oldProfit}),
-        \npercentage = (${oldPercentage})`,
+        \n pair = (${oldPair}),
+        \n pairObject = (${oldPairObject}),
+        \n market = (${oldMarket}),
+        \n move = (${oldMove}),
+        \n percentageProfit = (${oldPercentageProfit}),
+        \n openingPrice = (${oldOpeningPrice}),
+        \n closingPrice = (${oldClosingPrice}),
+        \n stake = (${oldStake}),
+        \n outcome = (${oldOutcome}),
+        \n profit = (${oldProfit}),
+        \n percentage = (${oldPercentage}),
+        `,
         callback: async () => {
           trade.pair = oldPair
           trade.pairObject = oldPairObject

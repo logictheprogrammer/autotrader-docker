@@ -33,7 +33,7 @@ const InvestmentSchema = new Schema<IInvestment>(
       type: String,
       required: true,
     },
-    timeLeft: {
+    minRunTime: {
       type: Number,
       required: true,
     },

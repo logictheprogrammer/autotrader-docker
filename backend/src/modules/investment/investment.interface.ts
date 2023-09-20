@@ -21,7 +21,7 @@ export interface IInvestmentObject extends IAppObject {
   planObject: IPlanObject
   user: IUser['_id']
   userObject: IUserObject
-  timeLeft: number
+  minRunTime: number
   gas: number
   status: InvestmentStatus
   amount: number
@@ -44,7 +44,7 @@ export interface IInvestment extends Document {
   planObject: IPlanObject
   user: IUser['_id']
   userObject: IUserObject
-  timeLeft: number
+  minRunTime: number
   gas: number
   status: InvestmentStatus
   amount: number
@@ -95,27 +95,6 @@ export interface IInvestmentService {
     account: UserAccount,
     environment: UserEnvironment
   ): THttpResponse<{ investment: IInvestment }>
-
-  // setTrade(
-  //   investmentId: ObjectId,
-  //   forecast: IForecastObject
-  // ): Promise<
-  //   ITransactionInstance<
-  //     IReferral | ITransaction | INotification | IInvestment | ITrade | IUser
-  //   >[]
-  // >
-
-  // updateTrade(
-  //   investmentId: ObjectId,
-  //   forecast: IForecastObject
-  // ): Promise<ITransactionInstance<ITrade>[]>
-
-  // setTradeStatus(
-  //   investmentId: ObjectId,
-  //   forecast: IForecastObject
-  // ): Promise<
-  //   ITransactionInstance<ITransaction | INotification | IInvestment | ITrade>[]
-  // >
 
   fetchAll(
     all: boolean,

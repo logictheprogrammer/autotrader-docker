@@ -9,7 +9,6 @@ import { sendMailMock } from '../../mail/__test__/mail.mock'
 import renderFile from '../../../utils/renderFile'
 import ParseString from '../../../utils/parsers/parseString'
 import { SiteConstants } from '../../config/config.constants'
-import { IUser } from '../user.interface'
 import { Types } from 'mongoose'
 
 describe('users', () => {
