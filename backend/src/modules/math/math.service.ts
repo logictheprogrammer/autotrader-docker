@@ -19,28 +19,33 @@ class MathService implements IMathService {
     return randomValues
   }
 
+  /**
+   * Get A Random array of numbers that meets a condition
+   * @param {number} averageValueOne An Average Range Values to use as a reference
+   * @param {number} averageValueTwo An Average Range Values to use as a reference
+   * @param {number} spread How far should the lowest value go in relative to zero, 1 will be the length for the lowest value to be zero
+   * @param {number} breakpoint How many sub values will be generated to get to the last value
+   * @returns {number} An array of Random number that meets a condition
+   */
   public getValues(
-    minAverageRange: number,
-    maxAverageRange: number,
+    averageValueOne: number,
+    averageValueTwo: number,
     spread: number,
     breakpoint: number
   ): number[] {
-    // validating input
-    if (minAverageRange > maxAverageRange)
-      throw new Error(
-        'minAverageRange aguement should be lesser than the maxAverageRange aguement'
-      )
-    if (minAverageRange <= 0)
-      throw new Error('minAverageRange aguement should not be lesser than zero')
-    if (spread < 0) throw new Error('spread aguement should not be negative')
-    if (breakpoint <= 0)
-      throw new Error('breakpoint aguement should be greater than zero')
-
     // sanitizing inputs
-    breakpoint = Math.ceil(breakpoint)
+    breakpoint = Math.abs(Math.ceil(breakpoint)) || 1
+    spread = Math.abs(spread)
+    averageValueOne = Math.abs(averageValueOne)
+    averageValueTwo = Math.abs(averageValueTwo)
+
+    const minAverageRange =
+      averageValueOne > averageValueTwo ? averageValueTwo : averageValueOne
+    const maxAverageRange =
+      averageValueOne > averageValueTwo ? averageValueOne : averageValueTwo
 
     // constants
-    const difference = minAverageRange * spread
+    const difference = Math.abs(minAverageRange * spread)
     const unit = difference / breakpoint
 
     // get the smallest and largest possible value
@@ -72,35 +77,27 @@ class MathService implements IMathService {
     return values
   }
 
+  /**
+   * Get half of the remaining values probability
+   * @param {number} spread How far should the lowest value go in relative to zero, 1 will be the length for the lowest value to be zero
+   * @param {number} breakpoint How many sub values will be generated to get to the last value
+   * @param {number} probability It should only be an auguement between 0.5 to 1
+   * @returns {number} half of the remaining values probability
+   */
   public getValuesProbability(
-    minAverageRange: number,
-    maxAverageRange: number,
     spread: number,
     breakpoint: number,
     probability: number
   ): number[] {
-    // validating input
-    if (probability > 1 || probability <= 0)
-      throw new Error(
-        'probability aguement should be greater than 0 and lesser than or equal to 1'
-      )
-    if (minAverageRange > maxAverageRange)
-      throw new Error(
-        'minAverageRange aguement should be lesser than the maxAverageRange aguement'
-      )
-    if (minAverageRange <= 0)
-      throw new Error('minAverageRange aguement should not be lesser than zero')
-    if (spread < 0) throw new Error('spread aguement should not be negative')
-    if (breakpoint <= 0)
-      throw new Error('breakpoint aguement should be greater than zero')
-
     // sanitizing inputs
-    breakpoint = Math.ceil(breakpoint)
+    breakpoint = Math.abs(Math.ceil(breakpoint)) || 1
+    spread = Math.abs(spread)
+    probability = probability > 1 ? 1 : probability < 0 ? 0 : probability
 
     // values propability
     const valuesProbability = []
 
-    const failureChance = (1 - probability) / 2
+    const remainingProbability = (1 - probability) / 2
 
     let probSum = 0
     for (let x = 0; x < breakpoint; x++) {
@@ -114,44 +111,44 @@ class MathService implements IMathService {
     const probUnit = 1 / probSum
     // set values probability
     for (let i = 0; i < breakpoint; i++) {
-      valuesProbability[i] = failureChance * (probUnit * valuesProbability[i])
+      valuesProbability[i] =
+        remainingProbability * (probUnit * valuesProbability[i])
     }
 
     console.log('valuesProbability: ', valuesProbability)
 
-    const remainder =
-      1 -
-      probability -
-      valuesProbability.reduce(
-        (accumulator, currentValue) => accumulator + currentValue,
-        0
-      ) *
-        2
-
-    console.log('remainder: ', remainder * 1000000)
-
     return valuesProbability
   }
 
+  /**
+   * Get The Probability value for the provided averageValueOne and averageValueTwo params
+   * @param {number} averageValueOne Should be a positive number
+   * @param {number} averageValueTwo Should be a positive number
+   * @param {number} spread How far should the lowest value go in relative to zero, 1 will be the length for the lowest value to be zero
+   * @param {number} breakpoint How many sub values will be generated to get to the last value
+   * @param {number} winProbability It should only be an auguement between 0.5 to 1
+   * @returns {number} The Probability value for the provided averageValueOne and averageValueTwo params
+   */
   public getMainProbability(
-    minAverageRange: number,
-    maxAverageRange: number,
+    averageValueOne: number,
+    averageValueTwo: number,
     spread: number,
     breakpoint: number,
     winProbability: number
   ): number {
-    // if (winProbability < 0.5 || winProbability > 1.1)
-    //   throw new Error(
-    //     'WinProbability most be greater than or equal to 0.5 and lesser than or equal to 1'
-    //   )
+    // sanitizing inputs
+    winProbability =
+      winProbability < 0.5 ? 0.5 : winProbability > 1 ? 1 : winProbability
 
-    const lossProbability = 1 - winProbability
+    const negativeProbability = 1 - winProbability
     const negativeUnit = this.getNegativeUnit(
-      minAverageRange,
-      maxAverageRange,
+      averageValueOne,
+      averageValueTwo,
       spread,
       breakpoint
     )
+    console.log('negativeUnit: ', negativeUnit)
+
     const lowNegativeUnit = Math.floor(negativeUnit)
     const highNegativeUnit = Math.ceil(negativeUnit)
 
@@ -162,38 +159,18 @@ class MathService implements IMathService {
     let valuesProbability: number[]
     let loopRan = 0
 
-    // Using binary search to find the right probability to that we make the "negativeUnitProbability" = "lossProbability"
+    // Using binary search to find the right probability to that we make the "negativeUnitProbability" = "negativeProbability"
     while (true) {
       loopRan++
-      negativeUnitProbability = 0
 
-      valuesProbability = this.getValuesProbability(
-        minAverageRange,
-        maxAverageRange,
-        spread,
-        breakpoint,
-        probability
-      )
-
-      for (let x = 0; x < lowNegativeUnit; x++) {
-        if (lowNegativeUnit) {
-          negativeUnitProbability += valuesProbability[x]
-        }
-      }
-      if (highNegativeUnit > lowNegativeUnit) {
-        negativeUnitProbability +=
-          valuesProbability[highNegativeUnit - 1] *
-          (negativeUnit - lowNegativeUnit)
-      }
-
-      // value is is just right
+      // value is just right
       if (
-        negativeUnitProbability === lossProbability ||
-        (negativeUnitProbability > lossProbability * 0.99999 &&
-          negativeUnitProbability < lossProbability * 1.00001)
+        negativeUnitProbability === negativeProbability ||
+        (negativeUnitProbability > negativeProbability * 0.99999 &&
+          negativeUnitProbability < negativeProbability * 1.00001)
       )
         break
-      else if (negativeUnitProbability > lossProbability) {
+      else if (negativeUnitProbability > negativeProbability) {
         // value is higher
         lowProbability = probability
         probability = probability + (highProbability - probability) * 0.5
@@ -203,7 +180,24 @@ class MathService implements IMathService {
         probability = probability - (probability - lowProbability) * 0.5
       }
 
-      if (loopRan >= 100) break
+      if (loopRan >= 30) break
+
+      negativeUnitProbability = 0
+      // Get A new values probability after updating the probability variable
+      valuesProbability = this.getValuesProbability(
+        spread,
+        breakpoint,
+        probability
+      )
+
+      for (let x = 0; x < lowNegativeUnit; x++) {
+        negativeUnitProbability += valuesProbability[x]
+      }
+      if (highNegativeUnit > lowNegativeUnit) {
+        negativeUnitProbability +=
+          valuesProbability[highNegativeUnit - 1] *
+          (negativeUnit - lowNegativeUnit)
+      }
     }
 
     console.log('getMainProbability loopRan: ', loopRan)
@@ -211,21 +205,30 @@ class MathService implements IMathService {
     return probability
   }
 
+  /**
+   * Get The Negative Unit value
+   * @param {number} averageValueOne Should be a positive number
+   * @param {number} averageValueTwo Should be a positive number
+   * @param {number} spread How far should the lowest value go in relative to zero, 1 will be the length for the lowest value to be zero
+   * @param {number} breakpoint How many unit will be generted to get to the last value
+   * @returns {number} The Sum Of Negative Unit value that meets approximatly at zero
+   */
   public getNegativeUnit(
-    minAverageRange: number,
-    maxAverageRange: number,
+    averageValueOne: number,
+    averageValueTwo: number,
     spread: number,
     breakpoint: number
   ): number {
     let negativeUnit: number = 0
 
     const values = this.getValues(
-      minAverageRange,
-      maxAverageRange,
+      averageValueOne,
+      averageValueTwo,
       spread,
       breakpoint
     )
-    const valuesCommonDifference = spread / breakpoint // Alternatively = values[1] - values[0]
+
+    const valuesCommonDifference = spread / breakpoint
 
     let currNegativeValue,
       nextNegativeValue,
@@ -258,6 +261,10 @@ class MathService implements IMathService {
         highInbetweenNegativeValue = nextNegativeValue
         inbetweenNegativeValue =
           0.5 * valuesCommonDifference + currNegativeValue
+
+        // console.log('lowInbetweenNegativeValue: ', lowInbetweenNegativeValue)
+        // console.log('highInbetweenNegativeValue: ', highInbetweenNegativeValue)
+        // console.log('inbetweenNegativeValue: ', inbetweenNegativeValue)
 
         while (true) {
           loopRan++
@@ -296,28 +303,32 @@ class MathService implements IMathService {
     return negativeUnit
   }
 
-  // spread - how far away from the provide value should be possible: min 0
-  // breakpoint - breakpoints to get to the provided values: more than zero
+  /**
+   * Get A Random number that meets the condition
+   * @param {number} averageValueOne An Average Range Values to use as a reference
+   * @param {number} averageValueTwo An Average Range Values to use as a reference
+   * @param {number} spread How far should the lowest value go in relative to zero, 1 will be the length for the lowest value to be zero
+   * @param {number} breakpoint How many sub values will be generated to get to the last value
+   * @param {number} probability The Probability value for the provided averageValueOne and averageValueTwo params
+   * @returns {number} A Random number that meets the condition
+   */
   public dynamicRange(
-    minAverageRange: number,
-    maxAverageRange: number,
+    averageValueOne: number,
+    averageValueTwo: number,
     spread: number,
     breakpoint: number,
     probability: number
   ): number {
+    const values = this.getValues(
+      averageValueOne,
+      averageValueTwo,
+      spread,
+      breakpoint
+    )
     const valuesProbability = this.getValuesProbability(
-      minAverageRange,
-      maxAverageRange,
       spread,
       breakpoint,
       probability
-    )
-
-    const values = this.getValues(
-      minAverageRange,
-      maxAverageRange,
-      spread,
-      breakpoint
     )
 
     // get random values
@@ -368,11 +379,8 @@ export default MathService
 
 const mathService = new MathService()
 // console.log('negativeUnit: ', mathService.getNegativeUnit(1, 2, 4, 4))
-console.log(
-  'probability: ',
-  mathService.getMainProbability(1, 2, 100, 100, 0.5)
-)
-// console.log('value: ', mathService.dynamicRange(1, 2, 2, 1, 0.04))
+console.log('probability: ', mathService.getMainProbability(1, -2, 2, 1, 0.76))
+// console.log('value: ', mathService.dynamicRange(-2, -1, 2, 2, 0.5))
 
 // const total = 10
 // const run = 100
