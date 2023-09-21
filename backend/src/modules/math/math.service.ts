@@ -72,7 +72,7 @@ class MathService implements IMathService {
       ...maxAverageRanges,
     ]
 
-    console.log('Values: ', values)
+    // console.log('Values: ', values)
 
     return values
   }
@@ -106,7 +106,7 @@ class MathService implements IMathService {
       probSum += prob
     }
 
-    console.log('valuesProbability: ', valuesProbability)
+    // console.log('valuesProbability: ', valuesProbability)
 
     const probUnit = 1 / probSum
     // set values probability
@@ -115,7 +115,7 @@ class MathService implements IMathService {
         remainingProbability * (probUnit * valuesProbability[i])
     }
 
-    console.log('valuesProbability: ', valuesProbability)
+    // console.log('valuesProbability: ', valuesProbability)
 
     return valuesProbability
   }
@@ -147,7 +147,7 @@ class MathService implements IMathService {
       spread,
       breakpoint
     )
-    console.log('negativeUnit: ', negativeUnit)
+    // console.log('negativeUnit: ', negativeUnit)
 
     const lowNegativeUnit = Math.floor(negativeUnit)
     const highNegativeUnit = Math.ceil(negativeUnit)
@@ -200,7 +200,7 @@ class MathService implements IMathService {
       }
     }
 
-    console.log('getMainProbability loopRan: ', loopRan)
+    // console.log('getMainProbability loopRan: ', loopRan)
 
     return probability
   }
@@ -297,16 +297,15 @@ class MathService implements IMathService {
       } else break
     }
 
-    console.log('getNegativeUnit loopRan: ', loopRan)
+    // console.log('getNegativeUnit loopRan: ', loopRan)
 
-    if (!negativeUnit) throw new Error('Values array has no negative value')
     return negativeUnit
   }
 
   /**
    * Get A Random number that meets the condition
-   * @param {number} averageValueOne An Average Range Values to use as a reference
-   * @param {number} averageValueTwo An Average Range Values to use as a reference
+   * @param {number} averageValueOne An Average Range Value to use as a reference
+   * @param {number} averageValueTwo An Average Range Value to use as a reference
    * @param {number} spread How far should the lowest value go in relative to zero, 1 will be the length for the lowest value to be zero
    * @param {number} breakpoint How many sub values will be generated to get to the last value
    * @param {number} probability The Probability value for the provided averageValueOne and averageValueTwo params
@@ -334,7 +333,7 @@ class MathService implements IMathService {
     // get random values
     const randomValues = this._setRandomValues(values)
 
-    console.log('randomValues: ', randomValues)
+    // console.log('randomValues: ', randomValues)
 
     const remainder =
       1 -
@@ -345,7 +344,7 @@ class MathService implements IMathService {
       ) *
         2
 
-    console.log('remainder: ', remainder)
+    // console.log('remainder: ', remainder)
 
     let accumulatedProbability = 0
     const finalValuesProbability = [
@@ -373,49 +372,81 @@ class MathService implements IMathService {
 
     return randomValues[probabilityIndex]
   }
+
+  /**
+   * Get A Random number that meets the condition
+   * @param {number} averageValueOne An Average Range Value to use as a reference
+   * @param {number} averageValueTwo An Average Range Value to use as a reference
+   * @param {number} positiveValueProbability The probability of getting a positive number, It should be a number between 0.55 to 0.99
+   * @returns {number} A Random number that meets the condition
+   */
+  public probabilityValue(
+    averageValueOne: number,
+    averageValueTwo: number,
+    positiveValueProbability: number
+  ): number {
+    // sanitizing inputs
+    positiveValueProbability =
+      positiveValueProbability < 0.55
+        ? 0.55
+        : positiveValueProbability > 0.99
+        ? 0.99
+        : positiveValueProbability
+
+    const spread = 10
+    const breakpoint = 100
+
+    const probability = this.getMainProbability(
+      averageValueOne,
+      averageValueTwo,
+      spread,
+      breakpoint,
+      positiveValueProbability
+    )
+
+    const randomValue = this.dynamicRange(
+      averageValueOne,
+      averageValueTwo,
+      spread,
+      breakpoint,
+      probability
+    )
+
+    return randomValue
+  }
 }
 
 export default MathService
 
 const mathService = new MathService()
-// console.log('negativeUnit: ', mathService.getNegativeUnit(1, 2, 4, 4))
-console.log('probability: ', mathService.getMainProbability(1, -2, 2, 1, 0.76))
-// console.log('value: ', mathService.dynamicRange(-2, -1, 2, 2, 0.5))
 
-// const total = 10
-// const run = 100
+const run = 10000
+const negativeValues = []
+const positiveValues = []
 
-// for (let y = 0; y < run; y++) {
-//   let sum = 0
+let sum = 0
+const startTime = new Date().getTime()
+for (let y = 0; y < run; y++) {
+  // 0.55 - 0.99
+  const curr = mathService.probabilityValue(1, 2, 0.55)
+  sum += curr
+  if (curr > 0) {
+    positiveValues.push(curr)
+  }
+  if (curr < 0) {
+    negativeValues.push(curr)
+  }
+}
+const average = sum / run
 
-//   for (let x = 0; x < total; x++) {
-//     const curr = mathService.quickDynamicRange(min, max, total, winProbability)
-//     sum += curr
-//     if (curr > max) {
-//       maxArr.push(curr)
-//     }
-//     if (curr < min) {
-//       minArr.push(curr)
-//     }
-//   }
-
-//   const average = sum / total
-
-//   averageArr.push(average)
-// }
-
-// console.log('Breakpoint: ', breakpoint)
-// console.log('Spread: ', spread)
-// console.log('Min: ', expectedMin)
-// console.log('Max: ', expectedMax)
-// console.log('======================')
-// console.log('Total: ', run * total)
-// console.log('negative: ', minArr.filter((val) => val < 0).length)
-// console.log('positive: ', maxArr.filter((val) => val >= 0).length)
-// console.log(
-//   'Average: ',
-//   averageArr.reduce((acc, curr) => (acc += curr), 0) / averageArr.length
-// )
+console.log('=====================')
+console.log('negative: ', negativeValues.filter((val) => val < 0).length / run)
+console.log('Average: ', average)
+console.log('=====================')
+console.log('max: ', Math.max(...positiveValues))
+console.log('min: ', Math.min(...negativeValues))
+console.log('=====================')
+console.log('Time: ', (new Date().getTime() - startTime) / 1000)
 
 ////////////////////////////////////
 ///////////////////////////////////
