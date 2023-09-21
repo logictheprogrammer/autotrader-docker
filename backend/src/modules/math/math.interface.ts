@@ -6,11 +6,4 @@ export interface IMathService {
     breakpoint: number,
     accuracy: number
   ): number
-
-  quickDynamicRange(
-    minValue: number,
-    maxValue: number,
-    total: number,
-    probability: number
-  ): number
 }
