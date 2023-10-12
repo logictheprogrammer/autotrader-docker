@@ -141,11 +141,10 @@ class InvestmentService implements IInvestmentService {
         60 *
         60 *
         (24 -
-          this.mathService.quickDynamicRange(
+          this.mathService.probabilityValue(
             InvestmentService.minWaitHour,
             InvestmentService.maxWaitHour,
-            1,
-            1
+            0.76
           )),
       gas: plan.gas,
       amount,

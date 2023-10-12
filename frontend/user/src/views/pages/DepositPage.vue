@@ -320,6 +320,7 @@ enum PAGE {
 
 const httpStore = useHttpStore()
 const authStore = useAuthStore()
+const depositStore = useDepositStore()
 
 const currentPage = ref(PAGE.MAKE_DEPOSIT)
 const setCurrentPage = (page: PAGE) => {
@@ -352,7 +353,6 @@ const setSelectedDepositMethod = (dm?: IDepositMethod) => {
   selectedDepositMethodId.value = dm._id
 }
 
-const depositStore = useDepositStore()
 const deposits = computed(() => depositStore.deposits)
 const depositLoaded = computed(() => depositStore.loaded)
 // fetch deposit s if not fetched

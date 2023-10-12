@@ -4,6 +4,7 @@ import type { WithdrawalStatus } from './withdrawal.enum'
 
 export const useWithdrawalStore = defineStore('withdrawal', () => {
   const httpStore = useHttpStore()
+  const userStore = useUserStore()
   const basePath = 'withdrawal'
   const withdrawals = ref<IWithdrawal[]>([])
   const loaded = ref(false)
@@ -48,6 +49,7 @@ export const useWithdrawalStore = defineStore('withdrawal', () => {
       })
 
       updateById(withdrawalId, result.data.data.withdrawal)
+      userStore.fetchAll()
       httpStore.handlePost(result)
     } catch (error: any) {
       console.error(error)

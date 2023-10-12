@@ -1,0 +1,164 @@
+import { Response } from 'express'
+
+enum StatusCode {
+  SUCCESS = '1000',
+  INFO = '1001',
+  WARNING = '1002',
+  DANGER = '1003',
+}
+
+enum ResponseStatus {
+  SUCCESS = 200,
+  SUCCESS_CREATED = 201,
+  BAD_REQUEST = 400,
+  CONFLICT = 409,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  NOT_FOUND = 404,
+  INTERNAL_ERROR = 500,
+}
+
+abstract class ApiResponse {
+  constructor(
+    protected statusCode: StatusCode,
+    protected status: ResponseStatus,
+    protected message: string,
+    protected description?: string,
+    protected data?: any,
+    protected errors?: []
+  ) {}
+
+  public send(res: Response) {
+    return res.status(this.status).json({
+      status: this.statusCode,
+      messsage: this.message,
+      description: this.description,
+      data: this.data,
+      errors: this.errors,
+    })
+  }
+}
+
+export class NotFoundResponse extends ApiResponse {
+  constructor(
+    message = 'Not Found',
+    description?: '',
+    statusCode?: StatusCode
+  ) {
+    super(
+      statusCode || StatusCode.DANGER,
+      ResponseStatus.NOT_FOUND,
+      message,
+      description
+    )
+  }
+}
+
+export class BadRequestResponse extends ApiResponse {
+  constructor(
+    message = 'Invalid Request',
+    description?: '',
+    statusCode?: StatusCode
+  ) {
+    super(
+      statusCode || StatusCode.DANGER,
+      ResponseStatus.BAD_REQUEST,
+      message,
+      description
+    )
+  }
+}
+
+export class RequestConflictResponse extends ApiResponse {
+  constructor(
+    message = 'Resource Already Exist',
+    description?: '',
+    statusCode?: StatusCode
+  ) {
+    super(
+      statusCode || StatusCode.DANGER,
+      ResponseStatus.CONFLICT,
+      message,
+      description
+    )
+  }
+}
+
+export class UnauthorizedResponse extends ApiResponse {
+  constructor(
+    message = 'Unauthorized',
+    description?: '',
+    statusCode?: StatusCode
+  ) {
+    super(
+      statusCode || StatusCode.DANGER,
+      ResponseStatus.UNAUTHORIZED,
+      message,
+      description
+    )
+  }
+}
+
+export class ForbiddenResponse extends ApiResponse {
+  constructor(
+    message = 'Forbidden',
+    description?: '',
+    statusCode?: StatusCode
+  ) {
+    super(
+      statusCode || StatusCode.DANGER,
+      ResponseStatus.FORBIDDEN,
+      message,
+      description
+    )
+  }
+}
+
+export class InternalErrorResponse extends ApiResponse {
+  constructor(
+    message = 'Something Went Wrong',
+    description?: '',
+    statusCode?: StatusCode
+  ) {
+    super(
+      statusCode || StatusCode.DANGER,
+      ResponseStatus.INTERNAL_ERROR,
+      message,
+      description
+    )
+  }
+}
+
+export class SuccessResponse extends ApiResponse {
+  constructor(
+    message: string,
+    data: any,
+    description?: '',
+    statusCode?: StatusCode
+  ) {
+    super(
+      statusCode || StatusCode.SUCCESS,
+      ResponseStatus.SUCCESS,
+      message,
+      description,
+      data
+    )
+  }
+}
+
+export class SuccessCreatedResponse extends ApiResponse {
+  constructor(
+    message: string,
+    data: any,
+    description?: '',
+    statusCode?: StatusCode
+  ) {
+    super(
+      statusCode || StatusCode.SUCCESS,
+      ResponseStatus.SUCCESS_CREATED,
+      message,
+      description,
+      data
+    )
+  }
+}

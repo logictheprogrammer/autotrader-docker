@@ -4,6 +4,7 @@ import type { DepositStatus } from './deposit.enum'
 
 export const useDepositStore = defineStore('deposit', () => {
   const httpStore = useHttpStore()
+  const userStore = useUserStore()
   const basePath = 'deposit'
   const deposits = ref<IDeposit[]>([])
   const loaded = ref(false)
@@ -48,6 +49,7 @@ export const useDepositStore = defineStore('deposit', () => {
       })
 
       updateById(depositId, result.data.data.deposit)
+      userStore.fetchAll()
       httpStore.handlePost(result)
     } catch (error: any) {
       console.error(error)

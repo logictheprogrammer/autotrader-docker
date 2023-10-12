@@ -25,7 +25,7 @@ import { HttpResponseStatus } from '@/modules/http/http.enum'
 import AppException from '@/modules/app/app.exception'
 import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
 import { IPairObject, IPairService } from '../pair/pair.interface'
-import Helpers from '@/utils/helpers/helpers'
+import Helpers from 'helpers/helpers'
 import { IMathService } from '../math/math.interface'
 import { ObjectId } from 'mongoose'
 import { IAsset } from '../asset/asset.interface'
@@ -75,12 +75,7 @@ class ForecastService implements IForecastService {
   private getForecastWaitTime(dailyForcast: number, duration: number): number {
     const min = ForecastService.minDailyWaitTime / dailyForcast
     const max = ForecastService.maxDailyWaitTime / dailyForcast
-    return this.mathService.quickDynamicRange(
-      min,
-      max,
-      dailyForcast * duration,
-      1
-    )
+    return this.mathService.probabilityValue(min, max, 0.76)
   }
 
   private getDurationTime(plan: IPlanObject): number {
@@ -388,11 +383,10 @@ class ForecastService implements IForecastService {
         ForecastService.maxStakeRate
       )
 
-      const percentageProfit = this.mathService.quickDynamicRange(
+      const percentageProfit = this.mathService.probabilityValue(
         minPercentageProfit,
         maxPercentageProfit,
-        totalForecast,
-        ForecastService.profitProbability
+        0.76
       )
 
       await this.create(plan, pair, percentageProfit, stakeRate)

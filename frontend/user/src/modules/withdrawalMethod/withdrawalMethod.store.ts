@@ -49,7 +49,7 @@ export const useWithdrawalMethodStore = defineStore('withdrawalMethod', () => {
   async function fetchAll() {
     setLoaded(false)
     try {
-      const result = await axios.get(`${basePath}/master`)
+      const result = await axios.get(`${basePath}`)
       setWithdrawalMethods(result.data.data.withdrawalMethods)
     } catch (error: any) {
       console.error(error)

@@ -74,13 +74,17 @@ import NotificationController from '@/modules/notification/notification.controll
 import { IPairService } from '@/modules/pair/pair.interface'
 import PairService from '@/modules/pair/pair.service'
 import PairController from '@/modules/pair/pair.controller'
-import { IMathService } from '@/modules/math/math.interface'
+import { IMathService, IMathUtility } from '@/modules/math/math.interface'
 import MathService from '@/modules/math/math.service'
 import { ITradeService } from '@/modules/trade/trade.interface'
 import TradeService from '@/modules/trade/trade.service'
 import TradeController from '@/modules/trade/trade.controller'
 import { IForecastService } from '@/modules/forecast/forecast.interface'
 import ForecastService from '@/modules/forecast/forecast.service'
+import MathUtility from './modules/math/math.utility'
+
+export const mathUtility = Container.get<IMathUtility>(MathUtility)
+Container.set<IMathUtility>(ServiceToken.MATH_UTILITY, mathUtility)
 
 export const mathService = Container.get<IMathService>(MathService)
 Container.set<IMathService>(ServiceToken.MATH_SERVICE, mathService)

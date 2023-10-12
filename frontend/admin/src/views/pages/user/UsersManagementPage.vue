@@ -124,7 +124,7 @@
   <ModalComponent
     :is-open="openFundUserModel"
     v-slot="{ errors }"
-    :validation-schema="updateEmailSchema"
+    :validation-schema="updateAmountSchema"
     @confirm="fundUserAccount"
     @close="() => (openFundUserModel = false)"
   >
@@ -200,11 +200,11 @@ const alertModalInfo = reactive<{
 if (!usersLoaded.value) userStore.fetchAll()
 
 // Email Schema
-const updateEmailSchema = yup.object({
+const updateAmountSchema = yup.object({
   amount: yup
     .number()
     .typeError('Amount is required')
-    .positive('Amount is not valid')
+    .not([0], 'Amount is not valid')
     .required('Amount is required'),
 })
 
