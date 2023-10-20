@@ -1,9 +1,9 @@
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
-import { IAppObject } from '@/modules/app/app.interface'
-import { THttpResponse } from '@/modules/http/http.type'
-import { Document, ObjectId, Types } from 'mongoose'
+import { FilterQuery, ObjectId, Types } from 'mongoose'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import baseModelInterface from '@/core/baseModelInterface'
 
-export interface IDepositMethodObject extends IAppObject {
+export interface IDepositMethodObject extends baseObjectInterface {
   currency: ObjectId
   name: string
   symbol: string
@@ -17,22 +17,10 @@ export interface IDepositMethodObject extends IAppObject {
   autoUpdate: boolean
 }
 
-export interface IDepositMethod extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  currency: ObjectId
-  name: string
-  symbol: string
-  logo: string
-  address: string
-  network: string
-  status: DepositMethodStatus
-  fee: number
-  minDeposit: number
-  price: number
-  autoUpdate: boolean
-}
+// @ts-ignore
+export interface IDepositMethod
+  extends baseModelInterface,
+    IDepositMethodObject {}
 
 export interface IDepositMethodService {
   create(
@@ -41,37 +29,35 @@ export interface IDepositMethodService {
     network: string,
     fee: number,
     minDeposit: number
-  ): THttpResponse<{ depositMethod: IDepositMethod }>
+  ): Promise<IDepositMethod>
 
   update(
-    depositMethodId: ObjectId,
+    filter: FilterQuery<IDepositMethod>,
     currencyId: ObjectId,
     address: string,
     network: string,
     fee: number,
     minDeposit: number
-  ): THttpResponse<{ depositMethod: IDepositMethod }>
+  ): Promise<IDepositMethod>
 
-  get(depositMethodId: ObjectId | Types.ObjectId): Promise<IDepositMethodObject>
+  fetch(filter: FilterQuery<IDepositMethod>): Promise<IDepositMethodObject>
 
-  fetchAll(all: boolean): THttpResponse<{ depositMethods: IDepositMethod[] }>
+  fetchAll(filter: FilterQuery<IDepositMethod>): Promise<IDepositMethod[]>
 
-  delete(
-    depositMethodId: ObjectId
-  ): THttpResponse<{ depositMethod: IDepositMethod }>
+  delete(filter: FilterQuery<IDepositMethod>): Promise<IDepositMethod>
 
   updateStatus(
-    depositMethodId: ObjectId,
+    filter: FilterQuery<IDepositMethod>,
     status: DepositMethodStatus
-  ): THttpResponse<{ depositMethod: IDepositMethod }>
+  ): Promise<IDepositMethod>
 
   updateMode(
-    depositMethodId: ObjectId,
+    filter: FilterQuery<IDepositMethod>,
     autoUpdate: boolean
-  ): THttpResponse<{ depositMethod: IDepositMethod }>
+  ): Promise<IDepositMethod>
 
   updatePrice(
-    depositMethodId: ObjectId,
+    filter: FilterQuery<IDepositMethod>,
     price: number
-  ): THttpResponse<{ depositMethod: IDepositMethod }>
+  ): Promise<IDepositMethod>
 }

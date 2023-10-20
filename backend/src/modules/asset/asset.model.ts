@@ -1,7 +1,8 @@
 import { Schema, model } from 'mongoose'
 import { IAsset } from '@/modules/asset/asset.interface'
+import { AssetType } from './asset.enum'
 
-const AssetSchema = new Schema(
+const AssetSchema = new Schema<IAsset>(
   {
     name: {
       type: String,
@@ -20,6 +21,7 @@ const AssetSchema = new Schema(
     type: {
       type: String,
       required: true,
+      enum: Object.values(AssetType),
     },
   },
   { timestamps: true }

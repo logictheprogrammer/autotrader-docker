@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose'
-import bcrypt from 'bcrypt'
 import { IResetPassword } from '@/modules/resetPassword/resetPassword.interface'
+import Cryptograph from '@/core/cryptograph'
 
 const ResetPasswordSchema = new Schema(
   {
@@ -20,5 +20,14 @@ const ResetPasswordSchema = new Schema(
   },
   { timestamps: true }
 )
+
+ResetPasswordSchema.pre<IResetPassword>('save', async function (next) {
+  if (!this.isModified('token')) return next()
+  this.token = await Cryptograph.setHash(this.token)
+})
+
+ResetPasswordSchema.methods.isValidToken = async function (token: string) {
+  return await Cryptograph.isValidHash(token, this.token)
+}
 
 export default model<IResetPassword>('ResetPassword', ResetPasswordSchema)

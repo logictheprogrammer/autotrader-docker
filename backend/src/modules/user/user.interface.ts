@@ -1,10 +1,9 @@
 import { UserAccount, UserRole, UserStatus } from '@/modules/user/user.enum'
-import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import { THttpResponse } from '@/modules/http/http.type'
-import { IAppObject } from '@/modules/app/app.interface'
-import { Document, ObjectId } from 'mongoose'
+import { FilterQuery, ObjectId } from 'mongoose'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import baseModelInterface from '@/core/baseModelInterface'
 
-export interface IUserObject extends IAppObject {
+export interface IUserObject extends baseObjectInterface {
   key: string
   email: string
   username: string
@@ -20,87 +19,46 @@ export interface IUserObject extends IAppObject {
   bonusBalance: number
   referralBalance: number
   demoBalance: number
-  isDeleted?: boolean
 }
 
-export interface IUser extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  key: string
-  email: string
-  username: string
-  name: string
-  country: string
-  password: string
-  role: UserRole
-  status: UserStatus
-  verifield: Boolean
-  referred: ObjectId
-  refer: string
-  mainBalance: number
-  bonusBalance: number
-  referralBalance: number
-  demoBalance: number
-  isDeleted?: boolean
-
-  isValidPassword(password: string): Promise<undefined | boolean>
+// @ts-ignore
+export interface IUser extends baseModelInterface, IUserObject {
+  isValidPassword(password: string): Promise<boolean>
 }
 
 export interface IUserService {
-  _fundTransaction(
-    userId: ObjectId,
-    account: UserAccount,
-    amount: number
-  ): TTransaction<IUserObject, IUser>
+  fetch(filter: FilterQuery<IUser>): Promise<IUserObject>
 
-  get(
-    userIdOrUsername: ObjectId | string,
-    errorMessage?: string
-  ): Promise<IUserObject>
-
-  fetch(userId: ObjectId): THttpResponse<{ user: IUser }>
-
-  fetchAll(): THttpResponse<{ users: IUser[] }>
+  fetchAll(filter: FilterQuery<IUser>): Promise<IUserObject[]>
 
   updateProfile(
-    userId: ObjectId,
+    filter: FilterQuery<IUser>,
     name: string,
     username: string,
-    isAdmin: boolean
-  ): THttpResponse<{ user: IUser }>
+    byAdmin: boolean
+  ): Promise<IUserObject>
 
-  updateEmail(userId: ObjectId, email: string): THttpResponse<{ user: IUser }>
+  updateEmail(filter: FilterQuery<IUser>, email: string): Promise<IUserObject>
 
   updateStatus(
-    userId: ObjectId,
+    filter: FilterQuery<IUser>,
     status: UserStatus
-  ): THttpResponse<{ user: IUser }>
+  ): Promise<IUserObject>
 
-  delete(userId: ObjectId): THttpResponse<{ user: IUser }>
-
-  forceFund(
-    userId: ObjectId,
-    account: UserAccount,
-    amount: number
-  ): THttpResponse<{ user: IUser }>
+  delete(filter: FilterQuery<IUser>): Promise<IUserObject>
 
   fund(
-    userIdOrUsername: ObjectId | string,
+    filter: FilterQuery<IUser>,
     account: UserAccount,
-    amount: number,
-    notFoundErrorMessage?: string
-  ): TTransaction<IUserObject, IUser>
+    amount: number
+  ): Promise<IUserObject>
 
-  getReferredUsers(
-    getAll: boolean,
-    userId?: ObjectId
-  ): THttpResponse<{ users: IUser[] }>
+  getReferredUsers(filter: FilterQuery<IUser>): Promise<IUserObject[]>
 
   sendEmail(
-    userId: ObjectId,
+    filter: FilterQuery<IUser>,
     subject: string,
     heading: string,
     content: string
-  ): THttpResponse
+  ): Promise<IUserObject>
 }

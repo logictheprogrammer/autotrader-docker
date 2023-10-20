@@ -1,24 +1,16 @@
 import { Schema, Types, model } from 'mongoose'
 import { IWithdrawal } from '@/modules/withdrawal/withdrawal.interface'
 
-const WithdrawalSchema = new Schema(
+const WithdrawalSchema = new Schema<IWithdrawal>(
   {
     withdrawalMethod: {
       type: Types.ObjectId,
       ref: 'WithdrawalMethod',
       required: true,
     },
-    withdrawalMethodObject: {
-      type: Object,
-      required: true,
-    },
     user: {
       type: Types.ObjectId,
       ref: 'User',
-      required: true,
-    },
-    userObject: {
-      type: Object,
       required: true,
     },
     account: {

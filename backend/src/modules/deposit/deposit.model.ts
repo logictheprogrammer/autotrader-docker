@@ -1,15 +1,12 @@
 import { Schema, Types, model } from 'mongoose'
 import { IDeposit } from '@/modules/deposit/deposit.interface'
+import { DepositStatus } from './deposit.enum'
 
-const DepositSchema = new Schema(
+const DepositSchema = new Schema<IDeposit>(
   {
     depositMethod: {
       type: Types.ObjectId,
       ref: 'DepositMethod',
-      required: true,
-    },
-    depositMethodObject: {
-      type: Object,
       required: true,
     },
     user: {
@@ -17,13 +14,10 @@ const DepositSchema = new Schema(
       ref: 'User',
       required: true,
     },
-    userObject: {
-      type: Object,
-      required: true,
-    },
     status: {
       type: String,
       required: true,
+      enum: Object.values(DepositStatus),
     },
     amount: {
       type: Number,

@@ -1,30 +1,20 @@
-import { IAppObject } from '@/modules/app/app.interface'
-import { THttpResponse } from '@/modules/http/http.type'
-import { Document, ObjectId, Types } from 'mongoose'
+import baseModelInterface from '@/core/baseModelInterface'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import { FilterQuery } from 'mongoose'
 
-export interface ICurrencyObject extends IAppObject {
+export interface ICurrencyObject extends baseObjectInterface {
   name: string
   symbol: string
   logo: string
 }
 
-export interface ICurrency extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  name: string
-  symbol: string
-  logo: string
-}
+// @ts-ignore
+export interface ICurrency extends baseModelInterface, ICurrencyObject {}
 
 export interface ICurrencyService {
-  create(
-    name: string,
-    symbol: string,
-    logo: string
-  ): THttpResponse<{ currency: ICurrency }>
+  create(name: string, symbol: string, logo: string): Promise<ICurrencyObject>
 
-  get(currencyId: ObjectId | Types.ObjectId): Promise<ICurrencyObject>
+  fetch(filter: FilterQuery<ICurrency>): Promise<ICurrencyObject>
 
-  fetchAll(): THttpResponse<{ currencies: ICurrency[] }>
+  fetchAll(filter: FilterQuery<ICurrency>): Promise<ICurrencyObject[]>
 }

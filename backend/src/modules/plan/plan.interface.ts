@@ -1,17 +1,14 @@
-import { IAppObject } from '@/modules/app/app.interface'
-import { THttpResponse } from '@/modules/http/http.type'
 import { PlanStatus } from '@/modules/plan/plan.enum'
-import { UserRole } from '@/modules/user/user.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
-import { IInvestment } from '../investment/investment.interface'
-import { Document, ObjectId, Types } from 'mongoose'
-import { IAsset } from '../asset/asset.interface'
-import { ITransactionInstance } from '../transactionManager/transactionManager.interface'
-import { IForecast, IForecastObject } from '../forecast/forecast.interface'
-import { TTransaction } from '../transactionManager/transactionManager.type'
+import { IInvestmentObject } from '../investment/investment.interface'
+import { FilterQuery, ObjectId } from 'mongoose'
+import { IAssetObject } from '../asset/asset.interface'
+import { IForecastObject } from '../forecast/forecast.interface'
 import { ForecastStatus } from '../forecast/forecast.enum'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import baseModelInterface from '@/core/baseModelInterface'
 
-export interface IPlanObject extends IAppObject {
+export interface IPlanObject extends baseObjectInterface {
   icon: string
   name: string
   engine: string
@@ -24,52 +21,22 @@ export interface IPlanObject extends IAppObject {
   gas: number
   description: string
   assetType: AssetType
-  assets: IAsset['_id'][]
+  assets: IAssetObject[]
   status: PlanStatus
   manualMode: boolean
-  investors: IInvestment['_id'][]
+  investors: IInvestmentObject[]
   dummyInvestors: number
   runTime: number
-  currentForecast?: IForecast['_id']
+  currentForecast?: IForecastObject
   forecastStatus?: ForecastStatus
   forecastTimeStamps: number[]
   forecastStartTime?: Date
 }
 
-export interface IPlan extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  icon: string
-  name: string
-  engine: string
-  minAmount: number
-  maxAmount: number
-  minPercentageProfit: number
-  maxPercentageProfit: number
-  duration: number
-  dailyForecasts: number
-  gas: number
-  description: string
-  assetType: AssetType
-  assets: IAsset['_id'][]
-  status: PlanStatus
-  manualMode: boolean
-  investors: IInvestment['_id'][]
-  dummyInvestors: number
-  runTime: number
-  currentForecast?: IForecast['_id']
-  forecastStatus?: ForecastStatus
-  forecastTimeStamps: number[]
-  forecastStartTime?: Date
-}
+// @ts-ignore
+export interface IPlan extends baseModelInterface, IPlanObject {}
 
 export interface IPlanService {
-  _updateForecastDetails(
-    planId: ObjectId,
-    forecastObject: IForecastObject
-  ): TTransaction<IPlanObject, IPlan>
-
   create(
     icon: string,
     name: string,
@@ -84,10 +51,10 @@ export interface IPlanService {
     description: string,
     assetType: AssetType,
     assets: ObjectId[]
-  ): THttpResponse<{ plan: IPlan }>
+  ): Promise<IPlanObject>
 
   update(
-    planId: ObjectId,
+    filter: FilterQuery<IPlan>,
     icon: string,
     name: string,
     engine: string,
@@ -101,25 +68,21 @@ export interface IPlanService {
     description: string,
     assetType: AssetType,
     assets: ObjectId[]
-  ): THttpResponse<{ plan: IPlan }>
+  ): Promise<IPlanObject>
 
   updateStatus(
-    planId: ObjectId,
+    filter: FilterQuery<IPlan>,
     status: PlanStatus
-  ): THttpResponse<{ plan: IPlan }>
+  ): Promise<IPlanObject>
 
   updateForecastDetails(
-    planId: ObjectId,
+    filter: FilterQuery<IPlan>,
     forecastObject: IForecastObject
-  ): Promise<ITransactionInstance<IPlan>>
+  ): Promise<IPlanObject>
 
-  get(planId: ObjectId | Types.ObjectId): Promise<IPlanObject | null>
+  fetch(filter: FilterQuery<IPlan>): Promise<IPlanObject>
 
-  getAllAutoIdled(): Promise<IPlanObject[]>
+  delete(filter: FilterQuery<IPlan>): Promise<IPlanObject>
 
-  getAllAutoRunning(): Promise<IPlanObject[]>
-
-  delete(planId: ObjectId): THttpResponse<{ plan: IPlan }>
-
-  fetchAll(role: UserRole): THttpResponse<{ plans: IPlan[] }>
+  fetchAll(filter: FilterQuery<IPlan>): Promise<IPlanObject[]>
 }

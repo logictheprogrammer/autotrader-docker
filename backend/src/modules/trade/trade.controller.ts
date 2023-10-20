@@ -1,15 +1,16 @@
 import { ITradeService } from '@/modules/trade/trade.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Request, Response, NextFunction } from 'express'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
+import { Router, Response } from 'express'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
 import { ObjectId } from 'mongoose'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessResponse } from '@/core/apiResponse'
+import routePermission from '@/helpers/routePermission'
 
 @Service()
-class TradeController implements IAppController {
+class TradeController implements IController {
   public path = '/trade'
   public router = Router()
 
@@ -23,68 +24,60 @@ class TradeController implements IAppController {
   private intialiseRoutes(): void {
     this.router.delete(
       `${this.path}/delete/:tradeId`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
       `${this.path}/master/demo`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.DEMO)
     )
 
     this.router.get(
       `${this.path}/demo`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.fetchAll(false, UserEnvironment.DEMO)
     )
 
     this.router.get(
       `${this.path}/master`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE)
     )
 
     this.router.get(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.fetchAll(false, UserEnvironment.LIVE)
     )
   }
 
-  private fetchAll =
-    (all: boolean, environment: UserEnvironment) =>
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<Response | void> => {
-      try {
-        const userId = req.user._id
-        const response = await this.tradeService.fetchAll(
-          all,
-          environment,
-          userId
-        )
-        res.status(200).json(response)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
-      }
-    }
+  private fetchAll = (byAdmin: boolean, environment: UserEnvironment) =>
+    asyncHandler(async (req, res): Promise<Response | void> => {
+      let trades
 
-  private delete = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const tradeId = req.params.tradeId as unknown as ObjectId
-      const response = await this.tradeService.delete(tradeId)
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+      if (byAdmin) {
+        trades = await this.tradeService.fetchAll({ environment })
+      } else {
+        trades = await this.tradeService.fetchAll({
+          environment,
+          user: req.user._id,
+        })
+      }
+
+      return new SuccessResponse('Trades fetched successfully', {
+        trades,
+      }).send(res)
+    })
+
+  private delete = asyncHandler(async (req, res): Promise<Response | void> => {
+    const tradeId = req.params.tradeId as unknown as ObjectId
+    const trade = await this.tradeService.delete(tradeId)
+    return new SuccessResponse('Trade deleted successfully', { trade }).send(
+      res
+    )
+  })
 }
 
 export default TradeController

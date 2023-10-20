@@ -1,26 +1,23 @@
-import { THttpResponse } from '@/modules/http/http.type'
-import { Document } from 'mongoose'
+import baseModelInterface from '@/core/baseModelInterface'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import { FilterQuery } from 'mongoose'
 
-export interface ITransferSettings extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
+export interface ITransferSettingsObject extends baseObjectInterface {
   approval: boolean
   fee: number
 }
 
+// @ts-ignore
+export interface ITransferSettings
+  extends baseModelInterface,
+    ITransferSettingsObject {}
+
 export interface ITransferSettingsService {
-  create(
-    approval: boolean,
-    fee: number
-  ): THttpResponse<{ transferSettings: ITransferSettings }>
+  create(approval: boolean, fee: number): Promise<ITransferSettingsObject>
 
-  update(
-    approval: boolean,
-    fee: number
-  ): THttpResponse<{ transferSettings: ITransferSettings }>
+  update(approval: boolean, fee: number): Promise<ITransferSettingsObject>
 
-  get(): Promise<ITransferSettings | null>
-
-  fetch(): THttpResponse<{ transferSettings: ITransferSettings }>
+  fetch(
+    filter: FilterQuery<ITransferSettings>
+  ): Promise<ITransferSettingsObject>
 }

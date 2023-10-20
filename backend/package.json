@@ -76,6 +76,8 @@
   "_moduleAliases": {
     "@/modules": "dist/modules",
     "@/utils": "dist/utils",
+    "@/core": "dist/core",
+    "@/helpers": "dist/helpers",
     "@/templates": "dist/templates"
   }
 }

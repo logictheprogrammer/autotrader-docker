@@ -1,70 +1,34 @@
 import { DepositStatus } from '@/modules/deposit/deposit.enum'
-import {
-  IDepositMethod,
-  IDepositMethodObject,
-} from '@/modules/depositMethod/depositMethod.interface'
-import { IUser, IUserObject } from '@/modules/user/user.interface'
-import { IAppObject } from '@/modules/app/app.interface'
-import { THttpResponse } from '@/modules/http/http.type'
-import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import { Document, ObjectId, Types } from 'mongoose'
+import { IDepositMethod } from '@/modules/depositMethod/depositMethod.interface'
+import { IUser } from '@/modules/user/user.interface'
+import { FilterQuery, ObjectId } from 'mongoose'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import baseModelInterface from '@/core/baseModelInterface'
 
-export interface IDepositObject extends IAppObject {
-  depositMethod: IDepositMethod['_id']
-  depositMethodObject: IDepositMethodObject
-  user: IUser['_id']
-  userObject: IUserObject
+export interface IDepositObject extends baseObjectInterface {
+  depositMethod: IDepositMethod
+  user: IUser
   status: DepositStatus
   amount: number
   fee: number
 }
 
-export interface IDeposit extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  depositMethod: IDepositMethod['_id']
-  depositMethodObject: IDepositMethodObject
-  user: IUser['_id']
-  userObject: IUserObject
-  status: DepositStatus
-  amount: number
-  fee: number
-}
+// @ts-ignore
+export interface IDeposit extends baseModelInterface, IDepositObject {}
 
 export interface IDepositService {
-  _createTransaction(
-    user: IUserObject,
-    depositMethod: IDepositMethodObject,
-    amount: number
-  ): TTransaction<IDepositObject, IDeposit>
-
-  _updateStatusTransaction(
-    depositId: ObjectId | Types.ObjectId,
-    status: DepositStatus
-  ): TTransaction<IDepositObject, IDeposit>
-
   create(
     depositMethodId: ObjectId,
     userId: ObjectId,
     amount: number
-  ): THttpResponse<{ deposit: IDeposit }>
+  ): Promise<IDepositObject>
 
-  fetch(
-    isAdmin: boolean,
-    depositId: ObjectId,
-    userId?: ObjectId
-  ): THttpResponse<{ deposit: IDeposit }>
+  fetchAll(filter: FilterQuery<IDeposit>): Promise<IDepositObject[]>
 
-  fetchAll(
-    all: boolean,
-    userId?: ObjectId
-  ): THttpResponse<{ deposits: IDeposit[] }>
-
-  delete(depositId: ObjectId): THttpResponse<{ deposit: IDeposit }>
+  delete(filter: FilterQuery<IDeposit>): Promise<IDepositObject>
 
   updateStatus(
-    depositId: ObjectId,
+    filter: FilterQuery<IDeposit>,
     status: DepositStatus
-  ): THttpResponse<{ deposit: IDeposit }>
+  ): Promise<IDepositObject>
 }

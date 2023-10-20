@@ -1,8 +1,8 @@
-import { THttpResponse } from '@/modules/http/http.type'
-import { IAppObject } from '@/modules/app/app.interface'
-import { Document } from 'mongoose'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import baseModelInterface from '@/core/baseModelInterface'
+import { FilterQuery } from 'mongoose'
 
-export interface IMailOptionObject extends IAppObject {
+export interface IMailOptionObject extends baseObjectInterface {
   name: string
   host: string
   port: number
@@ -10,20 +10,10 @@ export interface IMailOptionObject extends IAppObject {
   secure: boolean
   username: string
   password: string
-  getPassword(): string
 }
 
-export interface IMailOption extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  name: string
-  host: string
-  port: number
-  tls: boolean
-  secure: boolean
-  username: string
-  password: string
+// @ts-ignore
+export interface IMailOption extends baseModelInterface, IMailOptionObject {
   getPassword(): string
 }
 
@@ -36,9 +26,9 @@ export interface IMailOptionService {
     secure: boolean,
     username: string,
     password: string
-  ): THttpResponse<{ mailOption: IMailOption }>
+  ): Promise<IMailOptionObject>
 
-  get(mailOptionName: string): Promise<IMailOption>
+  fetch(filter: FilterQuery<IMailOption>): Promise<IMailOptionObject>
 
-  // getAll(): Promise<IMailOption[]>
+  fetchAll(filter: FilterQuery<IMailOption>): Promise<IMailOptionObject[]>
 }

@@ -1,15 +1,17 @@
 import validate from '@/modules/sendMail/sendMail.validation'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { NextFunction, Request, Response, Router } from 'express'
+import { Response, Router } from 'express'
 import { Inject, Service } from 'typedi'
 import { ISendMailService } from '@/modules/sendMail/sendMail.interface'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessResponse } from '@/core/apiResponse'
+import routePermission from '@/helpers/routePermission'
+import schemaValidator from '@/helpers/schemaValidator'
 
 @Service()
-class SendMailController implements IAppController {
+class SendMailController implements IController {
   public path = '/send-email'
   public router = Router()
 
@@ -24,32 +26,26 @@ class SendMailController implements IAppController {
     // Send Email
     this.router.post(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.sendEmail),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.sendEmail),
       this.sendCustomMail
     )
   }
 
-  private sendCustomMail = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
+  private sendCustomMail = asyncHandler(
+    async (req, res): Promise<void | Response> => {
       const { email, subject, heading, content } = req.body
 
-      const responce = await this.sendMailService.sendCustomMail(
+      await this.sendMailService.sendCustomMail(
         email,
         subject,
         heading,
         content
       )
 
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      return new SuccessResponse('Mail sent successfully').send(res)
     }
-  }
+  )
 }
 
 export default SendMailController

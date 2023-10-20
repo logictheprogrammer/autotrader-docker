@@ -1,32 +1,19 @@
-1. add transaction file to each service
-2. add utill file to each service
-3. add trade ref to all trades
-4. make the all files naming convention same
-5. use thesame patterns in the APIs
-6. rework on the transaction manager class
-7. rework on the exception service
-8. add an api file to each service
-9. add a toJSON property and an Interface to each models
-10. make all class methods non arrow functions
-11. create an methods param Interfaces to all modules
-12. add Interface to all service validations
-13. create a constant file for each modules if necessary
-14. introduce lodash
-15. use filter query to find one from another service
-16. export all models to begin with a capital letter
-17. implement all change password as a schema methods
-18. remove the object suffix from all models
+---- 16. export all models to begin with a capital letter
+---- 3. add trade ref to all trades
+✔ 4. make the all files naming convention same
+✔ 5. use thesame patterns in the APIs
+✔ 7. rework on the exception service
+---- 9. add a toJSON property and an Interface to each models
+✔ 10. make all class methods non arrow functions
+---- 11. create an methods param Interfaces to all modules
+---- 14. introduce lodash
+✔ 15. use filter query to find one from another service
+✔ 17. implement all change password as a schema methods
+✔ 18. remove the object suffix from all models
 19. use nodemone.json
-20. see if model schema trim and no trim make a difference
-21. change validation to schema
-22. all ids should be as a params
-23. rename transaction manager to executer
-24. use base service, base interface, and base controller
------ 25. add service async handler and controller async handler
-26. export all schemas directly as objects
-27. change the error code to response code
-28. have a core module
-29. add a apiResponce helper to the core module
+---- 20. see if model schema trim and no trim make a difference
+✔ 21. change validation to schema
+✔ 25. add service async handler and controller async handler
 
 * ASAP
 ✔ 1. impliment the forecast min/max daily wait time with the right logic

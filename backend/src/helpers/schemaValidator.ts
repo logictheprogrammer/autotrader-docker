@@ -1,13 +1,11 @@
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import { Request, Response, NextFunction, RequestHandler } from 'express'
+import { RequestHandler } from 'express'
 import Joi from 'joi'
+import asyncHandler from './asyncHandler'
+import { BadRequestError } from '@/core/apiError'
+import { StatusCode } from '@/core/apiResponse'
 
 export default (schema: Joi.Schema): RequestHandler => {
-  return async function (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  return asyncHandler(async function (req, res, next): Promise<void> {
     const validationOptions = {
       abortEarly: false,
       allowUnknown: true,
@@ -22,11 +20,13 @@ export default (schema: Joi.Schema): RequestHandler => {
       e.details.forEach((error: Joi.ValidationErrorItem) => {
         errors.push(error.message)
       })
-      res.status(400).json({
-        status: HttpResponseStatus.ERROR,
-        message: errors[0],
-        data: { status: 400, message: errors[0], errors },
-      })
+
+      throw new BadRequestError(
+        errors[0],
+        'Please fill all details correclty',
+        StatusCode.DANGER,
+        errors
+      )
     }
-  }
+  })
 }

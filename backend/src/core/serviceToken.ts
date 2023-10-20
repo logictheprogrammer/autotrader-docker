@@ -1,4 +1,6 @@
 enum ServiceToken {
+  MATH_SERVICE = 'mathService',
+  MATH_UTILITY = 'mathUtility',
   AUTH_SERVICE = 'AuthService',
   USER_SERVICE = 'UserService',
   MAIL_SERVICE = 'MailService',
@@ -27,8 +29,6 @@ enum ServiceToken {
   PAIR_SERVICE = 'pairService',
   TRADE_SERVICE = 'tradeService',
   FORECAST_SERVICE = 'forecastService',
-  MATH_SERVICE = 'mathService',
-  MATH_UTILITY = 'mathUtility',
 }
 
 export default ServiceToken

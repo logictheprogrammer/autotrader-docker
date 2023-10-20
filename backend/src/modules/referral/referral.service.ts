@@ -8,36 +8,24 @@ import {
 } from '@/modules/referral/referral.interface'
 import referralModel from '@/modules/referral/referral.model'
 import { ReferralStatus, ReferralTypes } from '@/modules/referral/referral.enum'
-import ServiceToken from '@/utils/enums/serviceToken'
 import { INotificationService } from '@/modules/notification/notification.interface'
 import { IReferralSettingsService } from '@/modules/referralSettings/referralSettings.interface'
-import formatNumber from '@/utils/formats/formatNumber'
-import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
+import { IUserObject, IUserService } from '@/modules/user/user.interface'
 import {
   NotificationCategory,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
-import {
-  ITransaction,
-  ITransactionService,
-} from '@/modules/transaction/transaction.interface'
+import { ITransactionService } from '@/modules/transaction/transaction.interface'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
-import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
-import HttpException from '@/modules/http/http.exception'
-import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import AllowedException from '@/utils/exceptions/allowedException'
-import AppException from '@/modules/app/app.exception'
-import { THttpResponse } from '@/modules/http/http.type'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import FormatString from '@/utils/formats/formatString'
-import userModel from '../user/user.model'
-import { ObjectId, isValidObjectId } from 'mongoose'
+import { FilterQuery, isValidObjectId } from 'mongoose'
+import { NotFoundError, ServiceError } from '@/core/apiError'
+import Helpers from '@/utils/helpers'
+import ServiceToken from '@/core/serviceToken'
 
 @Service()
 class ReferralService implements IReferralService {
   private referralModel = referralModel
-  private userModel = userModel
 
   constructor(
     @Inject(ServiceToken.NOTIFICATION_SERVICE)
@@ -50,31 +38,16 @@ class ReferralService implements IReferralService {
   ) {}
 
   private async findAll(
-    fromAllAccounts: boolean,
-    userId?: ObjectId
-  ): Promise<IReferral[]> {
+    filter: FilterQuery<IReferral>
+  ): Promise<IReferralObject[]> {
     try {
-      let referralTransactions
-
-      if (fromAllAccounts) {
-        referralTransactions = await this.referralModel
-          .find()
-          .select('-userObject -referrerObject')
-          .populate('user', 'username isDeleted createdAt')
-          .populate('referrer', 'username isDeleted')
-      } else {
-        referralTransactions = await this.referralModel
-          .find({
-            referrer: userId,
-          })
-          .select('-userObject -referrerObject')
-          .populate('user', 'username isDeleted createdAt')
-          .populate('referrer', 'username isDeleted')
-      }
-
-      return referralTransactions
+      return await this.referralModel
+        .find(filter)
+        .select('-userObject -referrerObject')
+        .populate('user', 'username isDeleted createdAt')
+        .populate('referrer', 'username isDeleted')
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to fetch referral transactions, please try again'
       )
@@ -85,10 +58,10 @@ class ReferralService implements IReferralService {
     type: ReferralTypes,
     amount: number
   ): Promise<{ earn: number; rate: number }> {
-    const referralSettings = await this.referralSettingsService.get()
+    const referralSettings = await this.referralSettingsService.fetch({})
 
     if (!referralSettings)
-      throw new HttpException(404, 'Referral settings not found')
+      throw new NotFoundError('Referral settings not found')
 
     const rate = referralSettings[type]
     const earn = (rate / 100) * amount
@@ -96,163 +69,108 @@ class ReferralService implements IReferralService {
     return { earn, rate }
   }
 
-  public async _createTransaction(
-    referrer: IUserObject,
-    user: IUserObject,
-    type: ReferralTypes,
-    rate: number,
-    earn: number
-  ): TTransaction<IReferralObject, IReferral> {
-    const referral = new this.referralModel({
-      rate,
-      type,
-      referrer: referrer._id,
-      referrerObject: referrer,
-      user: user._id,
-      userObject: user,
-      amount: earn,
-    })
-
-    return {
-      object: referral.toObject({ getters: true }),
-      instance: {
-        model: referral,
-        onFailed: `Delete Referral Transaction with an id of (${referral._id})`,
-        async callback() {
-          await referral.deleteOne()
-        },
-      },
-    }
-  }
-
   public async create(
     type: ReferralTypes,
     user: IUserObject,
     amount: number
-  ): Promise<ITransactionInstance<any>[]> {
+  ): Promise<IReferralObject | undefined> {
     try {
       const userReferrerId = user.referred
-      try {
-        if (!userReferrerId || !isValidObjectId(userReferrerId))
-          throw new HttpException(404, 'Referrer not found')
-      } catch (error) {
-        throw new AllowedException(error)
-      }
+      if (!userReferrerId || !isValidObjectId(userReferrerId)) return
 
       const { earn, rate } = await this._calcAmountEarn(type, amount)
 
-      let userReferralTransaction
+      let userReferrer
       try {
-        userReferralTransaction = await this.userService.fund(
+        userReferrer = await this.userService.fund(
           userReferrerId,
           UserAccount.REFERRAL_BALANCE,
           earn
         )
       } catch (error) {
-        throw new AllowedException(error)
+        if (!(error instanceof NotFoundError)) throw error
       }
 
-      const transactionInstances: ITransactionInstance<any>[] = []
+      if (!userReferrer) return
 
-      const { object: userReferrer, instance: userReferrerInstance } =
-        userReferralTransaction
+      const referral = new this.referralModel({
+        rate,
+        type,
+        referrer: userReferrer,
+        user,
+        amount: earn,
+      })
 
-      transactionInstances.push(userReferrerInstance)
-
-      const {
-        object: referralTransaction,
-        instance: referralTransactionInstance,
-      } = await this._createTransaction(userReferrer, user, type, rate, earn)
-
-      transactionInstances.push(referralTransactionInstance)
-
-      const message = `Your referral account has been credited with ${formatNumber.toDollar(
+      const message = `Your referral account has been credited with ${Helpers.toDollar(
         earn
-      )}, from ${user.username} ${FormatString.fromCamelToTitleCase(
+      )}, from ${user.username} ${Helpers.fromCamelToTitleCase(
         type
-      )} of ${formatNumber.toDollar(amount)}`
+      )} of ${Helpers.toDollar(amount)}`
       const category = NotificationCategory.REFERRAL
       const forWho = NotificationForWho.USER
       const status = ReferralStatus.SUCCESS
 
-      const userReferrerNotificationInstance =
-        await this.notificationService.create(
-          message,
-          category,
-          referralTransaction,
-          forWho,
-          status,
-          UserEnvironment.LIVE,
-          userReferrer
-        )
-
-      transactionInstances.push(userReferrerNotificationInstance)
+      await this.notificationService.create(
+        message,
+        category,
+        referral,
+        forWho,
+        status,
+        UserEnvironment.LIVE,
+        userReferrer
+      )
 
       const adminMessage = `${
         userReferrer.username
-      } referral account has been credited with ${formatNumber.toDollar(
+      } referral account has been credited with ${Helpers.toDollar(
         earn
-      )}, from ${user.username} ${type} of ${formatNumber.toDollar(amount)}`
+      )}, from ${user.username} ${type} of ${Helpers.toDollar(amount)}`
 
-      const adminNotificationInstance = await this.notificationService.create(
+      await this.notificationService.create(
         adminMessage,
         category,
-        referralTransaction,
+        referral,
         NotificationForWho.ADMIN,
         ReferralStatus.SUCCESS,
         UserEnvironment.LIVE
       )
 
-      transactionInstances.push(adminNotificationInstance)
+      await this.transactionService.create(
+        userReferrer,
+        ReferralStatus.SUCCESS,
+        TransactionCategory.REFERRAL,
+        referral,
+        earn,
+        UserEnvironment.LIVE
+      )
 
-      const userReferrerTransactionInstance =
-        await this.transactionService.create(
-          userReferrer,
-          ReferralStatus.SUCCESS,
-          TransactionCategory.REFERRAL,
-          referralTransaction,
-          earn,
-          UserEnvironment.LIVE
-        )
-
-      transactionInstances.push(userReferrerTransactionInstance)
-
-      return transactionInstances
+      return referral
     } catch (err: any) {
-      if (err.allow) return []
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to register referral transactions, please try again'
       )
     }
   }
 
-  public fetchAll = async (
-    fromAllAccounts: boolean,
-    userId?: ObjectId
-  ): THttpResponse<{ referralTransactions: IReferral[] }> => {
+  public async fetchAll(
+    filter: FilterQuery<IReferral>
+  ): Promise<IReferralObject[]> {
     try {
-      const referralTransactions = await this.findAll(fromAllAccounts, userId)
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Referral transactions fetched',
-        data: { referralTransactions },
-      }
+      return await this.findAll(filter)
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to fetch referral transactions, please try again'
       )
     }
   }
 
-  public earnings = async (
-    fromAllAccounts: boolean,
-    userId?: ObjectId
-  ): THttpResponse<{ referralEarnings: IReferralEarnings[] }> => {
+  public async earnings(
+    filter: FilterQuery<IReferral>
+  ): Promise<IReferralEarnings[]> {
     try {
-      const referralTransactions = await this.findAll(fromAllAccounts, userId)
+      const referralTransactions = await this.findAll(filter)
 
       const referralEarnings: IReferralEarnings[] = []
 
@@ -278,24 +196,20 @@ class ReferralService implements IReferralService {
         }
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Referral earnings fetched',
-        data: { referralEarnings },
-      }
+      return referralEarnings
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to fetch referral transactions, please try again'
       )
     }
   }
 
-  public async leaderboard(): THttpResponse<{
-    referralLeaderboard: IReferralLeaderboard[]
-  }> {
+  public async leaderboard(
+    filter: FilterQuery<IReferral>
+  ): Promise<IReferralLeaderboard[]> {
     try {
-      const referralTransactions = await this.findAll(true)
+      const referralTransactions = await this.findAll(filter)
 
       const referralLeaderboard: IReferralLeaderboard[] = []
 
@@ -318,13 +232,9 @@ class ReferralService implements IReferralService {
         }
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Referral leaderboard fetched',
-        data: { referralLeaderboard },
-      }
+      return referralLeaderboard
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to fetch referral transactions, please try again'
       )

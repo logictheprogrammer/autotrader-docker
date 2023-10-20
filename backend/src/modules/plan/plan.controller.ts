@@ -1,17 +1,19 @@
 import { IPlanService } from '@/modules/plan/plan.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Request, Response, NextFunction } from 'express'
+import { Router, Response } from 'express'
 import validate from '@/modules/plan/plan.validation'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { ObjectId } from 'mongoose'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import routePermission from '@/helpers/routePermission'
+import schemaValidator from '@/helpers/schemaValidator'
 
 @Service()
-class PlanController implements IAppController {
+class PlanController implements IController {
   public path = '/plans'
   public router = Router()
 
@@ -25,181 +27,159 @@ class PlanController implements IAppController {
   private intialiseRoutes(): void {
     this.router.post(
       `${this.path}/create`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.create),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
       this.create
     )
 
     this.router.put(
-      `${this.path}/update`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.update),
+      `${this.path}/update/:planId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
       this.update
     )
 
     this.router.patch(
-      `${this.path}/update-status`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateStatus),
+      `${this.path}/update-status/:planId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateStatus),
       this.updateStatus
     )
 
     this.router.delete(
       `${this.path}/delete/:planId`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
       `${this.path}/master`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      this.fetchAll(UserRole.ADMIN)
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(true)
     )
 
     this.router.get(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.USER),
-      this.fetchAll(UserRole.USER)
+      routePermission(UserRole.USER),
+      this.fetchAll(false)
     )
   }
 
-  private create = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const {
-        name,
-        engine,
-        minAmount,
-        maxAmount,
-        minPercentageProfit,
-        maxPercentageProfit,
-        duration,
-        dailyForecasts,
-        gas,
-        description,
-        assetType,
-      } = req.body
+  private create = asyncHandler(async (req, res): Promise<Response | void> => {
+    const {
+      name,
+      engine,
+      minAmount,
+      maxAmount,
+      minPercentageProfit,
+      maxPercentageProfit,
+      duration,
+      dailyForecasts,
+      gas,
+      description,
+      assetType,
+    } = req.body
 
-      const assets = req.body.assets as ObjectId[]
+    const assets = req.body.assets as ObjectId[]
 
-      const response = await this.planService.create(
-        'icon.png',
-        name,
-        engine,
-        minAmount,
-        maxAmount,
-        minPercentageProfit,
-        maxPercentageProfit,
-        duration,
-        dailyForecasts,
-        gas,
-        description,
-        assetType,
-        assets
-      )
-      res.status(201).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+    const plan = await this.planService.create(
+      'icon.png',
+      name,
+      engine,
+      minAmount,
+      maxAmount,
+      minPercentageProfit,
+      maxPercentageProfit,
+      duration,
+      dailyForecasts,
+      gas,
+      description,
+      assetType,
+      assets
+    )
+    return new SuccessCreatedResponse('Plan created successfully', {
+      plan,
+    }).send(res)
+  })
 
-  private update = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const {
-        planId,
-        name,
-        engine,
-        minAmount,
-        maxAmount,
-        minPercentageProfit,
-        maxPercentageProfit,
-        duration,
-        dailyForecasts,
-        gas,
-        description,
-        assetType,
-      } = req.body
+  private update = asyncHandler(async (req, res): Promise<Response | void> => {
+    const {
+      name,
+      engine,
+      minAmount,
+      maxAmount,
+      minPercentageProfit,
+      maxPercentageProfit,
+      duration,
+      dailyForecasts,
+      gas,
+      description,
+      assetType,
+    } = req.body
 
-      const assets = req.body.assets as ObjectId[]
+    const { planId } = req.params
 
-      const response = await this.planService.update(
-        planId,
-        'icon.png',
-        name,
-        engine,
-        minAmount,
-        maxAmount,
-        minPercentageProfit,
-        maxPercentageProfit,
-        duration,
-        dailyForecasts,
-        gas,
-        description,
-        assetType,
-        assets
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+    const assets = req.body.assets as ObjectId[]
 
-  private updateStatus = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { planId } = req.body
+    const plan = await this.planService.update(
+      { _id: planId },
+      'icon.png',
+      name,
+      engine,
+      minAmount,
+      maxAmount,
+      minPercentageProfit,
+      maxPercentageProfit,
+      duration,
+      dailyForecasts,
+      gas,
+      description,
+      assetType,
+      assets
+    )
+    return new SuccessResponse('Plan updated successfully', { plan }).send(res)
+  })
+
+  private updateStatus = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const { planId } = req.params
 
       const status = req.body.status as PlanStatus
 
-      const response = await this.planService.updateStatus(planId, status)
+      const plan = await this.planService.updateStatus({ _id: planId }, status)
 
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      return new SuccessResponse('Status updated successfully', { plan }).send(
+        res
+      )
     }
-  }
+  )
 
-  private delete = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const planId = req.params.planId as unknown as ObjectId
+  private delete = asyncHandler(async (req, res): Promise<Response | void> => {
+    const planId = req.params.planId as unknown as ObjectId
 
-      const response = await this.planService.delete(planId)
+    const plan = await this.planService.delete({ _id: planId })
 
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+    return new SuccessResponse('Plan deleted successfully', { plan }).send(res)
+  })
 
-  private fetchAll =
-    (role: UserRole) =>
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<Response | void> => {
-      try {
-        const response = await this.planService.fetchAll(role)
+  private fetchAll = (byAdmin: boolean) =>
+    asyncHandler(async (req, res): Promise<Response | void> => {
+      let plans
 
-        res.status(200).json(response)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
+      if (byAdmin) {
+        plans = await this.planService.fetchAll({})
+      } else {
+        plans = await this.planService.fetchAll({
+          status: {
+            $ne: PlanStatus.SUSPENDED,
+          },
+        })
       }
-    }
+
+      return new SuccessResponse('Plans fetched successfully', { plans }).send(
+        res
+      )
+    })
 }
 
 export default PlanController

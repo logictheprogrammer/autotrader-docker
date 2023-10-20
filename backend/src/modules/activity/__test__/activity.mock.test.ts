@@ -12,7 +12,7 @@ describe('activity', () => {
       const user = await userModel.create(userA)
       const message = 'message'
 
-      const result = await activityService.set(
+      const result = await activityService.create(
         user,
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
@@ -21,7 +21,6 @@ describe('activity', () => {
 
       expect(result).toMatchObject({
         user: user._id,
-        userObject: user.toObject({ getters: true }),
         category: ActivityCategory.PROFILE,
         forWho: ActivityForWho.USER,
         message,

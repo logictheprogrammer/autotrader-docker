@@ -1,7 +1,8 @@
 import { Schema, Types, model } from 'mongoose'
 import { IDepositMethod } from '@/modules/depositMethod/depositMethod.interface'
+import { DepositMethodStatus } from './depositMethod.enum'
 
-const DepositMethodSchema = new Schema(
+const DepositMethodSchema = new Schema<IDepositMethod>(
   {
     currency: {
       type: Types.ObjectId,
@@ -35,6 +36,7 @@ const DepositMethodSchema = new Schema(
     status: {
       type: String,
       required: true,
+      enum: Object.values(DepositMethodStatus),
     },
     fee: {
       type: Number,

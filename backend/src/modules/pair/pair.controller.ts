@@ -1,15 +1,18 @@
 import { IPairService } from '@/modules/pair/pair.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Request, Response, NextFunction } from 'express'
+import { Router, Response } from 'express'
 import validate from '@/modules/pair/pair.validation'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
+
 import { UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
+import ServiceToken from '@/core/serviceToken'
+import { IController } from '@/core/utils'
+import routePermission from '@/helpers/routePermission'
+import schemaValidator from '@/helpers/schemaValidator'
 
 @Service()
-class PairController implements IAppController {
+class PairController implements IController {
   public path = '/pair'
   public router = Router()
 
@@ -23,74 +26,56 @@ class PairController implements IAppController {
   private intialiseRoutes(): void {
     this.router.post(
       `${this.path}/create`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.create),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
       this.create
     )
 
     this.router.put(
-      `${this.path}/update`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.update),
+      `${this.path}/update/:pairId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
       this.update
     )
 
     this.router.get(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll
     )
   }
 
-  private fetchAll = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const response = await this.pairService.fetchAll()
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
-
-  private create = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { assetType, baseAssetId, quoteAssetId } = req.body
-      const response = await this.pairService.create(
-        assetType,
-        baseAssetId,
-        quoteAssetId
+  private fetchAll = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const pairs = await this.pairService.fetchAll({})
+      return new SuccessResponse('Pairs fetched successfully', { pairs }).send(
+        res
       )
-      res.status(201).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
     }
-  }
+  )
 
-  private update = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { pairId, assetType, baseAssetId, quoteAssetId } = req.body
-      const response = await this.pairService.update(
-        pairId,
-        assetType,
-        baseAssetId,
-        quoteAssetId
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  private create = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { assetType, baseAssetId, quoteAssetId } = req.body
+    const asset = await this.pairService.create(
+      assetType,
+      baseAssetId,
+      quoteAssetId
+    )
+    return new SuccessCreatedResponse('Pair created successfully', {
+      asset,
+    }).send(res)
+  })
+
+  private update = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { assetType, baseAssetId, quoteAssetId } = req.body
+    const pair = await this.pairService.update(
+      { _id: req.params.pairId },
+      assetType,
+      baseAssetId,
+      quoteAssetId
+    )
+    return new SuccessResponse('Pair updated successfully', { pair }).send(res)
+  })
 }
 
 export default PairController

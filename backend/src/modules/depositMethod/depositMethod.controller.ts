@@ -1,16 +1,19 @@
 import { IDepositMethodService } from '@/modules/depositMethod/depositMethod.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Request, Response, NextFunction } from 'express'
+import { Router, Response } from 'express'
 import validate from '@/modules/depositMethod/depositMethod.validation'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
 import { ObjectId } from 'mongoose'
+import asyncHandler from '@/helpers/asyncHandler'
+import { DepositMethodStatus } from './depositMethod.enum'
+import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import routePermission from '@/helpers/routePermission'
+import schemaValidator from '@/helpers/schemaValidator'
 
 @Service()
-class DepositMethodController implements IAppController {
+class DepositMethodController implements IController {
   public path = '/deposit-method'
   public router = Router()
 
@@ -23,186 +26,157 @@ class DepositMethodController implements IAppController {
 
   private intialiseRoutes(): void {
     this.router.post(
-      `${this.path}/create`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.create),
+      `${this.path}/create/:currencyId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
       this.create
     )
 
     this.router.patch(
-      `${this.path}/update-status`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateStatus),
+      `${this.path}/update-status/:depositMethodId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateStatus),
       this.updateStatus
     )
 
     this.router.patch(
-      `${this.path}/update-price`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updatePrice),
+      `${this.path}/update-price/:depositMethodId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updatePrice),
       this.updatePrice
     )
 
     this.router.patch(
-      `${this.path}/update-mode`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateMode),
+      `${this.path}/update-mode/:depositMethodId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateMode),
       this.updateMode
     )
 
     this.router.put(
-      `${this.path}/update`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.update),
+      `${this.path}/update/:depositMethodId/:currencyId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
       this.update
     )
 
     // Delete Deposit Method
     this.router.delete(
       `${this.path}/delete/:depositMethodId`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
       `${this.path}/master`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll(true)
     )
 
     this.router.get(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.fetchAll(false)
     )
   }
 
-  private fetchAll =
-    (all: boolean) =>
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<Response | void> => {
-      try {
-        let response
-        if (all) {
-          response = await this.depositMethodService.fetchAll(true)
-        } else {
-          response = await this.depositMethodService.fetchAll(false)
-        }
-        res.status(200).json(response)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
+  private fetchAll = (all: boolean) =>
+    asyncHandler(async (req, res): Promise<Response | void> => {
+      let depositMethods
+      if (all) {
+        depositMethods = await this.depositMethodService.fetchAll({})
+      } else {
+        depositMethods = await this.depositMethodService.fetchAll({
+          status: DepositMethodStatus.ENABLED,
+        })
       }
-    }
+      return new SuccessResponse('Deposit methods fetched successfully', {
+        depositMethods,
+      }).send(res)
+    })
 
-  private create = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { currencyId, address, network, fee, minDeposit } = req.body
-      const response = await this.depositMethodService.create(
-        currencyId,
-        address,
-        network,
-        fee,
-        minDeposit
-      )
-      res.status(201).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  private create = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { address, network, fee, minDeposit } = req.body
+    const { currencyId } = req.params
+    const depositMethod = await this.depositMethodService.create(
+      currencyId as unknown as ObjectId,
+      address,
+      network,
+      fee,
+      minDeposit
+    )
+    return new SuccessCreatedResponse('Deposit method created successfully', {
+      depositMethod,
+    }).send(res)
+  })
 
-  private update = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { depositMethodId, currencyId, address, network, fee, minDeposit } =
-        req.body
-      const response = await this.depositMethodService.update(
-        depositMethodId,
-        currencyId,
-        address,
-        network,
-        fee,
-        minDeposit
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  private update = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { address, network, fee, minDeposit } = req.body
+    const { depositMethodId, currencyId } = req.params
+    const depositMethod = await this.depositMethodService.update(
+      { _id: depositMethodId as unknown as ObjectId },
+      currencyId as unknown as ObjectId,
+      address,
+      network,
+      fee,
+      minDeposit
+    )
+    return new SuccessResponse('Deposit method updated successfully', {
+      depositMethod,
+    }).send(res)
+  })
 
-  private updateStatus = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { depositMethodId, status } = req.body
-      const response = await this.depositMethodService.updateStatus(
-        depositMethodId,
+  private updateStatus = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const { status } = req.body
+      const { depositMethodId } = req.params
+      const depositMethod = await this.depositMethodService.updateStatus(
+        { _id: depositMethodId as unknown as ObjectId },
         status
       )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      return new SuccessResponse('Status updated successfully', {
+        depositMethod,
+      }).send(res)
     }
-  }
+  )
 
-  private delete = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const depositMethodId = req.params.depositMethodId as unknown as ObjectId
-      const responce = await this.depositMethodService.delete(depositMethodId)
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  private delete = asyncHandler(async (req, res): Promise<Response | void> => {
+    const depositMethodId = req.params.depositMethodId as unknown as ObjectId
+    const depositMethod = await this.depositMethodService.delete({
+      _id: depositMethodId,
+    })
+    return new SuccessResponse('Deposit method deleted successfully', {
+      depositMethod,
+    }).send(res)
+  })
 
-  private updateMode = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { depositMethodId, autoUpdate } = req.body
-      const response = await this.depositMethodService.updateMode(
-        depositMethodId,
+  private updateMode = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const { autoUpdate } = req.body
+      const { depositMethodId } = req.params
+      const depositMethod = await this.depositMethodService.updateMode(
+        { _id: depositMethodId as unknown as ObjectId },
         autoUpdate
       )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      return new SuccessResponse('Mode updated successfully', {
+        depositMethod,
+      }).send(res)
     }
-  }
+  )
 
-  private updatePrice = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { depositMethodId, price } = req.body
-      const response = await this.depositMethodService.updatePrice(
-        depositMethodId,
+  private updatePrice = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const { price } = req.body
+      const { depositMethodId } = req.params
+      const depositMethod = await this.depositMethodService.updatePrice(
+        { _id: depositMethodId as unknown as ObjectId },
         price
       )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      return new SuccessResponse('Price updated successfully', {
+        depositMethod,
+      }).send(res)
     }
-  }
+  )
 }
 
 export default DepositMethodController

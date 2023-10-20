@@ -1,14 +1,13 @@
 import { Schema, Types, model } from 'mongoose'
 import { INotification } from '@/modules/notification/notification.interface'
+import { NotificationCategory } from './notification.enum'
+import { UserEnvironment, UserRole } from '../user/user.enum'
 
-const NotificationSchema = new Schema(
+const NotificationSchema = new Schema<INotification>(
   {
     user: {
       type: Types.ObjectId,
       ref: 'User',
-    },
-    userObject: {
-      type: Object,
     },
     message: {
       type: String,
@@ -22,18 +21,16 @@ const NotificationSchema = new Schema(
     categoryName: {
       type: String,
       required: true,
+      enum: Object.values(NotificationCategory),
     },
     category: {
       type: Types.ObjectId,
       required: true,
     },
-    categoryObject: {
-      type: Object,
-      required: true,
-    },
     forWho: {
-      type: String,
+      type: Number,
       required: true,
+      enum: Object.values(UserRole),
     },
     status: {
       type: String,
@@ -42,6 +39,7 @@ const NotificationSchema = new Schema(
     environment: {
       type: String,
       required: true,
+      enum: Object.values(UserEnvironment),
     },
   },
   { timestamps: true }

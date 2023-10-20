@@ -1,26 +1,18 @@
-import { IAppObject } from '@/modules/app/app.interface'
-import { THttpResponse } from '@/modules/http/http.type'
+import baseModelInterface from '@/core/baseModelInterface'
+import baseObjectInterface from '@/core/baseObjectInterface'
 import { AssetType } from '@/modules/asset/asset.enum'
-import { Document, ObjectId, Types } from 'mongoose'
+import { FilterQuery, QueryOptions } from 'mongoose'
+import { ObjectId } from 'mongoose'
 
-export interface IAssetObject extends IAppObject {
+export interface IAssetObject extends baseObjectInterface {
   name: string
   symbol: string
   logo: string
   type: AssetType
-  isDeleted?: boolean
 }
 
-export interface IAsset extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  name: string
-  symbol: string
-  logo: string
-  type: AssetType
-  isDeleted?: boolean
-}
+// @ts-ignore
+export interface IAsset extends baseModelInterface, IAssetObject {}
 
 export interface IAssetService {
   create(
@@ -28,20 +20,17 @@ export interface IAssetService {
     symbol: string,
     logo: string,
     type: AssetType
-  ): THttpResponse<{ asset: IAsset }>
+  ): Promise<IAssetObject>
 
-  get(
-    assetId: ObjectId | Types.ObjectId,
-    assetType: AssetType
-  ): Promise<IAssetObject | null | undefined>
+  fetch(filter: FilterQuery<IAsset>): Promise<IAssetObject>
 
   update(
-    assetId: ObjectId,
+    filter: FilterQuery<IAsset>,
     name: string,
     symbol: string,
     logo: string,
     type: AssetType
-  ): THttpResponse<{ asset: IAsset }>
+  ): Promise<IAssetObject>
 
-  fetchAll(): THttpResponse<{ assets: IAsset[] }>
+  fetchAll(filter: FilterQuery<IAsset>): Promise<IAssetObject[]>
 }

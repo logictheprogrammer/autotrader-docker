@@ -20,7 +20,6 @@ const create = Joi.object({
 })
 
 const update = Joi.object({
-  planId: Joi.string().required(),
   name: Joi.string().required(),
   engine: Joi.string().required(),
   minAmount: Joi.number().positive().required(),
@@ -38,7 +37,6 @@ const update = Joi.object({
 })
 
 const updateStatus = Joi.object({
-  planId: Joi.string().required(),
   status: Joi.string()
     .valid(...Object.values(PlanStatus))
     .required(),

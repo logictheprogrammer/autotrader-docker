@@ -7,7 +7,6 @@ const create = Joi.object({
 })
 
 const update = Joi.object({
-  pairId: Joi.string().required(),
   assetType: Joi.string().required(),
   baseAssetId: Joi.string().required(),
   quoteAssetId: Joi.string().required(),

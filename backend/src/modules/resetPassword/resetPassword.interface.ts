@@ -1,9 +1,7 @@
+import baseModelInterface from '@/core/baseModelInterface'
 import { IUser } from '@/modules/user/user.interface'
 
-export interface IResetPassword extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
+export interface IResetPassword extends baseModelInterface {
   key: string
   token: string
   expires: number

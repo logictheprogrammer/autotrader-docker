@@ -1,7 +1,8 @@
 import { Schema, Types, model } from 'mongoose'
 import { IWithdrawalMethod } from '@/modules/withdrawalMethod/withdrawalMethod.interface'
+import { WithdrawalMethodStatus } from './withdrawalMethod.enum'
 
-const WithdrawalMethodSchema = new Schema(
+const WithdrawalMethodSchema = new Schema<IWithdrawalMethod>(
   {
     currency: {
       type: Types.ObjectId,
@@ -27,6 +28,7 @@ const WithdrawalMethodSchema = new Schema(
     status: {
       type: String,
       required: true,
+      enum: Object.values(WithdrawalMethodStatus),
     },
     fee: {
       type: Number,

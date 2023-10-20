@@ -8,7 +8,6 @@ const create = Joi.object({
 })
 
 const update = Joi.object({
-  assetId: Joi.string().required(),
   name: Joi.string().required(),
   symbol: Joi.string().required(),
   logo: Joi.string().required(),

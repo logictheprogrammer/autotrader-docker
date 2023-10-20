@@ -1,15 +1,18 @@
 import { IAssetService } from '@/modules/asset/asset.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Request, Response, NextFunction } from 'express'
+import { Router, Response } from 'express'
 import validate from '@/modules/asset/asset.validation'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
+import routePermission from '@/helpers/routePermission'
+import schemaValidator from '@/helpers/schemaValidator'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import { ObjectId } from 'mongoose'
 
 @Service()
-class AssetController implements IAppController {
+class AssetController implements IController {
   public path = '/asset'
   public router = Router()
 
@@ -23,71 +26,58 @@ class AssetController implements IAppController {
   private intialiseRoutes(): void {
     this.router.post(
       `${this.path}/create`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.create),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
       this.create
     )
 
     this.router.put(
-      `${this.path}/update`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.update),
+      `${this.path}/update/:assetId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
       this.update
     )
 
     this.router.get(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll
     )
   }
 
-  private fetchAll = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const response = await this.assetService.fetchAll()
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
-
-  private create = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { name, symbol, logo, type } = req.body
-      const response = await this.assetService.create(name, symbol, logo, type)
-      res.status(201).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
-
-  private update = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { assetId, name, symbol, logo, type } = req.body
-      const response = await this.assetService.update(
-        assetId,
-        name,
-        symbol,
-        logo,
-        type
+  private fetchAll = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const asset = await this.assetService.fetchAll({})
+      return new SuccessResponse('Assets fetched successfully', { asset }).send(
+        res
       )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
     }
-  }
+  )
+
+  private create = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { name, symbol, logo, type } = req.body
+
+    const asset = await this.assetService.create(name, symbol, logo, type)
+    return new SuccessCreatedResponse('Asset created successfully', {
+      asset,
+    }).send(res)
+  })
+
+  private update = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { name, symbol, logo, type } = req.body
+    const { assetId } = req.params
+
+    const asset = await this.assetService.update(
+      assetId as unknown as ObjectId,
+      name,
+      symbol,
+      logo,
+      type
+    )
+    return new SuccessResponse('Asset updated successfully', { asset }).send(
+      res
+    )
+  })
 }
 
 export default AssetController

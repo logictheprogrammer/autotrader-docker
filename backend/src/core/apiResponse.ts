@@ -1,6 +1,6 @@
 import { Response } from 'express'
 
-enum StatusCode {
+export enum StatusCode {
   SUCCESS = '1000',
   INFO = '1001',
   WARNING = '1002',
@@ -25,7 +25,7 @@ abstract class ApiResponse {
     protected message: string,
     protected description?: string,
     protected data?: any,
-    protected errors?: []
+    protected errors?: string[]
   ) {}
 
   public send(res: Response) {
@@ -41,90 +41,108 @@ abstract class ApiResponse {
 
 export class NotFoundResponse extends ApiResponse {
   constructor(
-    message = 'Not Found',
-    description?: '',
-    statusCode?: StatusCode
+    message: string,
+    description?: string,
+    statusCode?: StatusCode,
+    errors?: string[]
   ) {
     super(
       statusCode || StatusCode.DANGER,
       ResponseStatus.NOT_FOUND,
       message,
-      description
+      description,
+      undefined,
+      errors || [message]
     )
   }
 }
 
 export class BadRequestResponse extends ApiResponse {
   constructor(
-    message = 'Invalid Request',
-    description?: '',
-    statusCode?: StatusCode
+    message: string,
+    description?: string,
+    statusCode?: StatusCode,
+    errors?: string[]
   ) {
     super(
       statusCode || StatusCode.DANGER,
       ResponseStatus.BAD_REQUEST,
       message,
-      description
+      description,
+      undefined,
+      errors || [message]
     )
   }
 }
 
 export class RequestConflictResponse extends ApiResponse {
   constructor(
-    message = 'Resource Already Exist',
-    description?: '',
-    statusCode?: StatusCode
+    message: string,
+    description?: string,
+    statusCode?: StatusCode,
+    errors?: string[]
   ) {
     super(
       statusCode || StatusCode.DANGER,
       ResponseStatus.CONFLICT,
       message,
-      description
+      description,
+      undefined,
+      errors || [message]
     )
   }
 }
 
 export class UnauthorizedResponse extends ApiResponse {
   constructor(
-    message = 'Unauthorized',
-    description?: '',
-    statusCode?: StatusCode
+    message: string,
+    description?: string,
+    statusCode?: StatusCode,
+    errors?: string[]
   ) {
     super(
       statusCode || StatusCode.DANGER,
       ResponseStatus.UNAUTHORIZED,
       message,
-      description
+      description,
+      undefined,
+      errors || [message]
     )
   }
 }
 
 export class ForbiddenResponse extends ApiResponse {
   constructor(
-    message = 'Forbidden',
-    description?: '',
-    statusCode?: StatusCode
+    message: string,
+    description?: string,
+    statusCode?: StatusCode,
+    errors?: string[]
   ) {
     super(
       statusCode || StatusCode.DANGER,
       ResponseStatus.FORBIDDEN,
       message,
-      description
+      description,
+      undefined,
+      errors || [message]
     )
   }
 }
 
 export class InternalErrorResponse extends ApiResponse {
   constructor(
-    message = 'Something Went Wrong',
-    description?: '',
-    statusCode?: StatusCode
+    message: string,
+    description?: string,
+    statusCode?: StatusCode,
+    errors?: string[]
   ) {
     super(
       statusCode || StatusCode.DANGER,
       ResponseStatus.INTERNAL_ERROR,
       message,
-      description
+      description,
+      undefined,
+      errors || [message]
     )
   }
 }
@@ -132,8 +150,8 @@ export class InternalErrorResponse extends ApiResponse {
 export class SuccessResponse extends ApiResponse {
   constructor(
     message: string,
-    data: any,
-    description?: '',
+    data?: any,
+    description?: string,
     statusCode?: StatusCode
   ) {
     super(
@@ -150,7 +168,7 @@ export class SuccessCreatedResponse extends ApiResponse {
   constructor(
     message: string,
     data: any,
-    description?: '',
+    description?: string,
     statusCode?: StatusCode
   ) {
     super(

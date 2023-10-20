@@ -1,51 +1,40 @@
-import { Request, Response, NextFunction } from 'express'
+import { Response } from 'express'
 import userModel from '@/modules/user/user.model'
 import { UserRole, UserStatus } from '@/modules/user/user.enum'
-
-import HttpException from '@/modules/http/http.exception'
-import Encryption from '@/utils/encryption'
+import Cryptograph from '@/core/cryptograph'
+import { UnauthorizedError } from '@/core/apiError'
+import asyncHandler from './asyncHandler'
 
 export default (role: UserRole) => {
-  return async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const bearer = req.headers.authorization
-      if (!bearer || !bearer.startsWith('Bearer ')) {
-        throw new HttpException(401, 'Unauthorized')
-      }
-
-      const accessToken = bearer.split('Bearer ')[1].trim()
-
-      const payload = await Encryption.verifyToken(accessToken)
-
-      if (!payload) {
-        throw new HttpException(401, 'Unauthorized')
-      }
-
-      const user = await userModel
-        .findById(payload.id)
-        .select('-password')
-        .exec()
-
-      if (!user) {
-        throw new HttpException(401, 'Unauthorized')
-      }
-
-      if (user.status !== UserStatus.ACTIVE) {
-        throw new HttpException(401, 'Unauthorized')
-      }
-
-      if (role > user.role) {
-        throw new HttpException(401, 'Unauthorized')
-      }
-
-      req.user = user
-      return next()
-    } catch (err) {
-      return next(err)
+  return asyncHandler(async (req, res, next): Promise<Response | void> => {
+    const bearer = req.headers.authorization
+    if (!bearer || !bearer.startsWith('Bearer ')) {
+      throw new UnauthorizedError('Unauthorized')
     }
-  }
+
+    const accessToken = bearer.split('Bearer ')[1].trim()
+
+    const payload = await Cryptograph.verifyToken(accessToken)
+
+    if (!payload) {
+      throw new UnauthorizedError('Unauthorized')
+    }
+
+    const user = await userModel.findById(payload.id).select('-password').exec()
+
+    if (!user) {
+      throw new UnauthorizedError('Unauthorized')
+    }
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedError('Unauthorized')
+    }
+
+    if (role > user.role) {
+      throw new UnauthorizedError('Unauthorized')
+    }
+
+    req.user = user
+    return next()
+  })
 }

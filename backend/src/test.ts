@@ -1,7 +1,7 @@
+import validateEnv from './helpers/validateEnv'
 import 'dotenv/config'
 import 'module-alias/register'
-import validateEnv from './utils/validateEnv'
-import { controllers, httpMiddleware } from './setup'
+import { controllers } from './setup'
 import App from './app'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import mongoose from 'mongoose'
@@ -23,11 +23,6 @@ afterAll(async () => {
   await mongoose.connection.close()
 })
 
-const app = new App(
-  controllers,
-  Number(process.env.PORT),
-  httpMiddleware,
-  false
-)
+const app = new App(controllers, Number(process.env.PORT), true)
 
 export const request = supertest(app.express)

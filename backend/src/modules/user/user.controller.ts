@@ -1,16 +1,19 @@
-import { Router, Request, Response, NextFunction } from 'express'
+import { Router, Response } from 'express'
 import { Service, Inject } from 'typedi'
 import { IUserService } from '@/modules/user/user.interface'
-import ServiceToken from '@/utils/enums/serviceToken'
-import HttpException from '@/modules/http/http.exception'
-import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
 import userValidation from '@/modules/user/user.validation'
-import { IAppController } from '@/modules/app/app.interface'
 import { ObjectId } from 'mongoose'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessResponse } from '@/core/apiResponse'
+import { RequestConflictError } from '@/core/apiError'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import routePermission from '@/helpers/routePermission'
+import schemaValidator from '@/helpers/schemaValidator'
 
 @Service()
-class UserController implements IAppController {
+class UserController implements IController {
   public path = '/users'
   public router = Router()
 
@@ -24,240 +27,191 @@ class UserController implements IAppController {
     // Fund User
     this.router.patch(
       `${this.path}/:userId/force-fund-user`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(userValidation.fundUser),
-      this.forceFundUser
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.fundUser),
+      this.fundUser
     )
 
     // Update Profile
     this.router.put(
       `${this.path}/update-profile`,
-      HttpMiddleware.authenticate(UserRole.USER),
-      HttpMiddleware.validate(userValidation.updateProfile),
+      routePermission(UserRole.USER),
+      schemaValidator(userValidation.updateProfile),
       this.updateProfile(false)
     )
 
     // Update User Profile
     this.router.put(
       `${this.path}/:userId/update-user-profile`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(userValidation.updateProfile),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.updateProfile),
       this.updateProfile(true)
     )
 
     // Update User Email
     this.router.patch(
       `${this.path}/:userId/update-user-email`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(userValidation.updateEmail),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.updateEmail),
       this.updateEmail(true)
     )
 
     // Update User Status
     this.router.patch(
       `${this.path}/:userId/update-user-status`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(userValidation.updateStatus),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.updateStatus),
       this.updateStatus
     )
 
     // Delete User
     this.router.delete(
       `${this.path}/:userId/delete-user`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.deleteUser
     )
 
     // Get Referred Users
     this.router.get(
       `${this.path}/referred-users`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.getReferredUsers(false)
     )
 
     // Get All Referred Users
     this.router.get(
       `${this.path}/all-referred-users`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.getReferredUsers(true)
     )
 
     // Send Email
     this.router.post(
       `${this.path}/send-email/:userId`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(userValidation.sendEmail),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.sendEmail),
       this.sendEmail
-    )
-
-    // Get User
-    this.router.get(
-      `${this.path}/:userId`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      this.getUser
     )
 
     // Get Users
     this.router.get(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      this.getUsers
+      routePermission(UserRole.ADMIN),
+      this.fetchAll
     )
   }
 
-  private getUsers = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const responce = await this.userService.fetchAll()
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+  private fetchAll = asyncHandler(
+    async (req, res): Promise<void | Response> => {
+      const users = await this.userService.fetchAll({})
+      return new SuccessResponse('Users fetched successfully', { users }).send(
+        res
+      )
     }
-  }
+  )
 
-  private getUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const userId = req.params.userId as unknown as ObjectId
-      const responce = await this.userService.fetch(userId)
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  private updateProfile = (byAdmin: boolean = false) =>
+    asyncHandler(async (req, res): Promise<void | Response> => {
+      const userId = byAdmin ? req.params.userId : req.user._id
+      const { name, username } = req.body
 
-  private updateProfile =
-    (isAdmin: boolean = false) =>
-    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-      try {
-        let userId
-        const { name, username } = req.body
-        if (isAdmin) {
-          userId = req.params.userId
-          if (!userId) throw new HttpException(404, 'User not found')
-        } else {
-          if (!req.user) throw new HttpException(404, 'User not found')
-          userId = req.user._id
-        }
-        const responce = await this.userService.updateProfile(
-          userId,
-          name,
-          username,
-          isAdmin
+      const usernameExit = await this.userService.fetch({
+        username,
+        _id: { $ne: userId },
+      })
+
+      if (usernameExit)
+        throw new RequestConflictError(
+          'A user with this username already exist'
         )
-        res.status(200).json(responce)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
-      }
-    }
 
-  private updateEmail =
-    (isAdmin: boolean = false) =>
-    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-      try {
-        let userId
-        const email = req.body.email
-        if (isAdmin) {
-          userId = req.params.userId
-          if (!userId) throw new HttpException(404, 'User not found')
-        } else {
-          if (!req.user) throw new HttpException(404, 'User not found')
-          userId = req.user._id
-        }
-        const responce = await this.userService.updateEmail(userId, email)
-        res.status(200).json(responce)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
-      }
-    }
+      const user = await this.userService.updateProfile(
+        { _id: userId },
+        name,
+        username,
+        byAdmin
+      )
+      return new SuccessResponse('Profile updated successfully', { user }).send(
+        res
+      )
+    })
 
-  private updateStatus = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
+  private updateEmail = (byAdmin: boolean) =>
+    asyncHandler(async (req, res): Promise<void | Response> => {
+      const userId = byAdmin ? req.params.userId : req.user._id
+      const email = req.body.email
+
+      const emailExit = await this.userService.fetch({
+        email,
+        _id: { $ne: userId },
+      })
+
+      if (emailExit)
+        throw new RequestConflictError('A user with this email already exist')
+
+      const user = await this.userService.updateEmail({ _id: userId }, email)
+      return new SuccessResponse('Email updated successfully', { user }).send(
+        res
+      )
+    })
+
+  private updateStatus = asyncHandler(
+    async (req, res): Promise<void | Response> => {
       const { status } = req.body
       const userId = req.params.userId as unknown as ObjectId
-      const responce = await this.userService.updateStatus(userId, status)
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      const user = await this.userService.updateStatus({ _id: userId }, status)
+      return new SuccessResponse('Status updated successfully', { user }).send(
+        res
+      )
     }
-  }
+  )
 
-  private deleteUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
+  private deleteUser = asyncHandler(
+    async (req, res): Promise<void | Response> => {
       const userId = req.params.userId as unknown as ObjectId
-      const responce = await this.userService.delete(userId)
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      const user = await this.userService.delete(userId)
+      return new SuccessResponse('', { user }).send(res)
     }
-  }
+  )
 
-  private forceFundUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
+  private fundUser = asyncHandler(
+    async (req, res): Promise<void | Response> => {
       const userId = req.params.userId as unknown as ObjectId
       const { account, amount } = req.body
-      const responce = await this.userService.forceFund(userId, account, amount)
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      const user = await this.userService.fund({ _id: userId }, account, amount)
+      return new SuccessResponse('User funded successfully', { user }).send(res)
     }
-  }
+  )
 
-  private getReferredUsers =
-    (getAll: boolean = false) =>
-    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-      try {
-        let userId
-        if (!getAll) {
-          if (!req.user) throw new HttpException(404, 'User not found')
-          userId = req.user._id
-        }
-        const responce = await this.userService.getReferredUsers(getAll, userId)
-        res.status(200).json(responce)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
+  private getReferredUsers = (byAdmin: boolean = false) =>
+    asyncHandler(async (req, res): Promise<void | Response> => {
+      let user
+      if (byAdmin) {
+        user = await this.userService.getReferredUsers({})
+      } else {
+        user = await this.userService.getReferredUsers({ _id: req.user._id })
       }
-    }
 
-  private sendEmail = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
+      return new SuccessResponse('Users fetched successfully', { user }).send(
+        res
+      )
+    })
+
+  private sendEmail = asyncHandler(
+    async (req, res): Promise<void | Response> => {
       const userId = req.params.userId as unknown as ObjectId
       const { subject, heading, content } = req.body
 
-      const responce = await this.userService.sendEmail(
-        userId,
+      const user = await this.userService.sendEmail(
+        { _id: userId },
         subject,
         heading,
         content
       )
 
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      return new SuccessResponse('', { user }).send(res)
     }
-  }
+  )
 }
 
 export default UserController

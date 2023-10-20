@@ -1,26 +1,30 @@
-import express, { Application } from 'express'
+import express, { Application, NextFunction, Request, Response } from 'express'
 import compression from 'compression'
 import cors from 'cors'
 import morgan from 'morgan'
 import helmet from 'helmet'
-import HttpMiddleware from '@/modules/http/http.middleware'
-import { IAppController } from '@/modules/app/app.interface'
 import path from 'path'
 import cookieParser from 'cookie-parser'
-import { doubleCsrfProtection } from '@/utils/csrf'
-import mongodbDatabase from './database/mongodb.database'
 import { referralSettingsService, transferSettingsService } from './setup'
+import mongoose from 'mongoose'
+import { IController } from '@/core/utils'
+import { doubleCsrfProtection } from '@/helpers/csrf'
+import {
+  ApiError,
+  InternalError,
+  NotFoundError,
+  ServiceError,
+} from '@/core/apiError'
 
 class App {
   public express: Application
 
   constructor(
-    public controllers: IAppController[],
+    public controllers: IController[],
     public port: number,
-    private httpMiddleware: HttpMiddleware,
-    private notTest: boolean,
+    private isTest: boolean,
     private database?: {
-      mogodb?: string
+      mogodbUri: string
     }
   ) {
     this.express = express()
@@ -50,14 +54,14 @@ class App {
     this.express.use(express.urlencoded({ extended: false }))
     this.express.use(compression())
     this.express.use(cookieParser())
-    if (this.notTest) this.express.use(doubleCsrfProtection)
+    if (!this.isTest) this.express.use(doubleCsrfProtection)
     this.express.get('/api/token', (req, res, next) => {
       res.json({ token: req.csrfToken && req.csrfToken() })
     })
   }
 
-  private initialiseControllers(controllers: IAppController[]): void {
-    controllers.forEach((controller: IAppController) => {
+  private initialiseControllers(controllers: IController[]): void {
+    controllers.forEach((controller: IController) => {
       this.express.use('/api', controller.router)
     })
   }
@@ -67,25 +71,53 @@ class App {
   }
 
   private initialiseErrorHandling(): void {
-    this.express.use(this.httpMiddleware.handle404Error)
+    // 404 Error
+    this.express.use((req, res, next) =>
+      next(
+        new NotFoundError(
+          'Sorry, the resourse you requested could not be found.'
+        )
+      )
+    )
+
+    // Catch thrown Errors
     this.express.use(
-      this.httpMiddleware.handleThrownError.bind(this.httpMiddleware)
+      (err: Error, req: Request, res: Response, next: NextFunction) => {
+        let defaultMessage
+        if (err instanceof ServiceError) {
+          defaultMessage = err.message
+          err = err.error
+        }
+        if (err instanceof ApiError) {
+          ApiError.handle(err, res)
+        } else {
+          ApiError.notifyDeveloper(err)
+          ApiError.handle(new InternalError(defaultMessage), res)
+        }
+      }
     )
   }
 
   private async initialiseDatabaseConnection(): Promise<void> {
     if (!this.database) return
-    if (this.database.mogodb) mongodbDatabase(this.database.mogodb)
+    try {
+      if (this.database.mogodbUri)
+        await mongoose.connect(`${this.database.mogodbUri}`)
+      console.log('DB CONNECTED')
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
   }
 
   private async beforeStart(): Promise<void> {
     await this.initialiseDatabaseConnection()
-    const transferSettings = await transferSettingsService.get()
-    if (!transferSettings && this.notTest) {
+    const transferSettings = await transferSettingsService.fetch({})
+    if (!transferSettings && !this.isTest) {
       await transferSettingsService.create(false, 0)
     }
-    const referralSettings = await referralSettingsService.get()
-    if (!referralSettings && this.notTest) {
+    const referralSettings = await referralSettingsService.fetch({})
+    if (!referralSettings && !this.isTest) {
       await referralSettingsService.create(10, 5, 15, 10, 10)
     }
   }

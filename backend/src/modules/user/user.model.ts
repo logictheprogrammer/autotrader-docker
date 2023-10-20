@@ -1,5 +1,6 @@
 import { Schema, model, Types } from 'mongoose'
 import { IUser } from '@/modules/user/user.interface'
+import Cryptograph from '@/core/cryptograph'
 
 const UserSchema = new Schema(
   {
@@ -35,6 +36,7 @@ const UserSchema = new Schema(
     verifield: {
       type: Boolean,
       required: true,
+      default: false,
     },
     password: {
       type: String,
@@ -77,5 +79,16 @@ const UserSchema = new Schema(
     timestamps: true,
   }
 )
+
+UserSchema.pre<IUser>('save', async function (next) {
+  if (!this.isModified('password')) return next()
+
+  this.password = await Cryptograph.setHash(this.password)
+  return next()
+})
+
+UserSchema.methods.isValidPassword = async function (password: string) {
+  return await Cryptograph.isValidHash(password, this.password)
+}
 
 export default model<IUser>('User', UserSchema)

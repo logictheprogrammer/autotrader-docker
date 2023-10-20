@@ -1,15 +1,17 @@
 import { IMailOptionService } from '@/modules/mailOption/mailOption.interface'
-import ServiceToken from '@/utils/enums/serviceToken'
 import { Service, Inject } from 'typedi'
 import validate from '@/modules/mailOption/mailOption.validation'
-import { NextFunction, Request, Response, Router } from 'express'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
+import { Response, Router } from 'express'
 import { UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessCreatedResponse } from '@/core/apiResponse'
+import ServiceToken from '@/core/serviceToken'
+import { IController } from '@/core/utils'
+import routePermission from '@/helpers/routePermission'
+import schemaValidator from '@/helpers/schemaValidator'
 
 @Service()
-export default class MailOptionController implements IAppController {
+export default class MailOptionController implements IController {
   public path = '/mail-options'
   public router = Router()
 
@@ -23,32 +25,26 @@ export default class MailOptionController implements IAppController {
   private initialiseRoutes = (): void => {
     this.router.post(
       `${this.path}/create`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.create),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
       this.create
     )
   }
 
-  private create = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { name, host, port, tls, secure, username, password } = req.body
+  private create = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { name, host, port, tls, secure, username, password } = req.body
 
-      const mailOption = await this.mailOptionService.create(
-        name,
-        host,
-        port,
-        tls,
-        secure,
-        username,
-        password
-      )
-      res.status(201).json(mailOption)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+    const mailOption = await this.mailOptionService.create(
+      name,
+      host,
+      port,
+      tls,
+      secure,
+      username,
+      password
+    )
+    return new SuccessCreatedResponse('Mail option created successfully', {
+      mailOption,
+    }).send(res)
+  })
 }

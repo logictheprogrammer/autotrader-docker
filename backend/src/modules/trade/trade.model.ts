@@ -2,15 +2,11 @@ import { ITrade } from '@/modules/trade/trade.interface'
 import { Schema, Types, model } from 'mongoose'
 import { ForecastStatus } from '@/modules/forecast/forecast.enum'
 
-const TradeSchema = new Schema(
+const TradeSchema = new Schema<ITrade>(
   {
     investment: {
       type: Types.ObjectId,
       ref: 'Investment',
-      required: true,
-    },
-    investmentObject: {
-      type: Object,
       required: true,
     },
     forecast: {
@@ -18,26 +14,14 @@ const TradeSchema = new Schema(
       ref: 'Forecast',
       required: true,
     },
-    forecastObject: {
-      type: Object,
-      required: true,
-    },
     user: {
       type: Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    userObject: {
-      type: Object,
-      required: true,
-    },
     pair: {
       type: Types.ObjectId,
       ref: 'Pair',
-      required: true,
-    },
-    pairObject: {
-      type: Object,
       required: true,
     },
     market: {
@@ -47,6 +31,7 @@ const TradeSchema = new Schema(
     status: {
       type: String,
       required: true,
+      enum: Object.values(ForecastStatus),
       default: ForecastStatus.PREPARING,
     },
     move: {
@@ -68,7 +53,7 @@ const TradeSchema = new Schema(
       type: Number,
       required: true,
     },
-    investmentPercentage: {
+    percentageProfit: {
       type: Number,
       required: true,
     },
@@ -95,11 +80,6 @@ const TradeSchema = new Schema(
     environment: {
       type: String,
       required: true,
-    },
-    manualUpdateAmount: {
-      type: Boolean,
-      required: true,
-      default: false,
     },
     manualMode: {
       type: Boolean,

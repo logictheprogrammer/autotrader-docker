@@ -1,24 +1,16 @@
 import { Schema, Types, model } from 'mongoose'
 import { ITransfer } from '@/modules/transfer/transfer.interface'
 
-const TransferSchema = new Schema(
+const TransferSchema = new Schema<ITransfer>(
   {
     fromUser: {
       type: Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    fromUserObject: {
-      type: Object,
-      required: true,
-    },
     toUser: {
       type: Types.ObjectId,
       ref: 'User',
-      required: true,
-    },
-    toUserObject: {
-      type: Object,
       required: true,
     },
     account: {

@@ -5,15 +5,16 @@ import {
   IDepositMethodService,
 } from '@/modules/depositMethod/depositMethod.interface'
 import depositMethodModel from '@/modules/depositMethod/depositMethod.model'
-import ServiceToken from '@/utils/enums/serviceToken'
 import { ICurrencyService } from '@/modules/currency/currency.interface'
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
-import { THttpResponse } from '@/modules/http/http.type'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import AppException from '@/modules/app/app.exception'
-import HttpException from '@/modules/http/http.exception'
-import { ObjectId } from 'mongoose'
-import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import { FilterQuery, ObjectId } from 'mongoose'
+import {
+  BadRequestError,
+  NotFoundError,
+  RequestConflictError,
+  ServiceError,
+} from '@/core/apiError'
+import ServiceToken from '@/core/serviceToken'
 
 @Service()
 class DepositMethodService implements IDepositMethodService {
@@ -24,28 +25,18 @@ class DepositMethodService implements IDepositMethodService {
     private currencyService: ICurrencyService
   ) {}
 
-  private async find(depositMethodId: ObjectId): Promise<IDepositMethod> {
-    const depositMethod = await this.depositMethodModel.findById(
-      depositMethodId
-    )
-
-    if (!depositMethod) throw new HttpException(404, 'Deposit method not found')
-
-    return depositMethod
-  }
-
-  public create = async (
+  public async create(
     currencyId: ObjectId,
     address: string,
     network: string,
     fee: number,
     minDeposit: number
-  ): THttpResponse<{ depositMethod: IDepositMethod }> => {
+  ): Promise<IDepositMethod> {
     try {
       if (fee >= minDeposit)
-        throw new HttpException(400, 'Min deposit must be greater than the fee')
+        throw new BadRequestError('Min deposit must be greater than the fee')
 
-      const currency = await this.currencyService.get(currencyId)
+      const currency = await this.currencyService.fetch({ _id: currencyId })
 
       const depositMethodExist = await this.depositMethodModel.findOne({
         name: currency.name,
@@ -53,10 +44,7 @@ class DepositMethodService implements IDepositMethodService {
       })
 
       if (depositMethodExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'This deposit method already exist'
-        )
+        throw new RequestConflictError('This deposit method already exist')
 
       const depositMethod = await this.depositMethodModel.create({
         currency: currency._id,
@@ -72,34 +60,32 @@ class DepositMethodService implements IDepositMethodService {
         price: 1,
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Deposit method added successfully',
-        data: { depositMethod },
-      }
+      return depositMethod
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to add this deposit method, please try again'
       )
     }
   }
 
-  public update = async (
-    depositMethodId: ObjectId,
+  public async update(
+    query: FilterQuery<IDepositMethod>,
     currencyId: ObjectId,
     address: string,
     network: string,
     fee: number,
     minDeposit: number
-  ): THttpResponse<{ depositMethod: IDepositMethod }> => {
+  ): Promise<IDepositMethod> {
     try {
       if (fee >= minDeposit)
-        throw new HttpException(400, 'Min deposit must be greater than the fee')
+        throw new BadRequestError('Min deposit must be greater than the fee')
 
-      const depositMethod = await this.find(depositMethodId)
+      const depositMethod = await this.depositMethodModel.findOne(query)
 
-      const currency = await this.currencyService.get(currencyId)
+      if (!depositMethod) throw new NotFoundError('Deposit method not found')
+
+      const currency = await this.currencyService.fetch({ _id: currencyId })
 
       const depositMethodExist = await this.depositMethodModel.findOne({
         name: currency.name,
@@ -108,10 +94,7 @@ class DepositMethodService implements IDepositMethodService {
       })
 
       if (depositMethodExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'This deposit method already exist'
-        )
+        throw new RequestConflictError('This deposit method already exist')
 
       depositMethod.currency = currency._id
       depositMethod.name = currency.name
@@ -124,78 +107,65 @@ class DepositMethodService implements IDepositMethodService {
 
       await depositMethod.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Deposit method updated successfully',
-        data: { depositMethod },
-      }
+      return depositMethod
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to update this deposit method, please try again'
       )
     }
   }
 
-  public async get(depositMethodId: ObjectId): Promise<IDepositMethodObject> {
+  public async fetch(
+    query: FilterQuery<IDepositMethod>
+  ): Promise<IDepositMethodObject> {
     try {
-      const depositMethod = await this.depositMethodModel.findOne({
-        _id: depositMethodId,
-        status: DepositMethodStatus.ENABLED,
-      })
+      const depositMethod = await this.depositMethodModel.findOne(query)
 
-      if (!depositMethod)
-        throw new HttpException(404, 'Deposit method not found')
+      if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
-      return depositMethod.toObject({ getters: true })
+      return depositMethod
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to get deposit method, please try again'
       )
     }
   }
 
-  public delete = async (
-    depositMethodId: ObjectId
-  ): THttpResponse<{ depositMethod: IDepositMethod }> => {
+  public async delete(
+    query: FilterQuery<IDepositMethod>
+  ): Promise<IDepositMethod> {
     try {
-      const depositMethod = await this.find(depositMethodId)
+      const depositMethod = await this.depositMethodModel.findOne(query)
+
+      if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
       await depositMethod.deleteOne()
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Deposit method deleted successfully',
-        data: { depositMethod },
-      }
+      return depositMethod
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to delete this deposit method, please try again'
       )
     }
   }
 
-  public updateStatus = async (
-    depositMethodId: ObjectId,
+  public async updateStatus(
+    query: FilterQuery<IDepositMethod>,
     status: DepositMethodStatus
-  ): THttpResponse<{ depositMethod: IDepositMethod }> => {
+  ): Promise<IDepositMethod> {
     try {
-      const depositMethod = await this.find(depositMethodId)
+      const depositMethod = await this.depositMethodModel.findOne(query)
 
-      if (!Object.values(DepositMethodStatus).includes(status))
-        throw new HttpException(400, 'Invalid status value')
+      if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
       depositMethod.status = status
       await depositMethod.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Status updated successfully',
-        data: { depositMethod },
-      }
+      return depositMethod
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to update this deposit method status, please try again'
       )
@@ -203,25 +173,21 @@ class DepositMethodService implements IDepositMethodService {
   }
 
   public async updateMode(
-    depositMethodId: ObjectId,
+    query: FilterQuery<IDepositMethod>,
     autoUpdate: boolean
-  ): THttpResponse<{ depositMethod: IDepositMethod }> {
+  ): Promise<IDepositMethod> {
     try {
-      const depositMethod = await this.find(depositMethodId)
+      const depositMethod = await this.depositMethodModel.findOne(query)
+
+      if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
       depositMethod.autoUpdate = autoUpdate
 
-      const newDepositMethod = await depositMethod.save()
+      await depositMethod.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: `Deposit method price updating is now on ${
-          autoUpdate ? 'auto mode' : 'manual mode'
-        }`,
-        data: { depositMethod: newDepositMethod },
-      }
+      return depositMethod
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to update price mode, please try again'
       )
@@ -229,15 +195,16 @@ class DepositMethodService implements IDepositMethodService {
   }
 
   public async updatePrice(
-    depositMethodId: ObjectId,
+    query: FilterQuery<IDepositMethod>,
     price: number
-  ): THttpResponse<{ depositMethod: IDepositMethod }> {
+  ): Promise<IDepositMethod> {
     try {
-      const depositMethod = await this.find(depositMethodId)
+      const depositMethod = await this.depositMethodModel.findOne(query)
+
+      if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
       if (depositMethod.autoUpdate)
-        throw new HttpException(
-          400,
+        throw new BadRequestError(
           'Can not update a deposit method price that is on auto update mode'
         )
 
@@ -245,40 +212,22 @@ class DepositMethodService implements IDepositMethodService {
 
       await depositMethod.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Deposit method price updated successfully',
-        data: { depositMethod },
-      }
+      return depositMethod
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to update deposit method price, please try again'
       )
     }
   }
 
-  public fetchAll = async (
-    all: boolean
-  ): THttpResponse<{ depositMethods: IDepositMethod[] }> => {
+  public async fetchAll(
+    query: FilterQuery<IDepositMethod>
+  ): Promise<IDepositMethod[]> {
     try {
-      let depositMethods
-
-      if (all) {
-        depositMethods = await this.depositMethodModel.find()
-      } else {
-        depositMethods = await this.depositMethodModel.find({
-          status: DepositMethodStatus.ENABLED,
-        })
-      }
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Deposit method fetched successfully',
-        data: { depositMethods },
-      }
+      return await this.depositMethodModel.find(query)
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to fetch deposit method, please try again'
       )

@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { ICurrency } from '@/modules/currency/currency.interface'
 
-const CurrencySchema = new Schema(
+const CurrencySchema = new Schema<ICurrency>(
   {
     name: {
       type: String,

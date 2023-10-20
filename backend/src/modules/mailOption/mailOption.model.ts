@@ -1,8 +1,8 @@
 import { Schema, model } from 'mongoose'
 import { IMailOption } from '@/modules/mailOption/mailOption.interface'
-import Encryption from '@/utils/encryption'
+import Cryptograph from '@/core/cryptograph'
 
-const MailOptonSchema = new Schema(
+const MailOptonSchema = new Schema<IMailOption>(
   {
     name: {
       type: String,
@@ -41,14 +41,14 @@ MailOptonSchema.pre<IMailOption>('save', async function (next) {
   if (!this.isModified('password')) {
     return next()
   }
-  const encrypted = Encryption.encrypt(this.password)
+  const encrypted = Cryptograph.encrypt(this.password)
   this.password = encrypted
 
   next()
 })
 
 MailOptonSchema.methods.getPassword = function () {
-  return Encryption.decrypt(this.password)
+  return Cryptograph.decrypt(this.password)
 }
 
 export default model<IMailOption>('MailOption', MailOptonSchema)

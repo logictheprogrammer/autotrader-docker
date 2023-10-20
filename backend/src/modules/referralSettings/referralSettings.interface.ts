@@ -1,16 +1,19 @@
-import { THttpResponse } from '@/modules/http/http.type'
-import { Document } from 'mongoose'
+import baseModelInterface from '@/core/baseModelInterface'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import { FilterQuery } from 'mongoose'
 
-export interface IReferralSettings extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
+export interface IReferralSettingsObject extends baseObjectInterface {
   deposit: number
   stake: number
   winnings: number
   investment: number
   completedPackageEarnings: number
 }
+
+// @ts-ignore
+export interface IReferralSettings
+  extends baseModelInterface,
+    IReferralSettingsObject {}
 
 export interface IReferralSettingsService {
   create(
@@ -19,7 +22,7 @@ export interface IReferralSettingsService {
     winnings: number,
     investment: number,
     completedPackageEarnings: number
-  ): THttpResponse<{ referralSettings: IReferralSettings }>
+  ): Promise<IReferralSettingsObject>
 
   update(
     deposit: number,
@@ -27,9 +30,9 @@ export interface IReferralSettingsService {
     winnings: number,
     investment: number,
     completedPackageEarnings: number
-  ): THttpResponse<{ referralSettings: IReferralSettings }>
+  ): Promise<IReferralSettingsObject>
 
-  get(): Promise<IReferralSettings | null>
-
-  fetch(): THttpResponse<{ referralSettings: IReferralSettings }>
+  fetch(
+    filter: FilterQuery<IReferralSettings>
+  ): Promise<IReferralSettingsObject>
 }

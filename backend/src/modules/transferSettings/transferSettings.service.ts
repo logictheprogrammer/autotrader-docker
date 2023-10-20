@@ -1,13 +1,12 @@
 import { Service } from 'typedi'
 import {
   ITransferSettings,
+  ITransferSettingsObject,
   ITransferSettingsService,
 } from '@/modules/transferSettings/transferSettings.interface'
 import transferSettingsModel from '@/modules/transferSettings/transferSettings.model'
-import { THttpResponse } from '@/modules/http/http.type'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import AppException from '@/modules/app/app.exception'
-import HttpException from '@/modules/http/http.exception'
+import { NotFoundError, ServiceError } from '@/core/apiError'
+import { FilterQuery } from 'mongoose'
 
 @Service()
 class TransferSettingsService implements ITransferSettingsService {
@@ -16,78 +15,60 @@ class TransferSettingsService implements ITransferSettingsService {
   public async create(
     approval: boolean,
     fee: number
-  ): THttpResponse<{ transferSettings: ITransferSettings }> {
+  ): Promise<ITransferSettingsObject> {
     try {
       const transferSettings = await this.transferSettingsModel.create({
         approval,
         fee,
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Transfer Settings Created',
-        data: { transferSettings },
-      }
+      return transferSettings
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to create transfer settings, please try again'
       )
     }
   }
 
-  public update = async (
+  public async update(
     approval: boolean,
     fee: number
-  ): THttpResponse<{ transferSettings: ITransferSettings }> => {
+  ): Promise<ITransferSettingsObject> {
     try {
-      const transferSettings = await this.get()
+      const transferSettings = await this.transferSettingsModel.findOne()
       if (!transferSettings)
-        throw new HttpException(404, 'Transfer settings not found')
+        throw new NotFoundError('Transfer settings not found')
 
       transferSettings.approval = approval
       transferSettings.fee = fee
 
       await transferSettings.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Transfer Settings Updated',
-        data: { transferSettings },
-      }
+      return transferSettings
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to update transfer settings, please try again'
       )
     }
   }
 
-  public get = async (): Promise<ITransferSettings | null> => {
+  public async fetch(
+    filter: FilterQuery<ITransferSettings>
+  ): Promise<ITransferSettingsObject> {
     try {
-      const transferSettings = await this.transferSettingsModel.findOne()
+      const transferSettings = await this.transferSettingsModel.findOne(filter)
+
+      if (!transferSettings)
+        throw new NotFoundError('Transfer settings not found')
 
       return transferSettings
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to fetch transfer settings, please try again'
       )
-    }
-  }
-
-  public fetch = async (): THttpResponse<{
-    transferSettings: ITransferSettings
-  }> => {
-    const transferSettings = await this.get()
-
-    if (!transferSettings)
-      throw new HttpException(404, 'Transfer settings not found')
-
-    return {
-      status: HttpResponseStatus.SUCCESS,
-      message: 'Transfer Settings fetched',
-      data: { transferSettings },
     }
   }
 }

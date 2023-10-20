@@ -2,24 +2,17 @@ import { AssetType } from '@/modules/asset/asset.enum'
 import { Inject, Service } from 'typedi'
 import planModel from '@/modules/plan/plan.model'
 import { IPlan, IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
-import AppException from '@/modules/app/app.exception'
-import HttpException from '@/modules/http/http.exception'
-import { THttpResponse } from '@/modules/http/http.type'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import ServiceToken from '@/utils/enums/serviceToken'
+
 import { IAssetService } from '@/modules/asset/asset.interface'
 import { PlanStatus } from '@/modules/plan/plan.enum'
-import { UserRole } from '@/modules/user/user.enum'
-import Helpers from 'helpers/helpers'
-import { IPair } from '../pair/pair.interface'
-import pairModel from '../pair/pair.model'
-import { ObjectId } from 'mongoose'
-import { IInvestment } from '../investment/investment.interface'
+
+import { FilterQuery, ObjectId } from 'mongoose'
 import { IForecastObject } from '../forecast/forecast.interface'
-import { TTransaction } from '../transactionManager/transactionManager.type'
-import { ITransactionInstance } from '../transactionManager/transactionManager.interface'
+
 import { ForecastStatus } from '../forecast/forecast.enum'
 import forecastModel from '../forecast/forecast.model'
+import ServiceToken from '@/core/serviceToken'
+import { NotFoundError, ServiceError } from '@/core/apiError'
 
 @Service()
 class PlanService implements IPlanService {
@@ -30,69 +23,6 @@ class PlanService implements IPlanService {
     @Inject(ServiceToken.ASSET_SERVICE)
     private assetService: IAssetService
   ) {}
-
-  private async find(
-    planId: ObjectId,
-    fromAllAccounts: boolean = true,
-    userId?: ObjectId
-  ): Promise<IPlan> {
-    let plan
-    if (fromAllAccounts) {
-      plan = await this.planModel.findById(planId)
-    } else {
-      plan = await this.planModel.findOne({ _id: planId, user: userId })
-    }
-
-    if (!plan) throw new HttpException(404, 'Plan not found')
-
-    return plan
-  }
-
-  public async _updateForecastDetails(
-    planId: ObjectId,
-    forecastObject: IForecastObject
-  ): TTransaction<IPlanObject, IPlan> {
-    const plan = await this.find(planId)
-
-    const oldStatus = plan.forecastStatus
-    const oldCurrentForecast = plan.currentForecast
-    const oldTimeStamps = plan.forecastTimeStamps.slice()
-    const oldStartTime = plan.forecastStartTime
-    const oldRuntime = plan.runTime
-
-    plan.currentForecast = forecastObject._id
-    plan.forecastStatus = forecastObject.status
-    plan.forecastTimeStamps = forecastObject.timeStamps.slice()
-    plan.forecastStartTime = forecastObject.startTime
-
-    if (forecastObject.status === ForecastStatus.SETTLED) {
-      plan.forecastStatus = undefined
-      plan.forecastStartTime = undefined
-      plan.currentForecast = undefined
-      plan.runTime += forecastObject.runTime
-    }
-
-    return {
-      object: plan.toObject({ getters: true }),
-      instance: {
-        model: plan,
-        onFailed: `Set the plan with an id of (${
-          plan._id
-        }) forecastStartTime to (${oldStartTime}) and forecastTimeStamps to (${JSON.stringify(
-          oldTimeStamps
-        )}) and ForecastStatus to (${oldStartTime}) and currentForecast to (${oldCurrentForecast}) and runTime = (${oldRuntime})`,
-        callback: async () => {
-          plan.currentForecast = oldCurrentForecast
-          plan.forecastStatus = oldStatus
-          plan.forecastTimeStamps = oldTimeStamps
-          plan.forecastStartTime = oldStartTime
-          plan.runTime = oldRuntime
-
-          await plan.save()
-        },
-      },
-    }
-  }
 
   public async create(
     icon: string,
@@ -108,16 +38,26 @@ class PlanService implements IPlanService {
     description: string,
     assetType: AssetType,
     assets: ObjectId[]
-  ): THttpResponse<{ plan: IPlan }> {
+  ): Promise<IPlanObject> {
     try {
+      const assetsArr = []
       for (const assetId of assets) {
-        const assetExist = await this.assetService.get(assetId, assetType)
+        let assetExist
+        try {
+          assetExist = await this.assetService.fetch({
+            _id: assetId,
+            type: assetType,
+          })
+        } catch (error) {
+          if (!(error instanceof NotFoundError)) {
+            throw error
+          }
+        }
 
         if (!assetExist)
-          throw new HttpException(
-            404,
-            'Some of the selected assets those not exist'
-          )
+          throw new NotFoundError('Some of the selected assets those not exist')
+
+        assetsArr.push(assetExist)
       }
 
       const plan = await this.planModel.create({
@@ -133,25 +73,12 @@ class PlanService implements IPlanService {
         gas,
         description,
         assetType,
-        assets,
+        assets: assetsArr,
       })
 
-      const assetsObj = []
-
-      for (const assetId of plan.assets) {
-        const asset = await this.assetService.get(assetId, assetType)
-        if (asset) assetsObj.push(asset)
-      }
-
-      plan.assets = assetsObj
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Plan has been created successfully',
-        data: { plan },
-      }
+      return plan
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to create this plan, please try again'
       )
@@ -159,7 +86,7 @@ class PlanService implements IPlanService {
   }
 
   public async update(
-    planId: ObjectId,
+    filter: FilterQuery<IPlan>,
     icon: string,
     name: string,
     engine: string,
@@ -173,19 +100,31 @@ class PlanService implements IPlanService {
     description: string,
     assetType: AssetType,
     assets: ObjectId[]
-  ): THttpResponse<{ plan: IPlan }> {
+  ): Promise<IPlanObject> {
     try {
+      const plan = await this.planModel.findOne(filter)
+
+      if (!plan) throw new NotFoundError('Plan not found')
+
+      const assetsArr = []
       for (const assetId of assets) {
-        const assetExist = await this.assetService.get(assetId, assetType)
+        let assetExist
+        try {
+          assetExist = await this.assetService.fetch({
+            _id: assetId,
+            type: assetType,
+          })
+        } catch (error) {
+          if (!(error instanceof NotFoundError)) {
+            throw error
+          }
+        }
 
         if (!assetExist)
-          throw new HttpException(
-            404,
-            'Some of the selected assets those not exist'
-          )
-      }
+          throw new NotFoundError('Some of the selected assets those not exist')
 
-      const plan = await this.find(planId)
+        assetsArr.push(assetExist)
+      }
 
       plan.name = name
       plan.icon = icon
@@ -199,26 +138,13 @@ class PlanService implements IPlanService {
       plan.gas = gas
       plan.description = description
       plan.assetType = assetType
-      plan.assets = assets
-
-      const assetsObj = []
-
-      for (const assetId of plan.assets) {
-        const asset = await this.assetService.get(assetId, assetType)
-        if (asset) assetsObj.push(asset)
-      }
-
-      plan.assets = assetsObj
+      plan.assets = assetsArr
 
       await plan.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Plan has been updated successfully',
-        data: { plan },
-      }
+      return plan
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to create this plan, please try again'
       )
@@ -226,23 +152,21 @@ class PlanService implements IPlanService {
   }
 
   public async updateStatus(
-    planId: ObjectId,
+    filter: FilterQuery<IPlan>,
     status: PlanStatus
-  ): THttpResponse<{ plan: IPlan }> {
+  ): Promise<IPlanObject> {
     try {
-      const plan = await this.find(planId)
+      const plan = await this.planModel.findOne(filter)
+
+      if (!plan) throw new NotFoundError('Plan not found')
 
       plan.status = status
 
       await plan.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Plan status has been updated successfully',
-        data: { plan },
-      }
+      return plan
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to update plan status, please try again'
       )
@@ -250,128 +174,55 @@ class PlanService implements IPlanService {
   }
 
   public async updateForecastDetails(
-    planId: ObjectId,
+    filter: FilterQuery<IPlan>,
     forecastObject: IForecastObject
-  ): Promise<ITransactionInstance<IPlan>> {
-    return (await this._updateForecastDetails(planId, forecastObject)).instance
-  }
+  ): Promise<IPlanObject> {
+    const plan = await this.planModel.findOne(filter)
 
-  public async get(planId: ObjectId): Promise<IPlanObject | null> {
-    const plan = await this.planModel.findById(planId)
+    if (!plan) throw new NotFoundError('Plan not found')
 
-    if (!plan) return null
+    plan.currentForecast = forecastObject
+    plan.forecastStatus = forecastObject.status
+    plan.forecastTimeStamps = forecastObject.timeStamps.slice()
+    plan.forecastStartTime = forecastObject.startTime
 
-    const assetsObj = []
-
-    for (const assetId of plan.assets) {
-      const asset = await this.assetService.get(assetId, plan.assetType)
-      if (asset) assetsObj.push(asset)
+    if (forecastObject.status === ForecastStatus.SETTLED) {
+      plan.forecastStatus = undefined
+      plan.forecastStartTime = undefined
+      plan.currentForecast = undefined
+      plan.runTime += forecastObject.runTime
     }
 
-    plan.assets = assetsObj
+    await plan.save()
+
+    return plan
+  }
+
+  public async fetch(filter: FilterQuery<IPlan>): Promise<IPlanObject> {
+    const plan = await this.planModel.findOne(filter).populate('assets')
+
+    if (!plan) throw new NotFoundError('Plan not found')
 
     return plan.toObject({ getters: true })
   }
 
-  public async getAllAutoIdled(): Promise<IPlanObject[]> {
-    const plans = await this.planModel.find({
-      manualMode: false,
-      status: PlanStatus.ACTIVE,
-      forecastStatus: { $or: [ForecastStatus.SETTLED, undefined] },
-    })
-
-    for (let index = 0; index < plans.length; index++) {
-      const plan = plans[index]
-      const assetsObj = []
-
-      for (const assetId of plan.assets) {
-        const asset = await this.assetService.get(assetId, plan.assetType)
-        if (asset) assetsObj.push(asset)
-      }
-
-      plan.assets = assetsObj
-
-      plan.toObject({ getters: true })
-    }
-
-    return plans
-  }
-
-  public async getAllAutoRunning(): Promise<IPlanObject[]> {
-    const plans = await this.planModel.find({
-      manualMode: false,
-      status: PlanStatus.ACTIVE,
-      forecastStatus: {
-        $or: [
-          ForecastStatus.PREPARING,
-          ForecastStatus.RUNNING,
-          ForecastStatus.MARKET_CLOSED,
-        ],
-      },
-    })
-
-    for (let index = 0; index < plans.length; index++) {
-      const plan = plans[index]
-      const assetsObj = []
-
-      for (const assetId of plan.assets) {
-        const asset = await this.assetService.get(assetId, plan.assetType)
-        if (asset) assetsObj.push(asset)
-      }
-
-      plan.assets = assetsObj
-
-      plan.toObject({ getters: true })
-    }
-
-    return plans
-  }
-
-  public async delete(planId: ObjectId): THttpResponse<{ plan: IPlan }> {
+  public async delete(filter: FilterQuery<IPlan>): Promise<IPlanObject> {
     try {
-      const plan = await this.planModel.findByIdAndDelete(planId)
-      if (!plan) throw new HttpException(404, 'Plan not found')
+      const plan = await this.planModel.findOneAndDelete(filter)
+      if (!plan) throw new NotFoundError('Plan not found')
 
       await this.forecastModel.deleteMany({ plan: plan._id })
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Plan has been deleted successfully',
-        data: { plan },
-      }
+      return plan
     } catch (err: any) {
-      throw new AppException(err, 'Failed to delete plan, please try again')
+      throw new ServiceError(err, 'Failed to delete plan, please try again')
     }
   }
 
-  public async fetchAll(role: UserRole): THttpResponse<{ plans: IPlan[] }> {
+  public async fetchAll(filter: FilterQuery<IPlan>): Promise<IPlanObject[]> {
     try {
-      let plans
-      if (role > UserRole.USER) {
-        plans = await this.planModel.find()
-      } else {
-        plans = await this.planModel.find({
-          status: { $ne: PlanStatus.SUSPENDED },
-        })
-      }
-
-      for (const plan of plans) {
-        const assetsObj = []
-
-        for (const assetId of plan.assets) {
-          const asset = await this.assetService.get(assetId, plan.assetType)
-          if (asset) assetsObj.push(asset)
-        }
-
-        plan.assets = assetsObj
-      }
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Plans fetched successfully',
-        data: { plans },
-      }
+      return await this.planModel.find(filter).populate('assets')
     } catch (err: any) {
-      throw new AppException(err, 'Failed to fetch plans, please try again')
+      throw new ServiceError(err, 'Failed to fetch plans, please try again')
     }
   }
 }

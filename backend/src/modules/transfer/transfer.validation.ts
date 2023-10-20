@@ -11,7 +11,6 @@ const create = Joi.object({
 })
 
 const updateStatus = Joi.object({
-  transferId: Joi.string().required(),
   status: Joi.string()
     .valid(TransferStatus.SUCCESSFUL, TransferStatus.REVERSED)
     .required(),

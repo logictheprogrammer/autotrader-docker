@@ -1,9 +1,9 @@
 import { WithdrawalMethodStatus } from '@/modules/withdrawalMethod/withdrawalMethod.enum'
-import { THttpResponse } from '@/modules/http/http.type'
-import { IAppObject } from '@/modules/app/app.interface'
-import { ObjectId, Document, Types } from 'mongoose'
+import { ObjectId, FilterQuery } from 'mongoose'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import baseModelInterface from '@/core/baseModelInterface'
 
-export interface IWithdrawalMethodObject extends IAppObject {
+export interface IWithdrawalMethodObject extends baseObjectInterface {
   currency: ObjectId
   name: string
   symbol: string
@@ -14,19 +14,10 @@ export interface IWithdrawalMethodObject extends IAppObject {
   minWithdrawal: number
 }
 
-export interface IWithdrawalMethod extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  currency: ObjectId
-  name: string
-  symbol: string
-  logo: string
-  network: string
-  status: WithdrawalMethodStatus
-  fee: number
-  minWithdrawal: number
-}
+// @ts-ignore
+export interface IWithdrawalMethod
+  extends baseModelInterface,
+    IWithdrawalMethodObject {}
 
 export interface IWithdrawalMethodService {
   create(
@@ -34,30 +25,30 @@ export interface IWithdrawalMethodService {
     network: string,
     fee: number,
     minWithdrawal: number
-  ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }>
+  ): Promise<IWithdrawalMethodObject>
 
   update(
-    withdrawalMethodId: ObjectId,
+    filter: FilterQuery<IWithdrawalMethod>,
     currencyId: ObjectId,
     network: string,
     fee: number,
     minWithdrawal: number
-  ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }>
+  ): Promise<IWithdrawalMethodObject>
 
-  get(
-    withdrawalMethodId: ObjectId | Types.ObjectId
+  fetch(
+    filter: FilterQuery<IWithdrawalMethod>
   ): Promise<IWithdrawalMethodObject>
 
   fetchAll(
-    all: boolean
-  ): THttpResponse<{ withdrawalMethods: IWithdrawalMethod[] }>
+    filter: FilterQuery<IWithdrawalMethod>
+  ): Promise<IWithdrawalMethodObject[]>
 
   delete(
-    withdrawalMethodId: ObjectId
-  ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }>
+    filter: FilterQuery<IWithdrawalMethod>
+  ): Promise<IWithdrawalMethodObject>
 
   updateStatus(
-    withdrawalMethodId: ObjectId,
+    filter: FilterQuery<IWithdrawalMethod>,
     status: WithdrawalMethodStatus
-  ): THttpResponse<{ withdrawalMethod: IWithdrawalMethod }>
+  ): Promise<IWithdrawalMethodObject>
 }

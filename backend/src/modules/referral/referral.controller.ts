@@ -1,14 +1,15 @@
-import ServiceToken from '@/utils/enums/serviceToken'
 import { NextFunction, Request, Response, Router } from 'express'
 import { Inject, Service } from 'typedi'
 import { IReferralService } from '@/modules/referral/referral.interface'
-import { IAppController } from '../app/app.interface'
-import HttpMiddleware from '../http/http.middleware'
 import { UserRole } from '../user/user.enum'
-import HttpException from '../http/http.exception'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessResponse } from '@/core/apiResponse'
+import routePermission from '@/helpers/routePermission'
 
 @Service()
-class ReferralController implements IAppController {
+class ReferralController implements IController {
   public path = '/referral'
   public router = Router()
 
@@ -23,87 +24,74 @@ class ReferralController implements IAppController {
     // Get Users Referral Transactions
     this.router.get(
       `${this.path}/users`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll(true)
     )
 
     // Get Referral Earnings
     this.router.get(
       `${this.path}/earnings`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.earnings(false)
     )
 
     // Get Users Referral Earnings
     this.router.get(
       `${this.path}/earnings/users`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.earnings(true)
     )
 
     // Get Leaderboard
     this.router.get(
       `${this.path}/leaderboard`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.leaderboard
     )
 
     // Get Referral Transactions
     this.router.get(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.fetchAll(false)
     )
   }
 
-  private fetchAll =
-    (fromAllAccounts: boolean) =>
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<Response | void> => {
-      try {
-        const response = await this.referralService.fetchAll(
-          fromAllAccounts,
-          req.user._id
-        )
-        res.status(200).json(response)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
+  private fetchAll = (byAdmin: boolean) =>
+    asyncHandler(async (req, res): Promise<Response | void> => {
+      let referrals
+      if (byAdmin) {
+        referrals = await this.referralService.fetchAll({})
+      } else {
+        referrals = await this.referralService.fetchAll({ user: req.user._id })
       }
-    }
+      return new SuccessResponse('Referrals', { referrals }).send(res)
+    })
 
-  private earnings =
-    (fromAllAccounts: boolean) =>
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<Response | void> => {
-      try {
-        const response = await this.referralService.earnings(
-          fromAllAccounts,
-          req.user._id
-        )
-        res.status(200).json(response)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
+  private earnings = (byAdmin: boolean) =>
+    asyncHandler(async (req, res): Promise<Response | void> => {
+      let referralEarnings
+      if (byAdmin) {
+        referralEarnings = await this.referralService.earnings({})
+      } else {
+        referralEarnings = await this.referralService.earnings({
+          user: req.user._id,
+        })
       }
-    }
+      return new SuccessResponse('Referral earnings fetched successfully', {
+        referralEarnings,
+      }).send(res)
+    })
 
-  private leaderboard = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const response = await this.referralService.leaderboard()
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+  private leaderboard = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const referralLeaderboard = await this.referralService.leaderboard({})
+
+      return new SuccessResponse('Referral leaderboard fetched successfully', {
+        referralLeaderboard,
+      }).send(res)
     }
-  }
+  )
 }
 
 export default ReferralController

@@ -1,17 +1,15 @@
 import { ForecastMove, ForecastStatus } from '@/modules/forecast/forecast.enum'
-import { IPlan, IPlanObject } from '@/modules/plan/plan.interface'
-import { IAppObject } from '@/modules/app/app.interface'
-import { THttpResponse } from '@/modules/http/http.type'
-import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
+import { IPlanObject } from '@/modules/plan/plan.interface'
+
 import { AssetType } from '@/modules/asset/asset.enum'
-import { IPair, IPairObject } from '@/modules/pair/pair.interface'
-import { Document, ObjectId, Types } from 'mongoose'
+import { IPairObject } from '@/modules/pair/pair.interface'
+import { FilterQuery, ObjectId } from 'mongoose'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import baseModelInterface from '@/core/baseModelInterface'
 
-export interface IForecastObject extends IAppObject {
-  plan: IPlan['_id']
-  planObject: IPlanObject
-  pair: IPair['_id']
-  pairObject: IPairObject
+export interface IForecastObject extends baseObjectInterface {
+  plan: IPlanObject
+  pair: IPairObject
   market: AssetType
   status: ForecastStatus
   move?: ForecastMove
@@ -25,51 +23,10 @@ export interface IForecastObject extends IAppObject {
   manualMode: boolean
 }
 
-export interface IForecast extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  plan: IPlan['_id']
-  planObject: IPlanObject
-  pair: IPair['_id']
-  pairObject: IPairObject
-  market: AssetType
-  status: ForecastStatus
-  move?: ForecastMove
-  percentageProfit: number
-  stakeRate: number
-  openingPrice?: number
-  closingPrice?: number
-  runTime: number
-  timeStamps: number[]
-  startTime?: Date
-  manualMode: boolean
-}
+// @ts-ignore
+export interface IForecast extends baseModelInterface, IForecastObject {}
 
 export interface IForecastService {
-  _createTransaction(
-    plan: IPlanObject,
-    pair: IPairObject,
-    percentageProfit: number,
-    stakeRate: number
-  ): TTransaction<IForecastObject, IForecast>
-
-  _updateTransaction(
-    forecastId: ObjectId,
-    pair: IPairObject,
-    percentageProfit: number,
-    stakeRate: number,
-    move?: ForecastMove,
-    openingPrice?: number,
-    closingPrice?: number
-  ): TTransaction<IForecastObject, IForecast>
-
-  _updateStatusTransaction(
-    forecastId: ObjectId | Types.ObjectId,
-    status: ForecastStatus,
-    move?: ForecastMove
-  ): TTransaction<IForecastObject, IForecast>
-
   getTodaysTotalForecast(planObject: IPlanObject): Promise<number>
 
   create(
@@ -77,37 +34,40 @@ export interface IForecastService {
     pair: IPairObject,
     percentageProfit: number,
     stakeRate: number
-  ): Promise<IForecast>
+  ): Promise<{ forecast: IForecastObject; errors: any[] }>
 
-  autoCreate(): Promise<void>
+  autoCreate(): Promise<{ forecasts: IForecastObject[]; errors: any[] }>
 
   manualCreate(
     planId: ObjectId,
     pairId: ObjectId,
     percentageProfit: number,
     stakeRate: number
-  ): THttpResponse<{ forecast: IForecast }>
+  ): Promise<{ forecast: IForecastObject; errors: any[] }>
 
   update(
-    forecastId: ObjectId,
+    filter: FilterQuery<IForecast>,
     pairId: ObjectId,
     percentageProfit: number,
     stakeRate: number,
     move?: ForecastMove,
     openingPrice?: number,
     closingPrice?: number
-  ): THttpResponse<{ forecast: IForecast }>
+  ): Promise<IForecastObject>
 
-  updateStatus(forecastId: ObjectId, status: ForecastStatus): Promise<IForecast>
+  updateStatus(
+    filter: FilterQuery<IForecast>,
+    status: ForecastStatus
+  ): Promise<{ forecast: IForecastObject; errors: any[] }>
 
-  autoUpdateStatus(): Promise<void>
+  autoUpdateStatus(): Promise<{ forecasts: IForecastObject[]; errors: any[] }>
 
   manualUpdateStatus(
-    forecastId: ObjectId,
+    filter: FilterQuery<IForecast>,
     status: ForecastStatus
-  ): THttpResponse<{ forecast: IForecast }>
+  ): Promise<{ forecast: IForecastObject; errors: any[] }>
 
-  fetchAll(planId: ObjectId): THttpResponse<{ forecasts: IForecast[] }>
+  fetchAll(filter: FilterQuery<IForecast>): Promise<IForecastObject[]>
 
-  delete(forecastId: ObjectId): THttpResponse<{ forecast: IForecast }>
+  delete(filter: FilterQuery<IForecast>): Promise<IForecastObject>
 }

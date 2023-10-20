@@ -5,52 +5,30 @@ import {
   IAssetService,
 } from '@/modules/asset/asset.interface'
 import assetModel from '@/modules/asset/asset.model'
-import { THttpResponse } from '@/modules/http/http.type'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import AppException from '@/modules/app/app.exception'
-import HttpException from '@/modules/http/http.exception'
 import { AssetType } from '@/modules/asset/asset.enum'
-import { ObjectId } from 'mongoose'
-import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import { FilterQuery, ObjectId } from 'mongoose'
+import {
+  NotFoundError,
+  RequestConflictError,
+  ServiceError,
+} from '@/core/apiError'
 
 @Service()
 class AssetService implements IAssetService {
   private assetModel = assetModel
 
-  private find = async (
-    assetId: ObjectId,
-    fromAllAccounts: boolean = true,
-    userId?: string
-  ): Promise<IAsset> => {
-    let asset
-
-    if (fromAllAccounts) {
-      asset = await this.assetModel.findById(assetId)
-    } else {
-      asset = await this.assetModel.findOne({ _id: assetId, user: userId })
-    }
-
-    if (!asset) throw new HttpException(404, 'Asset not found')
-
-    return asset
-  }
-
-  public create = async (
+  public async create(
     name: string,
     symbol: string,
     logo: string,
     type: AssetType
-  ): THttpResponse<{ asset: IAsset }> => {
+  ): Promise<IAssetObject> {
     try {
       const assetExist = await this.assetModel.findOne({
         $or: [{ name }, { symbol }],
       })
 
-      if (assetExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'Asset already exist'
-        )
+      if (assetExist) throw new RequestConflictError('Asset already exist')
 
       const asset = await this.assetModel.create({
         name,
@@ -59,53 +37,41 @@ class AssetService implements IAssetService {
         type,
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Asset added successfully',
-        data: { asset },
-      }
+      return asset
     } catch (err: any) {
-      throw new AppException(err, 'Unable to save new asset, please try again')
+      throw new ServiceError(err, 'Unable to save new asset, please try again')
     }
   }
 
-  public async get(
-    assetId: ObjectId,
-    assetType: AssetType
-  ): Promise<IAssetObject | null | undefined> {
+  public async fetch(filter: FilterQuery<IAsset>): Promise<IAssetObject> {
     try {
-      const asset = await this.assetModel.findOne({
-        _id: assetId,
-        type: assetType,
-      })
+      const asset = await this.assetModel.findOne(filter, {}, { lean: true })
 
-      if (!asset) return
+      if (!asset) throw new NotFoundError('Asset not found')
 
-      return asset.toObject({ getters: true })
+      return asset
     } catch (err: any) {
-      throw new AppException(err, 'Unable to get asset, please try again')
+      throw new ServiceError(err, 'Unable to fetch asset, please try again')
     }
   }
 
-  public update = async (
-    assetId: ObjectId,
+  public async update(
+    filter: FilterQuery<IAsset>,
     name: string,
     symbol: string,
     logo: string,
     type: AssetType
-  ): THttpResponse<{ asset: IAsset }> => {
+  ): Promise<IAssetObject> {
     try {
+      const asset = await this.assetModel.findOne(filter)
+
+      if (!asset) throw new NotFoundError('Asset not found')
+
       const assetExist = await this.assetModel.findOne({
-        $and: [{ _id: { $ne: assetId } }, { $or: [{ name }, { symbol }] }],
+        $and: [{ _id: { $ne: asset._id } }, { $or: [{ name }, { symbol }] }],
       })
 
-      if (assetExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'Asset already exist'
-        )
-
-      const asset = await this.find(assetId)
+      if (assetExist) throw new RequestConflictError('Asset already exist')
 
       asset.name = name
       asset.symbol = symbol
@@ -114,27 +80,19 @@ class AssetService implements IAssetService {
 
       await asset.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Asset updated successfully',
-        data: { asset },
-      }
+      return asset
     } catch (err: any) {
-      throw new AppException(err, 'Unable to update asset, please try again')
+      throw new ServiceError(err, 'Unable to update asset, please try again')
     }
   }
 
-  public fetchAll = async (): THttpResponse<{ assets: IAsset[] }> => {
+  public async fetchAll(filter: FilterQuery<IAsset>): Promise<IAssetObject[]> {
     try {
-      const assets = await this.assetModel.find()
+      const assets = await this.assetModel.find(filter, {}, { lean: true })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Assets fetch successfully',
-        data: { assets },
-      }
+      return assets
     } catch (err: any) {
-      throw new AppException(err, 'Unable to fetch asset, please try again')
+      throw new ServiceError(err, 'Unable to fetch assets, please try again')
     }
   }
 }

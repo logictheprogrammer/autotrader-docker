@@ -3,31 +3,25 @@ import userModel from '@/modules/user/user.model'
 import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
 import { UserAccount, UserRole, UserStatus } from '@/modules/user/user.enum'
 import { Service, Inject } from 'typedi'
-import ServiceToken from '@/utils/enums/serviceToken'
-import {
-  IActivity,
-  IActivityService,
-} from '@/modules/activity/activity.interface'
+import { IActivityService } from '@/modules/activity/activity.interface'
 import {
   ActivityCategory,
   ActivityForWho,
 } from '@/modules/activity/activity.enum'
-import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import HttpException from '@/modules/http/http.exception'
-import AppException from '@/modules/app/app.exception'
-import { THttpResponse } from '@/modules/http/http.type'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import FormatNumber from '@/utils/formats/formatNumber'
-import FormatString from '@/utils/formats/formatString'
 import { IMailService } from '@/modules/mail/mail.interface'
-import ParseString from '@/utils/parsers/parseString'
 import renderFile from '@/utils/renderFile'
 import { MailOptionName } from '@/modules/mailOption/mailOption.enum'
-import { INotification } from '@/modules/notification/notification.interface'
 import notificationModel from '@/modules/notification/notification.model'
 import { SiteConstants } from '@/modules/config/config.constants'
-import { ObjectId, isValidObjectId } from 'mongoose'
-import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import { FilterQuery } from 'mongoose'
+import ServiceToken from '@/core/serviceToken'
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+  ServiceError,
+} from '@/core/apiError'
+import Helpers from '@/utils/helpers'
 
 @Service()
 class UserService implements IUserService {
@@ -41,323 +35,179 @@ class UserService implements IUserService {
     @Inject(ServiceToken.MAIL_SERVICE) private mailService: IMailService
   ) {}
 
-  private async find(
-    userIdOrUsername: ObjectId | string,
-    errorMessage?: string
-  ): Promise<IUser> {
-    let user
-
-    user = await this.userModel
-      .findOne({ username: userIdOrUsername })
-      .select('-password')
-
-    if (!user && isValidObjectId(userIdOrUsername))
-      user = await this.userModel.findById(userIdOrUsername).select('-password')
-
-    if (!user) throw new HttpException(404, errorMessage || 'User not found')
-    return user
-  }
-
-  private setFund = async (
+  private async setFund(
     user: IUser,
     account: UserAccount,
     amount: number
-  ): Promise<IUser> => {
+  ): Promise<IUserObject> {
     if (isNaN(amount) || amount === 0)
-      throw new HttpException(400, 'Invalid amount')
+      throw new BadRequestError('Invalid amount')
 
     if (!Object.values(UserAccount).includes(account))
-      throw new HttpException(400, 'Invalid account')
+      throw new BadRequestError('Invalid account')
 
     user[account] += +amount
 
     if (user[account] < 0)
-      throw new HttpException(
-        400,
-        `insufficient balance in ${FormatString.fromCamelToTitleCase(
+      throw new BadRequestError(
+        `Insufficient balance in ${Helpers.fromCamelToTitleCase(
           account
         )} Account`
       )
 
-    return user
+    await user.save()
+
+    return user.toJSON()
   }
 
-  public async _fundTransaction(
-    userIdOrUsername: ObjectId | string,
-    account: UserAccount,
-    amount: number,
-    notFoundErrorMessage?: string
-  ): TTransaction<IUserObject, IUser> {
-    const user = await this.find(userIdOrUsername, notFoundErrorMessage)
-
-    const fundedUser = await this.setFund(user, account, amount)
-
-    const onFailed = `${amount > 0 ? 'substract' : 'add'} ${
-      amount > 0
-        ? FormatNumber.toDollar(amount)
-        : FormatNumber.toDollar(-amount)
-    } ${amount > 0 ? 'from' : 'to'} the ${FormatString.fromCamelToTitleCase(
-      account
-    )} of the user with an id of (${fundedUser._id})`
-
-    return {
-      object: user.toObject({ getters: true }),
-      instance: {
-        model: user,
-        onFailed,
-        callback: async () => {
-          const user = await this.setFund(fundedUser, account, -amount)
-          await user.save()
-        },
-      },
-    }
-  }
-
-  public fund = async (
-    userIdOrUsername: ObjectId | string,
-    account: UserAccount,
-    amount: number,
-    notFoundErrorMessage?: string
-  ): TTransaction<IUserObject, IUser> => {
-    return await this._fundTransaction(
-      userIdOrUsername,
-      account,
-      amount,
-      notFoundErrorMessage
-    )
-  }
-
-  public forceFund = async (
-    userId: ObjectId,
+  public async fund(
+    filter: FilterQuery<IUser>,
     account: UserAccount,
     amount: number
-  ): THttpResponse<{ user: IUser }> => {
+  ): Promise<IUserObject> {
     try {
-      const user = await this.find(userId)
+      const user = await this.userModel.findOne(filter)
+
+      if (!user) throw new NotFoundError('User not found')
 
       const fundedUser = await this.setFund(user, account, amount)
 
-      await fundedUser.save()
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: `User has been ${
-          amount > 0 ? 'credited' : 'debited'
-        } successfully`,
-        data: { user: fundedUser.toObject() },
-      }
+      return fundedUser
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         `Unable to ${amount > 0 ? 'credit' : 'debit'} user, please try again`
       )
     }
   }
 
-  public fetchAll = async (): THttpResponse<{ users: IUser[] }> => {
+  public async fetchAll(filter: FilterQuery<IUser>): Promise<IUserObject[]> {
     try {
-      const users = await this.userModel.find().select('-password')
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Users fetched',
-        data: {
-          users,
-        },
-      }
+      return await this.userModel.find(filter).select('-password')
     } catch (err: any) {
-      throw new AppException(err, 'Unable to get users, please try again')
+      throw new ServiceError(err, 'Unable to get users, please try again')
     }
   }
 
-  public get = async (
-    userIdOrUsername: ObjectId | string,
-    errorMessage?: string
-  ): Promise<IUserObject> => {
-    return (await this.find(userIdOrUsername, errorMessage)).toObject()
-  }
-
-  public fetch = async (userId: ObjectId): THttpResponse<{ user: IUser }> => {
+  public async fetch(filter: FilterQuery<IUser>): Promise<IUserObject> {
     try {
-      const user = await this.find(userId)
+      const user = await this.userModel.findOne(filter)
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'User fetched',
-        data: { user },
-      }
+      if (!user) throw new NotFoundError('User not found')
+
+      return user
     } catch (err: any) {
-      throw new AppException(err, 'Unable to get user, please try again')
+      throw new ServiceError(err, 'Unable to get user, please try again')
     }
   }
 
-  public updateProfile = async (
-    userId: ObjectId,
+  public async updateProfile(
+    filter: FilterQuery<IUser>,
     name: string,
     username: string,
     byAdmin: boolean
-  ): THttpResponse<{ user: IUser }> => {
+  ): Promise<IUserObject> {
     try {
-      const usernameExist = await this.userModel.findOne({
-        username,
-        _id: { $ne: userId },
-      })
+      const user = await this.userModel.findOne(filter)
 
-      if (usernameExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'Username already exist'
-        )
-
-      const user = await this.find(userId)
+      if (!user) throw new NotFoundError('User not found')
 
       if (byAdmin && user.role >= UserRole.ADMIN)
-        throw new HttpException(
-          409,
-          'This action can not be performed on an admin'
-        )
+        throw new ForbiddenError('This action can not be performed on an admin')
 
       user.name = name
       user.username = username
       await user.save()
 
-      this.activityService.set(
-        user.toObject(),
+      this.activityService.create(
+        user,
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
-        'Your updated your profile details'
+        'You updated your profile details'
       )
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Profile updated successfully',
-        data: { user },
-      }
+      return user
     } catch (err: any) {
-      throw new AppException(err, 'Unable to update profile, please try again')
+      throw new ServiceError(err, 'Unable to update profile, please try again')
     }
   }
 
-  public updateEmail = async (
-    userId: ObjectId,
+  public async updateEmail(
+    filter: FilterQuery<IUser>,
     email: string
-  ): THttpResponse<{ user: IUser }> => {
+  ): Promise<IUserObject> {
     try {
-      const emailExist = await this.userModel.findOne({
-        email,
-        _id: { $ne: userId },
-      })
-
-      if (emailExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'Email already exist'
-        )
-
-      const user = await this.find(userId)
+      const user = await this.userModel.findOne(filter)
+      if (!user) throw new NotFoundError('User not found')
 
       user.email = email
       await user.save()
 
-      this.activityService.set(
-        user.toObject(),
+      this.activityService.create(
+        user,
         ActivityForWho.USER,
         ActivityCategory.PROFILE,
         'Your updated your email address'
       )
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Email updated successfully',
-        data: { user },
-      }
+      return user
     } catch (err: any) {
-      throw new AppException(err, 'Unable to update email, please try again')
+      throw new ServiceError(err, 'Unable to update email, please try again')
     }
   }
 
-  public updateStatus = async (
-    userId: ObjectId,
+  public async updateStatus(
+    filter: FilterQuery<IUser>,
     status: UserStatus
-  ): THttpResponse<{ user: IUser }> => {
+  ): Promise<IUserObject> {
     try {
-      if (!userId) throw new HttpException(404, 'User not found')
-
-      const user = await this.find(userId)
+      const user = await this.userModel.findOne(filter)
+      if (!user) throw new NotFoundError('User not found')
 
       if (user.role >= UserRole.ADMIN && status === UserStatus.SUSPENDED)
-        throw new HttpException(
-          400,
-          'Users with admin role can not be suspended'
-        )
+        throw new BadRequestError('Users with admin role can not be suspended')
 
       user.status = status
       await user.save()
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Status updated successfully',
-        data: { user },
-      }
+
+      return user
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to update user status, please try again'
       )
     }
   }
 
-  public delete = async (userId: ObjectId): THttpResponse<{ user: IUser }> => {
+  public async delete(filter: FilterQuery<IUser>): Promise<IUserObject> {
     try {
-      const user = await this.find(userId)
+      const user = await this.userModel.findOne(filter)
+      if (!user) throw new NotFoundError('User not found')
 
       if (user.role >= UserRole.ADMIN)
-        throw new HttpException(400, 'Users with admin role can not be deleted')
+        throw new BadRequestError('Users with admin role can not be deleted')
 
-      await this.userModel.deleteOne({ _id: userId })
+      await this.userModel.deleteOne({ _id: user._id })
 
-      await this.notificationModel.deleteMany({ user: userId })
+      await this.notificationModel.deleteMany({ user: user._id })
 
-      await this.activityModel.deleteMany({ user: userId })
+      await this.activityModel.deleteMany({ user: user._id })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'User deleted successfully',
-        data: { user },
-      }
+      return user
     } catch (err: any) {
-      throw new AppException(err, 'Unable to delete user, please try again')
+      throw new ServiceError(err, 'Unable to delete user, please try again')
     }
   }
 
-  public getReferredUsers = async (
-    getAll: boolean,
-    userId?: ObjectId
-  ): THttpResponse<{ users: IUser[] }> => {
+  public async getReferredUsers(
+    filter: FilterQuery<IUser>
+  ): Promise<IUserObject[]> {
     try {
-      let users: IUser[] = []
-      if (!getAll) {
-        if (!userId) throw new HttpException(404, 'User not specifield')
+      const users = await this.userModel.find(filter).select('-password')
 
-        await this.find(userId)
-
-        users = await this.userModel
-          .find({
-            referred: userId,
-          })
-          .select('-password')
-      } else {
-        users = await this.userModel
-          .find({ referred: { $exists: true } })
-          .select('-password')
-      }
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: `Referred users fetched successfully`,
-        data: { users },
-      }
+      return users
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to get referred users, please try again'
       )
@@ -365,13 +215,14 @@ class UserService implements IUserService {
   }
 
   public async sendEmail(
-    userId: ObjectId,
+    filter: FilterQuery<IUser>,
     subject: string,
     heading: string,
     content: string
-  ): THttpResponse {
+  ): Promise<IUserObject> {
     try {
-      const user = await this.find(userId)
+      const user = await this.userModel.findOne(filter)
+      if (!user) throw new NotFoundError('User not found')
 
       this.mailService.setSender(MailOptionName.TEST)
 
@@ -384,16 +235,13 @@ class UserService implements IUserService {
       this.mailService.sendMail({
         subject: subject,
         to: user.email,
-        text: ParseString.clearHtml(emailContent),
+        text: Helpers.clearHtml(emailContent),
         html: emailContent,
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: `Email has been sent successfully`,
-      }
+      return user
     } catch (err: any) {
-      throw new AppException(err, 'Unable to send email, please try again')
+      throw new ServiceError(err, 'Unable to send email, please try again')
     }
   }
 }

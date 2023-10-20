@@ -9,7 +9,6 @@ const create = Joi.object({
 })
 
 const update = Joi.object({
-  withdrawalMethodId: Joi.string().required(),
   currencyId: Joi.string().required(),
   network: Joi.string().required(),
   fee: Joi.number().min(0).required(),
@@ -17,7 +16,6 @@ const update = Joi.object({
 })
 
 const updateStatus = Joi.object({
-  withdrawalMethodId: Joi.string().required(),
   status: Joi.string()
     .valid(...Object.values(WithdrawalMethodStatus))
     .required(),

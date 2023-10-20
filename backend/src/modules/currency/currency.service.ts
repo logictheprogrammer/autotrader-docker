@@ -5,53 +5,29 @@ import {
   ICurrencyService,
 } from '@/modules/currency/currency.interface'
 import currencyModel from '@/modules/currency/currency.model'
-import { THttpResponse } from '@/modules/http/http.type'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import AppException from '@/modules/app/app.exception'
-import HttpException from '@/modules/http/http.exception'
-import { ObjectId, Types } from 'mongoose'
-import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import { FilterQuery, ObjectId, Types } from 'mongoose'
+import {
+  NotFoundError,
+  RequestConflictError,
+  ServiceError,
+} from '@/core/apiError'
 
 @Service()
 class CurrencyService implements ICurrencyService {
   private currencyModel = currencyModel
 
-  private find = async (
-    currencyId: ObjectId | Types.ObjectId,
-    fromAllAccounts: boolean = true,
-    userId?: ObjectId
-  ): Promise<ICurrency> => {
-    let currency
-
-    if (fromAllAccounts) {
-      currency = await this.currencyModel.findById(currencyId)
-    } else {
-      currency = await this.currencyModel.findOne({
-        _id: currencyId,
-        user: userId,
-      })
-    }
-
-    if (!currency) throw new HttpException(404, 'Currency not found')
-
-    return currency
-  }
-
-  public create = async (
+  public async create(
     name: string,
     symbol: string,
     logo: string
-  ): THttpResponse<{ currency: ICurrency }> => {
+  ): Promise<ICurrencyObject> {
     try {
       const currencyExist = await this.currencyModel.findOne({
         $or: [{ name }, { symbol }],
       })
 
       if (currencyExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'Currency already exist'
-        )
+        throw new RequestConflictError('Currency already exist')
 
       const currency = await this.currencyModel.create({
         name,
@@ -59,42 +35,34 @@ class CurrencyService implements ICurrencyService {
         logo,
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Currency added successfully',
-        data: { currency },
-      }
+      return currency
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(err, 'Unable to create currency, please try again')
+    }
+  }
+
+  public async fetch(filter: FilterQuery<ICurrency>): Promise<ICurrencyObject> {
+    try {
+      const currency = await this.currencyModel.findOne(filter)
+
+      if (!currency) throw new NotFoundError('Currency not found')
+
+      return currency
+    } catch (err: any) {
+      throw new ServiceError(err, 'Unable to fetch currency, please try again')
+    }
+  }
+
+  public async fetchAll(
+    filter: FilterQuery<ICurrency>
+  ): Promise<ICurrencyObject[]> {
+    try {
+      return await this.currencyModel.find(filter)
+    } catch (err: any) {
+      throw new ServiceError(
         err,
-        'Unable to save new currency, please try again'
+        'Unable to fetch currencies, please try again'
       )
-    }
-  }
-
-  public async get(
-    currencyId: ObjectId | Types.ObjectId
-  ): Promise<ICurrencyObject> {
-    try {
-      const currency = await this.find(currencyId)
-
-      return currency.toObject({ getters: true })
-    } catch (err: any) {
-      throw new AppException(err, 'Unable to get currency, please try again')
-    }
-  }
-
-  public fetchAll = async (): THttpResponse<{ currencies: ICurrency[] }> => {
-    try {
-      const currencies = await this.currencyModel.find()
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Currencies fetch successfully',
-        data: { currencies },
-      }
-    } catch (err: any) {
-      throw new AppException(err, 'Unable to fetch currency, please try again')
     }
   }
 }

@@ -1,6 +1,6 @@
 import { Inject, Service } from 'typedi'
+import ServiceToken from '@/core/serviceToken'
 import { IMathService, IMathUtility } from './math.interface'
-import ServiceToken from '../../utils/enums/serviceToken'
 
 @Service()
 class MathService implements IMathService {
@@ -411,11 +411,11 @@ export default MathService
 ////////////////////////////
 ///////////////////////////
 
-import MathUtility from './math.utility'
-const mathService = new MathService(new MathUtility())
+// import MathUtility from './math.utility'
+// const mathService = new MathService(new MathUtility())
 
-console.log('values: ', mathService._getValues(1, 2, 3, 2))
-console.log('value: ', mathService._getNegativeUnit(1, 2, 3, 2))
+// console.log('values: ', mathService._getValues(1, 2, 3, 2))
+// console.log('value: ', mathService._getNegativeUnit(1, 2, 3, 2))
 
 // const run = 10000
 // const negativeValues = []

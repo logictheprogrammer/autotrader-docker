@@ -2,12 +2,14 @@ import { Schema, model } from 'mongoose'
 import { IPlan } from '@/modules/plan/plan.interface'
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { Types } from 'mongoose'
+import { ForecastStatus } from '../forecast/forecast.enum'
 
 const PlanSchema = new Schema<IPlan>(
   {
     status: {
       type: String,
       required: true,
+      enum: Object.values(PlanStatus),
       default: PlanStatus.ACTIVE,
     },
     icon: {
@@ -87,6 +89,7 @@ const PlanSchema = new Schema<IPlan>(
     },
     forecastStatus: {
       type: String,
+      enum: Object.values(ForecastStatus),
     },
     currentForecast: {
       type: Types.ObjectId,

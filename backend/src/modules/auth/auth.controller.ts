@@ -1,18 +1,22 @@
-import { Router, Request, Response, NextFunction } from 'express'
+import { Router, Response } from 'express'
 import { Service, Inject } from 'typedi'
 import validate from '@/modules/auth/auth.validation'
 import { UserRole, UserStatus } from '@/modules/user/user.enum'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { AppConstants } from '@/modules/app/app.constants'
 import { IAuthService } from '@/modules/auth/auth.interface'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
-import HttpException from '@/modules/http/http.exception'
-import { HttpResponseStatus } from '../http/http.enum'
-import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import { SiteConstants } from '../config/config.constants'
+import asyncHandler from '@/helpers/asyncHandler'
+import {
+  StatusCode,
+  SuccessCreatedResponse,
+  SuccessResponse,
+} from '@/core/apiResponse'
+import schemaValidator from '@/helpers/schemaValidator'
+import routePermission from '@/helpers/routePermission'
 
 @Service()
-class AuthController implements IAppController {
+class AuthController implements IController {
   public path = '/authentication'
   public router = Router()
 
@@ -26,70 +30,66 @@ class AuthController implements IAppController {
     // Register
     this.router.post(
       `${this.path}/register`,
-      HttpMiddleware.validate(validate.register),
+      schemaValidator(validate.register),
       this.register
     )
 
     // Login
     this.router.post(
       `${this.path}/login`,
-      HttpMiddleware.validate(validate.login),
+      schemaValidator(validate.login),
       this.login
     )
 
     // user
     this.router.get(
       `${this.path}/user`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.user
     )
 
     // Update Password
     this.router.patch(
       `${this.path}/update-password`,
-      HttpMiddleware.authenticate(UserRole.USER),
-      HttpMiddleware.validate(validate.updatePassword),
-      this.updatePassword(true)
+      routePermission(UserRole.USER),
+      schemaValidator(validate.updatePassword),
+      this.updatePassword(false)
     )
 
     // Update User Password
     this.router.patch(
       `${this.path}/update-password/:userId`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateUserPassword),
-      this.updatePassword(false, true)
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateUserPassword),
+      this.updatePassword(true)
     )
 
     // Forget Password
     this.router.post(
       `${this.path}/forget-password`,
-      HttpMiddleware.validate(validate.forgetPassword),
+      schemaValidator(validate.forgetPassword),
       this.forgetPassword
     )
 
     // Reset Password
     this.router.patch(
       `${this.path}/reset-password`,
-      HttpMiddleware.validate(validate.resetPassword),
+      schemaValidator(validate.resetPassword),
       this.resetPassword
     )
 
     // Verify Email
     this.router.patch(
       `${this.path}/verify-email`,
-      HttpMiddleware.validate(validate.verifyEmail),
+      schemaValidator(validate.verifyEmail),
       this.verifyEmail
     )
   }
 
-  private register = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
+  private register = asyncHandler(
+    async (req, res): Promise<Response | void> => {
       const { name, email, username, country, password, invite } = req.body
-      const responce = await this.authService.register(
+      const response = await this.authService.register(
         name,
         email,
         username,
@@ -97,127 +97,86 @@ class AuthController implements IAppController {
         password,
         UserRole.USER,
         UserStatus.ACTIVE,
-        AppConstants.mainBalance,
-        AppConstants.referralBalance,
-        AppConstants.demoBalance,
-        AppConstants.bonusBalance,
+        SiteConstants.mainBalance,
+        SiteConstants.referralBalance,
+        SiteConstants.demoBalance,
+        SiteConstants.bonusBalance,
         invite
       )
-      res.status(201).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      return new SuccessCreatedResponse(
+        response.message,
+        response,
+        StatusCode.INFO
+      ).send(res)
     }
-  }
+  )
 
-  private login = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { account, password } = req.body
+  private login = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { account, password } = req.body
 
-      const responce = await this.authService.login(account, password)
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+    const response = await this.authService.login(account, password)
 
-  private user = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      console.log(req.user.status)
-      if (req.user.status !== UserStatus.ACTIVE)
-        throw new HttpException(
-          ErrorCode.FORBIDDEN,
-          'Your account is under review, please check in later',
-          HttpResponseStatus.INFO
+    return new SuccessResponse(
+      // @ts-ignore
+      response.message || 'Login successfully',
+      response,
+      // @ts-ignore
+      response.message ? StatusCode.INFO : StatusCode.SUCCESS
+    ).send(res)
+  })
+
+  private user = asyncHandler(async (req, res): Promise<Response | void> => {
+    return new SuccessResponse('', { user: req.user }).send(res)
+  })
+
+  private updatePassword = (byAdmin: boolean = false) =>
+    asyncHandler(async (req, res): Promise<void | Response> => {
+      let user
+      const { password } = req.body
+      if (byAdmin) {
+        user = await this.authService.updatePassword(
+          { _id: req.params.userId },
+          password
         )
-
-      res.status(200).json({
-        status: HttpResponseStatus.SUCCESS,
-        message: 'profile fetched',
-        data: { user: req.user },
-      })
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
-
-  private updatePassword =
-    (withOldPassword: boolean = true, isAdmin: boolean = false) =>
-    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-      try {
-        let userId, oldPassword
-        const { password } = req.body
-        if (isAdmin) {
-          userId = req.params.userId
-          if (!userId) throw new HttpException(404, 'User not found')
-        } else {
-          if (!req.user) throw new HttpException(404, 'User not found')
-          userId = req.user._id
-          if (withOldPassword) oldPassword = req.body.oldPassword
-        }
-        const responce = await this.authService.updatePassword(
-          userId,
+      } else {
+        user = await this.authService.updatePassword(
+          { _id: req.user._id },
           password,
-          oldPassword
+          req.body.oldPassword
         )
-        res.status(200).json(responce)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
       }
-    }
 
-  private forgetPassword = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
+      return new SuccessResponse('Password updated successfully', {
+        user,
+      }).send(res)
+    })
+
+  private forgetPassword = asyncHandler(
+    async (req, res): Promise<void | Response> => {
       const { account } = req.body
-      const responce = await this.authService.forgetPassword(account)
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      const response = await this.authService.forgetPassword(account)
+      return new SuccessResponse(
+        'A reset password link has been sent to your email address',
+        { response }
+      ).send(res)
     }
-  }
+  )
 
-  private resetPassword = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
+  private resetPassword = asyncHandler(
+    async (req, res): Promise<void | Response> => {
       const { password, key, verifyToken } = req.body
-      const responce = await this.authService.resetPassword(
-        key,
-        verifyToken,
-        password
-      )
-      res.status(200).json(responce)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      await this.authService.resetPassword(key, verifyToken, password)
+      return new SuccessResponse('Password updated successfully').send(res)
     }
-  }
+  )
 
-  private verifyEmail = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
+  private verifyEmail = asyncHandler(
+    async (req, res): Promise<Response | void> => {
       const { key, verifyToken } = req.body
-      const response = await this.authService.verifyEmail(key, verifyToken)
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      await this.authService.verifyEmail(key, verifyToken)
+      return new SuccessResponse('Email successfully verifield').send(res)
     }
-  }
+  )
 }
 
 export default AuthController

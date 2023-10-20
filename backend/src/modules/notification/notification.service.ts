@@ -9,229 +9,104 @@ import {
   NotificationForWho,
   NotificationCategory,
 } from '@/modules/notification/notification.enum'
-import { IUser, IUserObject } from '@/modules/user/user.interface'
-import { THttpResponse } from '@/modules/http/http.type'
-import AppException from '@/modules/app/app.exception'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import HttpException from '@/modules/http/http.exception'
-import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
-import { ITransactionInstance } from '@/modules/transactionManager/transactionManager.interface'
-import { IAppObject } from '@/modules/app/app.interface'
+import { IUserObject } from '@/modules/user/user.interface'
 import { UserEnvironment } from '@/modules/user/user.enum'
 import { NotificationStatus } from './notification.type'
-import userModel from '../user/user.model'
-import { ObjectId } from 'mongoose'
+import { FilterQuery } from 'mongoose'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import { InternalError, NotFoundError, ServiceError } from '@/core/apiError'
 
 @Service()
 class NotificationService implements INotificationService {
   private notificationModel = notificationModel
-  private userModel = userModel
-
-  private find = async (
-    notificationId: ObjectId,
-    fromAllAccounts: boolean = true,
-    userId?: ObjectId
-  ): Promise<INotification> => {
-    let notification
-
-    if (fromAllAccounts) {
-      notification = await this.notificationModel.findById(notificationId)
-    } else {
-      notification = await this.notificationModel.findOne({
-        _id: notificationId,
-        user: userId,
-      })
-    }
-
-    if (!notification) throw new HttpException(404, 'Notification not found')
-
-    return notification
-  }
-
-  public async _createTransaction(
-    message: string,
-    categoryName: NotificationCategory,
-    categoryObject: IAppObject,
-    forWho: NotificationForWho,
-    status: NotificationStatus,
-    environment: UserEnvironment,
-    user?: IUserObject
-  ): TTransaction<INotificationObject, INotification> {
-    try {
-      const notification = new this.notificationModel({
-        user: user ? user._id : undefined,
-        userObject: user,
-        message,
-        categoryName,
-        category: categoryObject._id,
-        categoryObject,
-        forWho,
-        status,
-        environment,
-      })
-
-      return {
-        object: notification.toObject({ getters: true }),
-        instance: {
-          model: notification,
-          onFailed: `Delete the notification with an id of (${notification._id})`,
-          async callback() {
-            await notification.deleteOne()
-          },
-        },
-      }
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Unable to send notification, please try again'
-      )
-    }
-  }
 
   public async create(
     message: string,
     categoryName: NotificationCategory,
-    categoryObject: IAppObject,
+    categoryObject: baseObjectInterface,
     forWho: NotificationForWho,
     status: NotificationStatus,
     environment: UserEnvironment,
-    user?: IUserObject | undefined
-  ): Promise<ITransactionInstance<INotification>> {
+    user?: IUserObject
+  ): Promise<INotificationObject> {
     try {
       if (forWho === NotificationForWho.USER && !user)
-        throw new Error(
+        throw new InternalError(
           'User object must be provided when forWho is equal to user'
         )
 
-      const { instance } = await this._createTransaction(
+      const notification = await this.notificationModel.create({
+        user,
         message,
         categoryName,
-        categoryObject,
+        category: categoryObject,
         forWho,
         status,
         environment,
-        user
-      )
+      })
 
-      return instance
+      return notification
     } catch (err) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to send notification, please try again'
       )
     }
   }
 
-  public delete = async (
-    fromAllAccounts: boolean,
-    notificationId: ObjectId,
-    userId?: ObjectId
-  ): THttpResponse<{ notification: INotification }> => {
+  public async delete(
+    filter: FilterQuery<INotification>
+  ): Promise<INotificationObject> {
     try {
-      const notification = await this.find(
-        notificationId,
-        fromAllAccounts,
-        userId
-      )
+      const notification = await this.notificationModel.findOne(filter)
+
+      if (!notification) throw new NotFoundError('Notification not found')
 
       await notification.deleteOne()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Notification deleted successfully',
-        data: { notification },
-      }
+      return notification
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to delete notification, please try again'
       )
     }
   }
 
-  public read = async (
-    notificationId: ObjectId,
-    userId: ObjectId
-  ): THttpResponse<{ notification: INotification }> => {
+  public async read(
+    filter: FilterQuery<INotification>
+  ): Promise<INotificationObject> {
     try {
-      const notification = await this.find(notificationId, false, userId)
+      const notification = await this.notificationModel.findOne(filter)
+
+      if (!notification) throw new NotFoundError('Notification not found')
 
       notification.read = true
 
       await notification.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Notification has been read successfully',
-        data: { notification },
-      }
+      return notification
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to read notification, please try again'
       )
     }
   }
 
-  public fetch = async (
-    fromAllAccounts: boolean,
-    notificationId: ObjectId,
-    userId: ObjectId
-  ): THttpResponse<{ notification: INotification }> => {
+  public async fetchAll(
+    filter: FilterQuery<INotification>
+  ): Promise<INotificationObject[]> {
     try {
-      const notification = await this.find(
-        notificationId,
-        fromAllAccounts,
-        userId
-      )
+      const notifications = await this.notificationModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .select('-userObject -categoryObject')
+        .populate('user', 'username isDeleted')
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Notification fetched successfully',
-        data: { notification },
-      }
+      return notifications
     } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to fetch notification, please try again'
-      )
-    }
-  }
-
-  public fetchAll = async (
-    fromAllAccounts: boolean,
-    environment: UserEnvironment,
-    forWho: NotificationForWho,
-    userId?: ObjectId
-  ): THttpResponse<{ notifications: INotification[] }> => {
-    try {
-      let notifications
-
-      if (fromAllAccounts && forWho === NotificationForWho.USER) {
-        notifications = await this.notificationModel
-          .find({ environment, forWho })
-          .sort({ createdAt: -1 })
-          .select('-userObject -categoryObject')
-          .populate('user', 'username isDeleted')
-      } else if (fromAllAccounts) {
-        notifications = await this.notificationModel
-          .find({ environment, forWho })
-          .sort({ createdAt: -1 })
-          .select('-userObject -categoryObject')
-      } else {
-        notifications = await this.notificationModel
-          .find({ environment, forWho, user: userId })
-          .sort({ createdAt: -1 })
-          .select('-userObject -categoryObject')
-      }
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Notifications fetched successfully',
-        data: { notifications },
-      }
-    } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to fetch notifications, please try again'
       )

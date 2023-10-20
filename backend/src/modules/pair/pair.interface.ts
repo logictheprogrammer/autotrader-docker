@@ -1,45 +1,33 @@
-import { IAppObject } from '@/modules/app/app.interface'
-import { THttpResponse } from '@/modules/http/http.type'
 import { AssetType } from '@/modules/asset/asset.enum'
-import { IAsset, IAssetObject } from '@/modules/asset/asset.interface'
-import { Document, ObjectId, Types } from 'mongoose'
+import { IAssetObject } from '@/modules/asset/asset.interface'
+import { FilterQuery, ObjectId } from 'mongoose'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import baseModelInterface from '@/core/baseModelInterface'
 
-export interface IPairObject extends IAppObject {
+export interface IPairObject extends baseObjectInterface {
   assetType: AssetType
-  baseAsset: IAsset['_id']
-  baseAssetObject: IAssetObject
-  quoteAsset: IAsset['_id']
-  quoteAssetObject: IAssetObject
+  baseAsset: IAssetObject
+  quoteAsset: IAssetObject
 }
 
-export interface IPair extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  assetType: AssetType
-  baseAsset: IAsset['_id']
-  baseAssetObject: IAssetObject
-  quoteAsset: IAsset['_id']
-  quoteAssetObject: IAssetObject
-}
+// @ts-ignore
+export interface IPair extends baseModelInterface, IPairObject {}
 
 export interface IPairService {
   create(
     assetType: AssetType,
     baseAssetId: ObjectId,
     quoteAssetId: ObjectId
-  ): THttpResponse<{ pair: IPair }>
+  ): Promise<IPairObject>
 
-  get(pairId: ObjectId | Types.ObjectId): Promise<IPairObject | null>
-
-  getByBase(baseId: ObjectId): Promise<IPairObject[]>
+  fetch(filter: FilterQuery<IPair>): Promise<IPairObject>
 
   update(
-    pairId: ObjectId,
+    filter: FilterQuery<IPair>,
     assetType: AssetType,
     baseAssetId: ObjectId,
     quoteAssetId: ObjectId
-  ): THttpResponse<{ pair: IPair }>
+  ): Promise<IPairObject>
 
-  fetchAll(): THttpResponse<{ pairs: IPair[] }>
+  fetchAll(filter: FilterQuery<IPair>): Promise<IPairObject[]>
 }

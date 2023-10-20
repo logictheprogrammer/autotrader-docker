@@ -10,7 +10,7 @@ import PlanController from '@/modules/plan/plan.controller'
 import UserController from '@/modules/user/user.controller'
 import MailOptionController from '@/modules/mailOption/mailOption.controller'
 import UserService from '@/modules/user/user.service'
-import ServiceToken from '@/utils/enums/serviceToken'
+import ServiceToken from '@/core/serviceToken'
 import MailService from '@/modules/mail/mail.service'
 import ConfigController from '@/modules/config/config.controller'
 import { IAuthService } from '@/modules/auth/auth.interface'
@@ -23,10 +23,6 @@ import { INotificationService } from '@/modules/notification/notification.interf
 import NotificationService from '@/modules/notification/notification.service'
 import { IReferralService } from '@/modules/referral/referral.interface'
 import ReferralService from '@/modules/referral/referral.service'
-import { ITransactionManagerService } from '@/modules/transactionManager/transactionManager.interface'
-import TransactionManagerService from '@/modules/transactionManager/transactionManager.service'
-import { IFailedTransactionService } from '@/modules/failedTransaction/failedTransaction.interface'
-import FailedTransactionService from '@/modules/failedTransaction/failedTransaction.service'
 import { IEmailVerificationService } from '@/modules/emailVerification/emailVerification.interface'
 import EmailVerificationService from '@/modules/emailVerification/emailVerification.service'
 import { IResetPasswordService } from '@/modules/resetPassword/resetPassword.interface'
@@ -55,8 +51,6 @@ import { IWithdrawalService } from '@/modules/withdrawal/withdrawal.interface'
 import WithdrawalService from '@/modules/withdrawal/withdrawal.service'
 import WithdrawalController from '@/modules/withdrawal/withdrawal.controller'
 import ActivityController from '@/modules/activity/activity.controller'
-import HttpMiddleware from '@/modules/http/http.middleware'
-import FailedTransactionController from '@/modules/failedTransaction/failedTransaction.controller'
 import TransactionController from '@/modules/transaction/transaction.controller'
 import { ITransferSettingsService } from '@/modules/transferSettings/transferSettings.interface'
 import TransferSettingsService from '@/modules/transferSettings/transferSettings.service'
@@ -154,13 +148,6 @@ Container.set<ITransferSettingsService>(
   transferSettingsService
 )
 
-export const failedTransactionService =
-  Container.get<IFailedTransactionService>(FailedTransactionService)
-Container.set<IFailedTransactionService>(
-  ServiceToken.FAILED_TRANSACTION_SERVICE,
-  failedTransactionService
-)
-
 export const transactionService =
   Container.get<ITransactionService>(TransactionService)
 Container.set<ITransactionService>(
@@ -181,13 +168,6 @@ export const withdrawalMethodService = Container.get<IWithdrawalMethodService>(
 Container.set<IWithdrawalMethodService>(
   ServiceToken.WITHDRAWAL_METHOD_SERVICE,
   withdrawalMethodService
-)
-
-export const transactionManagerService =
-  Container.get<ITransactionManagerService>(TransactionManagerService)
-Container.set<ITransactionManagerService>(
-  ServiceToken.TRANSACTION_MANAGER_SERVICE,
-  transactionManagerService
 )
 
 export const userService = Container.get<IUserService>(UserService)
@@ -239,7 +219,6 @@ const withdrawalMethodController = Container.get(WithdrawalMethodController)
 const depositController = Container.get(DepositController)
 const withdrawalController = Container.get(WithdrawalController)
 const activityController = Container.get(ActivityController)
-const failedTransactionController = Container.get(FailedTransactionController)
 const transactionController = Container.get(TransactionController)
 const transferSettingsController = Container.get(TransferSettingsController)
 const transferController = Container.get(TransferController)
@@ -264,7 +243,6 @@ export const controllers = [
   depositController,
   withdrawalController,
   activityController,
-  failedTransactionController,
   transactionController,
   transferSettingsController,
   transferController,
@@ -274,5 +252,3 @@ export const controllers = [
   pairController,
   tradeController,
 ]
-
-export const httpMiddleware = Container.get(HttpMiddleware)

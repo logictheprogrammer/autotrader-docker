@@ -1,25 +1,24 @@
 import { Service } from 'typedi'
 import {
   IReferralSettings,
+  IReferralSettingsObject,
   IReferralSettingsService,
 } from '@/modules/referralSettings/referralSettings.interface'
 import referralSettingsModel from '@/modules/referralSettings/referralSettings.model'
-import { THttpResponse } from '@/modules/http/http.type'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import AppException from '@/modules/app/app.exception'
-import HttpException from '@/modules/http/http.exception'
+import { NotFoundError, ServiceError } from '@/core/apiError'
+import { FilterQuery } from 'mongoose'
 
 @Service()
 class ReferralSettingsService implements IReferralSettingsService {
   private referralSettingsModel = referralSettingsModel
 
-  public create = async (
+  public async create(
     deposit: number,
     stake: number,
     winnings: number,
     investment: number,
     completedPackageEarnings: number
-  ): THttpResponse<{ referralSettings: IReferralSettings }> => {
+  ): Promise<IReferralSettingsObject> {
     try {
       const referralSettings = await this.referralSettingsModel.create({
         deposit,
@@ -29,82 +28,56 @@ class ReferralSettingsService implements IReferralSettingsService {
         completedPackageEarnings,
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Referral Settings Created',
-        data: { referralSettings },
-      }
+      return referralSettings
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to create referral settings, please try again'
       )
     }
   }
 
-  public update = async (
+  public async update(
     deposit: number,
     stake: number,
     winnings: number,
     investment: number,
     completedPackageEarnings: number
-  ): THttpResponse<{ referralSettings: IReferralSettings }> => {
+  ): Promise<IReferralSettingsObject> {
     try {
-      await this.referralSettingsModel.updateOne(
-        {},
-        {
-          deposit,
-          stake,
-          winnings,
-          investment,
-          completedPackageEarnings,
-        }
-      )
-
-      const referralSettings = await this.get()
+      const referralSettings =
+        await this.referralSettingsModel.findOneAndUpdate(
+          {},
+          {
+            deposit,
+            stake,
+            winnings,
+            investment,
+            completedPackageEarnings,
+          }
+        )
 
       if (!referralSettings)
-        throw new HttpException(404, 'Referral settings not found')
+        throw new NotFoundError('Referral settings not found')
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Referral Settings Updated',
-        data: { referralSettings },
-      }
+      return referralSettings
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to update referral settings, please try again'
       )
     }
   }
 
-  public get = async (): Promise<IReferralSettings | null> => {
-    try {
-      const referralSettings = await this.referralSettingsModel.findOne({})
-
-      return referralSettings
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Unable to fetch referral settings, please try again'
-      )
-    }
-  }
-
-  public fetch = async (): THttpResponse<{
-    referralSettings: IReferralSettings
-  }> => {
-    const referralSettings = await this.get()
+  public async fetch(
+    filter: FilterQuery<IReferralSettings>
+  ): Promise<IReferralSettingsObject> {
+    const referralSettings = await this.referralSettingsModel.findOne(filter)
 
     if (!referralSettings)
-      throw new HttpException(404, 'Referral settings not found')
+      throw new NotFoundError('Referral settings not found')
 
-    return {
-      status: HttpResponseStatus.SUCCESS,
-      message: 'Referral Settings fetched',
-      data: { referralSettings },
-    }
+    return referralSettings
   }
 }
 

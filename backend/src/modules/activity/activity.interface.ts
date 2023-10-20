@@ -1,58 +1,39 @@
-import { UserRole } from '@/modules/user/user.enum'
 import {
   ActivityCategory,
   ActivityForWho,
   ActivityStatus,
 } from '@/modules/activity/activity.enum'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
-import { THttpResponse } from '@/modules/http/http.type'
-import { ObjectId } from 'mongoose'
+import { FilterQuery, ObjectId } from 'mongoose'
+import baseModelInterface from '@/core/baseModelInterface'
+import baseObjectInterface from '@/core/baseObjectInterface'
 
-export interface IActivity extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  user: IUser['_id']
-  userObject: IUserObject
+export interface IActivityObject extends baseObjectInterface {
+  user: IUser
   category: ActivityCategory
   message: string
   status: ActivityStatus
   forWho: ActivityForWho
 }
 
-export interface IActivityRepositry {}
+// @ts-ignore
+export interface IActivity extends baseModelInterface, IActivityObject {}
 
 export interface IActivityService {
-  set(
+  create(
     user: IUserObject,
     forWho: ActivityForWho,
     category: ActivityCategory,
     message: string
-  ): Promise<IActivity>
+  ): Promise<IActivityObject>
 
-  fetchAll(
-    role: UserRole,
-    forWho: ActivityForWho,
-    userId?: ObjectId
-  ): THttpResponse<{ activities: IActivity[] }>
+  fetchAll(filter: FilterQuery<IActivity>): Promise<IActivityObject[]>
 
-  hide(
-    userId: ObjectId,
-    activityId: ObjectId,
-    forWho: ActivityForWho
-  ): THttpResponse<{ activity: IActivity }>
+  hide(filter: FilterQuery<IActivity>): Promise<IActivityObject>
 
-  hideAll(userId: ObjectId, forWho: ActivityForWho): THttpResponse
+  hideAll(filter: FilterQuery<IActivity>): Promise<void>
 
-  delete(
-    activityId: ObjectId,
-    forWho: ActivityForWho,
-    userId?: ObjectId
-  ): THttpResponse<{ activity: IActivity }>
+  delete(filter: FilterQuery<IActivity>): Promise<IActivityObject>
 
-  deleteAll(
-    allUsers: boolean,
-    forWho: ActivityForWho,
-    userId: ObjectId
-  ): THttpResponse
+  deleteAll(filter: FilterQuery<IActivity>): Promise<void>
 }

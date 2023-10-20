@@ -1,7 +1,7 @@
 export enum UserRole {
-  SUPER_ADMIN = 3,
-  ADMIN = 2,
   USER = 1,
+  ADMIN = 2,
+  SUPER_ADMIN = 3,
 }
 
 export enum UserStatus {

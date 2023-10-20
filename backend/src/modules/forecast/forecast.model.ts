@@ -2,24 +2,16 @@ import { IForecast } from '@/modules/forecast/forecast.interface'
 import { Schema, Types, model } from 'mongoose'
 import { ForecastStatus } from '@/modules/forecast/forecast.enum'
 
-const ForecastSchema = new Schema(
+const ForecastSchema = new Schema<IForecast>(
   {
     plan: {
       type: Types.ObjectId,
       ref: 'Plan',
       required: true,
     },
-    planObject: {
-      type: Object,
-      required: true,
-    },
     pair: {
       type: Types.ObjectId,
       ref: 'Pair',
-      required: true,
-    },
-    pairObject: {
-      type: Object,
       required: true,
     },
     market: {
@@ -29,6 +21,7 @@ const ForecastSchema = new Schema(
     status: {
       type: String,
       required: true,
+      enum: Object.values(ForecastStatus),
       default: ForecastStatus.PREPARING,
     },
     move: {

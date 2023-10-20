@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { IReferralSettings } from '@/modules/referralSettings/referralSettings.interface'
 
-const ReferralSettingsSchema = new Schema(
+const ReferralSettingsSchema = new Schema<IReferralSettings>(
   {
     deposit: {
       type: Number,

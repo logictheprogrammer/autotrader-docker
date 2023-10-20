@@ -2,10 +2,9 @@ import { SiteConstants } from '@/modules/config/config.constants'
 import nodemailer, { Transporter } from 'nodemailer'
 import { Inject, Service } from 'typedi'
 import { IMailDetails, IMailService } from '@/modules/mail/mail.interface'
-import ServiceToken from '@/utils/enums/serviceToken'
 import { IMailOptionService } from '@/modules/mailOption/mailOption.interface'
-import HttpException from '@/modules/http/http.exception'
-import AppException from '@/modules/app/app.exception'
+import { NotFoundError, ServiceError } from '@/core/apiError'
+import ServiceToken from '@/core/serviceToken'
 
 @Service()
 class MailService implements IMailService {
@@ -45,8 +44,8 @@ class MailService implements IMailService {
   // CONFIGURE TRANSPORTER
   public async setSender(sender: string): Promise<void> {
     try {
-      const mailOption = await this.mailOptionService.get(sender)
-      if (!mailOption) throw new HttpException(404, 'Mail option not found')
+      const mailOption = await this.mailOptionService.fetch({ name: sender })
+      if (!mailOption) throw new NotFoundError('Mail option not found')
 
       this.username = mailOption.username
       this.transporter = nodemailer.createTransport({
@@ -62,7 +61,7 @@ class MailService implements IMailService {
         },
       })
     } catch (err: any) {
-      throw new AppException(err, 'Unable to configure mail, please try again')
+      throw new ServiceError(err, 'Unable to configure mail, please try again')
     }
   }
 

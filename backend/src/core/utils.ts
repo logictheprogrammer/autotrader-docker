@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { ObjectId } from 'mongoose'
 
-export interface IAppController {
+export interface IController {
   path: string
   router: Router
 }

@@ -1,7 +1,7 @@
 import { Schema, Types, model } from 'mongoose'
 import { IPair } from '@/modules/pair/pair.interface'
 
-const PairSchema = new Schema(
+const PairSchema = new Schema<IPair>(
   {
     assetType: {
       type: String,
@@ -12,17 +12,9 @@ const PairSchema = new Schema(
       ref: 'Asset',
       required: true,
     },
-    baseAssetObject: {
-      type: Object,
-      required: true,
-    },
     quoteAsset: {
       type: Types.ObjectId,
       ref: 'Asset',
-      required: true,
-    },
-    quoteAssetObject: {
-      type: Object,
       required: true,
     },
   },

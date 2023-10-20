@@ -1,20 +1,18 @@
 import { Service } from 'typedi'
 import {
   IMailOption,
+  IMailOptionObject,
   IMailOptionService,
 } from '@/modules/mailOption/mailOption.interface'
 import mailOptionModel from '@/modules/mailOption/mailOption.model'
-import { THttpResponse } from '@/modules/http/http.type'
-import AppException from '@/modules/app/app.exception'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import HttpException from '@/modules/http/http.exception'
-import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
+import { FilterQuery } from 'mongoose'
 
 @Service()
 export default class MailOptionService implements IMailOptionService {
   private mailOptionModel = mailOptionModel
 
-  public create = async (
+  public async create(
     name: string,
     host: string,
     port: number,
@@ -22,17 +20,14 @@ export default class MailOptionService implements IMailOptionService {
     secure: boolean,
     username: string,
     password: string
-  ): THttpResponse<{ mailOption: IMailOption }> => {
+  ): Promise<IMailOptionObject> {
     try {
       const mailOptionExist = await this.mailOptionModel.findOne({
         $or: [{ name }, { username }],
       })
 
       if (mailOptionExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'Name or Username already exist'
-        )
+        throw new BadRequestError('Name or Username already exist')
 
       const mailOption = await this.mailOptionModel.create({
         name,
@@ -44,41 +39,42 @@ export default class MailOptionService implements IMailOptionService {
         password,
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Mail Option created',
-        data: { mailOption },
-      }
+      return mailOption
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Unable to create new mail option, please try again'
       )
     }
   }
 
-  public get = async (mailOptionName: string): Promise<IMailOption> => {
+  public async fetch(
+    filter: FilterQuery<IMailOption>
+  ): Promise<IMailOptionObject> {
     try {
-      const mailOption = await this.mailOptionModel.findOne({
-        name: mailOptionName,
-      })
+      const mailOption = await this.mailOptionModel.findOne(filter)
 
-      if (!mailOption) throw new HttpException(404, 'Mail Option not found')
+      if (!mailOption) throw new NotFoundError('Mail Option not found')
 
       return mailOption
     } catch (err: any) {
-      throw new AppException(err, 'Unable to get mail option, please try again')
+      throw new ServiceError(
+        err,
+        'Unable to fetch mail option, please try again'
+      )
     }
   }
 
-  public async getAll(): Promise<IMailOption[]> {
+  public async fetchAll(
+    filter: FilterQuery<IMailOption>
+  ): Promise<IMailOptionObject[]> {
     try {
-      const mailOptions = await this.mailOptionModel.find()
+      const mailOptions = await this.mailOptionModel.find(filter)
       return mailOptions
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
-        'Unable to get mail options, please try again'
+        'Unable to fetch mail options, please try again'
       )
     }
   }

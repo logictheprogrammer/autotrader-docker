@@ -1,11 +1,12 @@
 import { Service } from 'typedi'
-import { NextFunction, Request, Response, Router } from 'express'
+import { Response, Router } from 'express'
 import { SiteConstants } from '@/modules/config/config.constants'
-import { IAppController } from '@/modules/app/app.interface'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
+import { IController } from '@/core/utils'
+import { SuccessResponse } from '@/core/apiResponse'
+import asyncHandler from '@/helpers/asyncHandler'
 
 @Service()
-export default class ConfigController implements IAppController {
+export default class ConfigController implements IController {
   public path = '/configurations'
   public router = Router()
 
@@ -17,24 +18,20 @@ export default class ConfigController implements IAppController {
     this.router.get(`${this.path}/constants`, this.getConstants)
   }
 
-  private getConstants = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    const constants = {
-      siteName: SiteConstants.siteName,
-      siteLink: SiteConstants.siteLink,
-      siteApi: SiteConstants.siteApi,
-      siteUrl: SiteConstants.siteUrl,
-      siteEmail: SiteConstants.siteEmail,
-      siteAddress: SiteConstants.siteAddress,
-      sitePhone: SiteConstants.sitePhone,
+  private getConstants = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const constants = {
+        siteName: SiteConstants.siteName,
+        siteLink: SiteConstants.siteLink,
+        siteApi: SiteConstants.siteApi,
+        siteUrl: SiteConstants.siteUrl,
+        siteEmail: SiteConstants.siteEmail,
+        siteAddress: SiteConstants.siteAddress,
+        sitePhone: SiteConstants.sitePhone,
+      }
+      return new SuccessResponse('Constants fetched successfully', {
+        constants,
+      }).send(res)
     }
-    res.status(200).json({
-      status: HttpResponseStatus.SUCCESS,
-      message: 'Constants fetched',
-      data: { constants },
-    })
-  }
+  )
 }

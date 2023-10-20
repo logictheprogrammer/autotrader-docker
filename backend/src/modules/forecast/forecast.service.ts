@@ -1,7 +1,4 @@
-import {
-  IInvestment,
-  IInvestmentService,
-} from '@/modules/investment/investment.interface'
+import { IInvestmentService } from '@/modules/investment/investment.interface'
 import { Inject, Service } from 'typedi'
 import {
   IForecast,
@@ -9,31 +6,25 @@ import {
   IForecastService,
 } from '@/modules/forecast/forecast.interface'
 import forecastModel from '@/modules/forecast/forecast.model'
-import ServiceToken from '@/utils/enums/serviceToken'
 import { ForecastMove, ForecastStatus } from '@/modules/forecast/forecast.enum'
-import { IPlan, IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
-import { IUser } from '@/modules/user/user.interface'
-import { ITransaction } from '@/modules/transaction/transaction.interface'
-import { INotification } from '@/modules/notification/notification.interface'
-import {
-  ITransactionInstance,
-  ITransactionManagerService,
-} from '@/modules/transactionManager/transactionManager.interface'
-import { THttpResponse } from '@/modules/http/http.type'
-import HttpException from '@/modules/http/http.exception'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import AppException from '@/modules/app/app.exception'
-import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
+import { IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
 import { IPairObject, IPairService } from '../pair/pair.interface'
-import Helpers from 'helpers/helpers'
 import { IMathService } from '../math/math.interface'
-import { ObjectId } from 'mongoose'
-import { IAsset } from '../asset/asset.interface'
+import { FilterQuery, ObjectId } from 'mongoose'
+import { IAsset, IAssetObject } from '../asset/asset.interface'
 import { ISendMailService } from '../sendMail/sendMail.interface'
-import { ITrade, ITradeService } from '../trade/trade.interface'
-import { IReferral } from '../referral/referral.interface'
-import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import { ITradeService } from '../trade/trade.interface'
 import InvestmentService from '../investment/investment.service'
+import {
+  BadRequestError,
+  InternalError,
+  NotFoundError,
+  ServiceError,
+} from '@/core/apiError'
+import ServiceToken from '@/core/serviceToken'
+import Helpers from '@/utils/helpers'
+import { PlanStatus } from '../plan/plan.enum'
+import { InvestmentStatus } from '../investment/investment.enum'
 
 @Service()
 class ForecastService implements IForecastService {
@@ -58,19 +49,9 @@ class ForecastService implements IForecastService {
     private investmentService: IInvestmentService,
     @Inject(ServiceToken.TRADE_SERVICE)
     private tradeService: ITradeService,
-    @Inject(ServiceToken.TRANSACTION_MANAGER_SERVICE)
-    private transactionManagerService: ITransactionManagerService<any>,
     @Inject(ServiceToken.SEND_MAIL_SERVICE)
     private SendMailService: ISendMailService
   ) {}
-
-  private async find(forecastId: ObjectId): Promise<IForecast> {
-    const forecast = await this.forecastModel.findById(forecastId)
-
-    if (!forecast) throw new HttpException(404, 'Forecast not found')
-
-    return forecast
-  }
 
   private getForecastWaitTime(dailyForcast: number, duration: number): number {
     const min = ForecastService.minDailyWaitTime / dailyForcast
@@ -86,113 +67,255 @@ class ForecastService implements IForecastService {
     )
   }
 
-  public async _createTransaction(
+  public async getTodaysTotalForecast(plan: IPlanObject): Promise<number> {
+    const today = new Date(new Date().setHours(0, 0, 0, 0))
+    return this.forecastModel
+      .count({
+        plan: plan._id,
+        createdAt: {
+          $gte: today,
+        },
+      })
+      .exec()
+  }
+
+  public async create(
     plan: IPlanObject,
     pair: IPairObject,
     percentageProfit: number,
     stakeRate: number
-  ): TTransaction<IForecastObject, IForecast> {
-    const forecast = new this.forecastModel({
-      plan: plan._id,
-      planObject: plan,
-      pair: pair._id,
-      pairObject: pair,
+  ): Promise<{ forecast: IForecastObject; errors: any[] }> {
+    const errors: any[] = []
+
+    const forecast = await this.forecastModel.create({
+      plan,
+      pair,
       market: pair.assetType,
       percentageProfit,
       stakeRate,
       manualMode: plan.manualMode,
     })
 
-    return {
-      object: forecast.toObject({ getters: true }),
-      instance: {
-        model: forecast,
-        onFailed: `Delete the forecast with an id of (${forecast._id})`,
-        callback: async () => {
-          await this.forecastModel.deleteOne({ _id: forecast._id })
-        },
-      },
+    await this.planService.updateForecastDetails(forecast.plan._id, forecast)
+
+    const activePlanInvestments = await this.investmentService.fetchAll({
+      manualMode: false,
+      status: InvestmentStatus.AWAITING_TRADE,
+      plan: forecast.plan._id,
+      tradeStatus: { $or: [ForecastStatus.SETTLED, undefined] },
+    })
+
+    for (let index = 0; index < activePlanInvestments.length; index++) {
+      try {
+        const investmentObject = activePlanInvestments[index]
+
+        await this.tradeService.create(
+          investmentObject.user._id,
+          investmentObject,
+          forecast
+        )
+      } catch (error) {
+        errors.push(error)
+        continue
+      }
+    }
+
+    return { forecast, errors }
+  }
+
+  public async autoCreate(): Promise<{
+    forecasts: IForecastObject[]
+    errors: any[]
+  }> {
+    const forecasts: IForecastObject[] = []
+    const errors: any[] = []
+
+    try {
+      const plans = await this.planService.fetchAll({
+        manualMode: false,
+        status: PlanStatus.ACTIVE,
+        forecastStatus: { $or: [ForecastStatus.SETTLED, undefined] },
+      })
+
+      for (let index = 0; index < plans.length; index++) {
+        const plan = plans[index]
+
+        // check if its time to set the forecast
+        const totalForecast = plan.dailyForecasts * plan.duration
+
+        const todaysForecast = await this.getTodaysTotalForecast(plan)
+        const playedRate = todaysForecast / plan.dailyForecasts
+
+        const startOfDayTime = new Date().setHours(0, 0, 0, 0)
+        const endOfDayTime = new Date().setHours(23, 59, 59, 999)
+        const currentTime =
+          new Date().getTime() -
+          this.getForecastWaitTime(plan.dailyForecasts, plan.duration)
+
+        const timeRate =
+          (startOfDayTime - currentTime) / (startOfDayTime - endOfDayTime)
+
+        if (timeRate < playedRate) continue
+
+        let pair
+        let assets = plan.assets
+
+        while (true) {
+          if (!assets.length) {
+            const error = new InternalError(
+              `There is no asset or assets with valid pairs in plan (${plan.name} - ${plan._id})`
+            )
+            errors.push(error)
+            break
+          }
+
+          const selectedAsset =
+            Helpers.randomPickFromArray<IAssetObject>(assets)
+
+          const validPairs = await this.pairService.fetchAll({
+            baseAsset: selectedAsset._id,
+          })
+
+          if (!validPairs.length) {
+            assets = assets.filter((cur) => cur._id !== selectedAsset._id)
+            continue
+          }
+          pair = Helpers.randomPickFromArray<IPairObject>(validPairs)
+          break
+        }
+
+        if (!pair) continue
+
+        if (pair.assetType !== plan.assetType) {
+          const error = new InternalError(
+            `The pair (${pair._id}) is not compatible with this plan (${plan.name} - ${plan._id})`
+          )
+          errors.push(error)
+          continue
+        }
+
+        const minPercentageProfit = plan.minPercentageProfit / totalForecast
+        const maxPercentageProfit = plan.maxPercentageProfit / totalForecast
+
+        const stakeRate = Helpers.getRandomValue(
+          ForecastService.minStakeRate,
+          ForecastService.maxStakeRate
+        )
+
+        const percentageProfit = this.mathService.probabilityValue(
+          minPercentageProfit,
+          maxPercentageProfit,
+          0.76
+        )
+
+        const { forecast, errors: createErrors } = await this.create(
+          plan,
+          pair,
+          percentageProfit,
+          stakeRate
+        )
+
+        forecasts.push(forecast)
+
+        createErrors.forEach((err) => errors.push(err))
+      }
+    } catch (error) {
+      errors.push(error)
+    }
+
+    return { forecasts, errors }
+  }
+
+  public async manualCreate(
+    planId: ObjectId,
+    pairId: ObjectId,
+    percentageProfit: number,
+    stakeRate: number
+  ): Promise<{ forecast: IForecastObject; errors: any[] }> {
+    try {
+      const plan = await this.planService.fetch({ _id: planId })
+      const pair = await this.pairService.fetch({ _id: pairId })
+
+      if (!plan) throw new NotFoundError('The plan no longer exist')
+
+      if (plan.forecastStatus && plan.forecastStatus !== ForecastStatus.SETTLED)
+        throw new BadRequestError(
+          'This plan already has an unsettled forecast running'
+        )
+
+      if (!pair) throw new NotFoundError('The selected pair no longer exist')
+
+      if (pair.assetType !== plan.assetType)
+        throw new BadRequestError(
+          'The pair is not compatible with this plan plan'
+        )
+
+      const result = await this.create(plan, pair, percentageProfit, stakeRate)
+
+      return result
+    } catch (err: any) {
+      throw new ServiceError(
+        err,
+        'Failed to create this forecast, please try again'
+      )
     }
   }
 
-  public async _updateTransaction(
-    forecastId: ObjectId,
-    pair: IPairObject,
+  public async update(
+    filter: FilterQuery<IForecast>,
+    pairId: ObjectId,
     percentageProfit: number,
     stakeRate: number,
     move?: ForecastMove,
     openingPrice?: number,
     closingPrice?: number
-  ): TTransaction<IForecastObject, IForecast> {
-    const forecast = await this.find(forecastId)
+  ): Promise<IForecastObject> {
+    try {
+      const pair = await this.pairService.fetch({ _id: pairId })
+      if (!pair) throw new NotFoundError('The selected pair no longer exist')
 
-    if (pair.assetType !== forecast.market)
-      throw new HttpException(
-        400,
-        `The pair is not compatible with this forecast, use a ${forecast.market} pair`
+      const forecast = await this.forecastModel.findOne(filter)
+
+      if (!forecast) throw new NotFoundError('Forecast not found')
+
+      if (pair.assetType !== forecast.market)
+        throw new BadRequestError(
+          `The pair is not compatible with this forecast, use a ${forecast.market} pair`
+        )
+
+      forecast.pair = pair
+      forecast.market = pair.assetType
+      forecast.move = move
+      forecast.percentageProfit = percentageProfit
+      forecast.stakeRate = stakeRate
+      forecast.openingPrice = openingPrice
+      forecast.closingPrice = closingPrice
+
+      return forecast
+    } catch (err: any) {
+      throw new ServiceError(
+        err,
+        'Failed to update this forecast, please try again'
       )
-
-    const oldPair = forecast.pair
-    const oldPairObject = forecast.pairObject
-    const oldMarket = forecast.market
-    const oldMove = forecast.move
-    const oldPercentageProfit = forecast.percentageProfit
-    const oldStakeRate = forecast.stakeRate
-    const oldOpeningPrice = forecast.openingPrice
-    const oldClosingPrice = forecast.closingPrice
-
-    forecast.pair = pair._id
-    forecast.pairObject = pair
-    forecast.market = pair.assetType
-    forecast.move = move
-    forecast.percentageProfit = percentageProfit
-    forecast.stakeRate = stakeRate
-    forecast.openingPrice = openingPrice
-    forecast.closingPrice = closingPrice
-
-    return {
-      object: forecast.toObject({ getters: true }),
-      instance: {
-        model: forecast,
-        onFailed: `Set the forecast with an id of (${forecast._id}) to the following: 
-        \npair = (${oldPair}), 
-        \npairObject = (${oldPairObject}), 
-        \nmarket = (${oldMarket}), 
-        \nmove = (${oldMove}), 
-        \npercentageProfit = (${oldPercentageProfit}), 
-        \nstakeRate = (${oldStakeRate}), 
-        \nopeningPrice = (${oldOpeningPrice}), 
-        \nclosingPrice = (${oldClosingPrice})`,
-        callback: async () => {
-          forecast.pair = oldPair
-          forecast.pairObject = oldPairObject
-          forecast.market = oldMarket
-          forecast.move = oldMove
-          forecast.percentageProfit = oldPercentageProfit
-          forecast.stakeRate = oldStakeRate
-          forecast.openingPrice = oldOpeningPrice
-          forecast.closingPrice = oldClosingPrice
-          await forecast.save()
-        },
-      },
     }
   }
 
-  public async _updateStatusTransaction(
-    forecastId: ObjectId,
-    status: ForecastStatus,
-    move?: ForecastMove
-  ): TTransaction<IForecastObject, IForecast> {
-    const forecast = await this.find(forecastId)
+  public async updateStatus(
+    filter: FilterQuery<IForecast>,
+    status: ForecastStatus
+  ): Promise<{ forecast: IForecastObject; errors: any[] }> {
+    const errors: any[] = []
+
+    const forecast = await this.forecastModel.findOne(filter)
+
+    if (!forecast) throw new NotFoundError('Forecast not found')
 
     const oldStatus = forecast.status
     const oldStartTime = forecast.startTime
     const oldTimeStamps = forecast.timeStamps.slice()
-    const oldRuntime = forecast.runTime
-    const oldMove = forecast.move
 
     if (oldStatus === ForecastStatus.SETTLED)
-      throw new HttpException(400, 'This forecast has already been settled')
+      throw new BadRequestError('This forecast has already been settled')
 
     let runtime: number
     switch (status) {
@@ -220,441 +343,169 @@ class ForecastService implements IForecastService {
           0
         )
         forecast.startTime = undefined
-        forecast.move = move
+      //  Get the right move based on the forecast profit and an api result
+      // forecast.move = 'move'
     }
 
     forecast.status = status
 
-    return {
-      object: forecast.toObject({ getters: true }),
-      instance: {
-        model: forecast,
-        onFailed: `Set the status of the forecast with an id of (${
-          forecast._id
-        }) to (${oldStatus}) and startTime to (${oldStartTime}) and timeStamps to (${JSON.stringify(
-          oldTimeStamps
-        )}) and move to (${oldMove}) and runtime to (${oldRuntime})`,
-        callback: async () => {
-          forecast.status = oldStatus
-          forecast.startTime = oldStartTime
-          forecast.timeStamps = oldTimeStamps
-          forecast.move = oldMove
-          forecast.runTime = oldRuntime
-          await forecast.save()
-        },
-      },
+    await this.planService.updateForecastDetails(forecast.plan._id, forecast)
+
+    const activePlanInvestments = await this.investmentService.fetchAll({
+      manualMode: false,
+      status: InvestmentStatus.RUNNING,
+      plan: forecast.plan._id,
+      tradeStatus: ForecastStatus.RUNNING,
+    })
+
+    for (let index = 0; index < activePlanInvestments.length; index++) {
+      try {
+        const investmentObject = activePlanInvestments[index]
+
+        await this.tradeService.updateStatus(investmentObject, forecast)
+      } catch (error) {
+        errors.push(error)
+        continue
+      }
     }
+
+    return { forecast, errors }
   }
 
-  public async getTodaysTotalForecast(
-    planObject: IPlanObject
-  ): Promise<number> {
-    const today = new Date(new Date().setHours(0, 0, 0, 0))
-    return this.forecastModel
-      .count({
-        plan: planObject._id,
-        createdAt: {
-          $gte: today,
+  public async autoUpdateStatus(): Promise<{
+    forecasts: IForecastObject[]
+    errors: any[]
+  }> {
+    const forecasts: IForecastObject[] = []
+    const errors: any[] = []
+
+    try {
+      const plans = await this.planService.fetchAll({
+        manualMode: false,
+        status: PlanStatus.ACTIVE,
+        forecastStatus: {
+          $or: [
+            ForecastStatus.PREPARING,
+            ForecastStatus.RUNNING,
+            ForecastStatus.MARKET_CLOSED,
+          ],
         },
       })
-      .exec()
-  }
 
-  public async create(
-    plan: IPlanObject,
-    pair: IPairObject,
-    percentageProfit: number,
-    stakeRate: number
-  ): Promise<IForecast> {
-    const transactionInstances: ITransactionInstance<
-      | IForecast
-      | IReferral
-      | ITransaction
-      | INotification
-      | IInvestment
-      | ITrade
-      | IUser
-      | IPlan
-    >[] = []
+      for (let index = 0; index < plans.length; index++) {
+        const plan = plans[index]
 
-    const { object: forecastObject, instance: forecastTransactionInstance } =
-      await this._createTransaction(plan, pair, percentageProfit, stakeRate)
+        const totalForecast = plan.dailyForecasts * plan.duration
 
-    transactionInstances.push(forecastTransactionInstance)
+        const durationTime = this.getDurationTime(plan)
 
-    const planTransactionInstance =
-      await this.planService.updateForecastDetails(
-        forecastObject.plan,
-        forecastObject
-      )
+        const forecastTime = durationTime / totalForecast
 
-    transactionInstances.push(planTransactionInstance)
+        const forecastStatus = plan.forecastStatus
+        const forecastTimeStamps = plan.forecastTimeStamps.slice()
+        const forecastStartTime = plan.forecastStartTime
 
-    const activePlanInvestments =
-      await this.investmentService.getAllAutoAwaiting(forecastObject.plan)
+        const runTime =
+          new Date().getTime() -
+          (forecastStartTime?.getTime() || new Date().getTime())
 
-    for (let index = 0; index < activePlanInvestments.length; index++) {
-      try {
-        const investmentObject = activePlanInvestments[index]
+        forecastTimeStamps.push(runTime)
 
-        const tradeInstances = await this.tradeService.create(
-          investmentObject.user,
-          investmentObject,
-          forecastObject
+        const totalRuntime = forecastTimeStamps.reduce(
+          (acc, curr) => (acc += curr),
+          0
         )
 
-        tradeInstances.forEach((instance) =>
-          transactionInstances.push(instance)
-        )
-      } catch (error) {
-        this.SendMailService.sendDeveloperErrorMail(error)
-        continue
-      }
-    }
+        // SETTLE FORECAST
+        if (
+          totalRuntime >= forecastTime &&
+          forecastStatus === ForecastStatus.RUNNING
+        ) {
+          if (!plan.currentForecast) {
+            const error = new InternalError(
+              `There is no current forecast in plan (${plan.name} - ${plan._id})`
+            )
+            errors.push(error)
+            continue
+          }
 
-    await this.transactionManagerService.execute(transactionInstances)
-
-    return forecastTransactionInstance.model
-  }
-
-  public async autoCreate(): Promise<void> {
-    const plans = await this.planService.getAllAutoIdled()
-    if (!plans.length) return
-
-    for (let index = 0; index < plans.length; index++) {
-      const plan = plans[index]
-
-      // check if its time to set the forecast
-      const totalForecast = plan.dailyForecasts * plan.duration
-
-      const todaysForecast = await this.getTodaysTotalForecast(plan)
-      const playedRate = todaysForecast / plan.dailyForecasts
-
-      const startOfDayTime = new Date().setHours(0, 0, 0, 0)
-      const endOfDayTime = new Date().setHours(23, 59, 59, 999)
-      const currentTime =
-        new Date().getTime() -
-        this.getForecastWaitTime(plan.dailyForecasts, plan.duration)
-
-      const timeRate =
-        (startOfDayTime - currentTime) / (startOfDayTime - endOfDayTime)
-
-      if (timeRate < playedRate) continue
-
-      let pair
-      let assets = plan.assets
-
-      while (true) {
-        if (!assets.length) {
-          const error = new Error(
-            `There is no assets or assets with valid pairs in plan (${plan.name} - ${plan._id})`
+          await this.updateStatus(
+            { _id: plan.currentForecast._id },
+            ForecastStatus.SETTLED
           )
-          this.SendMailService.sendDeveloperErrorMail(error)
-          break
         }
 
-        const selectedAsset = Helpers.randomPickFromArray<IAsset>(assets)
+        // RUN FORCAST
+        else if (forecastStatus === ForecastStatus.PREPARING) {
+          if (!plan.currentForecast) {
+            const error = new InternalError(
+              `There is no current forecast in plan (${plan.name} - ${plan._id})`
+            )
+            errors.push(error)
+            continue
+          }
 
-        const validPairs = await this.pairService.getByBase(selectedAsset._id)
-
-        if (!validPairs.length) {
-          assets = assets.filter((cur) => cur._id !== selectedAsset._id)
-          continue
-        }
-        pair = Helpers.randomPickFromArray<IPairObject>(validPairs)
-        break
-      }
-
-      if (!pair) return
-
-      if (pair.assetType !== plan.assetType) {
-        const error = new Error(
-          `The pair is not compatible with this plan (${plan.name} - ${plan._id})`
-        )
-        this.SendMailService.sendDeveloperErrorMail(error)
-        break
-      }
-
-      const minPercentageProfit = plan.minPercentageProfit / totalForecast
-      const maxPercentageProfit = plan.maxPercentageProfit / totalForecast
-
-      const stakeRate = Helpers.getRandomValue(
-        ForecastService.minStakeRate,
-        ForecastService.maxStakeRate
-      )
-
-      const percentageProfit = this.mathService.probabilityValue(
-        minPercentageProfit,
-        maxPercentageProfit,
-        0.76
-      )
-
-      await this.create(plan, pair, percentageProfit, stakeRate)
-    }
-  }
-
-  public async manualCreate(
-    planId: ObjectId,
-    pairId: ObjectId,
-    percentageProfit: number,
-    stakeRate: number
-  ): THttpResponse<{ forecast: IForecast }> {
-    try {
-      const plan = await this.planService.get(planId)
-      const pair = await this.pairService.get(pairId)
-
-      if (!plan) throw new HttpException(404, 'The plan no longer exist')
-
-      if (plan.forecastStatus && plan.forecastStatus !== ForecastStatus.SETTLED)
-        throw new HttpException(
-          ErrorCode.BAD_REQUEST,
-          'This plan already has an unsettled forecast running'
-        )
-
-      if (!pair)
-        throw new HttpException(404, 'The selected pair no longer exist')
-
-      if (pair.assetType !== plan.assetType)
-        throw new HttpException(
-          400,
-          'The pair is not compatible with this plan plan'
-        )
-
-      const forecast = await this.create(
-        plan,
-        pair,
-        percentageProfit,
-        stakeRate
-      )
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Forecast created successfully',
-        data: { forecast: forecast },
-      }
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to create this forecast, please try again'
-      )
-    }
-  }
-
-  public async update(
-    forecastId: ObjectId,
-    pairId: ObjectId,
-    percentageProfit: number,
-    stakeRate: number,
-    move?: ForecastMove,
-    openingPrice?: number,
-    closingPrice?: number
-  ): THttpResponse<{ forecast: IForecast }> {
-    try {
-      const pair = await this.pairService.get(pairId)
-      if (!pair)
-        throw new HttpException(404, 'The selected pair no longer exist')
-
-      const transactionInstances: ITransactionInstance<IForecast>[] = []
-
-      const {
-        instance: updateForecastTransactionInstance,
-        object: forecastObject,
-      } = await this._updateTransaction(
-        forecastId,
-        pair,
-        percentageProfit,
-        stakeRate,
-        move,
-        openingPrice,
-        closingPrice
-      )
-
-      transactionInstances.push(updateForecastTransactionInstance)
-
-      await this.transactionManagerService.execute(transactionInstances)
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Forecast updated successfully',
-        data: { forecast: updateForecastTransactionInstance.model },
-      }
-    } catch (err: any) {
-      throw new AppException(
-        err,
-        'Failed to update this forecast, please try again'
-      )
-    }
-  }
-
-  public async updateStatus(
-    forecastId: ObjectId,
-    status: ForecastStatus
-  ): Promise<IForecast> {
-    const transactionInstances: ITransactionInstance<
-      ITransaction | INotification | IInvestment | ITrade | IForecast | IPlan
-    >[] = []
-
-    let move
-
-    if (status === ForecastStatus.SETTLED) {
-      move = ForecastMove.LONG
-    }
-
-    const { instance: forecastInstance, object: forecastObject } =
-      await this._updateStatusTransaction(forecastId, status, move)
-
-    transactionInstances.push(forecastInstance)
-
-    const planTransactionInstance =
-      await this.planService.updateForecastDetails(
-        forecastObject.plan,
-        forecastObject
-      )
-
-    transactionInstances.push(planTransactionInstance)
-
-    const activePlanInvestments =
-      await this.investmentService.getAllAutoRunning(forecastObject.plan)
-
-    for (let index = 0; index < activePlanInvestments.length; index++) {
-      try {
-        const investmentObject = activePlanInvestments[index]
-
-        const tradeInstances = await this.tradeService.updateStatus(
-          investmentObject,
-          forecastObject
-        )
-        tradeInstances.forEach((instance) =>
-          transactionInstances.push(instance)
-        )
-      } catch (error) {
-        this.SendMailService.sendDeveloperErrorMail(error)
-        continue
-      }
-    }
-
-    await this.transactionManagerService.execute(transactionInstances)
-
-    return forecastInstance.model
-  }
-
-  public async autoUpdateStatus(): Promise<void> {
-    const plans = await this.planService.getAllAutoRunning()
-
-    if (!plans.length) return
-
-    for (let index = 0; index < plans.length; index++) {
-      const plan = plans[index]
-
-      const totalForecast = plan.dailyForecasts * plan.duration
-
-      const durationTime = this.getDurationTime(plan)
-
-      const forecastTime = durationTime / totalForecast
-
-      const forecastStatus = plan.forecastStatus
-      const forecastTimeStamps = plan.forecastTimeStamps.slice()
-      const forecastStartTime = plan.forecastStartTime
-
-      const runTime =
-        new Date().getTime() -
-        (forecastStartTime?.getTime() || new Date().getTime())
-
-      forecastTimeStamps.push(runTime)
-
-      const totalRuntime = forecastTimeStamps.reduce(
-        (acc, curr) => (acc += curr),
-        0
-      )
-
-      // SETTLE FORECAST
-      if (
-        totalRuntime >= forecastTime &&
-        forecastStatus === ForecastStatus.RUNNING
-      ) {
-        if (!plan.currentForecast) {
-          const error = new Error(
-            `There is no current forecast in plan (${plan.name} - ${plan._id})`
-          )
-          this.SendMailService.sendDeveloperErrorMail(error)
-          continue
+          await this.updateStatus(plan.currentForecast, ForecastStatus.RUNNING)
         }
 
-        await this.updateStatus(plan.currentForecast, ForecastStatus.SETTLED)
-      }
-
-      // RUN FORCAST
-      else if (forecastStatus === ForecastStatus.PREPARING) {
-        if (!plan.currentForecast) {
-          const error = new Error(
-            `There is no current forecast in plan (${plan.name} - ${plan._id})`
-          )
-          this.SendMailService.sendDeveloperErrorMail(error)
-          continue
+        // CHECK IF FORECAST MARKET HAS CLOSED
+        else if (forecastStatus === ForecastStatus.RUNNING) {
+          if (!plan.currentForecast) {
+            const error = new InternalError(
+              `There is no current forecast in plan (${plan.name} - ${plan._id})`
+            )
+            errors.push(error)
+            continue
+          }
+          // LOGIC TO CHECK IF MARKET HAS CLOSED
+          // await this.updateStatus(plan.currentForecast, ForecastStatus.MARKET_CLOSED)
         }
 
-        await this.updateStatus(plan.currentForecast, ForecastStatus.RUNNING)
-      }
-
-      // CHECK IF FORECAST MARKET HAS CLOSED
-      else if (forecastStatus === ForecastStatus.RUNNING) {
-        if (!plan.currentForecast) {
-          const error = new Error(
-            `There is no current forecast in plan (${plan.name} - ${plan._id})`
-          )
-          this.SendMailService.sendDeveloperErrorMail(error)
-          continue
+        // CHECK IF FORECAST MARKET HAS OPENED
+        else if (forecastStatus === ForecastStatus.MARKET_CLOSED) {
+          if (!plan.currentForecast) {
+            const error = new InternalError(
+              `There is no current forecast in plan (${plan.name} - ${plan._id})`
+            )
+            errors.push(error)
+            continue
+          }
+          // LOGIC TO CHECK IF MARKET HAS OPENED
+          // await this.updateStatus(plan.currentForecast, ForecastStatus.RUNNING)
         }
-        // LOGIC TO CHECK IF MARKET HAS CLOSED
-        // await this.updateStatus(plan.currentForecast, ForecastStatus.MARKET_CLOSED)
       }
-
-      // CHECK IF FORECAST MARKET HAS OPENED
-      else if (forecastStatus === ForecastStatus.MARKET_CLOSED) {
-        if (!plan.currentForecast) {
-          const error = new Error(
-            `There is no current forecast in plan (${plan.name} - ${plan._id})`
-          )
-          this.SendMailService.sendDeveloperErrorMail(error)
-          continue
-        }
-        // LOGIC TO CHECK IF MARKET HAS OPENED
-        // await this.updateStatus(plan.currentForecast, ForecastStatus.RUNNING)
-      }
+    } catch (error) {
+      errors.push(error)
     }
+
+    return { forecasts, errors }
   }
 
   public async manualUpdateStatus(
-    forecastId: ObjectId,
+    filter: FilterQuery<IForecast>,
     status: ForecastStatus
-  ): THttpResponse<{ forecast: IForecast }> {
-    const forecast = await this.updateStatus(forecastId, status)
+  ): Promise<{ forecast: IForecastObject; errors: any[] }> {
+    const result = await this.updateStatus(filter, status)
 
-    return {
-      status: HttpResponseStatus.SUCCESS,
-      message: 'Forecast created successfully',
-      data: { forecast },
-    }
+    return result
   }
 
   public async delete(
-    forecastId: ObjectId
-  ): THttpResponse<{ forecast: IForecast }> {
+    filter: FilterQuery<IForecast>
+  ): Promise<IForecastObject> {
     try {
-      const forecast = await this.find(forecastId)
+      const forecast = await this.forecastModel.findOne(filter)
+
+      if (!forecast) throw new NotFoundError('Forecast not found')
 
       if (forecast.status !== ForecastStatus.SETTLED)
-        throw new HttpException(400, 'Forecast has not been settled yet')
+        throw new BadRequestError('Forecast has not been settled yet')
 
       await this.forecastModel.deleteOne({ _id: forecast._id })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Forecast deleted successfully',
-        data: { forecast },
-      }
+      return forecast
     } catch (err: any) {
-      throw new AppException(
+      throw new ServiceError(
         err,
         'Failed to delete this forecast, please try again'
       )
@@ -662,24 +513,15 @@ class ForecastService implements IForecastService {
   }
 
   public async fetchAll(
-    planId: ObjectId
-  ): THttpResponse<{ forecasts: IForecast[] }> {
+    filter: FilterQuery<IForecast>
+  ): Promise<IForecastObject[]> {
     try {
-      let forecasts
-
-      forecasts = await this.forecastModel
-        .find({ plan: planId })
-        .select('-planObject -pairObject')
+      return await this.forecastModel
+        .find(filter)
         .populate('plan')
         .populate('pair')
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Forecast fetched successfully',
-        data: { forecasts },
-      }
     } catch (err: any) {
-      throw new AppException(err, 'Failed to fetch forecast, please try again')
+      throw new ServiceError(err, 'Failed to fetch forecast, please try again')
     }
   }
 }

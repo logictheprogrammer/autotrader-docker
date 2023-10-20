@@ -1,16 +1,18 @@
 import { IInvestmentService } from '@/modules/investment/investment.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Request, Response, NextFunction } from 'express'
+import { Router, Response } from 'express'
 import validate from '@/modules/investment/investment.validation'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
 import { ObjectId } from 'mongoose'
+import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
+import asyncHandler from '@/helpers/asyncHandler'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import routePermission from '@/helpers/routePermission'
+import schemaValidator from '@/helpers/schemaValidator'
 
 @Service()
-class InvestmentController implements IAppController {
+class InvestmentController implements IController {
   public path = '/investment'
   public router = Router()
 
@@ -23,154 +25,134 @@ class InvestmentController implements IAppController {
 
   private intialiseRoutes(): void {
     this.router.post(
-      `${this.path}/create`,
-      HttpMiddleware.authenticate(UserRole.USER),
-      HttpMiddleware.validate(validate.create),
+      `${this.path}/create/:planId`,
+      routePermission(UserRole.USER),
+      schemaValidator(validate.create),
       this.create(UserEnvironment.LIVE)
     )
 
     this.router.post(
-      `${this.path}/demo/create`,
-      HttpMiddleware.authenticate(UserRole.USER),
-      HttpMiddleware.validate(validate.createDemo),
+      `${this.path}/demo/create/:planId`,
+      routePermission(UserRole.USER),
+      schemaValidator(validate.createDemo),
       this.create(UserEnvironment.DEMO)
     )
 
     this.router.patch(
-      `${this.path}/fund`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.fund),
+      `${this.path}/fund/:investmentId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.fund),
       this.fund
     )
 
     this.router.patch(
-      `${this.path}/update-status`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateStatus),
+      `${this.path}/update-status/:investmentId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateStatus),
       this.updateStatus
     )
 
     this.router.delete(
       `${this.path}/delete/:investmentId`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
       `${this.path}/master/demo`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.DEMO)
     )
 
     this.router.get(
       `${this.path}/master`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE)
     )
 
     this.router.get(
       `${this.path}/demo`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.fetchAll(false, UserEnvironment.DEMO)
     )
 
     this.router.get(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.fetchAll(false, UserEnvironment.LIVE)
     )
   }
 
-  private fetchAll =
-    (all: boolean, environment: UserEnvironment) =>
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<Response | void> => {
-      try {
-        const userId = req.user._id
-        const response = await this.investmentService.fetchAll(
-          all,
+  private fetchAll = (all: boolean, environment: UserEnvironment) =>
+    asyncHandler(async (req, res): Promise<Response | void> => {
+      const userId = req.user._id
+      let investments
+      if (all) {
+        investments = await this.investmentService.fetchAll({ environment })
+      } else {
+        investments = await this.investmentService.fetchAll({
           environment,
-          userId
-        )
-        res.status(200).json(response)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
+          user: userId,
+        })
       }
-    }
 
-  private create =
-    (environment: UserEnvironment) =>
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<Response | void> => {
-      try {
-        const { planId, amount, account } = req.body
-        const userId = req.user._id
-        const response = await this.investmentService.create(
-          planId,
-          userId,
-          amount,
-          account,
-          environment
-        )
-        res.status(201).json(response)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
-      }
-    }
+      return new SuccessResponse('Investments fetched successfully', {
+        investments,
+      }).send(res)
+    })
 
-  private updateStatus = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { investmentId, status } = req.body
-      const response = await this.investmentService.forceUpdateStatus(
-        investmentId,
+  private create = (environment: UserEnvironment) =>
+    asyncHandler(async (req, res): Promise<Response | void> => {
+      const { amount, account } = req.body
+      const { planId } = req.params
+      const userId = req.user._id
+      const investment = await this.investmentService.create(
+        planId as unknown as ObjectId,
+        userId,
+        amount,
+        account,
+        environment
+      )
+      return new SuccessCreatedResponse('Investment registered successfully', {
+        investment,
+      }).send(res)
+    })
+
+  private updateStatus = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const { status } = req.body
+      const { investmentId } = req.params
+      const investment = await this.investmentService.updateStatus(
+        { _id: investmentId },
         status
       )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
+      return new SuccessResponse('Status updated successfully', {
+        investment,
+      }).send(res)
     }
-  }
+  )
 
-  private fund = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { investmentId, amount } = req.body
-      const response = await this.investmentService.forceFund(
-        investmentId,
-        amount
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  private fund = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { amount } = req.body
+    const { investmentId } = req.params
+    const investment = await this.investmentService.fund(
+      { _id: investmentId },
+      amount
+    )
+    return new SuccessResponse('Investment funded successfully', {
+      investment,
+    }).send(res)
+  })
 
-  private delete = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const investmentId = req.params.investmentId as unknown as ObjectId
-      const response = await this.investmentService.delete(investmentId)
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  private delete = asyncHandler(async (req, res): Promise<Response | void> => {
+    const investmentId = req.params.investmentId as unknown as ObjectId
+    const investment = await this.investmentService.delete({
+      _id: investmentId,
+    })
+    return new SuccessResponse('Investment deleted successfully', {
+      investment,
+    }).send(res)
+  })
 }
 
 export default InvestmentController

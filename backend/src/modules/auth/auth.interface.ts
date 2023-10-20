@@ -1,7 +1,6 @@
-import { THttpResponse } from '@/modules/http/http.type'
-import { IUser } from '@/modules/user/user.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { UserRole, UserStatus } from '@/modules/user/user.enum'
-import { ObjectId } from 'mongoose'
+import { FilterQuery } from 'mongoose'
 
 export interface IAuthService {
   register(
@@ -17,33 +16,31 @@ export interface IAuthService {
     demoBalance: number,
     bonusBalance: number,
     invite?: string
-  ): THttpResponse<{ email: string }>
+  ): Promise<{ email: string; message: string }>
 
   login(
-    account: string,
+    filter: FilterQuery<IUser>,
     password: string
-  ): THttpResponse<
-    { email: string } | { accessToken: string; expiresIn: number }
+  ): Promise<
+    | { email: string; message: string }
+    | { accessToken: string; expiresIn: number }
   >
 
   updatePassword(
-    userId: ObjectId,
+    filter: FilterQuery<IUser>,
     password: string,
     oldPassword?: string
-  ): THttpResponse<{ user: IUser }>
+  ): Promise<IUserObject>
 
-  verifyEmail(
-    key: string,
-    verifyToken: string
-  ): THttpResponse<{ accessToken: string }>
+  verifyEmail(key: string, verifyToken: string): Promise<void>
 
-  forgetPassword(account: string): THttpResponse<{ email: string }>
+  forgetPassword(filter: FilterQuery<IUser>): Promise<{ email: string }>
 
   resetPassword(
     key: string,
     verifyToken: string,
     password: string
-  ): THttpResponse
+  ): Promise<void>
 
   sendWelcomeMail(user: IUser): Promise<void>
 

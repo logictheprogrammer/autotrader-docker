@@ -12,7 +12,6 @@ const create = Joi.object({
 })
 
 const updateStatus = Joi.object({
-  withdrawalId: Joi.string().required(),
   status: Joi.string()
     .valid(WithdrawalStatus.APPROVED, WithdrawalStatus.CANCELLED)
     .required(),

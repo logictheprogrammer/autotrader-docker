@@ -1,81 +1,57 @@
 import { Inject, Service } from 'typedi'
 import { IPair, IPairObject, IPairService } from '@/modules/pair/pair.interface'
 import pairModel from '@/modules/pair/pair.model'
-import { THttpResponse } from '@/modules/http/http.type'
-import { HttpResponseStatus } from '@/modules/http/http.enum'
-import AppException from '@/modules/app/app.exception'
-import HttpException from '@/modules/http/http.exception'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { IAsset, IAssetService } from '../asset/asset.interface'
+
+import { IAssetService } from '../asset/asset.interface'
 import { AssetType } from '../asset/asset.enum'
-import assetModel from '../asset/asset.model'
-import { ObjectId } from 'mongoose'
-import { ErrorCode } from '@/utils/enums/errorCodes.enum'
+import { FilterQuery, ObjectId } from 'mongoose'
+import ServiceToken from '@/core/serviceToken'
+import {
+  NotFoundError,
+  RequestConflictError,
+  ServiceError,
+} from '@/core/apiError'
 
 @Service()
 class PairService implements IPairService {
   private pairModel = pairModel
-  private assetModel = assetModel
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)
     private assetService: IAssetService
   ) {}
 
-  private find = async (
-    pairId: ObjectId,
-    fromAllAccounts: boolean = true,
-    userId?: string
-  ): Promise<IPair> => {
-    let pair
-    if (fromAllAccounts) {
-      pair = await this.pairModel.findById(pairId)
-    } else {
-      pair = await this.pairModel.findById({ _id: pairId, user: userId })
-    }
-
-    if (!pair) throw new HttpException(404, 'Pair not found')
-
-    return pair
-  }
-
-  public async get(pairId: ObjectId): Promise<IPairObject | null> {
+  public async fetch(query: FilterQuery<IPair>): Promise<IPairObject> {
     try {
-      const pair = await this.pairModel.findById(pairId)
+      const pair = await this.pairModel.findOne(query, {}, { lean: true })
 
-      if (!pair) return null
+      if (!pair) throw new NotFoundError('Pair not found')
 
-      return pair.toObject({ getters: true })
+      return pair
     } catch (err: any) {
-      throw new AppException(err, 'Unable to get pair, please try again')
+      throw new ServiceError(err, 'Unable to fetch pair, please try again')
     }
   }
 
-  public async getByBase(baseId: ObjectId): Promise<IPairObject[]> {
-    try {
-      const pairs = await this.pairModel.find({ baseAsset: baseId })
-
-      const pairsObject = pairs.map((pair) => pair.toObject({ getters: true }))
-
-      return pairsObject
-    } catch (err: any) {
-      throw new AppException(err, 'Unable to get pair, please try again')
-    }
-  }
-
-  public create = async (
+  public async create(
     assetType: AssetType,
     baseAssetId: ObjectId,
     quoteAssetId: ObjectId
-  ): THttpResponse<{ pair: IPair }> => {
+  ): Promise<IPairObject> {
     try {
-      const baseAsset = await this.assetService.get(baseAssetId, assetType)
+      const baseAsset = await this.assetService.fetch({
+        _id: baseAssetId,
+        type: assetType,
+      })
 
-      if (!baseAsset) throw new HttpException(404, 'Base Asset not found')
+      if (!baseAsset) throw new NotFoundError('Base Asset not found')
 
-      const quoteAsset = await this.assetService.get(quoteAssetId, assetType)
+      const quoteAsset = await this.assetService.fetch({
+        _id: quoteAssetId,
+        type: assetType,
+      })
 
-      if (!quoteAsset) throw new HttpException(404, 'Quote Asset not found')
+      if (!quoteAsset) throw new NotFoundError('Quote Asset not found')
 
       const pairExist = await this.pairModel.findOne({
         baseAsset: baseAssetId,
@@ -83,11 +59,7 @@ class PairService implements IPairService {
         assetType,
       })
 
-      if (pairExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'Pair already exist'
-        )
+      if (pairExist) throw new RequestConflictError('Pair already exist')
 
       const pair = await this.pairModel.create({
         assetType,
@@ -97,81 +69,66 @@ class PairService implements IPairService {
         quoteAssetObject: quoteAsset,
       })
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Pair added successfully',
-        data: { pair },
-      }
+      return pair
     } catch (err: any) {
-      throw new AppException(err, 'Unable to save new pair, please try again')
+      throw new ServiceError(err, 'Unable to save new pair, please try again')
     }
   }
 
-  public update = async (
-    pairId: ObjectId,
+  public async update(
+    filter: FilterQuery<IPair>,
     assetType: AssetType,
     baseAssetId: ObjectId,
     quoteAssetId: ObjectId
-  ): THttpResponse<{ pair: IPair }> => {
+  ): Promise<IPairObject> {
     try {
+      const pair = await this.pairModel.findOne(filter)
+
+      if (!pair) throw new NotFoundError('Pair not found')
+
       const pairExist = await this.pairModel.findOne({
         $and: [
-          { _id: { $ne: pairId } },
+          { _id: { $ne: pair._id } },
           { assetType },
           { baseAsset: baseAssetId },
           { quoteAsset: quoteAssetId },
         ],
       })
 
-      if (pairExist)
-        throw new HttpException(
-          ErrorCode.REQUEST_CONFLICT,
-          'Pair already exist'
-        )
+      if (pairExist) throw new RequestConflictError('Pair already exist')
 
-      const baseAsset = await this.assetService.get(baseAssetId, assetType)
+      const baseAsset = await this.assetService.fetch(filter)
 
-      if (!baseAsset) throw new HttpException(404, 'Base Asset not found')
+      if (!baseAsset) throw new NotFoundError('Base Asset not found')
 
-      const quoteAsset = await this.assetService.get(quoteAssetId, assetType)
+      const quoteAsset = await this.assetService.fetch({
+        _id: quoteAssetId,
+        type: assetType,
+      })
 
-      if (!quoteAsset) throw new HttpException(404, 'Quote Asset not found')
-
-      const pair = await this.find(pairId)
+      if (!quoteAsset) throw new NotFoundError('Quote Asset not found')
 
       pair.assetType = assetType
-      pair.baseAsset = baseAsset._id
-      pair.baseAssetObject = baseAsset
-      pair.quoteAsset = quoteAsset._id
-      pair.quoteAssetObject = quoteAsset
+      pair.baseAsset = baseAsset
+      pair.quoteAsset = quoteAsset
 
       await pair.save()
 
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Pair updated successfully',
-        data: { pair },
-      }
+      return pair
     } catch (err: any) {
-      throw new AppException(err, 'Unable to update pair, please try again')
+      throw new ServiceError(err, 'Unable to update pair, please try again')
     }
   }
 
-  public fetchAll = async (): THttpResponse<{ pairs: IPair[] }> => {
+  public async fetchAll(query: FilterQuery<IPair>): Promise<IPairObject[]> {
     try {
-      const pairs = await this.pairModel
-        .find()
+      return await this.pairModel
+        .find(query, {}, { lean: true })
         .select('-baseAssetObject -quoteAssetObject')
-        .populate('baseAsset', 'name symbol logo type isDeleted')
-        .populate('quoteAsset', 'name symbol logo type isDeleted')
-
-      return {
-        status: HttpResponseStatus.SUCCESS,
-        message: 'Pairs fetch successfully',
-        data: { pairs },
-      }
+        .populate('baseAsset', 'name symbol logo type')
+        .populate('quoteAsset', 'name symbol logo type')
     } catch (err: any) {
-      throw new AppException(err, 'Unable to fetch pair, please try again')
+      throw new ServiceError(err, 'Unable to fetch pair, please try again')
     }
   }
 }

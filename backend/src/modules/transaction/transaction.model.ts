@@ -1,15 +1,11 @@
 import { Schema, Types, model } from 'mongoose'
 import { ITransaction } from '@/modules/transaction/transaction.interface'
 
-const TransactionSchema = new Schema(
+const TransactionSchema = new Schema<ITransaction>(
   {
     user: {
       type: Types.ObjectId,
       ref: 'User',
-      required: true,
-    },
-    userObject: {
-      type: Object,
       required: true,
     },
     status: {
@@ -22,10 +18,6 @@ const TransactionSchema = new Schema(
     },
     categoryName: {
       type: String,
-      required: true,
-    },
-    categoryObject: {
-      type: Object,
       required: true,
     },
     environment: {

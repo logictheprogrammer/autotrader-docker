@@ -1,17 +1,16 @@
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Request, Response, NextFunction } from 'express'
+import { Router, Response } from 'express'
 
-import validate from '@/modules/transaction/transaction.validation'
-import ServiceToken from '@/utils/enums/serviceToken'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
-import { ObjectId } from 'mongoose'
+import ServiceToken from '@/core/serviceToken'
+import { IController } from '@/core/utils'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessResponse } from '@/core/apiResponse'
+import routePermission from '@/helpers/routePermission'
 
 @Service()
-class TransactionController implements IAppController {
+class TransactionController implements IController {
   public path = '/transaction'
   public router = Router()
 
@@ -23,120 +22,64 @@ class TransactionController implements IAppController {
   }
 
   private intialiseRoutes(): void {
-    this.router.patch(
-      `${this.path}/force-update-status`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateStatus),
-      this.forceUpdateStatus
-    )
-
-    this.router.patch(
-      `${this.path}/force-update-amount`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.updateAmount),
-      this.forceUpdateAmount
-    )
-
     this.router.delete(
       `${this.path}/delete/:transactionId`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
       `${this.path}/demo/all`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.DEMO)
     )
 
     this.router.get(
       `${this.path}/all`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
+      routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE)
     )
 
     this.router.get(
       `${this.path}/demo`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.fetchAll(false, UserEnvironment.DEMO)
     )
 
     this.router.get(
       `${this.path}`,
-      HttpMiddleware.authenticate(UserRole.USER),
+      routePermission(UserRole.USER),
       this.fetchAll(false, UserEnvironment.LIVE)
     )
   }
 
-  private fetchAll =
-    (fromAllAccounts: boolean, environment: UserEnvironment) =>
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Promise<Response | void> => {
-      try {
-        const userId = req.user._id
+  private fetchAll = (byAdmin: boolean, environment: UserEnvironment) =>
+    asyncHandler(async (req, res): Promise<Response | void> => {
+      let transactions
 
-        const response = await this.transactionService.fetchAll(
-          fromAllAccounts,
+      if (byAdmin) {
+        transactions = await this.transactionService.fetchAll({ environment })
+      } else {
+        transactions = await this.transactionService.fetchAll({
           environment,
-          userId
-        )
-        res.status(200).json(response)
-      } catch (err: any) {
-        next(new HttpException(err.status, err.message, err.statusStrength))
+          user: req.user._id,
+        })
       }
-    }
 
-  private forceUpdateAmount = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { transactionId, status, amount } = req.body
-      const response = await this.transactionService.forceUpdateAmount(
-        transactionId,
-        status,
-        amount
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+      return new SuccessResponse('Transactions fetched successfully', {
+        transactions,
+      }).send(res)
+    })
 
-  private forceUpdateStatus = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { transactionId, status } = req.body
-      const response = await this.transactionService.forceUpdateStatus(
-        transactionId,
-        status
-      )
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
-
-  private delete = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const transactionId = req.params.transactionId as unknown as ObjectId
-      const response = await this.transactionService.delete(transactionId)
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  private delete = asyncHandler(async (req, res): Promise<Response | void> => {
+    const transactionId = req.params.transactionId
+    const transaction = await this.transactionService.delete({
+      _id: transactionId,
+    })
+    return new SuccessResponse('Transaction delted successfully', {
+      transaction,
+    }).send(res)
+  })
 }
 
 export default TransactionController

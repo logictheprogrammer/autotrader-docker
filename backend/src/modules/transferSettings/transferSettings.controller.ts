@@ -1,15 +1,17 @@
-import ServiceToken from '@/utils/enums/serviceToken'
 import { Service, Inject } from 'typedi'
 import validate from '@/modules/transferSettings/transferSettings.validation'
-import { NextFunction, Request, Response, Router } from 'express'
+import { Response, Router } from 'express'
 import { ITransferSettingsService } from '@/modules/transferSettings/transferSettings.interface'
-import { IAppController } from '@/modules/app/app.interface'
-import HttpMiddleware from '@/modules/http/http.middleware'
 import { UserRole } from '@/modules/user/user.enum'
-import HttpException from '@/modules/http/http.exception'
+import { IController } from '@/core/utils'
+import ServiceToken from '@/core/serviceToken'
+import asyncHandler from '@/helpers/asyncHandler'
+import { SuccessResponse } from '@/core/apiResponse'
+import routePermission from '@/helpers/routePermission'
+import schemaValidator from '@/helpers/schemaValidator'
 
 @Service()
-export default class TransferSettingsController implements IAppController {
+export default class TransferSettingsController implements IController {
   public path = '/transfer-settings'
   public router = Router()
 
@@ -21,63 +23,32 @@ export default class TransferSettingsController implements IAppController {
   }
 
   private initialiseRoutes = (): void => {
-    // this.router.post(
-    //   `${this.path}/create`,
-    //   HttpMiddleware.authenticate(UserRole.ADMIN),
-    //   HttpMiddleware.validate(validate.create),
-    //   this.create
-    // )
-
     this.router.put(
       `${this.path}/update`,
-      HttpMiddleware.authenticate(UserRole.ADMIN),
-      HttpMiddleware.validate(validate.update),
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
       this.update
     )
 
     this.router.get(`${this.path}`, this.fetch)
   }
 
-  private create = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { approval, fee } = req.body
+  private update = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { approval, fee } = req.body
 
-      const response = await this.transferSettingsService.create(approval, +fee)
-      res.status(201).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+    const transferSettings = await this.transferSettingsService.update(
+      approval,
+      +fee
+    )
+    return new SuccessResponse('Transfer settings updated successfully', {
+      transferSettings,
+    }).send(res)
+  })
 
-  private update = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const { approval, fee } = req.body
-
-      const response = await this.transferSettingsService.update(approval, +fee)
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
-
-  private fetch = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
-    try {
-      const response = await this.transferSettingsService.fetch()
-      res.status(200).json(response)
-    } catch (err: any) {
-      next(new HttpException(err.status, err.message, err.statusStrength))
-    }
-  }
+  private fetch = asyncHandler(async (req, res): Promise<Response | void> => {
+    const transferSettings = await this.transferSettingsService.fetch({})
+    return new SuccessResponse('Transfer status fetched successfully', {
+      transferSettings,
+    }).send(res)
+  })
 }

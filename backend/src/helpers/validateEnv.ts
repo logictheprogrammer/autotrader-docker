@@ -1,6 +1,6 @@
 import { cleanEnv, str, port, bool, num } from 'envalid'
 
-const validateEnv = (): void => {
+export default (): void => {
   cleanEnv(process.env, {
     NODE_ENV: str({
       choices: ['development', 'production', 'test'],
@@ -20,5 +20,3 @@ const validateEnv = (): void => {
     CRYPTO_METHOD: str(),
   })
 }
-
-export default validateEnv

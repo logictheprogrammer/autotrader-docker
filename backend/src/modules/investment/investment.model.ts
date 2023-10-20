@@ -1,5 +1,7 @@
 import { IInvestment } from '@/modules/investment/investment.interface'
 import { Schema, Types, model } from 'mongoose'
+import { UserAccount, UserEnvironment } from '../user/user.enum'
+import { InvestmentStatus } from './investment.enum'
 
 const InvestmentSchema = new Schema<IInvestment>(
   {
@@ -8,30 +10,25 @@ const InvestmentSchema = new Schema<IInvestment>(
       ref: 'Plan',
       required: true,
     },
-    planObject: {
-      type: Object,
-      required: true,
-    },
     user: {
       type: Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    userObject: {
-      type: Object,
-      required: true,
-    },
     account: {
       type: String,
       required: true,
+      enum: Object.values(UserAccount),
     },
     environment: {
       type: String,
       required: true,
+      enum: Object.values(UserEnvironment),
     },
     status: {
       type: String,
       required: true,
+      enum: Object.values(InvestmentStatus),
     },
     minRunTime: {
       type: Number,

@@ -1,79 +1,38 @@
 import { TransferStatus } from '@/modules/transfer/transfer.enum'
-import { IUser, IUserObject } from '@/modules/user/user.interface'
-import { THttpResponse } from '@/modules/http/http.type'
-import { IAppObject } from '@/modules/app/app.interface'
-import { TTransaction } from '@/modules/transactionManager/transactionManager.type'
+import { IUserObject } from '@/modules/user/user.interface'
 import { UserAccount } from '@/modules/user/user.enum'
-import { Document, ObjectId, Types } from 'mongoose'
+import { FilterQuery, ObjectId } from 'mongoose'
+import baseObjectInterface from '@/core/baseObjectInterface'
+import baseModelInterface from '@/core/baseModelInterface'
 
-export interface ITransferObject extends IAppObject {
-  fromUser: IUser['_id']
-  fromUserObject: IUser
-  toUser: IUser['_id']
-  toUserObject: IUser
+export interface ITransferObject extends baseObjectInterface {
+  fromUser: IUserObject
+  toUser: IUserObject
   account: UserAccount
   status: TransferStatus
   amount: number
   fee: number
 }
 
-export interface ITransfer extends Document {
-  __v: number
-  updatedAt: Date
-  createdAt: Date
-  fromUser: IUser['_id']
-  fromUserObject: IUser
-  toUser: IUser['_id']
-  toUserObject: IUser
-  account: UserAccount
-  status: TransferStatus
-  amount: number
-  fee: number
-}
+// @ts-ignore
+export interface ITransfer extends baseModelInterface, ITransferObject {}
 
 export interface ITransferService {
-  _createTransaction(
-    fromUser: IUserObject,
-    toUser: IUserObject,
-    account: UserAccount,
-    status: TransferStatus,
-    fee: number,
-    amount: number
-  ): TTransaction<ITransferObject, ITransfer>
-
-  _updateStatusTransaction(
-    transferId: ObjectId | Types.ObjectId,
-    status: TransferStatus
-  ): TTransaction<ITransferObject, ITransfer>
-
-  get(
-    transferId: ObjectId,
-    isAdmin: boolean,
-    userId?: ObjectId
-  ): Promise<ITransferObject>
-
   create(
     fromUserId: ObjectId,
     toUserUsername: string,
     account: UserAccount,
     amount: number
-  ): THttpResponse<{ transfer: ITransfer }>
+  ): Promise<ITransferObject>
 
-  fetch(
-    isAdmin: boolean,
-    transferId: ObjectId,
-    userId?: ObjectId
-  ): THttpResponse<{ transfer: ITransfer }>
+  fetch(filter: FilterQuery<ITransfer>): Promise<ITransferObject>
 
-  fetchAll(
-    allUsers: boolean,
-    userId?: ObjectId
-  ): THttpResponse<{ transfers: ITransfer[] }>
+  fetchAll(filter: FilterQuery<ITransfer>): Promise<ITransferObject[]>
 
-  delete(transferId: ObjectId): THttpResponse<{ transfer: ITransfer }>
+  delete(filter: FilterQuery<ITransfer>): Promise<ITransferObject>
 
   updateStatus(
-    transferId: ObjectId,
+    filter: FilterQuery<ITransfer>,
     status: TransferStatus
-  ): THttpResponse<{ transfer: ITransfer }>
+  ): Promise<ITransferObject>
 }
