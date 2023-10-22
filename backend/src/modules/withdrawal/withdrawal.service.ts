@@ -4,7 +4,6 @@ import {
   IWithdrawalObject,
   IWithdrawalService,
 } from '@/modules/withdrawal/withdrawal.interface'
-import withdrawalModel from '@/modules/withdrawal/withdrawal.model'
 import { WithdrawalStatus } from '@/modules/withdrawal/withdrawal.enum'
 import { IWithdrawalMethodService } from '@/modules/withdrawalMethod/withdrawalMethod.interface'
 import { IUserService } from '@/modules/user/user.interface'
@@ -20,10 +19,11 @@ import { FilterQuery, ObjectId } from 'mongoose'
 import ServiceToken from '@/core/serviceToken'
 import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
+import WithdrawalModel from '@/modules/withdrawal/withdrawal.model'
 
 @Service()
 class WithdrawalService implements IWithdrawalService {
-  private withdrawalModel = withdrawalModel
+  private withdrawalModel = WithdrawalModel
 
   public constructor(
     @Inject(ServiceToken.WITHDRAWAL_METHOD_SERVICE)

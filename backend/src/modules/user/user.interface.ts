@@ -4,12 +4,10 @@ import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
 
 export interface IUserObject extends baseObjectInterface {
-  key: string
   email: string
   username: string
   name: string
   country: string
-  password: string
   role: UserRole
   status: UserStatus
   verifield: Boolean
@@ -23,6 +21,8 @@ export interface IUserObject extends baseObjectInterface {
 
 // @ts-ignore
 export interface IUser extends baseModelInterface, IUserObject {
+  key: string
+  password: string
   isValidPassword(password: string): Promise<boolean>
 }
 

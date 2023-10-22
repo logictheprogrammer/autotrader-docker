@@ -9,31 +9,39 @@ import {
   UnauthorizedResponse,
 } from './apiResponse'
 import { sendMailService } from './../setup'
+import { ValidationError } from 'joi'
 
 export enum ErrorType {
-  UNAUTHORIZED = 'UnauthorizedError',
-  INTERNAL = 'InternalError',
-  CONFLICT = 'RequestConflictError',
-  NOT_FOUND = 'NotFoundError',
-  BAD_REQUEST = 'BadRequestError',
-  FORBIDDEN = 'ForbiddenError',
+  UNAUTHORIZED = '100',
+  INTERNAL = '101',
+  CONFLICT = '102',
+  NOT_FOUND = '103',
+  BAD_REQUEST = '104',
+  FORBIDDEN = '105',
+  INVALID_CSRF_ERROR = '106',
+  SCHEMA_VALIDATION_TOKEN = '107',
+  MONGOOSE_CAST_ERROR = '108',
 }
 
 export abstract class ApiError extends Error {
+  public name = 'ApiError'
   constructor(
     public type: ErrorType,
     public message: string = 'error',
-    public description: string = '',
+    public description?: string,
     public statusCode: StatusCode = StatusCode.DANGER,
     public errors?: string[]
   ) {
-    super(message)
+    super(type)
+
+    Object.setPrototypeOf(this, ApiError.prototype)
   }
 
   public static handle(err: ApiError, res: Response) {
     switch (err.type) {
       case ErrorType.UNAUTHORIZED:
         return new UnauthorizedResponse(
+          err.type,
           err.message,
           err.description,
           err.statusCode,
@@ -41,6 +49,7 @@ export abstract class ApiError extends Error {
         ).send(res)
       case ErrorType.INTERNAL:
         return new InternalErrorResponse(
+          err.type,
           err.message,
           err.description,
           err.statusCode,
@@ -48,6 +57,7 @@ export abstract class ApiError extends Error {
         ).send(res)
       case ErrorType.CONFLICT:
         return new RequestConflictResponse(
+          err.type,
           err.message,
           err.description,
           err.statusCode,
@@ -55,20 +65,26 @@ export abstract class ApiError extends Error {
         ).send(res)
       case ErrorType.NOT_FOUND:
         return new NotFoundResponse(
+          err.type,
           err.message,
           err.description,
           err.statusCode,
           err.errors
         ).send(res)
       case ErrorType.BAD_REQUEST:
+      case ErrorType.MONGOOSE_CAST_ERROR:
+      case ErrorType.SCHEMA_VALIDATION_TOKEN:
         return new BadRequestResponse(
+          err.type,
           err.message,
           err.description,
           err.statusCode,
           err.errors
         ).send(res)
       case ErrorType.FORBIDDEN:
+      case ErrorType.INVALID_CSRF_ERROR:
         return new ForbiddenResponse(
+          err.type,
           err.message,
           err.description,
           err.statusCode,
@@ -76,85 +92,142 @@ export abstract class ApiError extends Error {
         ).send(res)
       default: {
         const message = 'Something wrong happened.'
-        return new InternalErrorResponse(message).send(res)
+        return new InternalErrorResponse(ErrorType.INTERNAL, message).send(res)
       }
     }
   }
 
-  public static notifyDeveloper(err: any) {
+  public static notifyDeveloper(err: Error) {
+    if (err) console.log('name:', err.name)
     console.log(err)
     return sendMailService.sendDeveloperErrorMail(err)
   }
 }
 
 export class ServiceError extends Error {
-  constructor(public error: any, public message: string = 'error') {
+  public name = 'ServiceError'
+  public error: any
+
+  constructor(error: any, public message: string = 'error') {
+    let err = error
+    while (true) {
+      if (err instanceof ServiceError) err = err.error
+      else break
+    }
     super(message)
+
+    this.error = err
+
+    Object.setPrototypeOf(this, ServiceError.prototype)
   }
 }
 
 export class UnauthorizedError extends ApiError {
   constructor(
     message = 'Unauthorized',
-    description = '',
-    statusCode = StatusCode.DANGER,
-    errors?: string[]
+    description?: string,
+    statusCode = StatusCode.DANGER
   ) {
-    super(ErrorType.UNAUTHORIZED, message, description, statusCode, errors)
+    super(ErrorType.UNAUTHORIZED, message, description, statusCode)
+
+    Object.setPrototypeOf(this, UnauthorizedError.prototype)
   }
 }
 
 export class InternalError extends ApiError {
   constructor(
     message = 'Something went wrong, please try again later',
-    description = '',
-    statusCode = StatusCode.DANGER,
-    errors?: string[]
+    description?: string,
+    statusCode = StatusCode.DANGER
   ) {
-    super(ErrorType.INTERNAL, message, description, statusCode, errors)
+    super(ErrorType.INTERNAL, message, description, statusCode)
+
+    Object.setPrototypeOf(this, InternalError.prototype)
   }
 }
 
 export class RequestConflictError extends ApiError {
   constructor(
     message = 'Resource already exist',
-    description = '',
-    statusCode = StatusCode.DANGER,
-    errors?: string[]
+    description?: string,
+    statusCode = StatusCode.DANGER
   ) {
-    super(ErrorType.CONFLICT, message, description, statusCode, errors)
+    super(ErrorType.CONFLICT, message, description, statusCode)
+
+    Object.setPrototypeOf(this, RequestConflictError.prototype)
   }
 }
 
 export class BadRequestError extends ApiError {
   constructor(
     message = 'Invalid request',
-    description = '',
-    statusCode = StatusCode.DANGER,
-    errors?: string[]
+    description?: string,
+    statusCode = StatusCode.DANGER
   ) {
-    super(ErrorType.BAD_REQUEST, message, description, statusCode, errors)
+    super(ErrorType.BAD_REQUEST, message, description, statusCode)
+
+    Object.setPrototypeOf(this, BadRequestError.prototype)
   }
 }
 
 export class NotFoundError extends ApiError {
   constructor(
     message = 'Resource not found',
-    description = '',
-    statusCode = StatusCode.DANGER,
-    errors?: string[]
+    description?: string,
+    statusCode = StatusCode.DANGER
   ) {
-    super(ErrorType.NOT_FOUND, message, description, statusCode, errors)
+    super(ErrorType.NOT_FOUND, message, description, statusCode)
+
+    Object.setPrototypeOf(this, NotFoundError.prototype)
   }
 }
 
 export class ForbiddenError extends ApiError {
   constructor(
     message = 'Permission denied',
-    description = '',
-    statusCode = StatusCode.DANGER,
-    errors?: string[]
+    description?: string,
+    statusCode = StatusCode.DANGER
   ) {
-    super(ErrorType.FORBIDDEN, message, description, statusCode, errors)
+    super(ErrorType.FORBIDDEN, message, description, statusCode)
+    Object.setPrototypeOf(this, ForbiddenError.prototype)
+  }
+}
+
+export class InvalidCsrfTokenError extends ApiError {
+  constructor() {
+    super(
+      ErrorType.INVALID_CSRF_ERROR,
+      'Invalid request token',
+      undefined,
+      StatusCode.DANGER
+    )
+
+    Object.setPrototypeOf(this, InvalidCsrfTokenError.prototype)
+  }
+}
+
+export class SchemaValidationError extends ApiError {
+  constructor(error: ValidationError) {
+    const errors: string[] = []
+    error.details.forEach((err) => {
+      errors.push(err.message)
+    })
+
+    super(
+      ErrorType.SCHEMA_VALIDATION_TOKEN,
+      errors[0],
+      undefined,
+      StatusCode.DANGER,
+      errors
+    )
+
+    Object.setPrototypeOf(this, SchemaValidationError.prototype)
+  }
+}
+
+export class MongooseCastError extends ApiError {
+  constructor(message = 'Something went wrong, please try again later') {
+    super(ErrorType.MONGOOSE_CAST_ERROR, message, undefined, StatusCode.DANGER)
+    Object.setPrototypeOf(this, MongooseCastError.prototype)
   }
 }

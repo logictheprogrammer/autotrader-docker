@@ -2,14 +2,15 @@ import Joi from 'joi'
 import { ForecastMove, ForecastStatus } from './forecast.enum'
 
 const create = Joi.object({
-  pairId: Joi.string().required(),
+  pairId: Joi.string().trim().required(),
   percentageProfit: Joi.number().required(),
   stakeRate: Joi.number().positive().required(),
 })
 
 const update = Joi.object({
-  pairId: Joi.string().required(),
+  pairId: Joi.string().trim().required(),
   move: Joi.string()
+    .trim()
     .valid(...Object.values(ForecastMove))
     .required(),
   stakeRate: Joi.number().positive().required(),
@@ -20,6 +21,7 @@ const update = Joi.object({
 
 const updateStatus = Joi.object({
   status: Joi.string()
+    .trim()
     .valid(...Object.values(ForecastStatus))
     .required(),
 })

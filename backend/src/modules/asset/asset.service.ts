@@ -4,7 +4,6 @@ import {
   IAssetObject,
   IAssetService,
 } from '@/modules/asset/asset.interface'
-import assetModel from '@/modules/asset/asset.model'
 import { AssetType } from '@/modules/asset/asset.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
 import {
@@ -12,10 +11,11 @@ import {
   RequestConflictError,
   ServiceError,
 } from '@/core/apiError'
+import AssetModel from '@/modules/asset/asset.model'
 
 @Service()
 class AssetService implements IAssetService {
-  private assetModel = assetModel
+  private assetModel = AssetModel
 
   public async create(
     name: string,
@@ -88,7 +88,7 @@ class AssetService implements IAssetService {
 
   public async fetchAll(filter: FilterQuery<IAsset>): Promise<IAssetObject[]> {
     try {
-      const assets = await this.assetModel.find(filter, {}, { lean: true })
+      const assets = await this.assetModel.find(filter)
 
       return assets
     } catch (err: any) {

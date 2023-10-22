@@ -8,23 +8,36 @@ const AssetSchema = new Schema<IAsset>(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     symbol: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     logo: {
       type: String,
       required: true,
+      trim: true,
     },
     type: {
       type: String,
       required: true,
       enum: Object.values(AssetType),
+      trim: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IAsset>('Asset', AssetSchema)
+const AssetModel = model<IAsset>('Asset', AssetSchema)
+
+export default AssetModel

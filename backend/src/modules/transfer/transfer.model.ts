@@ -16,10 +16,12 @@ const TransferSchema = new Schema<ITransfer>(
     account: {
       type: String,
       required: true,
+      trim: true,
     },
     status: {
       type: String,
       required: true,
+      trim: true,
     },
     amount: {
       type: Number,
@@ -30,7 +32,16 @@ const TransferSchema = new Schema<ITransfer>(
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<ITransfer>('Transfer', TransferSchema)
+const TransferModel = model<ITransfer>('Transfer', TransferSchema)
+
+export default TransferModel

@@ -2,6 +2,7 @@ import { IInvestment } from '@/modules/investment/investment.interface'
 import { Schema, Types, model } from 'mongoose'
 import { UserAccount, UserEnvironment } from '../user/user.enum'
 import { InvestmentStatus } from './investment.enum'
+import { ForecastStatus } from '../forecast/forecast.enum'
 
 const InvestmentSchema = new Schema<IInvestment>(
   {
@@ -19,16 +20,19 @@ const InvestmentSchema = new Schema<IInvestment>(
       type: String,
       required: true,
       enum: Object.values(UserAccount),
+      trim: true,
     },
     environment: {
       type: String,
       required: true,
       enum: Object.values(UserEnvironment),
+      trim: true,
     },
     status: {
       type: String,
       required: true,
       enum: Object.values(InvestmentStatus),
+      trim: true,
     },
     minRunTime: {
       type: Number,
@@ -58,6 +62,8 @@ const InvestmentSchema = new Schema<IInvestment>(
     },
     tradeStatus: {
       type: String,
+      enum: Object.values(ForecastStatus),
+      trim: true,
     },
     currentTrade: {
       type: Types.ObjectId,
@@ -73,7 +79,16 @@ const InvestmentSchema = new Schema<IInvestment>(
       type: Date,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IInvestment>('Investment', InvestmentSchema)
+const InvestmentModel = model<IInvestment>('Investment', InvestmentSchema)
+
+export default InvestmentModel

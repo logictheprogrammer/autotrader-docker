@@ -4,13 +4,13 @@ import {
   ITransferSettingsObject,
   ITransferSettingsService,
 } from '@/modules/transferSettings/transferSettings.interface'
-import transferSettingsModel from '@/modules/transferSettings/transferSettings.model'
 import { NotFoundError, ServiceError } from '@/core/apiError'
 import { FilterQuery } from 'mongoose'
+import TransferSettingsModel from '@/modules/transferSettings/transferSettings.model'
 
 @Service()
 class TransferSettingsService implements ITransferSettingsService {
-  private transferSettingsModel = transferSettingsModel
+  private transferSettingsModel = TransferSettingsModel
 
   public async create(
     approval: boolean,

@@ -1,7 +1,10 @@
 import { Response, Router } from 'express'
 import { Inject, Service } from 'typedi'
 import { IActivityService } from '@/modules/activity/activity.interface'
-import { ActivityForWho } from '@/modules/activity/activity.enum'
+import {
+  ActivityForWho,
+  ActivityStatus,
+} from '@/modules/activity/activity.enum'
 import { UserRole } from '@/modules/user/user.enum'
 import { ObjectId } from 'mongoose'
 import { IController } from '@/core/utils'
@@ -30,14 +33,14 @@ class ActivityController implements IController {
       this.fetchAll(UserRole.USER)
     )
 
-    // Get Users Activity logs
+    // Get All Users Activity logs
     this.router.get(
       `${this.path}/users`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(UserRole.ADMIN)
     )
 
-    // Get User Activity logs
+    // Get A User Activity logs
     this.router.get(
       `${this.path}/user/:userId`,
       routePermission(UserRole.ADMIN),
@@ -65,13 +68,6 @@ class ActivityController implements IController {
       this.hideAll
     )
 
-    // Delete All users Activities
-    this.router.delete(
-      `${this.path}/delete/all`,
-      routePermission(UserRole.ADMIN),
-      this.deleteAll(true, ActivityForWho.USER)
-    )
-
     // Delete All selected user Activity
     this.router.delete(
       `${this.path}/delete/user/:userId`,
@@ -81,14 +77,14 @@ class ActivityController implements IController {
 
     // Delete Admin Activity
     this.router.delete(
-      `${this.path}/delete/admin/:activityId`,
+      `${this.path}/delete/master/:activityId`,
       routePermission(UserRole.ADMIN),
       this.delete(UserRole.ADMIN, ActivityForWho.ADMIN)
     )
 
     // Delete All active Admin Activity
     this.router.delete(
-      `${this.path}/delete/admin`,
+      `${this.path}/delete/master`,
       routePermission(UserRole.ADMIN),
       this.deleteAll(false, ActivityForWho.ADMIN)
     )
@@ -98,6 +94,13 @@ class ActivityController implements IController {
       `${this.path}/delete/:activityId`,
       routePermission(UserRole.ADMIN),
       this.delete(UserRole.USER, ActivityForWho.USER)
+    )
+
+    // Delete All users Activities
+    this.router.delete(
+      `${this.path}/delete`,
+      routePermission(UserRole.ADMIN),
+      this.deleteAll(true, ActivityForWho.USER)
     )
   }
 
@@ -119,8 +122,10 @@ class ActivityController implements IController {
         activities = await this.activityService.fetchAll({
           forWho: ActivityForWho.USER,
           user: userId,
+          status: ActivityStatus.VISIBLE,
         })
       }
+
       return new SuccessResponse('Activities fetched successfully', {
         activities,
       }).send(res)

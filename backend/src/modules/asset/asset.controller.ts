@@ -47,10 +47,10 @@ class AssetController implements IController {
 
   private fetchAll = asyncHandler(
     async (req, res): Promise<Response | void> => {
-      const asset = await this.assetService.fetchAll({})
-      return new SuccessResponse('Assets fetched successfully', { asset }).send(
-        res
-      )
+      const assets = await this.assetService.fetchAll({})
+      return new SuccessResponse('Assets fetched successfully', {
+        assets,
+      }).send(res)
     }
   )
 
@@ -68,7 +68,7 @@ class AssetController implements IController {
     const { assetId } = req.params
 
     const asset = await this.assetService.update(
-      assetId as unknown as ObjectId,
+      { _id: assetId },
       name,
       symbol,
       logo,

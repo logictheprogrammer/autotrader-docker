@@ -8,10 +8,12 @@ const MailOptonSchema = new Schema<IMailOption>(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     host: {
       type: String,
       required: true,
+      trim: true,
     },
     port: {
       type: Number,
@@ -28,13 +30,23 @@ const MailOptonSchema = new Schema<IMailOption>(
     username: {
       type: String,
       required: true,
+      trim: true,
     },
     password: {
       type: String,
       required: true,
+      trim: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+        delete ret.password
+      },
+    },
+  }
 )
 
 MailOptonSchema.pre<IMailOption>('save', async function (next) {
@@ -51,4 +63,6 @@ MailOptonSchema.methods.getPassword = function () {
   return Cryptograph.decrypt(this.password)
 }
 
-export default model<IMailOption>('MailOption', MailOptonSchema)
+const MailOptionModel = model<IMailOption>('MailOption', MailOptonSchema)
+
+export default MailOptionModel

@@ -24,10 +24,19 @@ const ReferralSettingsSchema = new Schema<IReferralSettings>(
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IReferralSettings>(
+const ReferralSettingsModel = model<IReferralSettings>(
   'ReferralSettings',
   ReferralSettingsSchema
 )
+
+export default ReferralSettingsModel

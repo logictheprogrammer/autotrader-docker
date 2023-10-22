@@ -25,7 +25,8 @@ abstract class ApiResponse {
     protected message: string,
     protected description?: string,
     protected data?: any,
-    protected errors?: string[]
+    protected errors?: string[],
+    protected errorType?: string
   ) {}
 
   public send(res: Response) {
@@ -35,12 +36,14 @@ abstract class ApiResponse {
       description: this.description,
       data: this.data,
       errors: this.errors,
+      errorType: this.errorType,
     })
   }
 }
 
 export class NotFoundResponse extends ApiResponse {
   constructor(
+    errorType: string,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -52,13 +55,15 @@ export class NotFoundResponse extends ApiResponse {
       message,
       description,
       undefined,
-      errors || [message]
+      errors,
+      errorType
     )
   }
 }
 
 export class BadRequestResponse extends ApiResponse {
   constructor(
+    errorType: string,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -70,13 +75,15 @@ export class BadRequestResponse extends ApiResponse {
       message,
       description,
       undefined,
-      errors || [message]
+      errors,
+      errorType
     )
   }
 }
 
 export class RequestConflictResponse extends ApiResponse {
   constructor(
+    errorType: string,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -88,13 +95,15 @@ export class RequestConflictResponse extends ApiResponse {
       message,
       description,
       undefined,
-      errors || [message]
+      errors,
+      errorType
     )
   }
 }
 
 export class UnauthorizedResponse extends ApiResponse {
   constructor(
+    errorType: string,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -106,13 +115,15 @@ export class UnauthorizedResponse extends ApiResponse {
       message,
       description,
       undefined,
-      errors || [message]
+      errors,
+      errorType
     )
   }
 }
 
 export class ForbiddenResponse extends ApiResponse {
   constructor(
+    errorType: string,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -124,13 +135,15 @@ export class ForbiddenResponse extends ApiResponse {
       message,
       description,
       undefined,
-      errors || [message]
+      errors,
+      errorType
     )
   }
 }
 
 export class InternalErrorResponse extends ApiResponse {
   constructor(
+    errorType: string,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -142,7 +155,8 @@ export class InternalErrorResponse extends ApiResponse {
       message,
       description,
       undefined,
-      errors || [message]
+      errors,
+      errorType
     )
   }
 }

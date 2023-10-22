@@ -1,18 +1,23 @@
 import express, { Application, NextFunction, Request, Response } from 'express'
 import compression from 'compression'
+import { ValidationError } from 'joi'
 import cors from 'cors'
 import morgan from 'morgan'
 import helmet from 'helmet'
 import path from 'path'
 import cookieParser from 'cookie-parser'
 import { referralSettingsService, transferSettingsService } from './setup'
-import mongoose from 'mongoose'
+import mongoose, { Error } from 'mongoose'
 import { IController } from '@/core/utils'
-import { doubleCsrfProtection } from '@/helpers/csrf'
+import { doubleCsrfProtection, invalidCsrfTokenError } from '@/helpers/csrf'
 import {
   ApiError,
+  BadRequestError,
   InternalError,
+  InvalidCsrfTokenError,
+  MongooseCastError,
   NotFoundError,
+  SchemaValidationError,
   ServiceError,
 } from '@/core/apiError'
 
@@ -90,6 +95,12 @@ class App {
         }
         if (err instanceof ApiError) {
           ApiError.handle(err, res)
+        } else if (err === invalidCsrfTokenError) {
+          ApiError.handle(new InvalidCsrfTokenError(), res)
+        } else if (err instanceof ValidationError) {
+          ApiError.handle(new SchemaValidationError(err), res)
+        } else if (err instanceof Error.CastError) {
+          ApiError.handle(new MongooseCastError(defaultMessage), res)
         } else {
           ApiError.notifyDeveloper(err)
           ApiError.handle(new InternalError(defaultMessage), res)
@@ -112,13 +123,19 @@ class App {
 
   private async beforeStart(): Promise<void> {
     await this.initialiseDatabaseConnection()
-    const transferSettings = await transferSettingsService.fetch({})
-    if (!transferSettings && !this.isTest) {
-      await transferSettingsService.create(false, 0)
-    }
-    const referralSettings = await referralSettingsService.fetch({})
-    if (!referralSettings && !this.isTest) {
-      await referralSettingsService.create(10, 5, 15, 10, 10)
+
+    if (!this.isTest) {
+      transferSettingsService.fetch({}).catch(async (err: any) => {
+        if (err.error instanceof NotFoundError)
+          await transferSettingsService.create(false, 0)
+        else throw err
+      })
+
+      referralSettingsService.fetch({}).catch(async (err: any) => {
+        if (err.error instanceof NotFoundError)
+          await referralSettingsService.create(10, 5, 15, 10, 10)
+        else throw err
+      })
     }
   }
 

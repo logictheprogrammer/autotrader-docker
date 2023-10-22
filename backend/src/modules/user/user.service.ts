@@ -1,5 +1,3 @@
-import activityModel from '@/modules/activity/activity.model'
-import userModel from '@/modules/user/user.model'
 import { IUser, IUserObject, IUserService } from '@/modules/user/user.interface'
 import { UserAccount, UserRole, UserStatus } from '@/modules/user/user.enum'
 import { Service, Inject } from 'typedi'
@@ -11,7 +9,6 @@ import {
 import { IMailService } from '@/modules/mail/mail.interface'
 import renderFile from '@/utils/renderFile'
 import { MailOptionName } from '@/modules/mailOption/mailOption.enum'
-import notificationModel from '@/modules/notification/notification.model'
 import { SiteConstants } from '@/modules/config/config.constants'
 import { FilterQuery } from 'mongoose'
 import ServiceToken from '@/core/serviceToken'
@@ -22,12 +19,15 @@ import {
   ServiceError,
 } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
+import UserModel from '@/modules/user/user.model'
+import ActivityModel from '@/modules/activity/activity.model'
+import NotificationModel from '@/modules/notification/notification.model'
 
 @Service()
 class UserService implements IUserService {
-  private userModel = userModel
-  private notificationModel = notificationModel
-  private activityModel = activityModel
+  private userModel = UserModel
+  private notificationModel = NotificationModel
+  private activityModel = ActivityModel
 
   public constructor(
     @Inject(ServiceToken.ACTIVITY_SERVICE)

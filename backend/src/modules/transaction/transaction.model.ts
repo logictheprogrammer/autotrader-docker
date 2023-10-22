@@ -11,6 +11,7 @@ const TransactionSchema = new Schema<ITransaction>(
     status: {
       type: String,
       required: true,
+      trim: true,
     },
     category: {
       type: Types.ObjectId,
@@ -19,10 +20,12 @@ const TransactionSchema = new Schema<ITransaction>(
     categoryName: {
       type: String,
       required: true,
+      trim: true,
     },
     environment: {
       type: String,
       required: true,
+      trim: true,
     },
     amount: {
       type: Number,
@@ -32,7 +35,16 @@ const TransactionSchema = new Schema<ITransaction>(
       type: Number,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<ITransaction>('Transaction', TransactionSchema)
+const TransactionModel = model<ITransaction>('Transaction', TransactionSchema)
+
+export default TransactionModel

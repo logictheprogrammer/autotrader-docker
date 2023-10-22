@@ -4,7 +4,6 @@ import {
   IDepositObject,
   IDepositService,
 } from '@/modules/deposit/deposit.interface'
-import depositModel from '@/modules/deposit/deposit.model'
 import { DepositStatus } from '@/modules/deposit/deposit.enum'
 import { IDepositMethodService } from '@/modules/depositMethod/depositMethod.interface'
 import { IUserObject, IUserService } from '@/modules/user/user.interface'
@@ -25,10 +24,11 @@ import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
 import ServiceToken from '@/core/serviceToken'
 import { DepositMethodStatus } from '../depositMethod/depositMethod.enum'
+import DepositModel from '@/modules/deposit/deposit.model'
 
 @Service()
 class DepositService implements IDepositService {
-  private depositModel = depositModel
+  private depositModel = DepositModel
 
   public constructor(
     @Inject(ServiceToken.DEPOSIT_METHOD_SERVICE)
@@ -61,10 +61,8 @@ class DepositService implements IDepositService {
       const user = await this.userService.fetch({ _id: userId })
 
       const deposit = await this.depositModel.create({
-        depositMethod: depositMethod._id,
-        depositMethodObject: depositMethod,
-        user: user._id,
-        userObject: user,
+        depositMethod,
+        user,
         amount,
         fee: depositMethod.fee,
         status: DepositStatus.PENDING,
@@ -101,7 +99,10 @@ class DepositService implements IDepositService {
 
   public async delete(filter: FilterQuery<IDeposit>): Promise<IDepositObject> {
     try {
-      const deposit = await this.depositModel.findOne(filter)
+      const deposit = await this.depositModel
+        .findOne(filter)
+        .populate('user')
+        .populate('depositMethod')
 
       if (!deposit) throw new NotFoundError('Deposit not found')
 
@@ -123,7 +124,10 @@ class DepositService implements IDepositService {
     status: DepositStatus
   ): Promise<IDepositObject> {
     try {
-      const deposit = await this.depositModel.findOne(filter)
+      const deposit = await this.depositModel
+        .findOne(filter)
+        .populate('user')
+        .populate('depositMethod')
 
       if (!deposit) throw new NotFoundError('Deposit not found')
 
@@ -133,6 +137,8 @@ class DepositService implements IDepositService {
         throw new BadRequestError('Deposit as already been settled')
 
       deposit.status = status
+
+      await deposit.save()
 
       let user: IUserObject
       if (status === DepositStatus.APPROVED) {
@@ -151,7 +157,10 @@ class DepositService implements IDepositService {
         user = await this.userService.fetch({ _id: deposit.user._id })
       }
 
-      await this.transactionService.updateStatus(deposit._id, status)
+      await this.transactionService.updateStatus(
+        { category: deposit._id },
+        status
+      )
 
       await this.notificationService.create(
         `Your deposit of ${Helpers.toDollar(deposit.amount)} was ${status}`,
@@ -179,7 +188,8 @@ class DepositService implements IDepositService {
       return await this.depositModel
         .find(filter)
         .sort({ createdAt: -1 })
-        .select('-userObject -depositMethod')
+        .populate('user')
+        .populate('depositMethod')
     } catch (err: any) {
       throw new ServiceError(
         err,

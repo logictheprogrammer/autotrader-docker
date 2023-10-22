@@ -4,20 +4,23 @@ import { UserAccount } from '../user/user.enum'
 
 const create = Joi.object({
   amount: Joi.number().positive().required(),
-  account: Joi.string().valid(
-    UserAccount.MAIN_BALANCE,
-    UserAccount.REFERRAL_BALANCE,
-    UserAccount.BONUS_BALANCE
-  ),
+  account: Joi.string()
+    .trim()
+    .valid(
+      UserAccount.MAIN_BALANCE,
+      UserAccount.REFERRAL_BALANCE,
+      UserAccount.BONUS_BALANCE
+    ),
 })
 
 const createDemo = Joi.object({
   amount: Joi.number().positive().required(),
-  account: Joi.string().valid(UserAccount.DEMO_BALANCE),
+  account: Joi.string().trim().valid(UserAccount.DEMO_BALANCE),
 })
 
 const updateStatus = Joi.object({
   status: Joi.string()
+    .trim()
     .valid(...Object.values(InvestmentStatus))
     .required(),
 })

@@ -16,6 +16,7 @@ const ReferralSchema = new Schema<IReferral>(
       type: String,
       required: true,
       enum: Object.values(ReferralTypes),
+      trim: true,
     },
     referrer: {
       type: Types.ObjectId,
@@ -28,7 +29,16 @@ const ReferralSchema = new Schema<IReferral>(
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IReferral>('Referral', ReferralSchema)
+const ReferralModel = model<IReferral>('Referral', ReferralSchema)
+
+export default ReferralModel

@@ -1,5 +1,5 @@
----- 16. export all models to begin with a capital letter
----- 3. add trade ref to all trades
+✔ 16. export all models to begin with a capital letter
+---- 3. add trans ref to all trades and transactions
 ✔ 4. make the all files naming convention same
 ✔ 5. use thesame patterns in the APIs
 ✔ 7. rework on the exception service

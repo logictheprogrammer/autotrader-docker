@@ -4,17 +4,17 @@ import {
   ICurrencyObject,
   ICurrencyService,
 } from '@/modules/currency/currency.interface'
-import currencyModel from '@/modules/currency/currency.model'
-import { FilterQuery, ObjectId, Types } from 'mongoose'
+import { FilterQuery } from 'mongoose'
 import {
   NotFoundError,
   RequestConflictError,
   ServiceError,
 } from '@/core/apiError'
+import CurrencyModel from '@/modules/currency/currency.model'
 
 @Service()
 class CurrencyService implements ICurrencyService {
-  private currencyModel = currencyModel
+  private currencyModel = CurrencyModel
 
   public async create(
     name: string,

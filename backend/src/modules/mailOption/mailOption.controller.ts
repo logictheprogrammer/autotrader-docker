@@ -4,7 +4,7 @@ import validate from '@/modules/mailOption/mailOption.validation'
 import { Response, Router } from 'express'
 import { UserRole } from '@/modules/user/user.enum'
 import asyncHandler from '@/helpers/asyncHandler'
-import { SuccessCreatedResponse } from '@/core/apiResponse'
+import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
 import ServiceToken from '@/core/serviceToken'
 import { IController } from '@/core/utils'
 import routePermission from '@/helpers/routePermission'
@@ -29,6 +29,12 @@ export default class MailOptionController implements IController {
       schemaValidator(validate.create),
       this.create
     )
+
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll
+    )
   }
 
   private create = asyncHandler(async (req, res): Promise<Response | void> => {
@@ -47,4 +53,13 @@ export default class MailOptionController implements IController {
       mailOption,
     }).send(res)
   })
+
+  private fetchAll = asyncHandler(
+    async (req, res): Promise<Response | void> => {
+      const mailOptions = await this.mailOptionService.fetchAll({})
+      return new SuccessResponse('Mail option created successfully', {
+        mailOptions,
+      }).send(res)
+    }
+  )
 }

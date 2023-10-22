@@ -4,7 +4,6 @@ import {
   ITransferObject,
   ITransferService,
 } from '@/modules/transfer/transfer.interface'
-import transferModel from '@/modules/transfer/transfer.model'
 import { TransferStatus } from '@/modules/transfer/transfer.enum'
 import { IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
@@ -22,10 +21,11 @@ import { FilterQuery, ObjectId } from 'mongoose'
 import ServiceToken from '@/core/serviceToken'
 import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
+import TransferModel from '@/modules/transfer/transfer.model'
 
 @Service()
 class TransferService implements ITransferService {
-  private transferModel = transferModel
+  private transferModel = TransferModel
 
   public constructor(
     @Inject(ServiceToken.TRANSFER_SETTINGS_SERVICE)

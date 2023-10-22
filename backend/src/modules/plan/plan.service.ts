@@ -1,23 +1,20 @@
 import { AssetType } from '@/modules/asset/asset.enum'
 import { Inject, Service } from 'typedi'
-import planModel from '@/modules/plan/plan.model'
 import { IPlan, IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
-
 import { IAssetService } from '@/modules/asset/asset.interface'
 import { PlanStatus } from '@/modules/plan/plan.enum'
-
 import { FilterQuery, ObjectId } from 'mongoose'
 import { IForecastObject } from '../forecast/forecast.interface'
-
 import { ForecastStatus } from '../forecast/forecast.enum'
-import forecastModel from '../forecast/forecast.model'
 import ServiceToken from '@/core/serviceToken'
 import { NotFoundError, ServiceError } from '@/core/apiError'
+import PlanModel from '@/modules/plan/plan.model'
+import ForecastModel from '../forecast/forecast.model'
 
 @Service()
 class PlanService implements IPlanService {
-  private planModel = planModel
-  private forecastModel = forecastModel
+  private planModel = PlanModel
+  private forecastModel = ForecastModel
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)

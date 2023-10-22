@@ -25,7 +25,7 @@ class DepositController implements IController {
 
   private intialiseRoutes(): void {
     this.router.post(
-      `${this.path}/create/:depositMethodId`,
+      `${this.path}/create`,
       routePermission(UserRole.USER),
       schemaValidator(validate.create),
       this.create
@@ -72,11 +72,10 @@ class DepositController implements IController {
     })
 
   private create = asyncHandler(async (req, res): Promise<Response | void> => {
-    const { amount } = req.body
-    const { depositMethodId } = req.params
+    const { amount, depositMethodId } = req.body
     const userId = req.user._id
     const deposit = await this.depositService.create(
-      depositMethodId as unknown as ObjectId,
+      depositMethodId,
       userId,
       amount
     )

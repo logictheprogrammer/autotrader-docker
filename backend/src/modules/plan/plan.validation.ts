@@ -3,8 +3,8 @@ import { PlanStatus } from '@/modules/plan/plan.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
 
 const create = Joi.object({
-  name: Joi.string().required(),
-  engine: Joi.string().required(),
+  name: Joi.string().trim().required(),
+  engine: Joi.string().trim().required(),
   minAmount: Joi.number().positive().required(),
   maxAmount: Joi.number().positive().required(),
   minPercentageProfit: Joi.number().positive().required(),
@@ -12,16 +12,17 @@ const create = Joi.object({
   duration: Joi.number().positive().required(),
   dailyForecasts: Joi.number().positive().required(),
   gas: Joi.number().positive().required(),
-  description: Joi.string().required(),
+  description: Joi.string().trim().required(),
   assetType: Joi.string()
+    .trim()
     .valid(...Object.values(AssetType))
     .required(),
-  assets: Joi.array().items(Joi.string()).min(1).unique(),
+  assets: Joi.array().items(Joi.string().trim()).min(1).unique(),
 })
 
 const update = Joi.object({
-  name: Joi.string().required(),
-  engine: Joi.string().required(),
+  name: Joi.string().trim().required(),
+  engine: Joi.string().trim().required(),
   minAmount: Joi.number().positive().required(),
   maxAmount: Joi.number().positive().required(),
   minPercentageProfit: Joi.number().positive().required(),
@@ -29,15 +30,17 @@ const update = Joi.object({
   duration: Joi.number().positive().required(),
   dailyForecasts: Joi.number().positive().required(),
   gas: Joi.number().positive().required(),
-  description: Joi.string().required(),
+  description: Joi.string().trim().required(),
   assetType: Joi.string()
+    .trim()
     .valid(...Object.values(AssetType))
     .required(),
-  assets: Joi.array().items(Joi.string()).min(1).unique(),
+  assets: Joi.array().items(Joi.string().trim()).min(1).unique(),
 })
 
 const updateStatus = Joi.object({
   status: Joi.string()
+    .trim()
     .valid(...Object.values(PlanStatus))
     .required(),
 })

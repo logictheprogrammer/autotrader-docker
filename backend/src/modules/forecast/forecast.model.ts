@@ -17,15 +17,18 @@ const ForecastSchema = new Schema<IForecast>(
     market: {
       type: String,
       required: true,
+      trim: true,
     },
     status: {
       type: String,
       required: true,
       enum: Object.values(ForecastStatus),
       default: ForecastStatus.PREPARING,
+      trim: true,
     },
     move: {
       type: String,
+      trim: true,
     },
     percentageProfit: {
       type: Number,
@@ -59,7 +62,16 @@ const ForecastSchema = new Schema<IForecast>(
       default: false,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IForecast>('Forecast', ForecastSchema)
+const ForecastModel = model<IForecast>('Forecast', ForecastSchema)
+
+export default ForecastModel

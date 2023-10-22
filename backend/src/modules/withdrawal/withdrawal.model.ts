@@ -16,14 +16,17 @@ const WithdrawalSchema = new Schema<IWithdrawal>(
     account: {
       type: String,
       required: true,
+      trim: true,
     },
     address: {
       type: String,
       required: true,
+      trim: true,
     },
     status: {
       type: String,
       required: true,
+      trim: true,
     },
     amount: {
       type: Number,
@@ -34,7 +37,16 @@ const WithdrawalSchema = new Schema<IWithdrawal>(
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IWithdrawal>('Withdrawal', WithdrawalSchema)
+const WithdrawalModel = model<IWithdrawal>('Withdrawal', WithdrawalSchema)
+
+export default WithdrawalModel

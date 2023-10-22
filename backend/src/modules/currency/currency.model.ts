@@ -7,18 +7,30 @@ const CurrencySchema = new Schema<ICurrency>(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     symbol: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     logo: {
       type: String,
       required: true,
+      trim: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<ICurrency>('Currency', CurrencySchema)
+const CurrencyModel = model<ICurrency>('Currency', CurrencySchema)
+
+export default CurrencyModel

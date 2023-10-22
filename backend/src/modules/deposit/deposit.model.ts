@@ -18,6 +18,7 @@ const DepositSchema = new Schema<IDeposit>(
       type: String,
       required: true,
       enum: Object.values(DepositStatus),
+      trim: true,
     },
     amount: {
       type: Number,
@@ -28,7 +29,16 @@ const DepositSchema = new Schema<IDeposit>(
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IDeposit>('Deposit', DepositSchema)
+const DepositModel = model<IDeposit>('Deposit', DepositSchema)
+
+export default DepositModel

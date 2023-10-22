@@ -4,7 +4,6 @@ import {
   INotificationObject,
   INotificationService,
 } from '@/modules/notification/notification.interface'
-import notificationModel from '@/modules/notification/notification.model'
 import {
   NotificationForWho,
   NotificationCategory,
@@ -15,10 +14,11 @@ import { NotificationStatus } from './notification.type'
 import { FilterQuery } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import { InternalError, NotFoundError, ServiceError } from '@/core/apiError'
+import NotificationModel from '@/modules/notification/notification.model'
 
 @Service()
 class NotificationService implements INotificationService {
-  private notificationModel = notificationModel
+  private notificationModel = NotificationModel
 
   public async create(
     message: string,
@@ -58,7 +58,9 @@ class NotificationService implements INotificationService {
     filter: FilterQuery<INotification>
   ): Promise<INotificationObject> {
     try {
-      const notification = await this.notificationModel.findOne(filter)
+      const notification = await this.notificationModel
+        .findOne(filter)
+        .populate('user')
 
       if (!notification) throw new NotFoundError('Notification not found')
 
@@ -77,7 +79,9 @@ class NotificationService implements INotificationService {
     filter: FilterQuery<INotification>
   ): Promise<INotificationObject> {
     try {
-      const notification = await this.notificationModel.findOne(filter)
+      const notification = await this.notificationModel
+        .findOne(filter)
+        .populate('user')
 
       if (!notification) throw new NotFoundError('Notification not found')
 
@@ -101,8 +105,7 @@ class NotificationService implements INotificationService {
       const notifications = await this.notificationModel
         .find(filter)
         .sort({ createdAt: -1 })
-        .select('-userObject -categoryObject')
-        .populate('user', 'username isDeleted')
+        .populate('user')
 
       return notifications
     } catch (err: any) {

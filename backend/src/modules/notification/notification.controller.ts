@@ -23,6 +23,24 @@ class NotificationController implements IController {
   }
 
   private intialiseRoutes(): void {
+    this.router.get(
+      `/demo${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
+    )
+
+    this.router.get(
+      `/demo${this.path}/user/:userId`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
+    )
+
+    this.router.get(
+      `/demo${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false, UserEnvironment.DEMO, NotificationForWho.USER)
+    )
+
     this.router.delete(
       `${this.path}/admin/delete/:notificationId`,
       routePermission(UserRole.ADMIN),
@@ -36,25 +54,19 @@ class NotificationController implements IController {
     )
 
     this.router.get(
-      `${this.path}/demo/all`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
-    )
-
-    this.router.get(
-      `${this.path}/all`,
+      `${this.path}/users`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.USER)
     )
 
     this.router.get(
-      `${this.path}/demo`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.DEMO, NotificationForWho.USER)
+      `${this.path}/user/:userId`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.USER)
     )
 
     this.router.get(
-      `${this.path}/admin`,
+      `${this.path}/master`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.ADMIN)
     )
@@ -67,13 +79,19 @@ class NotificationController implements IController {
   }
 
   private fetchAll = (
-    fromAllAccounts: boolean,
+    byAdmin: boolean,
     environment: UserEnvironment,
     forWho: NotificationForWho
   ) =>
     asyncHandler(async (req, res): Promise<Response | void> => {
       let notifications
-      if (fromAllAccounts) {
+      if (byAdmin && req.params.userId) {
+        notifications = await this.notificationService.fetchAll({
+          environment,
+          forWho,
+          user: req.params.userId,
+        })
+      } else if (byAdmin) {
         notifications = await this.notificationService.fetchAll({
           environment,
           forWho,

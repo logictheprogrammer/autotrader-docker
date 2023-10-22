@@ -2,16 +2,18 @@ import { Schema, model, Types } from 'mongoose'
 import { IUser } from '@/modules/user/user.interface'
 import Cryptograph from '@/core/cryptograph'
 
-const UserSchema = new Schema(
+const UserSchema = new Schema<IUser>(
   {
     key: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     name: {
       type: String,
       required: true,
+      trim: true,
     },
     email: {
       type: String,
@@ -28,10 +30,12 @@ const UserSchema = new Schema(
     country: {
       type: String,
       required: true,
+      trim: true,
     },
     status: {
       type: String,
       required: true,
+      trim: true,
     },
     verifield: {
       type: Boolean,
@@ -41,6 +45,7 @@ const UserSchema = new Schema(
     password: {
       type: String,
       required: true,
+      trim: true,
     },
     role: {
       type: Number,
@@ -53,6 +58,7 @@ const UserSchema = new Schema(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     mainBalance: {
       type: Number,
@@ -70,13 +76,16 @@ const UserSchema = new Schema(
       type: Number,
       required: true,
     },
-    isDeleted: {
-      type: Boolean,
-      required: true,
-    },
   },
   {
     timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.password
+        delete ret.key
+        delete ret.__v
+      },
+    },
   }
 )
 
@@ -91,4 +100,6 @@ UserSchema.methods.isValidPassword = async function (password: string) {
   return await Cryptograph.isValidHash(password, this.password)
 }
 
-export default model<IUser>('User', UserSchema)
+const UserModel = model<IUser>('User', UserSchema)
+
+export default UserModel

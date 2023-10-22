@@ -1,7 +1,5 @@
 import { Inject, Service } from 'typedi'
 import { IPair, IPairObject, IPairService } from '@/modules/pair/pair.interface'
-import pairModel from '@/modules/pair/pair.model'
-
 import { IAssetService } from '../asset/asset.interface'
 import { AssetType } from '../asset/asset.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
@@ -11,10 +9,11 @@ import {
   RequestConflictError,
   ServiceError,
 } from '@/core/apiError'
+import PairModel from '@/modules/pair/pair.model'
 
 @Service()
 class PairService implements IPairService {
-  private pairModel = pairModel
+  private pairModel = PairModel
 
   public constructor(
     @Inject(ServiceToken.ASSET_SERVICE)
@@ -23,7 +22,10 @@ class PairService implements IPairService {
 
   public async fetch(query: FilterQuery<IPair>): Promise<IPairObject> {
     try {
-      const pair = await this.pairModel.findOne(query, {}, { lean: true })
+      const pair = await this.pairModel
+        .findOne(query)
+        .populate('baseAsset')
+        .populate('quoteAsset')
 
       if (!pair) throw new NotFoundError('Pair not found')
 
@@ -46,6 +48,11 @@ class PairService implements IPairService {
 
       if (!baseAsset) throw new NotFoundError('Base Asset not found')
 
+      if (baseAssetId.toString() === quoteAssetId.toString())
+        throw new RequestConflictError(
+          'Base and quote assets can not be thesame'
+        )
+
       const quoteAsset = await this.assetService.fetch({
         _id: quoteAssetId,
         type: assetType,
@@ -54,8 +61,8 @@ class PairService implements IPairService {
       if (!quoteAsset) throw new NotFoundError('Quote Asset not found')
 
       const pairExist = await this.pairModel.findOne({
-        baseAsset: baseAssetId,
-        quoteAsset: quoteAssetId,
+        baseAsset,
+        quoteAsset,
         assetType,
       })
 
@@ -63,11 +70,12 @@ class PairService implements IPairService {
 
       const pair = await this.pairModel.create({
         assetType,
-        baseAsset: baseAsset._id,
-        baseAssetObject: baseAsset,
-        quoteAsset: quoteAsset._id,
-        quoteAssetObject: quoteAsset,
+        baseAsset,
+        quoteAsset,
       })
+
+      await pair.populate('baseAsset')
+      await pair.populate('quoteAsset')
 
       return pair
     } catch (err: any) {
@@ -123,10 +131,9 @@ class PairService implements IPairService {
   public async fetchAll(query: FilterQuery<IPair>): Promise<IPairObject[]> {
     try {
       return await this.pairModel
-        .find(query, {}, { lean: true })
-        .select('-baseAssetObject -quoteAssetObject')
-        .populate('baseAsset', 'name symbol logo type')
-        .populate('quoteAsset', 'name symbol logo type')
+        .find(query)
+        .populate('baseAsset')
+        .populate('quoteAsset')
     } catch (err: any) {
       throw new ServiceError(err, 'Unable to fetch pair, please try again')
     }

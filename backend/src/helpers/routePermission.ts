@@ -1,9 +1,9 @@
 import { Response } from 'express'
-import userModel from '@/modules/user/user.model'
 import { UserRole, UserStatus } from '@/modules/user/user.enum'
 import Cryptograph from '@/core/cryptograph'
 import { UnauthorizedError } from '@/core/apiError'
 import asyncHandler from './asyncHandler'
+import { userService } from './../setup'
 
 export default (role: UserRole) => {
   return asyncHandler(async (req, res, next): Promise<Response | void> => {
@@ -20,7 +20,7 @@ export default (role: UserRole) => {
       throw new UnauthorizedError('Unauthorized')
     }
 
-    const user = await userModel.findById(payload.id).select('-password').exec()
+    const user = await userService.fetch({ _id: payload.id })
 
     if (!user) {
       throw new UnauthorizedError('Unauthorized')

@@ -4,7 +4,6 @@ import {
   IWithdrawalMethod,
   IWithdrawalMethodService,
 } from '@/modules/withdrawalMethod/withdrawalMethod.interface'
-import withdrawalMethodModel from '@/modules/withdrawalMethod/withdrawalMethod.model'
 import { ICurrencyService } from '@/modules/currency/currency.interface'
 import { WithdrawalMethodStatus } from '@/modules/withdrawalMethod/withdrawalMethod.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
@@ -15,10 +14,11 @@ import {
   RequestConflictError,
   ServiceError,
 } from '@/core/apiError'
+import WithdrawalMethodModel from '@/modules/withdrawalMethod/withdrawalMethod.model'
 
 @Service()
 class WithdrawalMethodService implements IWithdrawalMethodService {
-  private withdrawalMethodModel = withdrawalMethodModel
+  private withdrawalMethodModel = WithdrawalMethodModel
 
   public constructor(
     @Inject(ServiceToken.CURRENCY_SERVICE)

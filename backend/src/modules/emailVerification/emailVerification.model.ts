@@ -8,17 +8,26 @@ const EmailVerificationSchema = new Schema<IEmailVerification>(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     token: {
       type: String,
       required: true,
+      trim: true,
     },
     expires: {
       type: Number,
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
 EmailVerificationSchema.pre<IEmailVerification>('save', async function (next) {
@@ -30,7 +39,9 @@ EmailVerificationSchema.methods.isValidToken = async function (token: string) {
   return await Cryptograph.isValidHash(token, this.token)
 }
 
-export default model<IEmailVerification>(
+const EmailVerificationModel = model<IEmailVerification>(
   'EmailVerification',
   EmailVerificationSchema
 )
+
+export default EmailVerificationModel

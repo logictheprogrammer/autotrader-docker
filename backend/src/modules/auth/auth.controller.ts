@@ -89,7 +89,7 @@ class AuthController implements IController {
   private register = asyncHandler(
     async (req, res): Promise<Response | void> => {
       const { name, email, username, country, password, invite } = req.body
-      const response = await this.authService.register(
+      const { message, email: resEmail } = await this.authService.register(
         name,
         email,
         username,
@@ -104,8 +104,9 @@ class AuthController implements IController {
         invite
       )
       return new SuccessCreatedResponse(
-        response.message,
-        response,
+        message,
+        { email: resEmail },
+        '',
         StatusCode.INFO
       ).send(res)
     }
@@ -114,12 +115,16 @@ class AuthController implements IController {
   private login = asyncHandler(async (req, res): Promise<Response | void> => {
     const { account, password } = req.body
 
-    const response = await this.authService.login(account, password)
+    const response = await this.authService.login(
+      { $or: [{ username: account }, { email: account }] },
+      password
+    )
 
     return new SuccessResponse(
       // @ts-ignore
       response.message || 'Login successfully',
       response,
+      '',
       // @ts-ignore
       response.message ? StatusCode.INFO : StatusCode.SUCCESS
     ).send(res)
@@ -134,6 +139,7 @@ class AuthController implements IController {
       let user
       const { password } = req.body
       if (byAdmin) {
+        console.log(req.params.userId)
         user = await this.authService.updatePassword(
           { _id: req.params.userId },
           password
@@ -154,7 +160,9 @@ class AuthController implements IController {
   private forgetPassword = asyncHandler(
     async (req, res): Promise<void | Response> => {
       const { account } = req.body
-      const response = await this.authService.forgetPassword(account)
+      const response = await this.authService.forgetPassword({
+        $or: [{ username: account }, { email: account }],
+      })
       return new SuccessResponse(
         'A reset password link has been sent to your email address',
         { response }

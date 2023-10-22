@@ -1,14 +1,14 @@
 import { IEmailVerificationService } from '@/modules/emailVerification/emailVerification.interface'
-import emailVerificationModel from '@/modules/emailVerification/emailVerification.model'
 import { Service } from 'typedi'
 import { IUser } from '@/modules/user/user.interface'
 import { SiteConstants } from '@/modules/config/config.constants'
 import Cryptograph from '@/core/cryptograph'
 import { BadRequestError, ServiceError } from '@/core/apiError'
+import EmailVerificationModel from '@/modules/emailVerification/emailVerification.model'
 
 @Service()
 class EmailVerificationService implements IEmailVerificationService {
-  private emailVerificationModel = emailVerificationModel
+  private emailVerificationModel = EmailVerificationModel
 
   public async create(user: IUser): Promise<string> {
     const key = user.key

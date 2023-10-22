@@ -12,23 +12,28 @@ const WithdrawalMethodSchema = new Schema<IWithdrawalMethod>(
     name: {
       type: String,
       required: true,
+      trim: true,
     },
     symbol: {
       type: String,
       required: true,
+      trim: true,
     },
     logo: {
       type: String,
       required: true,
+      trim: true,
     },
     network: {
       type: String,
       required: true,
+      trim: true,
     },
     status: {
       type: String,
       required: true,
       enum: Object.values(WithdrawalMethodStatus),
+      trim: true,
     },
     fee: {
       type: Number,
@@ -39,10 +44,19 @@ const WithdrawalMethodSchema = new Schema<IWithdrawalMethod>(
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IWithdrawalMethod>(
+const WithdrawalMethodModel = model<IWithdrawalMethod>(
   'WithdrawalMethod',
   WithdrawalMethodSchema
 )
+
+export default WithdrawalMethodModel

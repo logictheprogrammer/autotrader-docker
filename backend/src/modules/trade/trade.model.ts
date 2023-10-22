@@ -27,15 +27,18 @@ const TradeSchema = new Schema<ITrade>(
     market: {
       type: String,
       required: true,
+      trim: true,
     },
     status: {
       type: String,
       required: true,
       enum: Object.values(ForecastStatus),
       default: ForecastStatus.PREPARING,
+      trim: true,
     },
     move: {
       type: String,
+      trim: true,
     },
     stake: {
       type: Number,
@@ -80,6 +83,7 @@ const TradeSchema = new Schema<ITrade>(
     environment: {
       type: String,
       required: true,
+      trim: true,
     },
     manualMode: {
       type: Boolean,
@@ -87,7 +91,16 @@ const TradeSchema = new Schema<ITrade>(
       default: false,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<ITrade>('Trade', TradeSchema)
+const TradeModel = model<ITrade>('Trade', TradeSchema)
+
+export default TradeModel

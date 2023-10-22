@@ -6,7 +6,7 @@ import {
   IReferralObject,
   IReferralService,
 } from '@/modules/referral/referral.interface'
-import referralModel from '@/modules/referral/referral.model'
+import ReferralModel from '@/modules/referral/referral.model'
 import { ReferralStatus, ReferralTypes } from '@/modules/referral/referral.enum'
 import { INotificationService } from '@/modules/notification/notification.interface'
 import { IReferralSettingsService } from '@/modules/referralSettings/referralSettings.interface'
@@ -25,7 +25,7 @@ import ServiceToken from '@/core/serviceToken'
 
 @Service()
 class ReferralService implements IReferralService {
-  private referralModel = referralModel
+  private referralModel = ReferralModel
 
   constructor(
     @Inject(ServiceToken.NOTIFICATION_SERVICE)

@@ -12,10 +12,19 @@ const TransferSettingsSchema = new Schema<ITransferSettings>(
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<ITransferSettings>(
+const TransferSettingsModel = model<ITransferSettings>(
   'TransferSettings',
   TransferSettingsSchema
 )
+
+export default TransferSettingsModel

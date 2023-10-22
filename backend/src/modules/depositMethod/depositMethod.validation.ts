@@ -2,21 +2,24 @@ import Joi from 'joi'
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
 
 const create = Joi.object({
-  address: Joi.string().required(),
-  network: Joi.string().required().lowercase(),
+  currencyId: Joi.string().trim().required(),
+  address: Joi.string().trim().required(),
+  network: Joi.string().trim().required().lowercase(),
   fee: Joi.number().min(0).required(),
   minDeposit: Joi.number().positive().required(),
 })
 
 const update = Joi.object({
-  address: Joi.string().required(),
-  network: Joi.string().required().lowercase(),
+  currencyId: Joi.string().trim().required(),
+  address: Joi.string().trim().required(),
+  network: Joi.string().trim().required().lowercase(),
   fee: Joi.number().min(0).required(),
   minDeposit: Joi.number().positive().required(),
 })
 
 const updateStatus = Joi.object({
   status: Joi.string()
+    .trim()
     .valid(...Object.values(DepositMethodStatus))
     .required(),
 })

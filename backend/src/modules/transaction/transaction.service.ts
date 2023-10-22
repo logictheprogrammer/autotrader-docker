@@ -4,7 +4,6 @@ import {
   ITransactionObject,
   ITransactionService,
 } from '@/modules/transaction/transaction.interface'
-import transactionModel from '@/modules/transaction/transaction.model'
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
 import { IUserObject } from '@/modules/user/user.interface'
 import { UserEnvironment } from '../user/user.enum'
@@ -12,10 +11,11 @@ import { TransactionStatus } from './transaction.type'
 import { FilterQuery } from 'mongoose'
 import { NotFoundError, ServiceError } from '@/core/apiError'
 import baseObjectInterface from '@/core/baseObjectInterface'
+import TransactionModel from './transaction.model'
 
 @Service()
 class TransactionService implements ITransactionService {
-  private transactionModel = transactionModel
+  private transactionModel = TransactionModel
 
   public async create(
     user: IUserObject,

@@ -4,7 +4,6 @@ import {
   ITradeObject,
   ITradeService,
 } from '@/modules/trade/trade.interface'
-import tradeModel from '@/modules/trade/trade.model'
 import { ForecastStatus } from '@/modules/forecast/forecast.enum'
 import { IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
@@ -22,10 +21,11 @@ import { FilterQuery, ObjectId } from 'mongoose'
 import { IForecastObject } from '../forecast/forecast.interface'
 import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
 import ServiceToken from '@/core/serviceToken'
+import TradeModel from '@/modules/trade/trade.model'
 
 @Service()
 class TradeService implements ITradeService {
-  private tradeModel = tradeModel
+  private tradeModel = TradeModel
 
   public constructor(
     @Inject(ServiceToken.USER_SERVICE) private userService: IUserService,

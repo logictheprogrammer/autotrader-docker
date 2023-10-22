@@ -5,7 +5,6 @@ import {
   IInvestmentObject,
   IInvestmentService,
 } from '@/modules/investment/investment.interface'
-import investmentModel from '@/modules/investment/investment.model'
 import { InvestmentStatus } from '@/modules/investment/investment.enum'
 import { IPlanService } from '@/modules/plan/plan.interface'
 import { IUserService } from '@/modules/user/user.interface'
@@ -22,17 +21,17 @@ import { ReferralTypes } from '@/modules/referral/referral.enum'
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { ForecastStatus } from '../forecast/forecast.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
-import tradeModel from '../trade/trade.model'
 import { IMathService } from '../math/math.interface'
 import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
-import { BadRequestResponse } from '@/core/apiResponse'
 import ServiceToken from '@/core/serviceToken'
 import Helpers from '@/utils/helpers'
+import InvestmentModel from '@/modules/investment/investment.model'
+import TradeModel from '../trade/trade.model'
 
 @Service()
 class InvestmentService implements IInvestmentService {
-  private investmentModel = investmentModel
-  private tradeModel = tradeModel
+  private investmentModel = InvestmentModel
+  private tradeModel = TradeModel
 
   public static minWaitHour = 4
   public static maxWaitHour = 8
@@ -189,7 +188,7 @@ class InvestmentService implements IInvestmentService {
         investment.status = InvestmentStatus.RUNNING
         break
       default:
-        throw new BadRequestResponse('Invalid forcast status')
+        throw new BadRequestError('Invalid forcast status')
     }
 
     if (tradeObject.status === ForecastStatus.SETTLED) {

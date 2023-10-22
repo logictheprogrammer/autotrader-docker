@@ -11,18 +11,22 @@ const PlanSchema = new Schema<IPlan>(
       required: true,
       enum: Object.values(PlanStatus),
       default: PlanStatus.ACTIVE,
+      trim: true,
     },
     icon: {
       type: String,
       required: true,
+      trim: true,
     },
     name: {
       type: String,
       required: true,
+      trim: true,
     },
     engine: {
       type: String,
       required: true,
+      trim: true,
     },
     minAmount: {
       type: Number,
@@ -55,10 +59,12 @@ const PlanSchema = new Schema<IPlan>(
     description: {
       type: String,
       required: true,
+      trim: true,
     },
     assetType: {
       type: String,
       required: true,
+      trim: true,
     },
     assets: [
       {
@@ -90,6 +96,7 @@ const PlanSchema = new Schema<IPlan>(
     forecastStatus: {
       type: String,
       enum: Object.values(ForecastStatus),
+      trim: true,
     },
     currentForecast: {
       type: Types.ObjectId,
@@ -105,7 +112,16 @@ const PlanSchema = new Schema<IPlan>(
       type: Date,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IPlan>('Plan', PlanSchema)
+const PlanModel = model<IPlan>('Plan', PlanSchema)
+
+export default PlanModel

@@ -4,13 +4,13 @@ import {
   IMailOptionObject,
   IMailOptionService,
 } from '@/modules/mailOption/mailOption.interface'
-import mailOptionModel from '@/modules/mailOption/mailOption.model'
 import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
 import { FilterQuery } from 'mongoose'
+import MailOptionModel from '@/modules/mailOption/mailOption.model'
 
 @Service()
 export default class MailOptionService implements IMailOptionService {
-  private mailOptionModel = mailOptionModel
+  private mailOptionModel = MailOptionModel
 
   public async create(
     name: string,
@@ -55,6 +55,7 @@ export default class MailOptionService implements IMailOptionService {
       const mailOption = await this.mailOptionModel.findOne(filter)
 
       if (!mailOption) throw new NotFoundError('Mail Option not found')
+      mailOption.password = mailOption.getPassword()
 
       return mailOption
     } catch (err: any) {

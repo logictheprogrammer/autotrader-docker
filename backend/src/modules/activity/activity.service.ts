@@ -9,14 +9,14 @@ import {
   IActivityObject,
   IActivityService,
 } from '@/modules/activity/activity.interface'
-import activityModel from '@/modules/activity/activity.model'
 import { IUserObject } from '@/modules/user/user.interface'
 import { FilterQuery } from 'mongoose'
 import { NotFoundError, ServiceError } from '@/core/apiError'
+import ActivityModel from './activity.model'
 
 @Service()
 class ActivityService implements IActivityService {
-  private activityModel = activityModel
+  private activityModel = ActivityModel
 
   public async create(
     user: IUserObject,
@@ -45,9 +45,7 @@ class ActivityService implements IActivityService {
     filter: FilterQuery<IActivity>
   ): Promise<IActivityObject[]> {
     try {
-      const activities = await this.activityModel
-        .find(filter)
-        .populate('user', 'username')
+      const activities = await this.activityModel.find(filter).populate('user')
 
       return activities
     } catch (err: any) {
@@ -60,7 +58,7 @@ class ActivityService implements IActivityService {
 
   public async hide(filter: FilterQuery<IActivity>): Promise<IActivityObject> {
     try {
-      const activity = await this.activityModel.findOne(filter)
+      const activity = await this.activityModel.findOne(filter).populate('user')
 
       if (!activity) throw new NotFoundError('Activity not found')
 
@@ -76,9 +74,9 @@ class ActivityService implements IActivityService {
 
   public async hideAll(filter: FilterQuery<IActivity>): Promise<void> {
     try {
-      const activities = await this.activityModel.find(filter)
+      const activities = await this.activityModel.find(filter).populate('user')
 
-      if (!activities.length) throw new NotFoundError('No Activity log found')
+      if (!activities.length) throw new NotFoundError('No Activities found')
 
       for (const activity of activities) {
         activity.status = ActivityStatus.HIDDEN
@@ -93,7 +91,7 @@ class ActivityService implements IActivityService {
     filter: FilterQuery<IActivity>
   ): Promise<IActivityObject> {
     try {
-      const activity = await this.activityModel.findOne(filter)
+      const activity = await this.activityModel.findOne(filter).populate('user')
       if (!activity) throw new NotFoundError('Activity not found')
 
       await this.activityModel.deleteOne({ _id: activity._id })
@@ -106,9 +104,9 @@ class ActivityService implements IActivityService {
 
   public async deleteAll(filter: FilterQuery<IActivity>): Promise<void> {
     try {
-      let activities = await this.activityModel.find(filter)
+      let activities = await this.activityModel.find(filter).populate('user')
 
-      if (!activities.length) throw new NotFoundError('No Activity found')
+      if (!activities.length) throw new NotFoundError('No Activities found')
 
       for (const activity of activities) {
         await this.activityModel.deleteOne({ _id: activity._id })

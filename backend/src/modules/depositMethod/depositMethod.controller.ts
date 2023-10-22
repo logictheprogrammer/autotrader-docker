@@ -26,7 +26,7 @@ class DepositMethodController implements IController {
 
   private intialiseRoutes(): void {
     this.router.post(
-      `${this.path}/create/:currencyId`,
+      `${this.path}/create`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.create),
       this.create
@@ -54,7 +54,7 @@ class DepositMethodController implements IController {
     )
 
     this.router.put(
-      `${this.path}/update/:depositMethodId/:currencyId`,
+      `${this.path}/update/:depositMethodId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.update),
       this.update
@@ -96,10 +96,9 @@ class DepositMethodController implements IController {
     })
 
   private create = asyncHandler(async (req, res): Promise<Response | void> => {
-    const { address, network, fee, minDeposit } = req.body
-    const { currencyId } = req.params
+    const { currencyId, address, network, fee, minDeposit } = req.body
     const depositMethod = await this.depositMethodService.create(
-      currencyId as unknown as ObjectId,
+      currencyId,
       address,
       network,
       fee,
@@ -111,11 +110,11 @@ class DepositMethodController implements IController {
   })
 
   private update = asyncHandler(async (req, res): Promise<Response | void> => {
-    const { address, network, fee, minDeposit } = req.body
-    const { depositMethodId, currencyId } = req.params
+    const { currencyId, address, network, fee, minDeposit } = req.body
+    const { depositMethodId } = req.params
     const depositMethod = await this.depositMethodService.update(
       { _id: depositMethodId as unknown as ObjectId },
-      currencyId as unknown as ObjectId,
+      currencyId,
       address,
       network,
       fee,

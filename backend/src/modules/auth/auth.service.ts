@@ -1,5 +1,4 @@
 import { IAuthService } from '@/modules/auth/auth.interface'
-import userModel from '@/modules/user/user.model'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { Service, Inject } from 'typedi'
 import { IEmailVerificationService } from '@/modules/emailVerification/emailVerification.interface'
@@ -24,10 +23,11 @@ import {
 import Helpers from '@/utils/helpers'
 import Cryptograph from '@/core/cryptograph'
 import { StatusCode } from '@/core/apiResponse'
+import UserModel from '@/modules/user/user.model'
 
 @Service()
 class AuthService implements IAuthService {
-  private userModel = userModel
+  private userModel = UserModel
 
   public constructor(
     @Inject(ServiceToken.MAIL_SERVICE) private mailService: IMailService,
@@ -147,7 +147,7 @@ class AuthService implements IAuthService {
       if (user.status !== UserStatus.ACTIVE) {
         throw new ForbiddenError(
           'Your account is under review, please check in later',
-          '',
+          undefined,
           StatusCode.INFO
         )
       }

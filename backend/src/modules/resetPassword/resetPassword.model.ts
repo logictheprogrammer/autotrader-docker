@@ -8,17 +8,26 @@ const ResetPasswordSchema = new Schema(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     token: {
       type: String,
       required: true,
+      trim: true,
     },
     expires: {
       type: Number,
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
 ResetPasswordSchema.pre<IResetPassword>('save', async function (next) {
@@ -30,4 +39,9 @@ ResetPasswordSchema.methods.isValidToken = async function (token: string) {
   return await Cryptograph.isValidHash(token, this.token)
 }
 
-export default model<IResetPassword>('ResetPassword', ResetPasswordSchema)
+const ResetPasswordModel = model<IResetPassword>(
+  'ResetPassword',
+  ResetPasswordSchema
+)
+
+export default ResetPasswordModel

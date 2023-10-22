@@ -4,7 +4,6 @@ import {
   IDepositMethodObject,
   IDepositMethodService,
 } from '@/modules/depositMethod/depositMethod.interface'
-import depositMethodModel from '@/modules/depositMethod/depositMethod.model'
 import { ICurrencyService } from '@/modules/currency/currency.interface'
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
@@ -15,10 +14,11 @@ import {
   ServiceError,
 } from '@/core/apiError'
 import ServiceToken from '@/core/serviceToken'
+import DepositMethodModel from '@/modules/depositMethod/depositMethod.model'
 
 @Service()
 class DepositMethodService implements IDepositMethodService {
-  private depositMethodModel = depositMethodModel
+  private depositMethodModel = DepositMethodModel
 
   public constructor(
     @Inject(ServiceToken.CURRENCY_SERVICE)
@@ -47,10 +47,7 @@ class DepositMethodService implements IDepositMethodService {
         throw new RequestConflictError('This deposit method already exist')
 
       const depositMethod = await this.depositMethodModel.create({
-        currency: currency._id,
-        name: currency.name,
-        symbol: currency.symbol,
-        logo: currency.logo,
+        currency,
         address,
         network,
         fee,
@@ -96,10 +93,7 @@ class DepositMethodService implements IDepositMethodService {
       if (depositMethodExist)
         throw new RequestConflictError('This deposit method already exist')
 
-      depositMethod.currency = currency._id
-      depositMethod.name = currency.name
-      depositMethod.symbol = currency.symbol
-      depositMethod.logo = currency.logo
+      depositMethod.currency = currency
       depositMethod.address = address
       depositMethod.network = network
       depositMethod.fee = fee
@@ -120,7 +114,9 @@ class DepositMethodService implements IDepositMethodService {
     query: FilterQuery<IDepositMethod>
   ): Promise<IDepositMethodObject> {
     try {
-      const depositMethod = await this.depositMethodModel.findOne(query)
+      const depositMethod = await this.depositMethodModel
+        .findOne(query)
+        .populate('currency')
 
       if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
@@ -137,7 +133,9 @@ class DepositMethodService implements IDepositMethodService {
     query: FilterQuery<IDepositMethod>
   ): Promise<IDepositMethod> {
     try {
-      const depositMethod = await this.depositMethodModel.findOne(query)
+      const depositMethod = await this.depositMethodModel
+        .findOne(query)
+        .populate('currency')
 
       if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
@@ -156,7 +154,9 @@ class DepositMethodService implements IDepositMethodService {
     status: DepositMethodStatus
   ): Promise<IDepositMethod> {
     try {
-      const depositMethod = await this.depositMethodModel.findOne(query)
+      const depositMethod = await this.depositMethodModel
+        .findOne(query)
+        .populate('currency')
 
       if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
@@ -177,7 +177,9 @@ class DepositMethodService implements IDepositMethodService {
     autoUpdate: boolean
   ): Promise<IDepositMethod> {
     try {
-      const depositMethod = await this.depositMethodModel.findOne(query)
+      const depositMethod = await this.depositMethodModel
+        .findOne(query)
+        .populate('currency')
 
       if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
@@ -199,7 +201,9 @@ class DepositMethodService implements IDepositMethodService {
     price: number
   ): Promise<IDepositMethod> {
     try {
-      const depositMethod = await this.depositMethodModel.findOne(query)
+      const depositMethod = await this.depositMethodModel
+        .findOne(query)
+        .populate('currency')
 
       if (!depositMethod) throw new NotFoundError('Deposit method not found')
 
@@ -225,7 +229,7 @@ class DepositMethodService implements IDepositMethodService {
     query: FilterQuery<IDepositMethod>
   ): Promise<IDepositMethod[]> {
     try {
-      return await this.depositMethodModel.find(query)
+      return await this.depositMethodModel.find(query).populate('currency')
     } catch (err: any) {
       throw new ServiceError(
         err,

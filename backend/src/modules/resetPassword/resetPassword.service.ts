@@ -5,10 +5,11 @@ import { IUser } from '@/modules/user/user.interface'
 import { SiteConstants } from '@/modules/config/config.constants'
 import Cryptograph from '@/core/cryptograph'
 import { BadRequestError, ServiceError } from '@/core/apiError'
+import ResetPasswordModel from '@/modules/resetPassword/resetPassword.model'
 
 @Service()
 class resetPasswordService implements IResetPasswordService {
-  private resetPasswordModel = resetPasswordModel
+  private resetPasswordModel = ResetPasswordModel
 
   public async create(user: IUser): Promise<string> {
     const key = user.key

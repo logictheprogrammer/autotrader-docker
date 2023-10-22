@@ -6,19 +6,7 @@ const DepositMethodSchema = new Schema<IDepositMethod>(
   {
     currency: {
       type: Types.ObjectId,
-      ref: 'currency',
-      required: true,
-    },
-    name: {
-      type: String,
-      required: true,
-    },
-    symbol: {
-      type: String,
-      required: true,
-    },
-    logo: {
-      type: String,
+      ref: 'Currency',
       required: true,
     },
     price: {
@@ -28,15 +16,18 @@ const DepositMethodSchema = new Schema<IDepositMethod>(
     address: {
       type: String,
       required: true,
+      trim: true,
     },
     network: {
       type: String,
       required: true,
+      trim: true,
     },
     status: {
       type: String,
       required: true,
       enum: Object.values(DepositMethodStatus),
+      trim: true,
     },
     fee: {
       type: Number,
@@ -51,7 +42,19 @@ const DepositMethodSchema = new Schema<IDepositMethod>(
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret, options) {
+        delete ret.__v
+      },
+    },
+  }
 )
 
-export default model<IDepositMethod>('DepositMethod', DepositMethodSchema)
+const DepositMethodModel = model<IDepositMethod>(
+  'DepositMethod',
+  DepositMethodSchema
+)
+
+export default DepositMethodModel
