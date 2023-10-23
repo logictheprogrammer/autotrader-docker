@@ -76,7 +76,7 @@ class TransferService implements ITransferService {
 
       // transfer instance
 
-      const transfer = new this.transferModel({
+      const transfer = await this.transferModel.create({
         fromUser,
         toUser,
         account,
@@ -180,6 +180,10 @@ class TransferService implements ITransferService {
           UserEnvironment.LIVE
         )
       }
+
+      await transfer.populate('toUser')
+      await transfer.populate('fromUser')
+
       return transfer
     } catch (err: any) {
       throw new ServiceError(
@@ -215,7 +219,10 @@ class TransferService implements ITransferService {
     status: TransferStatus
   ): Promise<ITransferObject> {
     try {
-      const transfer = await this.transferModel.findOne(filter)
+      const transfer = await this.transferModel
+        .findOne(filter)
+        .populate('toUser')
+        .populate('fromUser')
 
       if (!transfer) throw new NotFoundError('Tranfer not found')
 
@@ -291,7 +298,10 @@ class TransferService implements ITransferService {
 
   public async fetch(filter: FilterQuery<ITransfer>): Promise<ITransferObject> {
     try {
-      const transfer = await this.transferModel.findOne(filter)
+      const transfer = await this.transferModel
+        .findOne(filter)
+        .populate('toUser')
+        .populate('fromUser')
 
       if (!transfer) throw new NotFoundError('Tranfer not found')
 
@@ -313,9 +323,8 @@ class TransferService implements ITransferService {
         .sort({
           updatedAt: -1,
         })
-        .select('-fromUserObject -toUserObject')
-        .populate('toUser', 'username')
-        .populate('fromUser', 'username')
+        .populate('toUser')
+        .populate('fromUser')
 
       return transfers
     } catch (err: any) {

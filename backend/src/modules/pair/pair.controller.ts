@@ -25,21 +25,21 @@ class PairController implements IController {
 
   private intialiseRoutes(): void {
     this.router.post(
-      `${this.path}/create`,
+      `/master${this.path}/create`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.create),
       this.create
     )
 
     this.router.put(
-      `${this.path}/update/:pairId`,
+      `/master${this.path}/update/:pairId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.update),
       this.update
     )
 
     this.router.get(
-      `${this.path}`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll
     )

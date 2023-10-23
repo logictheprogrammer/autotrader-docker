@@ -1,10 +1,8 @@
 import { IWithdrawalService } from '@/modules/withdrawal/withdrawal.interface'
 import { Inject, Service } from 'typedi'
 import { Router, Response } from 'express'
-
 import validate from '@/modules/withdrawal/withdrawal.validation'
 import { UserRole } from '@/modules/user/user.enum'
-import { ObjectId } from 'mongoose'
 import { IController } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import asyncHandler from '@/helpers/asyncHandler'
@@ -32,29 +30,29 @@ class WithdrawalController implements IController {
       this.create
     )
 
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false)
+    )
+
     this.router.patch(
-      `${this.path}/update-status/:withdrawalId`,
+      `/master${this.path}/update-status/:withdrawalId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updateStatus),
       this.updateStatus
     )
 
     this.router.delete(
-      `${this.path}/delete/:withdrawalId`,
+      `/master${this.path}/delete/:withdrawalId`,
       routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
-      `${this.path}/master`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true)
-    )
-
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false)
     )
   }
 
@@ -65,7 +63,7 @@ class WithdrawalController implements IController {
         withdrawals = await this.withdrawalService.fetchAll({})
       } else {
         const userId = req.user._id
-        withdrawals = await this.withdrawalService.fetchAll({ _id: userId })
+        withdrawals = await this.withdrawalService.fetchAll({ user: userId })
       }
       return new SuccessResponse('Withdrawals fetched successfully', {
         withdrawals,
@@ -89,17 +87,20 @@ class WithdrawalController implements IController {
 
   private updateStatus = asyncHandler(
     async (req, res): Promise<Response | void> => {
-      const { withdrawalId, status } = req.body
+      const { status } = req.body
+      const { withdrawalId } = req.params
       const withdrawal = await this.withdrawalService.updateStatus(
-        withdrawalId,
+        { _id: withdrawalId },
         status
       )
-      return new SuccessResponse('', { withdrawal }).send(res)
+      return new SuccessResponse('Status updated successfully', {
+        withdrawal,
+      }).send(res)
     }
   )
 
   private delete = asyncHandler(async (req, res): Promise<Response | void> => {
-    const withdrawalId = req.params.withdrawalId as unknown as ObjectId
+    const withdrawalId = req.params.withdrawalId
     const withdrawal = await this.withdrawalService.delete({
       _id: withdrawalId,
     })

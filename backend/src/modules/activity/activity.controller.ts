@@ -33,27 +33,6 @@ class ActivityController implements IController {
       this.fetchAll(UserRole.USER)
     )
 
-    // Get All Users Activity logs
-    this.router.get(
-      `${this.path}/users`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(UserRole.ADMIN)
-    )
-
-    // Get A User Activity logs
-    this.router.get(
-      `${this.path}/user/:userId`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(UserRole.ADMIN, false)
-    )
-
-    // Get Admin Activity logs
-    this.router.get(
-      `${this.path}/master`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAllAdmin
-    )
-
     // Hide Activity
     this.router.patch(
       `${this.path}/hide/:activityId`,
@@ -63,44 +42,65 @@ class ActivityController implements IController {
 
     // Hide All Activity
     this.router.patch(
-      `${this.path}/hide`,
+      `${this.path}/hide/all`,
       routePermission(UserRole.USER),
       this.hideAll
     )
 
+    // Get All Users Activity logs
+    this.router.get(
+      `/master${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(UserRole.ADMIN)
+    )
+
+    // Get A User Activity logs
+    this.router.get(
+      `/master${this.path}/user/:userId`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(UserRole.ADMIN, false)
+    )
+
+    // Get Admin Activity logs
+    this.router.get(
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAllAdmin
+    )
+
     // Delete All selected user Activity
     this.router.delete(
-      `${this.path}/delete/user/:userId`,
+      `/master${this.path}/delete/all/user/:userId`,
       routePermission(UserRole.ADMIN),
       this.deleteAll(false, ActivityForWho.USER)
     )
 
-    // Delete Admin Activity
-    this.router.delete(
-      `${this.path}/delete/master/:activityId`,
-      routePermission(UserRole.ADMIN),
-      this.delete(UserRole.ADMIN, ActivityForWho.ADMIN)
-    )
-
-    // Delete All active Admin Activity
-    this.router.delete(
-      `${this.path}/delete/master`,
-      routePermission(UserRole.ADMIN),
-      this.deleteAll(false, ActivityForWho.ADMIN)
-    )
-
     // Delete Activity
     this.router.delete(
-      `${this.path}/delete/:activityId`,
+      `/master${this.path}/delete/user/:activityId`,
       routePermission(UserRole.ADMIN),
       this.delete(UserRole.USER, ActivityForWho.USER)
     )
 
+    // Delete All active Admin Activity
+    this.router.delete(
+      `/master${this.path}/delete/all`,
+      routePermission(UserRole.ADMIN),
+      this.deleteAll(false, ActivityForWho.ADMIN)
+    )
+
     // Delete All users Activities
     this.router.delete(
-      `${this.path}/delete`,
+      `/master${this.path}/delete/all/users`,
       routePermission(UserRole.ADMIN),
       this.deleteAll(true, ActivityForWho.USER)
+    )
+
+    // Delete Admin Activity
+    this.router.delete(
+      `/master${this.path}/delete/:activityId`,
+      routePermission(UserRole.ADMIN),
+      this.delete(UserRole.ADMIN, ActivityForWho.ADMIN)
     )
   }
 

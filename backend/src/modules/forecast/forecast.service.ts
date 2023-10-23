@@ -11,8 +11,7 @@ import { IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
 import { IPairObject, IPairService } from '../pair/pair.interface'
 import { IMathService } from '../math/math.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
-import { IAsset, IAssetObject } from '../asset/asset.interface'
-import { ISendMailService } from '../sendMail/sendMail.interface'
+import { IAssetObject } from '../asset/asset.interface'
 import { ITradeService } from '../trade/trade.interface'
 import InvestmentService from '../investment/investment.service'
 import {
@@ -48,9 +47,7 @@ class ForecastService implements IForecastService {
     @Inject(ServiceToken.INVESTMENT_SERVICE)
     private investmentService: IInvestmentService,
     @Inject(ServiceToken.TRADE_SERVICE)
-    private tradeService: ITradeService,
-    @Inject(ServiceToken.SEND_MAIL_SERVICE)
-    private SendMailService: ISendMailService
+    private tradeService: ITradeService
   ) {}
 
   private getForecastWaitTime(dailyForcast: number, duration: number): number {
@@ -102,7 +99,7 @@ class ForecastService implements IForecastService {
       manualMode: false,
       status: InvestmentStatus.AWAITING_TRADE,
       plan: forecast.plan._id,
-      tradeStatus: { $or: [ForecastStatus.SETTLED, undefined] },
+      tradeStatus: { $in: [ForecastStatus.SETTLED, undefined] },
     })
 
     for (let index = 0; index < activePlanInvestments.length; index++) {
@@ -291,6 +288,8 @@ class ForecastService implements IForecastService {
       forecast.openingPrice = openingPrice
       forecast.closingPrice = closingPrice
 
+      await forecast.save()
+
       return forecast
     } catch (err: any) {
       throw new ServiceError(
@@ -306,7 +305,10 @@ class ForecastService implements IForecastService {
   ): Promise<{ forecast: IForecastObject; errors: any[] }> {
     const errors: any[] = []
 
-    const forecast = await this.forecastModel.findOne(filter)
+    const forecast = await this.forecastModel
+      .findOne(filter)
+      .populate('plan')
+      .populate('pair')
 
     if (!forecast) throw new NotFoundError('Forecast not found')
 

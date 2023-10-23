@@ -38,7 +38,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
       const currency = await this.currencyService.fetch({ _id: currencyId })
 
       const withdrawalMethodExist = await this.withdrawalMethodModel.findOne({
-        name: currency.name,
+        currency: currency._id,
         network,
       })
 
@@ -46,16 +46,13 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
         throw new RequestConflictError('This withdrawal method already exist')
 
       const withdrawalMethod = await this.withdrawalMethodModel.create({
-        currency: currency._id,
-        name: currency.name,
-        symbol: currency.symbol,
-        logo: currency.logo,
+        currency,
         network,
         fee,
         minWithdrawal,
         status: WithdrawalMethodStatus.ENABLED,
       })
-      return withdrawalMethod
+      return withdrawalMethod.populate('currency')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -83,7 +80,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
       const currency = await this.currencyService.fetch({ _id: currencyId })
 
       const withdrawalMethodExist = await this.withdrawalMethodModel.findOne({
-        name: currency.name,
+        currency: currency._id,
         network,
         _id: { $ne: withdrawalMethod._id },
       })
@@ -91,17 +88,14 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
       if (withdrawalMethodExist)
         throw new RequestConflictError('This withdrawal method already exist')
 
-      withdrawalMethod.currency = currency._id
-      withdrawalMethod.name = currency.name
-      withdrawalMethod.symbol = currency.symbol
-      withdrawalMethod.logo = currency.logo
+      withdrawalMethod.currency = currency
       withdrawalMethod.network = network
       withdrawalMethod.fee = fee
       withdrawalMethod.minWithdrawal = minWithdrawal
 
       await withdrawalMethod.save()
 
-      return withdrawalMethod
+      return withdrawalMethod.populate('currency')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -113,7 +107,9 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   public async fetch(
     filter: FilterQuery<IWithdrawalMethod>
   ): Promise<IWithdrawalMethodObject> {
-    const withdrawalMethod = await this.withdrawalMethodModel.findOne(filter)
+    const withdrawalMethod = await this.withdrawalMethodModel
+      .findOne(filter)
+      .populate('currency')
     if (!withdrawalMethod)
       throw new NotFoundError('Withdrawal method not found')
 
@@ -143,7 +139,9 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
     status: WithdrawalMethodStatus
   ): Promise<IWithdrawalMethodObject> {
     try {
-      const withdrawalMethod = await this.withdrawalMethodModel.findOne(filter)
+      const withdrawalMethod = await this.withdrawalMethodModel
+        .findOne(filter)
+        .populate('currency')
       if (!withdrawalMethod)
         throw new NotFoundError('Withdrawal method not found')
 

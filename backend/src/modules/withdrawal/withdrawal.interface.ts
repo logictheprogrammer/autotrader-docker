@@ -5,9 +5,11 @@ import { UserAccount } from '@/modules/user/user.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
+import { ICurrencyObject } from '../currency/currency.interface'
 
 export interface IWithdrawalObject extends baseObjectInterface {
   withdrawalMethod: IWithdrawalMethodObject
+  currency: ICurrencyObject
   user: IUserObject
   account: UserAccount
   address: string

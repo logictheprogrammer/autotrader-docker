@@ -6,7 +6,6 @@ import userValidation from '@/modules/user/user.validation'
 import { ObjectId } from 'mongoose'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
-import { RequestConflictError } from '@/core/apiError'
 import { IController } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
@@ -24,51 +23,12 @@ class UserController implements IController {
   }
 
   private initialiseRoutes = (): void => {
-    // Fund User
-    this.router.patch(
-      `${this.path}/:userId/force-fund-user`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(userValidation.fundUser),
-      this.fundUser
-    )
-
     // Update Profile
     this.router.put(
       `${this.path}/update-profile`,
       routePermission(UserRole.USER),
       schemaValidator(userValidation.updateProfile),
       this.updateProfile(false)
-    )
-
-    // Update User Profile
-    this.router.put(
-      `${this.path}/:userId/update-user-profile`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(userValidation.updateProfile),
-      this.updateProfile(true)
-    )
-
-    // Update User Email
-    this.router.patch(
-      `${this.path}/:userId/update-user-email`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(userValidation.updateEmail),
-      this.updateEmail(true)
-    )
-
-    // Update User Status
-    this.router.patch(
-      `${this.path}/:userId/update-user-status`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(userValidation.updateStatus),
-      this.updateStatus
-    )
-
-    // Delete User
-    this.router.delete(
-      `${this.path}/:userId/delete-user`,
-      routePermission(UserRole.ADMIN),
-      this.deleteUser
     )
 
     // Get Referred Users
@@ -78,26 +38,64 @@ class UserController implements IController {
       this.getReferredUsers(false)
     )
 
+    // Get Users
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll
+    )
+    // Fund User
+    this.router.patch(
+      `/master${this.path}/fund/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.fundUser),
+      this.fundUser
+    )
+
+    // Update User Profile
+    this.router.put(
+      `/master${this.path}/update-profile/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.updateProfile),
+      this.updateProfile(true)
+    )
+
+    // Update User Email
+    this.router.patch(
+      `/master${this.path}/update-email/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.updateEmail),
+      this.updateEmail(true)
+    )
+
+    // Update User Status
+    this.router.patch(
+      `/master${this.path}/update-status/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.updateStatus),
+      this.updateStatus
+    )
+
+    // Delete User
+    this.router.delete(
+      `/master${this.path}/delete/:userId`,
+      routePermission(UserRole.ADMIN),
+      this.deleteUser
+    )
+
     // Get All Referred Users
     this.router.get(
-      `${this.path}/all-referred-users`,
+      `/master${this.path}/referred-users/:userId`,
       routePermission(UserRole.ADMIN),
       this.getReferredUsers(true)
     )
 
     // Send Email
     this.router.post(
-      `${this.path}/send-email/:userId`,
+      `/master${this.path}/send-email/:userId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(userValidation.sendEmail),
       this.sendEmail
-    )
-
-    // Get Users
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll
     )
   }
 
@@ -115,16 +113,6 @@ class UserController implements IController {
       const userId = byAdmin ? req.params.userId : req.user._id
       const { name, username } = req.body
 
-      const usernameExit = await this.userService.fetch({
-        username,
-        _id: { $ne: userId },
-      })
-
-      if (usernameExit)
-        throw new RequestConflictError(
-          'A user with this username already exist'
-        )
-
       const user = await this.userService.updateProfile(
         { _id: userId },
         name,
@@ -140,14 +128,6 @@ class UserController implements IController {
     asyncHandler(async (req, res): Promise<void | Response> => {
       const userId = byAdmin ? req.params.userId : req.user._id
       const email = req.body.email
-
-      const emailExit = await this.userService.fetch({
-        email,
-        _id: { $ne: userId },
-      })
-
-      if (emailExit)
-        throw new RequestConflictError('A user with this email already exist')
 
       const user = await this.userService.updateEmail({ _id: userId }, email)
       return new SuccessResponse('Email updated successfully', { user }).send(
@@ -169,8 +149,10 @@ class UserController implements IController {
   private deleteUser = asyncHandler(
     async (req, res): Promise<void | Response> => {
       const userId = req.params.userId as unknown as ObjectId
-      const user = await this.userService.delete(userId)
-      return new SuccessResponse('', { user }).send(res)
+      const user = await this.userService.delete({ _id: userId })
+      return new SuccessResponse('User deleted successfully', { user }).send(
+        res
+      )
     }
   )
 
@@ -185,14 +167,16 @@ class UserController implements IController {
 
   private getReferredUsers = (byAdmin: boolean = false) =>
     asyncHandler(async (req, res): Promise<void | Response> => {
-      let user
+      let users
       if (byAdmin) {
-        user = await this.userService.getReferredUsers({})
+        users = await this.userService.fetchAll({
+          referred: req.params.userId,
+        })
       } else {
-        user = await this.userService.getReferredUsers({ _id: req.user._id })
+        users = await this.userService.fetchAll({ referred: req.user._id })
       }
 
-      return new SuccessResponse('Users fetched successfully', { user }).send(
+      return new SuccessResponse('Users fetched successfully', { users }).send(
         res
       )
     })
@@ -209,7 +193,7 @@ class UserController implements IController {
         content
       )
 
-      return new SuccessResponse('', { user }).send(res)
+      return new SuccessResponse('Email successfully sent', { user }).send(res)
     }
   )
 }

@@ -39,7 +39,7 @@ class DepositMethodService implements IDepositMethodService {
       const currency = await this.currencyService.fetch({ _id: currencyId })
 
       const depositMethodExist = await this.depositMethodModel.findOne({
-        name: currency.name,
+        currency: currency._id,
         network,
       })
 
@@ -85,7 +85,7 @@ class DepositMethodService implements IDepositMethodService {
       const currency = await this.currencyService.fetch({ _id: currencyId })
 
       const depositMethodExist = await this.depositMethodModel.findOne({
-        name: currency.name,
+        currency: currency._id,
         network,
         _id: { $ne: depositMethod._id },
       })

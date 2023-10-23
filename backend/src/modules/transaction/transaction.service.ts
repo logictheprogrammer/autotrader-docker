@@ -37,7 +37,7 @@ class TransactionService implements ITransactionService {
         environment,
       })
 
-      return transaction
+      return transaction.populate('user')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -61,7 +61,7 @@ class TransactionService implements ITransactionService {
 
       await transaction.save()
 
-      return transaction
+      return transaction.populate('user')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -83,7 +83,7 @@ class TransactionService implements ITransactionService {
 
       await transaction.save()
 
-      return transaction
+      return transaction.populate('user')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -100,7 +100,7 @@ class TransactionService implements ITransactionService {
 
       if (!transaction) throw new NotFoundError('Transaction not found')
 
-      return transaction
+      return transaction.populate('user')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -116,8 +116,7 @@ class TransactionService implements ITransactionService {
       const transactions = await this.transactionModel
         .find(filter)
         .sort({ updatedAt: -1 })
-        .select('-userObject -categoryObject -environment')
-        .populate('user', 'username')
+        .populate('user')
 
       return transactions
     } catch (err: any) {
@@ -132,7 +131,9 @@ class TransactionService implements ITransactionService {
     filter: FilterQuery<ITransaction>
   ): Promise<ITransactionObject> {
     try {
-      const transaction = await this.transactionModel.findOne(filter)
+      const transaction = await this.transactionModel
+        .findOne(filter)
+        .populate('user')
 
       if (!transaction) throw new NotFoundError('Transaction not found')
 

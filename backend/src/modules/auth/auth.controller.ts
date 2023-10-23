@@ -56,14 +56,6 @@ class AuthController implements IController {
       this.updatePassword(false)
     )
 
-    // Update User Password
-    this.router.patch(
-      `${this.path}/update-password/:userId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.updateUserPassword),
-      this.updatePassword(true)
-    )
-
     // Forget Password
     this.router.post(
       `${this.path}/forget-password`,
@@ -83,6 +75,14 @@ class AuthController implements IController {
       `${this.path}/verify-email`,
       schemaValidator(validate.verifyEmail),
       this.verifyEmail
+    )
+
+    // Update User Password
+    this.router.patch(
+      `/master${this.path}/update-password/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateUserPassword),
+      this.updatePassword(true)
     )
   }
 

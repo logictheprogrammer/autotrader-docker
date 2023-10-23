@@ -45,20 +45,16 @@ class ReferralSettingsService implements IReferralSettingsService {
     completedPackageEarnings: number
   ): Promise<IReferralSettingsObject> {
     try {
-      const referralSettings =
-        await this.referralSettingsModel.findOneAndUpdate(
-          {},
-          {
-            deposit,
-            stake,
-            winnings,
-            investment,
-            completedPackageEarnings,
-          }
-        )
+      const referralSettings = await this.referralSettingsModel.findOne()
 
       if (!referralSettings)
         throw new NotFoundError('Referral settings not found')
+
+      referralSettings.deposit = deposit
+      referralSettings.stake = stake
+      referralSettings.winnings = winnings
+      referralSettings.investment = investment
+      referralSettings.completedPackageEarnings = completedPackageEarnings
 
       return referralSettings
     } catch (err: any) {

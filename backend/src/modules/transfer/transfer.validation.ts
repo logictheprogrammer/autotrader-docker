@@ -9,7 +9,8 @@ const create = Joi.object({
     .lowercase()
     .min(3)
     .max(30)
-    .required(),
+    .required()
+    .label('Recipient username'),
   account: Joi.string()
     .trim()
     .valid(UserAccount.MAIN_BALANCE, UserAccount.REFERRAL_BALANCE)

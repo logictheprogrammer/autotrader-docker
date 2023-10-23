@@ -6,23 +6,8 @@ const WithdrawalMethodSchema = new Schema<IWithdrawalMethod>(
   {
     currency: {
       type: Types.ObjectId,
-      ref: 'currency',
+      ref: 'Currency',
       required: true,
-    },
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    symbol: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    logo: {
-      type: String,
-      required: true,
-      trim: true,
     },
     network: {
       type: String,

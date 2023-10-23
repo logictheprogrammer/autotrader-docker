@@ -62,6 +62,7 @@ class DepositService implements IDepositService {
 
       const deposit = await this.depositModel.create({
         depositMethod,
+        currency: depositMethod.currency,
         user,
         amount,
         fee: depositMethod.fee,
@@ -128,6 +129,7 @@ class DepositService implements IDepositService {
         .findOne(filter)
         .populate('user')
         .populate('depositMethod')
+        .populate('currency')
 
       if (!deposit) throw new NotFoundError('Deposit not found')
 
@@ -190,6 +192,7 @@ class DepositService implements IDepositService {
         .sort({ createdAt: -1 })
         .populate('user')
         .populate('depositMethod')
+        .populate('currency')
     } catch (err: any) {
       throw new ServiceError(
         err,

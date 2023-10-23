@@ -23,14 +23,14 @@ export default class ReferralSettingsController implements IController {
   }
 
   private initialiseRoutes = (): void => {
+    this.router.get(`${this.path}`, this.fetch)
+
     this.router.put(
-      `${this.path}/update`,
+      `/master${this.path}/update`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.update),
       this.update
     )
-
-    this.router.get(`${this.path}`, this.fetch)
   }
 
   private update = asyncHandler(async (req, res): Promise<Response | void> => {

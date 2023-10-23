@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from 'express'
+import { Response, Router } from 'express'
 import { Inject, Service } from 'typedi'
 import { IReferralService } from '@/modules/referral/referral.interface'
 import { UserRole } from '../user/user.enum'
@@ -21,13 +21,6 @@ class ReferralController implements IController {
   }
 
   private initialiseRoutes = (): void => {
-    // Get Users Referral Transactions
-    this.router.get(
-      `${this.path}/users`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true)
-    )
-
     // Get Referral Earnings
     this.router.get(
       `${this.path}/earnings`,
@@ -35,25 +28,39 @@ class ReferralController implements IController {
       this.earnings(false)
     )
 
+    // Get Referral Transactions
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false)
+    )
+
     // Get Users Referral Earnings
     this.router.get(
-      `${this.path}/earnings/users`,
+      `/master${this.path}/earnings/users`,
       routePermission(UserRole.ADMIN),
       this.earnings(true)
     )
 
     // Get Leaderboard
     this.router.get(
-      `${this.path}/leaderboard`,
+      `/master${this.path}/leaderboard`,
       routePermission(UserRole.ADMIN),
       this.leaderboard
     )
 
-    // Get Referral Transactions
+    // Get Users Referral Transactions
     this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false)
+      `/master${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(true)
+    )
+
+    // Delete Referral Transactions
+    this.router.delete(
+      `/master${this.path}/delete/:referralId`,
+      routePermission(UserRole.ADMIN),
+      this.delete
     )
   }
 
@@ -65,7 +72,9 @@ class ReferralController implements IController {
       } else {
         referrals = await this.referralService.fetchAll({ user: req.user._id })
       }
-      return new SuccessResponse('Referrals', { referrals }).send(res)
+      return new SuccessResponse('Referrals fetched successfully', {
+        referrals,
+      }).send(res)
     })
 
   private earnings = (byAdmin: boolean) =>
@@ -92,6 +101,14 @@ class ReferralController implements IController {
       }).send(res)
     }
   )
+
+  private delete = asyncHandler(async (req, res): Promise<Response | void> => {
+    const referralId = req.params.referralId
+    const referral = await this.referralService.delete({ _id: referralId })
+    return new SuccessResponse('Referral transcation deleted successfully', {
+      referral,
+    }).send(res)
+  })
 }
 
 export default ReferralController

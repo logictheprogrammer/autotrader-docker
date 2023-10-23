@@ -73,7 +73,7 @@ class PlanService implements IPlanService {
         assets: assetsArr,
       })
 
-      return plan
+      return plan.populate('assets')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -139,6 +139,10 @@ class PlanService implements IPlanService {
 
       await plan.save()
 
+      await plan.populate('assets')
+      await plan.populate('investors')
+      await plan.populate('currentForecast')
+
       return plan
     } catch (err: any) {
       throw new ServiceError(
@@ -153,7 +157,11 @@ class PlanService implements IPlanService {
     status: PlanStatus
   ): Promise<IPlanObject> {
     try {
-      const plan = await this.planModel.findOne(filter)
+      const plan = await this.planModel
+        .findOne(filter)
+        .populate('assets')
+        .populate('investors')
+        .populate('currentForecast')
 
       if (!plan) throw new NotFoundError('Plan not found')
 
@@ -174,7 +182,11 @@ class PlanService implements IPlanService {
     filter: FilterQuery<IPlan>,
     forecastObject: IForecastObject
   ): Promise<IPlanObject> {
-    const plan = await this.planModel.findOne(filter)
+    const plan = await this.planModel
+      .findOne(filter)
+      .populate('assets')
+      .populate('investors')
+      .populate('currentForecast')
 
     if (!plan) throw new NotFoundError('Plan not found')
 
@@ -196,7 +208,11 @@ class PlanService implements IPlanService {
   }
 
   public async fetch(filter: FilterQuery<IPlan>): Promise<IPlanObject> {
-    const plan = await this.planModel.findOne(filter).populate('assets')
+    const plan = await this.planModel
+      .findOne(filter)
+      .populate('assets')
+      .populate('investors')
+      .populate('currentForecast')
 
     if (!plan) throw new NotFoundError('Plan not found')
 
@@ -217,7 +233,11 @@ class PlanService implements IPlanService {
 
   public async fetchAll(filter: FilterQuery<IPlan>): Promise<IPlanObject[]> {
     try {
-      return await this.planModel.find(filter).populate('assets')
+      return await this.planModel
+        .find(filter)
+        .populate('assets')
+        .populate('investors')
+        .populate('currentForecast')
     } catch (err: any) {
       throw new ServiceError(err, 'Failed to fetch plans, please try again')
     }

@@ -25,37 +25,37 @@ class ForecastController implements IController {
   }
 
   private intialiseRoutes(): void {
+    this.router.get(
+      `${this.path}/plan/:planId`,
+      routePermission(UserRole.USER),
+      this.fetchAll
+    )
+
     this.router.post(
-      `${this.path}/create/:planId`,
+      `/master${this.path}/create`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.create),
       this.create
     )
 
     this.router.put(
-      `${this.path}/update/:forecastId`,
+      `/master${this.path}/update/:forecastId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.update),
       this.update
     )
 
-    this.router.put(
-      `${this.path}/update-status/:forecastId`,
+    this.router.patch(
+      `/master${this.path}/update-status/:forecastId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updateStatus),
       this.updateStatus
     )
 
     this.router.delete(
-      `${this.path}/delete/:forecastId`,
+      `/master${this.path}/delete/:forecastId`,
       routePermission(UserRole.ADMIN),
       this.delete
-    )
-
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll
     )
   }
 
@@ -70,10 +70,9 @@ class ForecastController implements IController {
   )
 
   private create = asyncHandler(async (req, res): Promise<Response | void> => {
-    const { percentageProfit, stakeRate, pairId } = req.body
-    const { planId } = req.params
+    const { percentageProfit, stakeRate, pairId, planId } = req.body
     const { forecast, errors } = await this.forecastService.manualCreate(
-      planId as unknown as ObjectId,
+      planId,
       pairId,
       percentageProfit,
       stakeRate
@@ -99,7 +98,7 @@ class ForecastController implements IController {
     const { forecastId } = req.params
 
     const forecast = await this.forecastService.update(
-      forecastId as unknown as ObjectId,
+      { _id: forecastId },
       pairId,
       percentageProfit,
       stakeRate,
@@ -118,7 +117,7 @@ class ForecastController implements IController {
       const { forecastId } = req.params
       const { forecast, errors } =
         await this.forecastService.manualUpdateStatus(
-          forecastId as unknown as ObjectId,
+          { _id: forecastId },
           status
         )
 
@@ -131,8 +130,8 @@ class ForecastController implements IController {
   )
 
   private delete = asyncHandler(async (req, res): Promise<Response | void> => {
-    const forecastId = req.params.forecastId as unknown as ObjectId
-    const forecast = await this.forecastService.delete(forecastId)
+    const forecastId = req.params.forecastId
+    const forecast = await this.forecastService.delete({ _id: forecastId })
     return new SuccessResponse('Forecast deleted successfully', {
       forecast,
     }).send(res)

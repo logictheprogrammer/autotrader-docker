@@ -43,9 +43,8 @@ class ReferralService implements IReferralService {
     try {
       return await this.referralModel
         .find(filter)
-        .select('-userObject -referrerObject')
-        .populate('user', 'username isDeleted createdAt')
-        .populate('referrer', 'username isDeleted')
+        .populate('user')
+        .populate('referrer')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -237,6 +236,27 @@ class ReferralService implements IReferralService {
       throw new ServiceError(
         err,
         'Failed to fetch referral transactions, please try again'
+      )
+    }
+  }
+  public async delete(
+    filter: FilterQuery<IReferral>
+  ): Promise<IReferralObject> {
+    try {
+      const referral = await this.referralModel
+        .findOne(filter)
+        .populate('user')
+        .populate('referrer')
+
+      if (!referral) throw new NotFoundError('Referral transcation not found')
+
+      await referral.deleteOne()
+
+      return referral
+    } catch (err: any) {
+      throw new ServiceError(
+        err,
+        'Failed to delete this referral, please try again'
       )
     }
   }

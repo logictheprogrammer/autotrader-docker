@@ -25,7 +25,7 @@ class SendMailController implements IController {
   private initialiseRoutes = (): void => {
     // Send Email
     this.router.post(
-      `${this.path}`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.sendEmail),
       this.sendCustomMail

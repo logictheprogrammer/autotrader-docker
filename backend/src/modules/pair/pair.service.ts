@@ -105,7 +105,10 @@ class PairService implements IPairService {
 
       if (pairExist) throw new RequestConflictError('Pair already exist')
 
-      const baseAsset = await this.assetService.fetch(filter)
+      const baseAsset = await this.assetService.fetch({
+        _id: baseAssetId,
+        type: assetType,
+      })
 
       if (!baseAsset) throw new NotFoundError('Base Asset not found')
 

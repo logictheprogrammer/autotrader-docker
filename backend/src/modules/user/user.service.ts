@@ -16,6 +16,7 @@ import {
   BadRequestError,
   ForbiddenError,
   NotFoundError,
+  RequestConflictError,
   ServiceError,
 } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
@@ -83,7 +84,7 @@ class UserService implements IUserService {
 
   public async fetchAll(filter: FilterQuery<IUser>): Promise<IUserObject[]> {
     try {
-      return await this.userModel.find(filter).select('-password')
+      return await this.userModel.find(filter)
     } catch (err: any) {
       throw new ServiceError(err, 'Unable to get users, please try again')
     }
@@ -112,6 +113,16 @@ class UserService implements IUserService {
 
       if (!user) throw new NotFoundError('User not found')
 
+      const usernameExit = await this.userModel.findOne({
+        username,
+        _id: { $ne: user._id },
+      })
+
+      if (usernameExit)
+        throw new RequestConflictError(
+          'A user with this username already exist'
+        )
+
       if (byAdmin && user.role >= UserRole.ADMIN)
         throw new ForbiddenError('This action can not be performed on an admin')
 
@@ -139,6 +150,14 @@ class UserService implements IUserService {
     try {
       const user = await this.userModel.findOne(filter)
       if (!user) throw new NotFoundError('User not found')
+
+      const emailExit = await this.userModel.findOne({
+        email,
+        _id: { $ne: user._id },
+      })
+
+      if (emailExit)
+        throw new RequestConflictError('A user with this email already exist')
 
       user.email = email
       await user.save()
@@ -196,21 +215,6 @@ class UserService implements IUserService {
       return user
     } catch (err: any) {
       throw new ServiceError(err, 'Unable to delete user, please try again')
-    }
-  }
-
-  public async getReferredUsers(
-    filter: FilterQuery<IUser>
-  ): Promise<IUserObject[]> {
-    try {
-      const users = await this.userModel.find(filter).select('-password')
-
-      return users
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Unable to get referred users, please try again'
-      )
     }
   }
 

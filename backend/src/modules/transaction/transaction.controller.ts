@@ -1,7 +1,6 @@
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
 import { Inject, Service } from 'typedi'
 import { Router, Response } from 'express'
-
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import ServiceToken from '@/core/serviceToken'
 import { IController } from '@/core/utils'
@@ -22,34 +21,33 @@ class TransactionController implements IController {
   }
 
   private intialiseRoutes(): void {
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false, UserEnvironment.LIVE)
+    )
+
+    this.router.get(
+      `/demo${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false, UserEnvironment.DEMO)
+    )
+    this.router.get(
+      `/master/demo${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(true, UserEnvironment.DEMO)
+    )
+
     this.router.delete(
-      `${this.path}/delete/:transactionId`,
+      `/master${this.path}/delete/:transactionId`,
       routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
-      `${this.path}/demo/all`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO)
-    )
-
-    this.router.get(
-      `${this.path}/all`,
+      `/master${this.path}/users`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE)
-    )
-
-    this.router.get(
-      `${this.path}/demo`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.DEMO)
-    )
-
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.LIVE)
     )
   }
 

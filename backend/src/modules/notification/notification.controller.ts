@@ -23,16 +23,16 @@ class NotificationController implements IController {
   }
 
   private intialiseRoutes(): void {
-    this.router.get(
-      `/demo${this.path}/users`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
+    this.router.delete(
+      `${this.path}/delete/:notificationId`,
+      routePermission(UserRole.USER),
+      this.delete(false)
     )
 
     this.router.get(
-      `/demo${this.path}/user/:userId`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false, UserEnvironment.LIVE, NotificationForWho.USER)
     )
 
     this.router.get(
@@ -41,40 +41,40 @@ class NotificationController implements IController {
       this.fetchAll(false, UserEnvironment.DEMO, NotificationForWho.USER)
     )
 
+    this.router.get(
+      `/master/demo${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
+    )
+
+    this.router.get(
+      `/master/demo${this.path}/user/:userId`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
+    )
+
     this.router.delete(
-      `${this.path}/admin/delete/:notificationId`,
+      `/master${this.path}/delete/:notificationId`,
       routePermission(UserRole.ADMIN),
       this.delete(true)
     )
 
-    this.router.delete(
-      `${this.path}/delete/:notificationId`,
-      routePermission(UserRole.USER),
-      this.delete(false)
-    )
-
     this.router.get(
-      `${this.path}/users`,
+      `/master${this.path}/users`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.USER)
     )
 
     this.router.get(
-      `${this.path}/user/:userId`,
+      `/master${this.path}/user/:userId`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.USER)
     )
 
     this.router.get(
-      `${this.path}/master`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.ADMIN)
-    )
-
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.LIVE, NotificationForWho.USER)
     )
   }
 

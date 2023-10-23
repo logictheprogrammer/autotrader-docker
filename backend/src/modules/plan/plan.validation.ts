@@ -17,7 +17,7 @@ const create = Joi.object({
     .trim()
     .valid(...Object.values(AssetType))
     .required(),
-  assets: Joi.array().items(Joi.string().trim()).min(1).unique(),
+  assets: Joi.array().items(Joi.string().trim()).min(1).unique().required(),
 })
 
 const update = Joi.object({

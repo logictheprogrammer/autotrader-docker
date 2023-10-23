@@ -25,36 +25,42 @@ class DepositMethodController implements IController {
   }
 
   private intialiseRoutes(): void {
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false)
+    )
+
     this.router.post(
-      `${this.path}/create`,
+      `/master${this.path}/create`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.create),
       this.create
     )
 
     this.router.patch(
-      `${this.path}/update-status/:depositMethodId`,
+      `/master${this.path}/update-status/:depositMethodId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updateStatus),
       this.updateStatus
     )
 
     this.router.patch(
-      `${this.path}/update-price/:depositMethodId`,
+      `/master${this.path}/update-price/:depositMethodId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updatePrice),
       this.updatePrice
     )
 
     this.router.patch(
-      `${this.path}/update-mode/:depositMethodId`,
+      `/master${this.path}/update-mode/:depositMethodId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updateMode),
       this.updateMode
     )
 
     this.router.put(
-      `${this.path}/update/:depositMethodId`,
+      `/master${this.path}/update/:depositMethodId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.update),
       this.update
@@ -62,21 +68,15 @@ class DepositMethodController implements IController {
 
     // Delete Deposit Method
     this.router.delete(
-      `${this.path}/delete/:depositMethodId`,
+      `/master${this.path}/delete/:depositMethodId`,
       routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
-      `${this.path}/master`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true)
-    )
-
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false)
     )
   }
 

@@ -49,4 +49,6 @@ export interface IReferralService {
   earnings(filter: FilterQuery<IReferral>): Promise<IReferralEarnings[]>
 
   leaderboard(filter: FilterQuery<IReferral>): Promise<IReferralLeaderboard[]>
+
+  delete(filter: FilterQuery<IReferral>): Promise<IReferralObject>
 }

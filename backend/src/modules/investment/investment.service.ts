@@ -82,10 +82,8 @@ class InvestmentService implements IInvestmentService {
 
       // Investment Transaction Instance
       const investment = await this.investmentModel.create({
-        plan: plan._id,
-        planObject: plan,
-        user: user._id,
-        userObject: user,
+        plan,
+        user,
         minRunTime:
           plan.duration *
           1000 *
@@ -153,7 +151,7 @@ class InvestmentService implements IInvestmentService {
         environment
       )
 
-      return investment
+      return (await investment.populate('user')).populate('plan')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -166,7 +164,10 @@ class InvestmentService implements IInvestmentService {
     filter: FilterQuery<IInvestment>,
     tradeObject: ITradeObject
   ): Promise<IInvestmentObject> {
-    const investment = await this.investmentModel.findOne(filter)
+    const investment = await this.investmentModel
+      .findOne(filter)
+      .populate('user')
+      .populate('plan')
 
     if (!investment) throw new NotFoundError('Investment not found')
 
@@ -216,7 +217,10 @@ class InvestmentService implements IInvestmentService {
   ): Promise<IInvestmentObject> {
     try {
       // Investment Transaction Instance
-      const investment = await this.investmentModel.findOne(filter)
+      const investment = await this.investmentModel
+        .findOne(filter)
+        .populate('user')
+        .populate('plan')
 
       if (!investment) throw new NotFoundError('Investment not found')
 
@@ -322,7 +326,10 @@ class InvestmentService implements IInvestmentService {
     amount: number
   ): Promise<IInvestmentObject> {
     try {
-      const investment = await this.investmentModel.findOne(filter)
+      const investment = await this.investmentModel
+        .findOne(filter)
+        .populate('user')
+        .populate('plan')
 
       if (!investment) throw new NotFoundError('Investment not found')
 
@@ -344,7 +351,10 @@ class InvestmentService implements IInvestmentService {
     gas: number
   ): Promise<IInvestmentObject> {
     try {
-      const investment = await this.investmentModel.findOne(filter)
+      const investment = await this.investmentModel
+        .findOne(filter)
+        .populate('user')
+        .populate('plan')
 
       if (!investment) throw new NotFoundError('Investment not found')
 
@@ -390,9 +400,8 @@ class InvestmentService implements IInvestmentService {
     try {
       const investments = await this.investmentModel
         .find(filter)
-        .select('-userObject -plan')
-        .populate('user', 'username isDeleted')
-        .select('-userObject -plan')
+        .populate('user')
+        .populate('plan')
 
       return investments
     } catch (err: any) {

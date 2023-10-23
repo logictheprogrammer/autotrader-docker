@@ -3,7 +3,6 @@ import { Inject, Service } from 'typedi'
 import { Router, Response } from 'express'
 import validate from '@/modules/withdrawalMethod/withdrawalMethod.validation'
 import { UserRole } from '@/modules/user/user.enum'
-import { ObjectId } from 'mongoose'
 import asyncHandler from '@/helpers/asyncHandler'
 import { WithdrawalMethodStatus } from './withdrawalMethod.enum'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
@@ -25,22 +24,28 @@ class WithdrawalMethodController implements IController {
   }
 
   private intialiseRoutes(): void {
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false)
+    )
+
     this.router.post(
-      `${this.path}/create`,
+      `/master${this.path}/create`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.create),
       this.create
     )
 
     this.router.patch(
-      `${this.path}/update-status/:withdrawalMethodId`,
+      `/master${this.path}/update-status/:withdrawalMethodId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updateStatus),
       this.updateStatus
     )
 
     this.router.put(
-      `${this.path}/update/:withdrawalMethodId`,
+      `/master${this.path}/update/:withdrawalMethodId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.update),
       this.update
@@ -48,21 +53,15 @@ class WithdrawalMethodController implements IController {
 
     // Delete Withdrawal Method
     this.router.delete(
-      `${this.path}/delete/:withdrawalMethodId`,
+      `/master${this.path}/delete/:withdrawalMethodId`,
       routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
-      `${this.path}/master`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true)
-    )
-
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false)
     )
   }
 
@@ -99,7 +98,7 @@ class WithdrawalMethodController implements IController {
     const { currencyId, network, fee, minWithdrawal } = req.body
     const { withdrawalMethodId } = req.params
     const withdrawalMethod = await this.withdrawalMethodService.update(
-      withdrawalMethodId as unknown as ObjectId,
+      { _id: withdrawalMethodId },
       currencyId,
       network,
       fee,
@@ -111,8 +110,7 @@ class WithdrawalMethodController implements IController {
   })
 
   private delete = asyncHandler(async (req, res): Promise<void | Response> => {
-    const withdrawalMethodId = req.params
-      .withdrawalMethodId as unknown as ObjectId
+    const withdrawalMethodId = req.params.withdrawalMethodId
     const withdrawalMethod = await this.withdrawalMethodService.delete({
       _id: withdrawalMethodId,
     })
@@ -126,7 +124,7 @@ class WithdrawalMethodController implements IController {
       const { status } = req.body
       const { withdrawalMethodId } = req.params
       const withdrawalMethod = await this.withdrawalMethodService.updateStatus(
-        withdrawalMethodId as unknown as ObjectId,
+        { _id: withdrawalMethodId },
         status
       )
       return new SuccessResponse('Status updated successfully', {

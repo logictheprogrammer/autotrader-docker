@@ -47,9 +47,6 @@ class WithdrawalService implements IWithdrawalService {
         _id: withdrawalMethodId,
       })
 
-      if (!withdrawalMethod)
-        throw new NotFoundError('Withdrawal method not found')
-
       if (withdrawalMethod.minWithdrawal > amount)
         throw new BadRequestError(
           'Amount is lower than the min withdrawal of the selected withdrawal method'
@@ -61,8 +58,9 @@ class WithdrawalService implements IWithdrawalService {
         -(amount + withdrawalMethod.fee)
       )
 
-      const withdrawal = new this.withdrawalModel({
-        withdrawalMethod: withdrawalMethod,
+      const withdrawal = await this.withdrawalModel.create({
+        withdrawalMethod,
+        currency: withdrawalMethod.currency,
         user,
         account,
         address,
@@ -91,7 +89,7 @@ class WithdrawalService implements IWithdrawalService {
         UserEnvironment.LIVE
       )
 
-      return withdrawal
+      return withdrawal.populate('user')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -127,7 +125,11 @@ class WithdrawalService implements IWithdrawalService {
     status: WithdrawalStatus
   ): Promise<IWithdrawalObject> {
     try {
-      const withdrawal = await this.withdrawalModel.findOne(filter)
+      const withdrawal = await this.withdrawalModel
+        .findOne(filter)
+        .populate('user')
+        .populate('withdrawalMethod')
+        .populate('currency')
 
       if (!withdrawal) throw new NotFoundError('Withdrawal not found')
 
@@ -138,7 +140,12 @@ class WithdrawalService implements IWithdrawalService {
 
       withdrawal.status = status
 
-      await this.transactionService.updateStatus(withdrawal._id, status)
+      await withdrawal.save()
+
+      await this.transactionService.updateStatus(
+        { category: withdrawal._id },
+        status
+      )
 
       let user
 
@@ -177,7 +184,11 @@ class WithdrawalService implements IWithdrawalService {
     filter: FilterQuery<IWithdrawal>
   ): Promise<IWithdrawalObject> {
     try {
-      const withdrawal = await this.withdrawalModel.findOne(filter)
+      const withdrawal = await this.withdrawalModel
+        .findOne(filter)
+        .populate('user')
+        .populate('withdrawalMethod')
+        .populate('currency')
 
       if (!withdrawal) throw new NotFoundError('Withdrawal not found')
 
@@ -197,7 +208,9 @@ class WithdrawalService implements IWithdrawalService {
       return await this.withdrawalModel
         .find(filter)
         .sort({ createdAt: -1 })
-        .populate('user', 'username')
+        .populate('user')
+        .populate('withdrawalMethod')
+        .populate('currency')
     } catch (err: any) {
       throw new ServiceError(
         err,

@@ -14,7 +14,7 @@ import schemaValidator from '@/helpers/schemaValidator'
 
 @Service()
 class PlanController implements IController {
-  public path = '/plans'
+  public path = '/plan'
   public router = Router()
 
   constructor(
@@ -25,43 +25,43 @@ class PlanController implements IController {
   }
 
   private intialiseRoutes(): void {
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false)
+    )
+
     this.router.post(
-      `${this.path}/create`,
+      `/master${this.path}/create`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.create),
       this.create
     )
 
     this.router.put(
-      `${this.path}/update/:planId`,
+      `/master${this.path}/update/:planId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.update),
       this.update
     )
 
     this.router.patch(
-      `${this.path}/update-status/:planId`,
+      `/master${this.path}/update-status/:planId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updateStatus),
       this.updateStatus
     )
 
     this.router.delete(
-      `${this.path}/delete/:planId`,
+      `/master${this.path}/delete/:planId`,
       routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
-      `${this.path}/master`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true)
-    )
-
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false)
     )
   }
 

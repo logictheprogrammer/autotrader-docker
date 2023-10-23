@@ -22,34 +22,34 @@ class TradeController implements IController {
   }
 
   private intialiseRoutes(): void {
-    this.router.delete(
-      `${this.path}/delete/:tradeId`,
-      routePermission(UserRole.ADMIN),
-      this.delete
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false, UserEnvironment.LIVE)
     )
 
     this.router.get(
-      `${this.path}/master/demo`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO)
-    )
-
-    this.router.get(
-      `${this.path}/demo`,
+      `/demo${this.path}`,
       routePermission(UserRole.USER),
       this.fetchAll(false, UserEnvironment.DEMO)
     )
 
     this.router.get(
-      `${this.path}/master`,
+      `/master/demo${this.path}`,
       routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.LIVE)
+      this.fetchAll(true, UserEnvironment.DEMO)
+    )
+
+    this.router.delete(
+      `/master${this.path}/delete/:tradeId`,
+      routePermission(UserRole.ADMIN),
+      this.delete
     )
 
     this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.LIVE)
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      this.fetchAll(true, UserEnvironment.LIVE)
     )
   }
 
@@ -73,7 +73,7 @@ class TradeController implements IController {
 
   private delete = asyncHandler(async (req, res): Promise<Response | void> => {
     const tradeId = req.params.tradeId as unknown as ObjectId
-    const trade = await this.tradeService.delete(tradeId)
+    const trade = await this.tradeService.delete({ _id: tradeId })
     return new SuccessResponse('Trade deleted successfully', { trade }).send(
       res
     )

@@ -9,7 +9,6 @@ import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
 import { IController } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
-import { ObjectId } from 'mongoose'
 
 @Service()
 class AssetController implements IController {
@@ -25,21 +24,21 @@ class AssetController implements IController {
 
   private intialiseRoutes(): void {
     this.router.post(
-      `${this.path}/create`,
+      `/master${this.path}/create`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.create),
       this.create
     )
 
     this.router.put(
-      `${this.path}/update/:assetId`,
+      `/master${this.path}/update/:assetId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.update),
       this.update
     )
 
     this.router.get(
-      `${this.path}`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll
     )

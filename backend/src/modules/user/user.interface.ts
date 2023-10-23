@@ -53,8 +53,6 @@ export interface IUserService {
     amount: number
   ): Promise<IUserObject>
 
-  getReferredUsers(filter: FilterQuery<IUser>): Promise<IUserObject[]>
-
   sendEmail(
     filter: FilterQuery<IUser>,
     subject: string,

@@ -24,62 +24,62 @@ class InvestmentController implements IController {
   }
 
   private intialiseRoutes(): void {
+    this.router.get(
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false, UserEnvironment.LIVE)
+    )
+
     this.router.post(
-      `${this.path}/create/:planId`,
+      `${this.path}/create`,
       routePermission(UserRole.USER),
       schemaValidator(validate.create),
       this.create(UserEnvironment.LIVE)
     )
 
+    this.router.get(
+      `/demo${this.path}`,
+      routePermission(UserRole.USER),
+      this.fetchAll(false, UserEnvironment.DEMO)
+    )
+
     this.router.post(
-      `${this.path}/demo/create/:planId`,
+      `/demo${this.path}/create`,
       routePermission(UserRole.USER),
       schemaValidator(validate.createDemo),
       this.create(UserEnvironment.DEMO)
     )
 
     this.router.patch(
-      `${this.path}/fund/:investmentId`,
+      `/master${this.path}/fund/:investmentId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.fund),
       this.fund
     )
 
     this.router.patch(
-      `${this.path}/update-status/:investmentId`,
+      `/master${this.path}/update-status/:investmentId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updateStatus),
       this.updateStatus
     )
 
     this.router.delete(
-      `${this.path}/delete/:investmentId`,
+      `/master${this.path}/delete/:investmentId`,
       routePermission(UserRole.ADMIN),
       this.delete
     )
 
     this.router.get(
-      `${this.path}/master/demo`,
+      `/master/demo${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.DEMO)
     )
 
     this.router.get(
-      `${this.path}/master`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll(true, UserEnvironment.LIVE)
-    )
-
-    this.router.get(
-      `${this.path}/demo`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.DEMO)
-    )
-
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.LIVE)
     )
   }
 
@@ -103,8 +103,7 @@ class InvestmentController implements IController {
 
   private create = (environment: UserEnvironment) =>
     asyncHandler(async (req, res): Promise<Response | void> => {
-      const { amount, account } = req.body
-      const { planId } = req.params
+      const { amount, account, planId } = req.body
       const userId = req.user._id
       const investment = await this.investmentService.create(
         planId as unknown as ObjectId,

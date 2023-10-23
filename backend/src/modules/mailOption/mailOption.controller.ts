@@ -24,14 +24,14 @@ export default class MailOptionController implements IController {
 
   private initialiseRoutes = (): void => {
     this.router.post(
-      `${this.path}/create`,
+      `/master${this.path}/create`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.create),
       this.create
     )
 
     this.router.get(
-      `${this.path}`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll
     )
