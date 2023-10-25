@@ -2,10 +2,10 @@ import { WithdrawalMethodStatus } from '@/modules/withdrawalMethod/withdrawalMet
 import { ObjectId, FilterQuery } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
-import { ICurrencyObject } from '../currency/currency.interface'
+import { ICurrency, ICurrencyObject } from '../currency/currency.interface'
 
 export interface IWithdrawalMethodObject extends baseObjectInterface {
-  currency: ICurrencyObject
+  currency: ICurrency['_id']
   network: string
   status: WithdrawalMethodStatus
   fee: number

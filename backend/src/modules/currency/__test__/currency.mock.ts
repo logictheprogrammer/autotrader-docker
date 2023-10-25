@@ -1,5 +1,5 @@
+import { NotFoundError } from './../../../core/apiError'
 import CurrencyService from '../../../modules/currency/currency.service'
-import HttpException from '../../http/http.exception'
 import {
   currencyA,
   currencyA_id,
@@ -9,15 +9,14 @@ import {
   currencyC_id,
 } from './currency.payload'
 
-export const getCurrencyMock = jest
-  .spyOn(CurrencyService.prototype, 'get')
+export const fetchCurrencyMock = jest
+  .spyOn(CurrencyService.prototype, 'fetch')
   // @ts-ignore
-  .mockImplementation((key) => {
+  .mockImplementation(({ _id: key }) => {
     if (key.toString() === currencyA_id.toString()) {
       return Promise.resolve({
         ...currencyA,
         _id: currencyA_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
@@ -25,7 +24,6 @@ export const getCurrencyMock = jest
       return Promise.resolve({
         ...currencyB,
         _id: currencyB_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
@@ -33,11 +31,10 @@ export const getCurrencyMock = jest
       return Promise.resolve({
         ...currencyC,
         _id: currencyC_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
     } else {
-      return Promise.reject(new HttpException(404, 'Currency not found'))
+      return Promise.reject(new NotFoundError('Currency not found'))
     }
   })

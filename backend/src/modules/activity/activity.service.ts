@@ -32,7 +32,7 @@ class ActivityService implements IActivityService {
         forWho,
       })
 
-      return activity
+      return activity.populate('user')
     } catch (err: any) {
       throw new ServiceError(
         err,

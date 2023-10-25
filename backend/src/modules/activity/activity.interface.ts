@@ -9,7 +9,7 @@ import baseModelInterface from '@/core/baseModelInterface'
 import baseObjectInterface from '@/core/baseObjectInterface'
 
 export interface IActivityObject extends baseObjectInterface {
-  user: IUser
+  user: IUser['_id']
   category: ActivityCategory
   message: string
   status: ActivityStatus

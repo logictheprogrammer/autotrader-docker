@@ -208,15 +208,19 @@ class PlanService implements IPlanService {
   }
 
   public async fetch(filter: FilterQuery<IPlan>): Promise<IPlanObject> {
-    const plan = await this.planModel
-      .findOne(filter)
-      .populate('assets')
-      .populate('investors')
-      .populate('currentForecast')
+    try {
+      const plan = await this.planModel
+        .findOne(filter)
+        .populate('assets')
+        .populate('investors')
+        .populate('currentForecast')
 
-    if (!plan) throw new NotFoundError('Plan not found')
+      if (!plan) throw new NotFoundError('Plan not found')
 
-    return plan.toObject({ getters: true })
+      return plan
+    } catch (error) {
+      throw new ServiceError(error, 'Unable to fetch plan, please try again')
+    }
   }
 
   public async delete(filter: FilterQuery<IPlan>): Promise<IPlanObject> {

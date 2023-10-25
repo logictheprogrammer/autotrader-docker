@@ -93,7 +93,7 @@ class TradeService implements ITradeService {
       user
     )
 
-    return trade
+    return (await trade.populate('user')).populate('investment')
   }
 
   public async update(
@@ -131,17 +131,20 @@ class TradeService implements ITradeService {
 
     await this.investmentService.updateTradeDetails(trade.investment._id, trade)
 
-    return trade
+    return (await trade.populate('user')).populate('investment')
   }
 
   public async updateStatus(
     investment: IInvestmentObject,
     forecast: IForecastObject
   ): Promise<ITradeObject> {
-    const trade = await this.tradeModel.findOne({
-      investment: investment._id,
-      forecast: forecast._id,
-    })
+    const trade = await this.tradeModel
+      .findOne({
+        investment: investment._id,
+        forecast: forecast._id,
+      })
+      .populate('user')
+      .populate('investment')
 
     if (!trade)
       throw new NotFoundError(
@@ -227,8 +230,8 @@ class TradeService implements ITradeService {
     try {
       return await this.tradeModel
         .find(filter)
-        .populate('investment', 'name icon')
-        .populate('user', 'username ')
+        .populate('user')
+        .populate('investment')
     } catch (err: any) {
       throw new ServiceError(
         err,

@@ -1,5 +1,5 @@
 import { ReferralTypes } from '@/modules/referral/referral.enum'
-import { IUserObject } from '@/modules/user/user.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
@@ -7,8 +7,8 @@ import baseModelInterface from '@/core/baseModelInterface'
 export interface IReferralObject extends baseObjectInterface {
   rate: number
   type: ReferralTypes
-  referrer: IUserObject
-  user: IUserObject
+  referrer: IUser['_id']
+  user: IUser['_id']
   amount: number
 }
 
@@ -16,28 +16,22 @@ export interface IReferralObject extends baseObjectInterface {
 export interface IReferral extends baseModelInterface, IReferralObject {}
 
 export interface IReferralEarnings {
-  user: {
-    username: string
-    _id: ObjectId
-    createdAt: Date
-  }
-  referrer: {
-    username: string
-    _id: ObjectId
-  }
+  user: IUserObject
+  referrer: IUserObject
   earnings: number
 }
 
 export interface IReferralLeaderboard {
-  user: {
-    username: string
-    _id: ObjectId
-    createdAt: Date
-  }
+  user: IUserObject
   earnings: number
 }
 
 export interface IReferralService {
+  _calcAmountEarn(
+    type: ReferralTypes,
+    amount: number
+  ): Promise<{ earn: number; rate: number }>
+
   create(
     type: ReferralTypes,
     user: IUserObject,

@@ -9,39 +9,18 @@ import {
   tradeModelReturn,
 } from './trade.payload'
 
-export const createTransactionTradeMock = jest
-  .spyOn(TradeService.prototype, '_createTransaction')
-  .mockResolvedValue({
-    object: tradeAObj,
-    instance: {
-      model: tradeModelReturn,
-      onFailed: 'delete trade',
-      async callback() {},
-    },
-  })
+export const createTradeMock = jest
+  .spyOn(TradeService.prototype, 'create')
+  .mockResolvedValue(tradeAObj)
 
-export const updateStatusTransactionTradeMock = jest
-  .spyOn(TradeService.prototype, '_updateStatusTransaction')
-  .mockImplementation((tradeId) => {
-    if (tradeId.toString() === tradeA_id) {
-      return Promise.resolve({
-        object: tradeAObj,
-        instance: {
-          model: tradeModelReturn,
-          onFailed: 'change trade status to old status',
-          async callback() {},
-        },
-      })
-    }
-    if (tradeId.toString() === tradeB_id) {
-      return Promise.resolve({
-        object: tradeBObj,
-        instance: {
-          model: tradeModelReturn,
-          onFailed: 'change trade status to old status',
-          async callback() {},
-        },
-      })
-    }
-    return Promise.reject('Mock: unknown trade status')
-  })
+// export const updateStatusTradeMock = jest
+//   .spyOn(TradeService.prototype, 'updateStatus')
+//   .mockImplementation(({ _id: tradeId }) => {
+//     if (tradeId.toString() === tradeA_id) {
+//       return Promise.resolve(tradeAObj)
+//     }
+//     if (tradeId.toString() === tradeB_id) {
+//       return Promise.resolve(tradeBObj)
+//     }
+//     return Promise.reject('Mock: unknown trade Id')
+//   })

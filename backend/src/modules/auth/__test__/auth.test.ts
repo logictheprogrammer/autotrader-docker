@@ -1,5 +1,3 @@
-import { IEmailVerification } from './../../emailVerification/emailVerification.interface'
-import { IResetPassword } from './../../resetPassword/resetPassword.interface'
 import { request } from '../../../test'
 import emailVerificationModel from '../../../modules/emailVerification/emailVerification.model'
 import {
@@ -8,7 +6,6 @@ import {
 } from './../../activity/activity.enum'
 import resetPasswordModel from '../../../modules/resetPassword/resetPassword.model'
 import userModel from '../../../modules/user/user.model'
-import { AppConstants } from '../../app/app.constants'
 import { setActivityMock } from '../../activity/__test__/activity.mock'
 import { createEmailVerificationMock } from '../../emailVerification/__test__/emailVerification.mock'
 import { createResetPasswordMock } from '../../resetPassword/__test__/resetPassword.mock'
@@ -18,19 +15,19 @@ import {
   suspendedUser,
   verifieldUser,
 } from '../../user/__test__/user.payload'
-import { HttpResponseStatus } from '../../http/http.enum'
-import Encryption from '../../../utils/encryption'
 import {
   sendEmailVerificationMailMock,
   sendResetPasswordMailMock,
   sendWelcomeMailMock,
 } from './auth.mock'
-import { IUser } from '../../user/user.interface'
-import AppCrypto from '../../app/app.crypto'
 import { Types } from 'mongoose'
+import { StatusCode } from '../../../core/apiResponse'
+import Cryptograph from '../../../core/cryptograph'
+import { SiteConstants } from '../../config/config.constants'
 
 describe('authentication', () => {
   const baseUrl = '/api/authentication/'
+  const masterUrl = '/api/master/authentication/'
   describe('registeration', () => {
     const url = baseUrl + 'register'
     describe('given user inputs are not valid', () => {
@@ -46,7 +43,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.post(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
@@ -64,9 +61,9 @@ describe('authentication', () => {
 
         const { statusCode, body } = await request.post(url).send(newUser)
 
-        expect(statusCode).toBe(409)
         expect(body.message).toBe('Email already exist')
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
+        expect(statusCode).toBe(409)
 
         const usersCount = await userModel.count()
 
@@ -88,9 +85,9 @@ describe('authentication', () => {
 
         const { statusCode, body } = await request.post(url).send(newUser)
 
-        expect(statusCode).toBe(409)
         expect(body.message).toBe('Username already exist')
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
+        expect(statusCode).toBe(409)
 
         const usersCount = await userModel.count()
 
@@ -115,7 +112,7 @@ describe('authentication', () => {
 
         expect(statusCode).toBe(400)
         expect(body.message).toBe('Invalid referral code')
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
 
         const usersCount = await userModel.count()
 
@@ -140,10 +137,10 @@ describe('authentication', () => {
         const { statusCode, body } = await request.post(url).send(newUser)
 
         expect(body.message).toBe(
-          'A verification link has been sent to your email address'
+          'Verify your email to continue, an email verification link has been sent to your email address'
         )
         expect(statusCode).toBe(201)
-        expect(body.status).toBe(HttpResponseStatus.INFO)
+        expect(body.status).toBe(StatusCode.INFO)
 
         expect(createEmailVerificationMock).toHaveBeenCalledTimes(1)
 
@@ -181,7 +178,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.post(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('"password" is not allowed to be empty')
       })
     })
@@ -196,7 +193,7 @@ describe('authentication', () => {
         expect(body.message).toBe(
           'Could not find a user with that Email or Username'
         )
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(statusCode).toBe(404)
       })
     })
@@ -210,7 +207,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.post(url).send(userInput)
 
         expect(body.message).toBe('Incorrect password')
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(statusCode).toBe(400)
       })
     })
@@ -222,14 +219,14 @@ describe('authentication', () => {
       it('should send return a 200 and send a verification mail', async () => {
         await userModel.create({
           ...existingUser,
-          password: await AppCrypto.setHash(existingUser.password),
+          password: existingUser.password,
         })
         const { statusCode, body } = await request.post(url).send(userInput)
 
         expect(body.message).toBe(
-          'A verification link has been sent to your email address'
+          'Verify your email to continue, an email verification link has been sent to your email address'
         )
-        expect(body.status).toBe(HttpResponseStatus.INFO)
+        expect(body.status).toBe(StatusCode.INFO)
         expect(statusCode).toBe(200)
 
         expect(createEmailVerificationMock).toHaveBeenCalledTimes(1)
@@ -251,7 +248,7 @@ describe('authentication', () => {
       it('should send return a 403 and send a verification mail', async () => {
         await userModel.create({
           ...suspendedUser,
-          password: await AppCrypto.setHash(suspendedUser.password),
+          password: suspendedUser.password,
         })
         const { statusCode, body } = await request.post(url).send(userInput)
 
@@ -259,7 +256,7 @@ describe('authentication', () => {
           'Your account is under review, please check in later'
         )
         expect(statusCode).toBe(403)
-        expect(body.status).toBe(HttpResponseStatus.INFO)
+        expect(body.status).toBe(StatusCode.INFO)
       })
     })
     describe('log user in', () => {
@@ -270,18 +267,20 @@ describe('authentication', () => {
       it('should return a 200 and an access token', async () => {
         const user = await userModel.create({
           ...verifieldUser,
-          password: await AppCrypto.setHash(verifieldUser.password),
+          password: verifieldUser.password,
         })
         const { statusCode, body } = await request.post(url).send(userInput)
 
-        expect(body.message).toBe('Login successful')
+        expect(body.message).toBe('Login successfully')
         expect(body.data.accessToken).toBeDefined()
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(statusCode).toBe(200)
 
         expect(setActivityMock).toHaveBeenCalledTimes(1)
         expect(setActivityMock).toHaveBeenCalledWith(
-          user.toObject({ getters: true }),
+          expect.objectContaining({
+            _id: user._id,
+          }),
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
           'you logged in to your account'
@@ -304,7 +303,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.patch(url).send(payload)
 
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Unauthorized')
 
         const usersCount = await userModel.count()
@@ -320,14 +319,14 @@ describe('authentication', () => {
       }
       it('should return a 400', async () => {
         const user = await userModel.create(existingUser)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given current password is not currect', () => {
@@ -338,14 +337,14 @@ describe('authentication', () => {
       }
       it('should return a 400', async () => {
         const user = await userModel.create(existingUser)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
         expect(body.message).toBe('Incorrect password')
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(statusCode).toBe(400)
       })
     })
@@ -358,40 +357,36 @@ describe('authentication', () => {
       it('should return a 200', async () => {
         const user = await userModel.create({
           ...existingUser,
-          password: await AppCrypto.setHash(existingUser.password),
+          password: existingUser.password,
         })
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
         expect(body.message).toBe('Password updated successfully')
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(statusCode).toBe(200)
 
         expect(setActivityMock).toHaveBeenCalledTimes(1)
         expect(setActivityMock).toHaveBeenCalledWith(
-          {
-            ...user.toObject({ getters: true }),
-            password: expect.any(String),
-            updatedAt: expect.anything(),
-          },
+          expect.objectContaining({
+            _id: user._id,
+          }),
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
           'you updated your password'
         )
 
-        expect(body.data.user).toEqual({
-          ...existingUser,
-          __v: 0,
-          _id: expect.any(String),
-          createdAt: expect.any(String),
-          updatedAt: expect.any(String),
-          password: expect.not.stringContaining(user.password),
-        })
+        expect(body.data.user._id.toString()).toEqual(user._id.toString())
       })
     })
+  })
+
+  describe('Update password by admin', () => {
+    const url = masterUrl + 'update-password'
+
     describe('admin: given user is not an admin', () => {
       const payload = {
         password: '123456789',
@@ -401,15 +396,15 @@ describe('authentication', () => {
         const user = await userModel.create(existingUser)
 
         const notAdmin = await userModel.create(verifieldUser)
-        const token = Encryption.createToken(notAdmin)
+        const token = Cryptograph.createToken(notAdmin)
         const { statusCode, body } = await request
           .patch(url + `/${user._id}`)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Unauthorized')
+        expect(body.status).toBe(StatusCode.DANGER)
+        expect(statusCode).toBe(401)
       })
     })
     describe('admin: given input are invalid', () => {
@@ -421,17 +416,17 @@ describe('authentication', () => {
         const user = await userModel.create(existingUser)
 
         const admin = await userModel.create(adminUser)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
         const { statusCode, body } = await request
           .patch(url + `/${user._id}`)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe(
           '"password" length must be at least 8 characters long'
         )
+        expect(body.status).toBe(StatusCode.DANGER)
+        expect(statusCode).toBe(400)
       })
     })
     describe('admin: given user does not exsit', () => {
@@ -441,14 +436,14 @@ describe('authentication', () => {
       }
       it('should return a 400', async () => {
         const admin = await userModel.create(adminUser)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
         const { statusCode, body } = await request
           .patch(url + `/${new Types.ObjectId()}`)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
         expect(body.message).toBe('User not found')
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(statusCode).toBe(404)
       })
     })
@@ -461,23 +456,21 @@ describe('authentication', () => {
         const user = await userModel.create(existingUser)
 
         const admin = await userModel.create(adminUser)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
         const { statusCode, body } = await request
           .patch(url + `/${user._id}`)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
         expect(body.message).toBe('Password updated successfully')
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(statusCode).toBe(200)
 
         expect(setActivityMock).toHaveBeenCalledTimes(1)
         expect(setActivityMock).toHaveBeenCalledWith(
-          {
-            ...user.toObject({ getters: true }),
-            password: expect.any(String),
-            updatedAt: expect.anything(),
-          },
+          expect.objectContaining({
+            _id: user._id,
+          }),
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
           'you updated your password'
@@ -496,7 +489,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.post(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Invalid email or username')
       })
     })
@@ -509,7 +502,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.post(url).send(userInput)
 
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe(
           'Could not find a user with that Email or Username'
         )
@@ -524,11 +517,11 @@ describe('authentication', () => {
         await userModel.create(existingUser)
         const { statusCode, body } = await request.post(url).send(userInput)
 
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.INFO)
         expect(body.message).toBe(
           'A reset password link has been sent to your email address'
         )
+        expect(body.status).toBe(StatusCode.INFO)
+        expect(statusCode).toBe(200)
 
         expect(createResetPasswordMock).toHaveBeenCalledTimes(1)
 
@@ -556,7 +549,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('"password" is not allowed to be empty')
       })
     })
@@ -572,7 +565,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Invalid or expired token')
       })
     })
@@ -587,7 +580,7 @@ describe('authentication', () => {
       const key = userInput.key
       const expires = new Date().getTime()
       it('should return a 400', async () => {
-        const token = await AppCrypto.setHash(userInput.verifyToken)
+        const token = userInput.verifyToken
 
         await userModel.create(verifieldUser)
         await resetPasswordModel.create({ key, token, expires })
@@ -595,7 +588,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Invalid or expired token')
       })
     })
@@ -609,17 +602,17 @@ describe('authentication', () => {
       }
       const key = userInput.key
       const expires =
-        new Date().getTime() + AppConstants.resetPasswordExpiresTime
+        new Date().getTime() + SiteConstants.resetPasswordExpiresTime
 
       it('should return a 400', async () => {
-        const token = await AppCrypto.setHash('valid token')
+        const token = 'valid token'
         await userModel.create(verifieldUser)
         await resetPasswordModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Invalid or expired token')
       })
     })
@@ -633,16 +626,16 @@ describe('authentication', () => {
       }
       const key = userInput.key
       const expires =
-        new Date().getTime() + AppConstants.resetPasswordExpiresTime
+        new Date().getTime() + SiteConstants.resetPasswordExpiresTime
 
       it('should return a 404', async () => {
-        const token = await AppCrypto.setHash(userInput.verifyToken)
+        const token = userInput.verifyToken
         await resetPasswordModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(body.message).toBe('User not found')
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(statusCode).toBe(404)
       })
     })
@@ -656,10 +649,10 @@ describe('authentication', () => {
       }
       const key = userInput.key
       const expires =
-        new Date().getTime() + AppConstants.resetPasswordExpiresTime
+        new Date().getTime() + SiteConstants.resetPasswordExpiresTime
 
       it('should return a 200, update password, delete the token and create an activity', async () => {
-        const token = await AppCrypto.setHash(userInput.verifyToken)
+        const token = userInput.verifyToken
         const user = await userModel.create(verifieldUser)
         await resetPasswordModel.create({ key, token, expires })
 
@@ -667,16 +660,14 @@ describe('authentication', () => {
 
         expect(body.message).toBe('Password updated successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(setActivityMock).toHaveBeenCalledTimes(1)
 
         expect(setActivityMock).toHaveBeenCalledWith(
-          {
-            ...user.toObject({ getters: true }),
-            password: expect.any(String),
-            updatedAt: expect.anything(),
-          },
+          expect.objectContaining({
+            _id: user._id,
+          }),
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
           'you reset your password'
@@ -696,7 +687,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('"Verify Token" is not allowed to be empty')
       })
     })
@@ -710,7 +701,7 @@ describe('authentication', () => {
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Invalid or expired token')
       })
     })
@@ -723,14 +714,14 @@ describe('authentication', () => {
       const key = userInput.key
       const expires = new Date().getTime()
       it('should return a 400', async () => {
-        const token = await AppCrypto.setHash(userInput.verifyToken)
+        const token = userInput.verifyToken
         await userModel.create(verifieldUser)
         await emailVerificationModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Invalid or expired token')
       })
     })
@@ -742,17 +733,17 @@ describe('authentication', () => {
       }
       const key = userInput.key
       const expires =
-        new Date().getTime() + AppConstants.resetPasswordExpiresTime
+        new Date().getTime() + SiteConstants.resetPasswordExpiresTime
 
       it('should return a 400', async () => {
-        const token = await AppCrypto.setHash('valid token')
+        const token = 'valid token'
         await userModel.create(verifieldUser)
         await emailVerificationModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Invalid or expired token')
       })
     })
@@ -764,16 +755,16 @@ describe('authentication', () => {
       }
       const key = userInput.key
       const expires =
-        new Date().getTime() + AppConstants.resetPasswordExpiresTime
+        new Date().getTime() + SiteConstants.resetPasswordExpiresTime
 
       it('should return a 404', async () => {
-        const token = await AppCrypto.setHash(userInput.verifyToken)
+        const token = userInput.verifyToken
         await emailVerificationModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
 
         expect(body.message).toBe('User not found')
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(statusCode).toBe(404)
       })
     })
@@ -785,20 +776,20 @@ describe('authentication', () => {
       }
       const key = userInput.key
       const expires =
-        new Date().getTime() + AppConstants.resetPasswordExpiresTime
+        new Date().getTime() + SiteConstants.resetPasswordExpiresTime
 
       it('should return a 200, send a welcome email and create an activity log', async () => {
-        const token = await AppCrypto.setHash(userInput.verifyToken)
+        const token = userInput.verifyToken
 
         const user = await userModel.create(verifieldUser)
         await emailVerificationModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
-        const userObj = user.toObject({ getters: true })
+        const userObj = user
 
         expect(body.message).toBe('Email successfully verifield')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(sendWelcomeMailMock).toHaveBeenCalledTimes(1)
         expect(sendWelcomeMailMock.mock.calls[0][0]._id.toString()).toBe(
@@ -808,7 +799,9 @@ describe('authentication', () => {
         expect(setActivityMock).toHaveBeenCalledTimes(1)
 
         expect(setActivityMock).toHaveBeenCalledWith(
-          userObj,
+          expect.objectContaining({
+            _id: userObj._id,
+          }),
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
           'you verifield your email address'

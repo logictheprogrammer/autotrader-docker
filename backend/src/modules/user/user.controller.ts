@@ -40,7 +40,7 @@ class UserController implements IController {
 
     // Get Users
     this.router.get(
-      `${this.path}`,
+      `/master${this.path}`,
       routePermission(UserRole.ADMIN),
       this.fetchAll
     )

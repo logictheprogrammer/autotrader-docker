@@ -1,16 +1,19 @@
 import { WithdrawalStatus } from '@/modules/withdrawal/withdrawal.enum'
-import { IWithdrawalMethodObject } from '@/modules/withdrawalMethod/withdrawalMethod.interface'
-import { IUserObject } from '@/modules/user/user.interface'
+import {
+  IWithdrawalMethod,
+  IWithdrawalMethodObject,
+} from '@/modules/withdrawalMethod/withdrawalMethod.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { UserAccount } from '@/modules/user/user.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
-import { ICurrencyObject } from '../currency/currency.interface'
+import { ICurrency, ICurrencyObject } from '../currency/currency.interface'
 
 export interface IWithdrawalObject extends baseObjectInterface {
-  withdrawalMethod: IWithdrawalMethodObject
-  currency: ICurrencyObject
-  user: IUserObject
+  withdrawalMethod: IWithdrawalMethod['_id']
+  currency: ICurrency['_id']
+  user: IUser['_id']
   account: UserAccount
   address: string
   status: WithdrawalStatus

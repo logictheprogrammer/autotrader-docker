@@ -5,12 +5,6 @@ import { userA, userA_id } from '../../user/__test__/user.payload'
 import { UserEnvironment } from '../../user/user.enum'
 import { TransactionCategory } from '../transaction.enum'
 
-// @ts-ignore
-export const transactionModelReturn: ITransaction = {
-  save: jest.fn(),
-  _id: 'transaction id',
-}
-
 export const transactionA_id = '3145de5d5b1f5b3a5c1b539a'
 
 export const transactionA = {

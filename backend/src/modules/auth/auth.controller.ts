@@ -139,7 +139,6 @@ class AuthController implements IController {
       let user
       const { password } = req.body
       if (byAdmin) {
-        console.log(req.params.userId)
         user = await this.authService.updatePassword(
           { _id: req.params.userId },
           password
@@ -165,7 +164,9 @@ class AuthController implements IController {
       })
       return new SuccessResponse(
         'A reset password link has been sent to your email address',
-        { response }
+        { response },
+        undefined,
+        StatusCode.INFO
       ).send(res)
     }
   )

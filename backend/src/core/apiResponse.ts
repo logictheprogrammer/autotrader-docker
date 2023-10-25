@@ -32,7 +32,7 @@ abstract class ApiResponse {
   public send(res: Response) {
     return res.status(this.status).json({
       status: this.statusCode,
-      messsage: this.message,
+      message: this.message,
       description: this.description,
       data: this.data,
       errors: this.errors,

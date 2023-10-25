@@ -33,18 +33,18 @@ class ActivityController implements IController {
       this.fetchAll(UserRole.USER)
     )
 
-    // Hide Activity
-    this.router.patch(
-      `${this.path}/hide/:activityId`,
-      routePermission(UserRole.USER),
-      this.hide
-    )
-
     // Hide All Activity
     this.router.patch(
       `${this.path}/hide/all`,
       routePermission(UserRole.USER),
       this.hideAll
+    )
+
+    // Hide Activity
+    this.router.patch(
+      `${this.path}/hide/:activityId`,
+      routePermission(UserRole.USER),
+      this.hide
     )
 
     // Get All Users Activity logs
@@ -161,6 +161,7 @@ class ActivityController implements IController {
     await this.activityService.hideAll({
       user: userId,
       forWho: ActivityForWho.USER,
+      status: ActivityStatus.VISIBLE,
     })
     return new SuccessResponse('Activities deleted successfully').send(res)
   })
@@ -173,7 +174,7 @@ class ActivityController implements IController {
         activity = await this.activityService.delete({
           user: req.user._id,
           _id: activityId,
-          forWho: ActivityForWho.USER,
+          forWho,
         })
       } else {
         activity = await this.activityService.delete({

@@ -1,11 +1,5 @@
-import transactionModel from '../../../modules/transaction/transaction.model'
-import { ITransaction } from '../transaction.interface'
 import TransactionService from '../transaction.service'
-import {
-  transactionA,
-  transactionA_id,
-  transactionModelReturn,
-} from './transaction.payload'
+import { transactionA, transactionA_id } from './transaction.payload'
 
 // @ts-ignore
 const transactionObj: INotificationObj = {
@@ -15,34 +9,13 @@ const transactionObj: INotificationObj = {
 }
 
 export const createTransactionTransactionMock = jest
-  .spyOn(TransactionService.prototype, '_createTransaction')
-  .mockResolvedValue({
-    object: transactionObj,
-    instance: {
-      model: transactionModelReturn,
-      onFailed: 'delete transaction',
-      async callback() {},
-    },
-  })
+  .spyOn(TransactionService.prototype, 'create')
+  .mockResolvedValue(transactionObj)
 
 export const updateStatusTransactionTransactionMock = jest
-  .spyOn(TransactionService.prototype, '_updateStatusTransaction')
-  .mockResolvedValue({
-    object: transactionObj,
-    instance: {
-      model: transactionModelReturn,
-      onFailed: 'change transaction status to old status',
-      async callback() {},
-    },
-  })
+  .spyOn(TransactionService.prototype, 'updateStatus')
+  .mockResolvedValue(transactionObj)
 
 export const updateAmountTransactionTransactionMock = jest
-  .spyOn(TransactionService.prototype, '_updateAmountTransaction')
-  .mockResolvedValue({
-    object: transactionObj,
-    instance: {
-      model: transactionModelReturn,
-      onFailed: 'change transaction amount to old amount',
-      async callback() {},
-    },
-  })
+  .spyOn(TransactionService.prototype, 'updateAmount')
+  .mockResolvedValue(transactionObj)

@@ -8,15 +8,14 @@ import {
   planC_id,
 } from './plan.payload'
 
-export const getPlanMock = jest
-  .spyOn(PlanService.prototype, 'get')
+export const fetchPlanMock = jest
+  .spyOn(PlanService.prototype, 'fetch')
   // @ts-ignore
-  .mockImplementation((key) => {
+  .mockImplementation(({ _id: key }) => {
     if (key.toString() === planA_id.toString()) {
       return Promise.resolve({
         ...planA,
         _id: planA_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
@@ -24,7 +23,6 @@ export const getPlanMock = jest
       return Promise.resolve({
         ...planB,
         _id: planB_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
@@ -32,11 +30,10 @@ export const getPlanMock = jest
       return Promise.resolve({
         ...planC,
         _id: planC_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
     } else {
-      return Promise.resolve(null)
+      return Promise.reject('Mock: plan id not handled')
     }
   })

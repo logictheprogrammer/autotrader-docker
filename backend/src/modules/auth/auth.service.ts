@@ -18,6 +18,7 @@ import {
   BadRequestError,
   ForbiddenError,
   NotFoundError,
+  RequestConflictError,
   ServiceError,
 } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
@@ -88,11 +89,12 @@ class AuthService implements IAuthService {
 
       const emailExist = await this.userModel.findOne({ email })
 
-      if (emailExist) throw new BadRequestError('Email already exist')
+      if (emailExist) throw new RequestConflictError('Email already exist')
 
       const usernameExist = await this.userModel.findOne({ username })
 
-      if (usernameExist) throw new BadRequestError('Username already exist')
+      if (usernameExist)
+        throw new RequestConflictError('Username already exist')
 
       const key = Cryptograph.randomBytes(16).toString('hex')
 

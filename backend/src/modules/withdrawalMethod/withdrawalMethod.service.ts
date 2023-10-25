@@ -107,13 +107,20 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   public async fetch(
     filter: FilterQuery<IWithdrawalMethod>
   ): Promise<IWithdrawalMethodObject> {
-    const withdrawalMethod = await this.withdrawalMethodModel
-      .findOne(filter)
-      .populate('currency')
-    if (!withdrawalMethod)
-      throw new NotFoundError('Withdrawal method not found')
+    try {
+      const withdrawalMethod = await this.withdrawalMethodModel
+        .findOne(filter)
+        .populate('currency')
+      if (!withdrawalMethod)
+        throw new NotFoundError('Withdrawal method not found')
 
-    return withdrawalMethod
+      return withdrawalMethod
+    } catch (error) {
+      throw new ServiceError(
+        error,
+        'Unable to fetch withdrawal method, please try again'
+      )
+    }
   }
 
   public async delete(

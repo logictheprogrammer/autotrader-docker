@@ -1,4 +1,4 @@
-import HttpException from '../../../modules/http/http.exception'
+import { NotFoundError } from '../../../core/apiError'
 import UserService from '../../../modules/user/user.service'
 import { IUser } from '../user.interface'
 import userModel from '../user.model'
@@ -9,41 +9,25 @@ import {
   userA_id,
   userBObj,
   userB_id,
-  userModelReturn,
 } from './user.payload'
 
-export const fundTransactionUserMock = jest
-  .spyOn(UserService.prototype, '_fundTransaction')
-  .mockImplementation((userId) => {
+export const fundUserMock = jest
+  .spyOn(UserService.prototype, 'fund')
+  .mockImplementation(({ _id: userId, username }) => {
     if (
       userId.toString() === userA_id.toString() ||
-      userId === userAObj.username
+      username === userAObj.username
     ) {
-      return Promise.resolve({
-        object: userAObj,
-        instance: {
-          model: userModelReturn,
-          onFailed: 'return deposit',
-          async callback() {},
-        },
-      })
+      return Promise.resolve(userAObj)
     }
     if (
       userId.toString() === userB_id.toString() ||
-      userId === userBObj.username
+      username === userBObj.username
     ) {
-      return Promise.resolve({
-        object: userBObj,
-        instance: {
-          model: userModelReturn,
-          onFailed: 'return deposit',
-          async callback() {},
-        },
-      })
+      return Promise.resolve(userBObj)
     }
-    if (userId === notFoundUser.username) {
-      throw new HttpException(
-        404,
+    if (username === notFoundUser.username) {
+      throw new NotFoundError(
         `No Recipient with the username of ${notFoundUser.username} was found`
       )
     }

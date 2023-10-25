@@ -1,4 +1,3 @@
-import HttpException from '../../../modules/http/http.exception'
 import WithdrawalMethodService from '../../../modules/withdrawalMethod/withdrawalMethod.service'
 import {
   withdrawalMethodA,
@@ -9,15 +8,14 @@ import {
   withdrawalMethodC_id,
 } from './withdrawalMethod.payload'
 
-export const getWithdrawalMethodMock = jest
-  .spyOn(WithdrawalMethodService.prototype, 'get')
+export const fetchWithdrawalMethodMock = jest
+  .spyOn(WithdrawalMethodService.prototype, 'fetch')
   // @ts-ignore
-  .mockImplementation((key) => {
+  .mockImplementation(({ _id: key }) => {
     if (key.toString() === withdrawalMethodA_id.toString()) {
       return Promise.resolve({
         ...withdrawalMethodA,
         _id: withdrawalMethodA_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
@@ -25,7 +23,6 @@ export const getWithdrawalMethodMock = jest
       return Promise.resolve({
         ...withdrawalMethodB,
         _id: withdrawalMethodB_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
@@ -33,13 +30,10 @@ export const getWithdrawalMethodMock = jest
       return Promise.resolve({
         ...withdrawalMethodC,
         _id: withdrawalMethodC_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
     } else {
-      return Promise.reject(
-        new HttpException(404, 'Withdrawal method not found')
-      )
+      return Promise.reject('Mock: Withdrawal method not found')
     }
   })

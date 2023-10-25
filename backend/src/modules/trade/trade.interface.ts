@@ -1,19 +1,22 @@
 import { ForecastMove, ForecastStatus } from '@/modules/forecast/forecast.enum'
-import { IInvestmentObject } from '@/modules/investment/investment.interface'
-import { IUserObject } from '@/modules/user/user.interface'
+import {
+  IInvestment,
+  IInvestmentObject,
+} from '@/modules/investment/investment.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { UserEnvironment } from '@/modules/user/user.enum'
 import { AssetType } from '../asset/asset.enum'
-import { IPairObject } from '../pair/pair.interface'
+import { IPair, IPairObject } from '../pair/pair.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
-import { IForecastObject } from '../forecast/forecast.interface'
+import { IForecast, IForecastObject } from '../forecast/forecast.interface'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
 
 export interface ITradeObject extends baseObjectInterface {
-  investment: IInvestmentObject
-  forecast: IForecastObject
-  user: IUserObject
-  pair: IPairObject
+  investment: IInvestment['_id']
+  forecast: IForecast['_id']
+  user: IUser['_id']
+  pair: IPair['_id']
   market: AssetType
   status: ForecastStatus
   move?: ForecastMove

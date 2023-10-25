@@ -1,5 +1,5 @@
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
-import { IUserObject } from '@/modules/user/user.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { UserEnvironment } from '../user/user.enum'
 import { TransactionStatus } from './transaction.type'
 import { FilterQuery, ObjectId } from 'mongoose'
@@ -7,10 +7,10 @@ import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
 
 export interface ITransactionObject extends baseObjectInterface {
-  user: IUserObject
+  user: IUser['_id']
   status: TransactionStatus
   categoryName: TransactionCategory
-  category: baseObjectInterface
+  category: baseModelInterface['_id']
   amount: number
   stake: number
   environment: UserEnvironment

@@ -8,7 +8,6 @@ import {
   NotificationCategory,
   NotificationForWho,
 } from './../../notification/notification.enum'
-import formatNumber from '../../../utils/formats/formatNumber'
 import { TransactionCategory } from './../../transaction/transaction.enum'
 import { DepositStatus } from '../../../modules/deposit/deposit.enum'
 import { depositMethodA_id } from './../../depositMethod/__test__/depositMethod.payload'
@@ -18,14 +17,11 @@ import {
   userA,
   userA_id,
   userB,
-  userModelReturn,
   userAObj,
   userBObj,
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { getDepositMethodMock } from '../../depositMethod/__test__/depositMethod.mock'
-
-import { executeTransactionManagerMock } from '../../transactionManager/__test__/transactionManager.mock'
 import {
   depositA,
   depositA_id,
@@ -35,12 +31,6 @@ import {
   depositB,
   depositBObj,
 } from './deposit.payload'
-import {
-  createTransactionDepositMock,
-  updateStatusTransactionDepositMock,
-} from './deposit.mock'
-import { HttpResponseStatus } from '../../http/http.enum'
-import Encryption from '../../../utils/encryption'
 import { transactionModelReturn } from '../../transaction/__test__/transaction.payload'
 import { notificationModelReturn } from '../../notification/__test__/notification.payload'
 import { fundTransactionUserMock } from '../../user/__test__/user.mock'
@@ -52,16 +42,9 @@ import {
   referralModelReturn,
 } from '../../referral/__test__/referral.payoad'
 import { ReferralStatus, ReferralTypes } from '../../referral/referral.enum'
-import FormatString from '../../../utils/formats/formatString'
-import { IDeposit } from '../deposit.interface'
-import { INotification } from '../../notification/notification.interface'
-import notificationModel from '../../notification/notification.model'
-import { IReferral } from '../../referral/referral.interface'
-import referralModel from '../../referral/referral.model'
-import { ITransaction } from '../../transaction/transaction.interface'
-import transactionModel from '../../transaction/transaction.model'
-import { IUser } from '../../user/user.interface'
 import { Types } from 'mongoose'
+import { StatusCode } from '../../../core/apiResponse'
+import Cryptograph from '../../../core/cryptograph'
 
 describe('deposit', () => {
   const baseUrl = '/api/deposit/'
@@ -74,7 +57,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given payload are not valid', () => {
@@ -84,7 +67,7 @@ describe('deposit', () => {
         }
 
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
@@ -93,7 +76,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('"amount" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given deposit method those not exits', () => {
@@ -105,7 +88,7 @@ describe('deposit', () => {
         }
 
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
@@ -114,12 +97,10 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit method not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
 
         expect(getDepositMethodMock).toHaveBeenCalledTimes(1)
         expect(getDepositMethodMock).toHaveBeenCalledWith(id)
-
-        expect(createTransactionDepositMock).toHaveBeenCalledTimes(0)
       })
     })
     describe('given deposit amount is lower than min deposit of selected method', () => {
@@ -130,7 +111,7 @@ describe('deposit', () => {
         }
 
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
@@ -141,14 +122,12 @@ describe('deposit', () => {
           'Amount is lower than the min deposit of the selected deposit method'
         )
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
 
         expect(getDepositMethodMock).toHaveBeenCalledTimes(1)
         expect(getDepositMethodMock).toHaveBeenCalledWith(
           depositMethodA_id.toString()
         )
-
-        expect(createTransactionDepositMock).toHaveBeenCalledTimes(0)
       })
     })
     describe('given all validations passed', () => {
@@ -159,9 +138,9 @@ describe('deposit', () => {
         }
 
         const user = await userModel.create(userA)
-        const { password: _, ...userA1 } = userA
+        const { ...userA1 } = userA
 
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
@@ -170,7 +149,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit has been registered successfully')
         expect(statusCode).toBe(201)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data).toMatchObject({
           deposit: { _id: depositModelReturn._id.toString() },
@@ -248,7 +227,7 @@ describe('deposit', () => {
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
 
         const payload = {
           depositId: '',
@@ -262,14 +241,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given payload is not valid', () => {
       it('should throw a 400 error', async () => {
         const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
 
         const payload = {
           depositId: '',
@@ -283,7 +262,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('"depositId" is not allowed to be empty')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
@@ -293,7 +272,7 @@ describe('deposit', () => {
           const admin = await userModel.create(adminA)
           const user = await userModel.create({ ...userA, _id: userA_id })
 
-          const token = Encryption.createToken(admin)
+          const token = Cryptograph.createToken(admin)
 
           const deposit = await depositModel.create({
             ...depositA,
@@ -315,7 +294,7 @@ describe('deposit', () => {
 
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+          expect(body.status).toBe(StatusCode.SUCCESS)
           expect(body.data).toEqual({
             deposit: {
               _id: depositModelReturn._id.toString(),
@@ -388,7 +367,7 @@ describe('deposit', () => {
       describe('given status was approved but no referrer', () => {
         it('should return a 200 and the deposit payload', async () => {
           const admin = await userModel.create(adminA)
-          const token = Encryption.createToken(admin)
+          const token = Cryptograph.createToken(admin)
 
           const deposit = await depositModel.create({
             ...depositA,
@@ -409,7 +388,7 @@ describe('deposit', () => {
 
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+          expect(body.status).toBe(StatusCode.SUCCESS)
           expect(body.data).toEqual({
             deposit: {
               _id: depositModelReturn._id.toString(),
@@ -495,7 +474,7 @@ describe('deposit', () => {
       describe('given status was approved and there is a referrer', () => {
         it('should return a 200 and the deposit payload', async () => {
           const admin = await userModel.create(adminA)
-          const token = Encryption.createToken(admin)
+          const token = Cryptograph.createToken(admin)
 
           const deposit = await depositModel.create({
             ...depositB,
@@ -516,7 +495,7 @@ describe('deposit', () => {
 
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+          expect(body.status).toBe(StatusCode.SUCCESS)
           expect(body.data).toEqual({
             deposit: {
               _id: depositModelReturn._id.toString(),
@@ -697,7 +676,7 @@ describe('deposit', () => {
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
 
         const url = baseUrl + `delete/depositId`
 
@@ -707,14 +686,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given deposit id those not exist', () => {
       it('should throw a 404 error', async () => {
         const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
 
         const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
 
@@ -724,14 +703,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit transaction not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given deposit has not been settled', () => {
       it('should return a 400 error', async () => {
         const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
 
         const deposit = await depositModel.create(depositA)
 
@@ -743,14 +722,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit has not been settled yet')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and the deposit payload', async () => {
         const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
 
         const deposit = await depositModel.create({
           ...depositA,
@@ -765,7 +744,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit deleted successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
       })
     })
   })
@@ -776,7 +755,7 @@ describe('deposit', () => {
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
@@ -784,14 +763,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of deposit payload', async () => {
         const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
 
         const { statusCode, body } = await request
           .get(url)
@@ -799,7 +778,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit history fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data).toEqual({
           deposits: [],
         })
@@ -811,7 +790,7 @@ describe('deposit', () => {
       it('should return a 200 and an array of deposit payload', async () => {
         const admin = await userModel.create(adminA)
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
         const deposit = await depositModel.create({
           ...depositA,
           user: user._id,
@@ -823,7 +802,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit history fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.deposits.length).toBe(1)
         expect(body.data.deposits[0].amount).toBe(deposit.amount)
         expect(body.data.deposits[0].status).toBe(deposit.status)
@@ -852,14 +831,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given deposit those not exist', () => {
       it('should throw a 404 error', async () => {
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
         const url = baseUrl + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
@@ -868,14 +847,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit transaction not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given deposit those not belongs to logged in user', () => {
       it('should throw a 404 error', async () => {
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
         const deposit = await depositModel.create(depositA)
 
         const url = baseUrl + deposit._id
@@ -886,7 +865,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit transaction not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
 
         const depositCounts = await depositModel.count()
 
@@ -897,7 +876,7 @@ describe('deposit', () => {
     describe('given all validations passed', () => {
       it('should return a 200 and the deposit payload', async () => {
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
         const deposit = await depositModel.create({
           ...depositA,
           user: user._id,
@@ -911,7 +890,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.deposit.amount).toBe(deposit.amount)
         expect(body.data.deposit.status).toBe(deposit.status)
 
@@ -931,7 +910,7 @@ describe('deposit', () => {
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
         const url = baseUrl + `master/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
@@ -940,14 +919,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given deposit those not exist', () => {
       it('should throw a 404 error', async () => {
         const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
         const url = baseUrl + `master/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
@@ -956,14 +935,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit transaction not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and the deposit payload', async () => {
         const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const token = Cryptograph.createToken(admin)
         const deposit = await depositModel.create(depositA)
         const url = baseUrl + `master/${deposit._id}`
 
@@ -973,7 +952,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.deposit.amount).toBe(deposit.amount)
         expect(body.data.deposit.status).toBe(deposit.status)
@@ -993,14 +972,14 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and the an empty array of deposit payload', async () => {
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
@@ -1008,13 +987,13 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit history fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.deposits).toEqual([])
       })
 
       it('should return a 200 and the an array of deposit payload', async () => {
         const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
         const deposit = await depositModel.create({
           ...depositA,
           user: user._id,
@@ -1026,7 +1005,7 @@ describe('deposit', () => {
 
         expect(body.message).toBe('Deposit history fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.deposits.length).toBe(1)
         expect(body.data.deposits[0].amount).toBe(deposit.amount)
         expect(body.data.deposits[0].status).toBe(deposit.status)

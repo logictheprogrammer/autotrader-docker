@@ -3,15 +3,11 @@
 ✔ 4. make the all files naming convention same
 ✔ 5. use thesame patterns in the APIs
 ✔ 7. rework on the exception service
----- 9. add a toJSON property and an Interface to each models
+✔ 9. add a toJSON property and an Interface to each models
 ✔ 10. make all class methods non arrow functions
----- 11. create an methods param Interfaces to all modules
----- 14. introduce lodash
 ✔ 15. use filter query to find one from another service
 ✔ 17. implement all change password as a schema methods
 ✔ 18. remove the object suffix from all models
-19. use nodemone.json
----- 20. see if model schema trim and no trim make a difference
 ✔ 21. change validation to schema
 ✔ 25. add service async handler and controller async handler
 

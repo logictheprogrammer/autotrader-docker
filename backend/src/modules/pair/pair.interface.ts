@@ -1,13 +1,13 @@
 import { AssetType } from '@/modules/asset/asset.enum'
-import { IAssetObject } from '@/modules/asset/asset.interface'
+import { IAsset, IAssetObject } from '@/modules/asset/asset.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
 
 export interface IPairObject extends baseObjectInterface {
   assetType: AssetType
-  baseAsset: IAssetObject
-  quoteAsset: IAssetObject
+  baseAsset: IAsset['_id']
+  quoteAsset: IAsset['_id']
 }
 
 // @ts-ignore

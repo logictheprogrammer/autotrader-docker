@@ -1,11 +1,11 @@
 import { DepositMethodStatus } from '@/modules/depositMethod/depositMethod.enum'
-import { FilterQuery, ObjectId, Types } from 'mongoose'
+import { FilterQuery, ObjectId } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
-import { ICurrencyObject } from '../currency/currency.interface'
+import { ICurrency } from '../currency/currency.interface'
 
 export interface IDepositMethodObject extends baseObjectInterface {
-  currency: ICurrencyObject
+  currency: ICurrency['_id']
   address: string
   network: string
   status: DepositMethodStatus

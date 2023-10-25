@@ -1,15 +1,18 @@
 import { DepositStatus } from '@/modules/deposit/deposit.enum'
-import { IDepositMethodObject } from '@/modules/depositMethod/depositMethod.interface'
-import { IUserObject } from '@/modules/user/user.interface'
+import {
+  IDepositMethod,
+  IDepositMethodObject,
+} from '@/modules/depositMethod/depositMethod.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
-import { ICurrencyObject } from '../currency/currency.interface'
+import { ICurrency, ICurrencyObject } from '../currency/currency.interface'
 
 export interface IDepositObject extends baseObjectInterface {
-  depositMethod: IDepositMethodObject
-  currency: ICurrencyObject
-  user: IUserObject
+  depositMethod: IDepositMethod['_id']
+  currency: ICurrency['_id']
+  user: IUser['_id']
   status: DepositStatus
   amount: number
   fee: number

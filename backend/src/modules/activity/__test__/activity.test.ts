@@ -1,16 +1,13 @@
-import { IActivity } from './../activity.interface'
-import Helpers from '../../../utils/helpers/helpers'
-import Encryption from '../../../utils/encryption'
-import { HttpResponseStatus } from '../../../modules/http/http.enum'
+import Helpers from '../../../utils/helpers'
+import { StatusCode } from './../../../core/apiResponse'
+import Cryptograph from '../../../core/cryptograph'
 import activityModel from '../../../modules/activity/activity.model'
 import { request } from '../../../test'
 import {
-  adminA,
-  userA,
+  adminBInput,
+  userAInput,
   userA_id,
-  userB,
   userB_id,
-  userC,
   userC_id,
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
@@ -19,11 +16,11 @@ import {
   ActivityForWho,
   ActivityStatus,
 } from '../activity.enum'
-import { IUser } from '../../user/user.interface'
 import { Types } from 'mongoose'
 
 describe('Activity', () => {
   const baseUrl = '/api/activity/'
+  const adminUrl = '/api/master/activity/'
   describe('get activity logs', () => {
     const url = baseUrl
     describe('given user is not logged in', () => {
@@ -31,32 +28,31 @@ describe('Activity', () => {
         const { statusCode, body } = await request.get(url)
 
         expect(body.message).toBe('Unauthorized')
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(statusCode).toBe(401)
       })
     })
     describe('given user exist', () => {
       it('should return a 200 and an empty array of logged in user visible activity logs', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.message).toBe('Activities fetched successfully')
         expect(body.data).toEqual({ activities: [] })
       })
 
       it('should return a 200 and an array of logged in user visible activity logs', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -64,7 +60,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: user._id,
-          userObject: user,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -73,7 +68,6 @@ describe('Activity', () => {
 
         const userActivity = await activityModel.create({
           user: user._id,
-          userObject: user,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -84,7 +78,7 @@ describe('Activity', () => {
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.message).toBe('Activities fetched successfully')
 
         expect(body.data.activities.length).toBe(1)
@@ -94,71 +88,65 @@ describe('Activity', () => {
         expect(body.data.activities[0].status).toBe(userActivity.status)
 
         expect(body.data.activities[0].user._id).toBe(
-          userActivity.user.toString()
-        )
-        expect(body.data.activities[0].user.username).toBe(
-          userActivity.userObject.username
+          userActivity.user._id.toString()
         )
       })
     })
   })
-  describe('admin: get all users activity logs', () => {
-    const url = baseUrl + 'users'
+  describe('Fetch All users activities by admin', () => {
+    const url = adminUrl + 'users'
     describe('given current user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Unauthorized')
       })
     })
     describe('given current user is an admin', () => {
       it('should return a 200 and an empty array of all users activity logs', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.message).toBe('Activities fetched successfully')
         expect(body.data).toEqual({
           activities: [],
         })
       })
       it('should return a 200 and an array of all users activity logs', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
-        await userModel.create({ ...userA, _id: userA_id })
+        await userModel.create({ ...userAInput, _id: userA_id })
 
         const userActivity1 = await activityModel.create({
           user: userA_id,
-          userObject: userA,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
         })
 
-        const userActivity2 = await activityModel.create({
+        await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
         })
 
-        const userActivity3 = await activityModel.create({
+        await activityModel.create({
           user: userC_id,
-          userObject: userC,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -167,7 +155,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -178,7 +165,7 @@ describe('Activity', () => {
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.message).toBe('Activities fetched successfully')
 
         expect(body.data.activities.length).toBe(3)
@@ -188,10 +175,7 @@ describe('Activity', () => {
         expect(body.data.activities[0].status).toBe(userActivity1.status)
 
         expect(body.data.activities[0].user._id).toBe(
-          userActivity1.user.toString()
-        )
-        expect(body.data.activities[0].user.username).toBe(
-          userActivity1.userObject.username
+          userActivity1.user._id.toString()
         )
 
         const activitiesCount = await activityModel.count()
@@ -200,158 +184,30 @@ describe('Activity', () => {
       })
     })
   })
-  describe('admin: get one user activity logs', () => {
-    // const url = baseUrl + 'user/:user'
+
+  describe('Fetch all activities of current admin', () => {
+    const url = adminUrl
     describe('given current user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const url = baseUrl + 'user/' + new Types.ObjectId().toString()
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Unauthorized')
-      })
-    })
-    describe('given selected user those not exist', () => {
-      it('should return an empty array', async () => {
-        const url = baseUrl + 'user/' + new Types.ObjectId().toString()
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-
-        await activityModel.create({
-          user: userB_id,
-          userObject: userB,
-          category: ActivityCategory.PROFILE,
-          message: 'message',
-          forWho: ActivityForWho.USER,
-        })
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.message).toBe('Activities fetched successfully')
-
-        expect(body.data).toEqual({
-          activities: [],
-        })
-
-        const activitiesCount = await activityModel.count()
-
-        expect(activitiesCount).toBe(1)
-      })
-    })
-    describe('given selected user exist', () => {
-      it('should return a 200 and an empty array of the selected users activity logs', async () => {
-        const user = await userModel.create(userA)
-        const url = baseUrl + 'user/' + user._id
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-
-        await activityModel.create({
-          user: userB_id,
-          userObject: userB,
-          category: ActivityCategory.PROFILE,
-          message: 'message',
-          forWho: ActivityForWho.USER,
-        })
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.message).toBe('Activities fetched successfully')
-
-        expect(body.data).toEqual({
-          activities: [],
-        })
-
-        const activitiesCount = await activityModel.count()
-
-        expect(activitiesCount).toBe(1)
-      })
-      it('should return a 200 and an array of the selected users activity logs', async () => {
-        const user = await userModel.create(userA)
-        const url = baseUrl + 'user/' + user._id
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-
-        const userActivity = await activityModel.create({
-          user: user._id,
-          userObject: user,
-          category: ActivityCategory.PROFILE,
-          message: 'message',
-          forWho: ActivityForWho.USER,
-        })
-
-        await activityModel.create({
-          user: userB_id,
-          userObject: userB,
-          category: ActivityCategory.PROFILE,
-          message: 'message',
-          forWho: ActivityForWho.USER,
-        })
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.message).toBe('Activities fetched successfully')
-
-        expect(body.data.activities.length).toBe(1)
-        expect(body.data.activities[0].category).toBe(userActivity.category)
-        expect(body.data.activities[0].message).toBe(userActivity.message)
-        expect(body.data.activities[0].forWho).toBe(userActivity.forWho)
-        expect(body.data.activities[0].status).toBe(userActivity.status)
-
-        expect(body.data.activities[0].user._id).toBe(
-          userActivity.user.toString()
-        )
-        expect(body.data.activities[0].user.username).toBe(
-          userActivity.userObject.username
-        )
-
-        const activitiesCount = await activityModel.count()
-
-        expect(activitiesCount).toBe(2)
-      })
-    })
-  })
-  describe('admin: get admin activity logs', () => {
-    const url = baseUrl + 'admin'
-    describe('given current user is not an admin', () => {
-      it('should return a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-        expect(body.message).toBe('Unauthorized')
       })
     })
     describe('given current user is an admin', () => {
       it('should return a 200 and an empty array of the current admin activity logs', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -359,7 +215,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -367,7 +222,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -377,9 +231,9 @@ describe('Activity', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
         expect(body.message).toBe('Activities fetched successfully')
+        expect(body.status).toBe(StatusCode.SUCCESS)
+        expect(statusCode).toBe(200)
 
         expect(body.data).toEqual({
           activities: [],
@@ -390,12 +244,11 @@ describe('Activity', () => {
         expect(activitiesCount).toBe(3)
       })
       it('should return a 200 and not empty array of the current admin activity logs', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -403,7 +256,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -411,7 +263,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -419,7 +270,6 @@ describe('Activity', () => {
 
         const adminActivity = await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -429,9 +279,9 @@ describe('Activity', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
         expect(body.message).toBe('Activities fetched successfully')
+        expect(body.status).toBe(StatusCode.SUCCESS)
+        expect(statusCode).toBe(200)
 
         expect(body.data.activities.length).toBe(1)
         expect(body.data.activities[0].category).toBe(adminActivity.category)
@@ -441,9 +291,6 @@ describe('Activity', () => {
 
         expect(body.data.activities[0].user._id).toBe(
           adminActivity.user.toString()
-        )
-        expect(body.data.activities[0].user.username).toBe(
-          adminActivity.userObject.username
         )
 
         const activitiesCount = await activityModel.count()
@@ -461,18 +308,17 @@ describe('Activity', () => {
         const { statusCode, body } = await request.patch(url)
 
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Unauthorized')
       })
     })
     describe('given activity log those not exist', () => {
       it('should return a 404', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         await activityModel.create({
           user: user._id,
-          userObject: user,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -485,7 +331,7 @@ describe('Activity', () => {
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Activity not found')
 
         const activitiesCount = await activityModel.count()
@@ -495,12 +341,11 @@ describe('Activity', () => {
     })
     describe('given activity log those not belongs to current user', () => {
       it('should return a 404', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const anotherUserActivity = await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -513,7 +358,7 @@ describe('Activity', () => {
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Activity not found')
 
         const activitiesCount = await activityModel.count()
@@ -523,12 +368,11 @@ describe('Activity', () => {
     })
     describe('hide selected activity log', () => {
       it('should return a 200 and hide the selected activity log', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const userActivity = await activityModel.create({
           user: user._id,
-          userObject: user,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -540,9 +384,9 @@ describe('Activity', () => {
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Activity log deleted successfully')
+        expect(body.message).toBe('Activity deleted successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data).toEqual({
           activity: {
@@ -551,31 +395,33 @@ describe('Activity', () => {
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
             _id: expect.any(String),
-            user: expect.any(String),
+            user: expect.any(Object),
           },
         })
+
+        const savedResult = await activityModel.count(body.data.activity).exec()
+        expect(savedResult).toBe(1)
       })
     })
   })
   describe('hide all activity logs', () => {
-    const url = baseUrl + 'hide'
+    const url = baseUrl + 'hide/all'
     describe('given user is not logged in', () => {
       it('should return a 401 Unauthorized', async () => {
         const { statusCode, body } = await request.patch(url)
 
-        expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
         expect(body.message).toBe('Unauthorized')
+        expect(statusCode).toBe(401)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given no visible activity log exist', () => {
       it('should return a 404', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         await activityModel.create({
           user: user._id,
-          userObject: user,
           category: ActivityCategory.PROFILE,
           status: ActivityStatus.HIDDEN,
           message: 'message',
@@ -584,7 +430,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: user._id,
-          userObject: user,
           category: ActivityCategory.PROFILE,
           status: ActivityStatus.HIDDEN,
           message: 'message',
@@ -595,23 +440,23 @@ describe('Activity', () => {
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
 
+        expect(body.message).toBe('No Activities found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-        expect(body.message).toBe('No Activity log found')
+        expect(body.status).toBe(StatusCode.DANGER)
 
-        const activitiesCount = await activityModel.count()
-
+        const activitiesCount = await activityModel.count({
+          status: ActivityStatus.HIDDEN,
+        })
         expect(activitiesCount).toBe(2)
       })
     })
     describe('hide all user activity logs', () => {
       it('should return a 200 and hide all activity logs of current user', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         await activityModel.create({
           user: user._id,
-          userObject: user,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -619,7 +464,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: user._id,
-          userObject: user,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -629,9 +473,9 @@ describe('Activity', () => {
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
 
+        expect(body.message).toBe('Activities deleted successfully')
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.message).toBe('Activity logs deleted successfully')
 
         const activitiesCount = await activityModel.count({
           status: ActivityStatus.HIDDEN,
@@ -642,44 +486,43 @@ describe('Activity', () => {
     })
   })
   describe('admin: delete one activity log', () => {
-    // const url = baseUrl + 'delete/:activityId'
+    // const url = adminUrl + 'delete/user/:activityId'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
-        const url = baseUrl + 'delete/' + new Types.ObjectId().toString()
+        const url = adminUrl + 'delete/user/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Unauthorized')
       })
     })
     describe('given activity log those not exist', () => {
       it('should return a 404', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
         })
 
-        const url = baseUrl + 'delete/' + new Types.ObjectId().toString()
+        const url = adminUrl + 'delete/user/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Activity not found')
 
         const activitiesCount = await activityModel.count()
@@ -688,27 +531,26 @@ describe('Activity', () => {
       })
     })
     describe('delete selected activity log', () => {
-      it('should return a 200 and hide the selected activity log', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+      it('should return a 200 and delete the selected activity log', async () => {
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         const activity = await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
         })
 
-        const url = baseUrl + 'delete/' + activity._id
+        const url = adminUrl + 'delete/user/' + activity._id
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
+        expect(body.message).toBe('Activity deleted successfully')
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.message).toBe('Activity log deleted successfully')
 
         expect(body.data).toEqual({
           activity: {
@@ -716,7 +558,7 @@ describe('Activity', () => {
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
             _id: expect.any(String),
-            user: expect.any(String),
+            user: expect.any(Object),
           },
         })
 
@@ -726,52 +568,51 @@ describe('Activity', () => {
       })
     })
   })
-  describe('admin: delete all user activity logs', () => {
-    // const url = baseUrl + 'delete/user/:userId'
+  describe('Delete all activities of provided user', () => {
+    // const url = adminUrl + 'delete/user/:userId'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
-        const url = baseUrl + 'delete/user/' + new Types.ObjectId().toString()
+        const url = adminUrl + 'delete/user/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
         expect(body.message).toBe('Unauthorized')
       })
     })
     describe('given no activity log exist', () => {
       it('should return a 404', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         const userId = new Types.ObjectId().toString()
 
-        const url = baseUrl + 'delete/user/' + userId
+        const url = adminUrl + 'delete/user/' + userId
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-        expect(body.message).toBe('No Activity found')
+        expect(body.status).toBe(StatusCode.DANGER)
+        expect(body.message).toBe('Activity not found')
       })
     })
     describe('delete all selected user activity logs', () => {
       it('should return a 200 and delete all activity logs of current user', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
-        const url = baseUrl + 'delete/user/' + userC_id
+        const url = adminUrl + 'delete/all/user/' + userC_id
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -779,7 +620,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: userC_id,
-          userObject: userC,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -787,7 +627,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: userC_id,
-          userObject: userC,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -795,7 +634,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: userC_id,
-          userObject: userC,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -805,9 +643,9 @@ describe('Activity', () => {
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Activity logs deleted successfully')
+        expect(body.message).toBe('Activities deleted successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         const activitiesCount = await activityModel.count()
 
@@ -820,12 +658,12 @@ describe('Activity', () => {
       })
     })
   })
-  describe('admin: delete all activity logs', () => {
-    const url = baseUrl + 'delete/all'
+  describe('Delete all activites', () => {
+    const url = adminUrl + 'delete/all/users'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .delete(url)
@@ -833,17 +671,16 @@ describe('Activity', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given no activity log was found', () => {
       it('should return a 404', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -851,7 +688,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -861,9 +697,9 @@ describe('Activity', () => {
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('No Activity found')
+        expect(body.message).toBe('No Activities found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
 
         const activitiesCount = await activityModel.count()
 
@@ -872,12 +708,11 @@ describe('Activity', () => {
     })
     describe('delete all usesr activity logs', () => {
       it('should return a 200 and delete all users', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -885,7 +720,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -893,7 +727,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -901,7 +734,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -911,9 +743,9 @@ describe('Activity', () => {
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Activity logs deleted successfully')
+        expect(body.message).toBe('Activities deleted successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         const activitiesCount = await activityModel.count()
 
@@ -921,14 +753,14 @@ describe('Activity', () => {
       })
     })
   })
-  describe('admin: delete current admin activity log', () => {
-    // const url = baseUrl + 'delete/admin/:activityId'
+  describe('Delete activity of current admin', () => {
+    // const url = adminUrl + 'delete/:activityId'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
-        const url = baseUrl + 'delete/admin/' + new Types.ObjectId().toString()
+        const url = adminUrl + 'delete/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -936,23 +768,22 @@ describe('Activity', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given activity log those not exist', () => {
       it('should return a 404', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
         })
 
-        const url = baseUrl + 'delete/admin/' + new Types.ObjectId().toString()
+        const url = adminUrl + 'delete/' + new Types.ObjectId().toString()
 
         const { statusCode, body } = await request
           .delete(url)
@@ -960,7 +791,7 @@ describe('Activity', () => {
 
         expect(body.message).toBe('Activity not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
 
         const activitiesCount = await activityModel.count()
 
@@ -969,12 +800,11 @@ describe('Activity', () => {
     })
     describe('given activity log those not belongs to current admin', () => {
       it('should return a 404', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         const activity = await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -982,14 +812,13 @@ describe('Activity', () => {
 
         const activity2 = await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
         })
 
-        const url = baseUrl + 'delete/admin/' + activity._id
-        const url2 = baseUrl + 'delete/admin/' + activity2._id
+        const url = adminUrl + 'delete/' + activity._id
+        const url2 = adminUrl + 'delete/' + activity2._id
 
         const { statusCode, body } = await request
           .delete(url)
@@ -1001,11 +830,11 @@ describe('Activity', () => {
 
         expect(body.message).toBe('Activity not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
 
         expect(body2.message).toBe('Activity not found')
         expect(statusCode2).toBe(404)
-        expect(body2.status).toBe(HttpResponseStatus.ERROR)
+        expect(body2.status).toBe(StatusCode.DANGER)
 
         const activitiesCount = await activityModel.count()
 
@@ -1014,12 +843,11 @@ describe('Activity', () => {
     })
     describe('delete selected admin activity log', () => {
       it('should return a 200 and delete the selected admin activity log', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         const activity = await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -1027,7 +855,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -1035,21 +862,20 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
         })
 
-        const url = baseUrl + 'delete/admin/' + activity._id
+        const url = adminUrl + 'delete/' + activity._id
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Activity log deleted successfully')
+        expect(body.message).toBe('Activity deleted successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data).toEqual({
           activity: {
@@ -1057,7 +883,7 @@ describe('Activity', () => {
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
             _id: expect.any(String),
-            user: expect.any(String),
+            user: expect.any(Object),
           },
         })
 
@@ -1067,12 +893,12 @@ describe('Activity', () => {
       })
     })
   })
-  describe('admin: delete all current admin activity logs', () => {
-    const url = baseUrl + 'delete/admin'
+  describe('Delete all activity log of current admin', () => {
+    const url = adminUrl + 'delete/all'
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .delete(url)
@@ -1080,17 +906,16 @@ describe('Activity', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given no activity log exist', () => {
       it('should return a 404', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -1098,7 +923,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.USER,
@@ -1108,9 +932,9 @@ describe('Activity', () => {
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('No Activity found')
+        expect(body.message).toBe('No Activities found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
 
         const activitiesCount = await activityModel.count()
 
@@ -1119,12 +943,11 @@ describe('Activity', () => {
     })
     describe('delete all selected admin activity logs', () => {
       it('should return a 200 and delete all activity logs of current admin', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminBInput)
+        const token = Cryptograph.createToken(admin)
 
         await activityModel.create({
           user: userB_id,
-          userObject: userB,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -1132,7 +955,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -1140,7 +962,6 @@ describe('Activity', () => {
 
         await activityModel.create({
           user: admin._id,
-          userObject: admin,
           category: ActivityCategory.PROFILE,
           message: 'message',
           forWho: ActivityForWho.ADMIN,
@@ -1150,9 +971,9 @@ describe('Activity', () => {
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Activity logs deleted successfully')
+        expect(body.message).toBe('Activities deleted successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         const activitiesCount = await activityModel.count()
 

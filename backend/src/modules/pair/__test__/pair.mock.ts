@@ -8,35 +8,32 @@ import {
   pairC_id,
 } from './pair.payload'
 
-export const getPairMock = jest
-  .spyOn(PairService.prototype, 'get')
+export const fetchPairMock = jest
+  .spyOn(PairService.prototype, 'fetch')
   // @ts-ignore
-  .mockImplementation((pairId) => {
+  .mockImplementation(({ _id: pairId }) => {
     if (pairId.toString() === pairA_id.toString()) {
       return Promise.resolve({
         ...pairA,
         _id: pairA_id,
-        __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (pairId.toString() === pairB_id.toString()) {
       return Promise.resolve({
         ...pairB,
         _id: pairB_id,
-        __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else if (pairId.toString() === pairC_id.toString()) {
       return Promise.resolve({
         ...pairC,
         _id: pairC_id,
-        __v: 0,
-        updatedAt: 'date',
-        createdAt: 'date',
+        updatedAt: new Date(),
+        createdAt: new Date(),
       })
     } else {
-      return Promise.resolve(null)
+      return Promise.reject('Mock: pair id not handled')
     }
   })

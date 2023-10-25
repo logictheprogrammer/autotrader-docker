@@ -1,13 +1,13 @@
 import { TransferStatus } from '@/modules/transfer/transfer.enum'
-import { IUserObject } from '@/modules/user/user.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { UserAccount } from '@/modules/user/user.enum'
-import { FilterQuery, ObjectId } from 'mongoose'
+import { FilterQuery, ObjectId, Types } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
 
 export interface ITransferObject extends baseObjectInterface {
-  fromUser: IUserObject
-  toUser: IUserObject
+  fromUser: IUser['_id']
+  toUser: IUser['_id']
   account: UserAccount
   status: TransferStatus
   amount: number
@@ -19,7 +19,7 @@ export interface ITransfer extends baseModelInterface, ITransferObject {}
 
 export interface ITransferService {
   create(
-    fromUserId: ObjectId,
+    fromUserId: ObjectId | Types.ObjectId,
     toUserUsername: string,
     account: UserAccount,
     amount: number

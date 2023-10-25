@@ -1,9 +1,12 @@
 import { PlanStatus } from '@/modules/plan/plan.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
-import { IInvestmentObject } from '../investment/investment.interface'
+import {
+  IInvestment,
+  IInvestmentObject,
+} from '../investment/investment.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
-import { IAssetObject } from '../asset/asset.interface'
-import { IForecastObject } from '../forecast/forecast.interface'
+import { IAsset, IAssetObject } from '../asset/asset.interface'
+import { IForecast, IForecastObject } from '../forecast/forecast.interface'
 import { ForecastStatus } from '../forecast/forecast.enum'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
@@ -21,13 +24,13 @@ export interface IPlanObject extends baseObjectInterface {
   gas: number
   description: string
   assetType: AssetType
-  assets: IAssetObject[]
+  assets: IAsset['_id'][]
   status: PlanStatus
   manualMode: boolean
-  investors: IInvestmentObject[]
+  investors: IInvestment['_id'][]
   dummyInvestors: number
   runTime: number
-  currentForecast?: IForecastObject
+  currentForecast?: IForecast['_id']
   forecastStatus?: ForecastStatus
   forecastTimeStamps: number[]
   forecastStartTime?: Date

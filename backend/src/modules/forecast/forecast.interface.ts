@@ -1,15 +1,15 @@
 import { ForecastMove, ForecastStatus } from '@/modules/forecast/forecast.enum'
-import { IPlanObject } from '@/modules/plan/plan.interface'
+import { IPlan, IPlanObject } from '@/modules/plan/plan.interface'
 
 import { AssetType } from '@/modules/asset/asset.enum'
-import { IPairObject } from '@/modules/pair/pair.interface'
+import { IPair, IPairObject } from '@/modules/pair/pair.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
 
 export interface IForecastObject extends baseObjectInterface {
-  plan: IPlanObject
-  pair: IPairObject
+  plan: IPlan['_id']
+  pair: IPair['_id']
   market: AssetType
   status: ForecastStatus
   move?: ForecastMove

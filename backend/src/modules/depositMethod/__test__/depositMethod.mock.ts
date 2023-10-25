@@ -1,4 +1,4 @@
-import HttpException from '../../../modules/http/http.exception'
+import { NotFoundError } from '../../../core/apiError'
 import DepositMethodService from '../../../modules/depositMethod/depositMethod.service'
 import {
   depositMethodA,
@@ -9,15 +9,14 @@ import {
   depositMethodC_id,
 } from './depositMethod.payload'
 
-export const getDepositMethodMock = jest
-  .spyOn(DepositMethodService.prototype, 'get')
+export const fetchDepositMethodMock = jest
+  .spyOn(DepositMethodService.prototype, 'fetch')
   // @ts-ignore
-  .mockImplementation((key) => {
+  .mockImplementation(({ _id: key }) => {
     if (key.toString() === depositMethodA_id.toString()) {
       return Promise.resolve({
         ...depositMethodA,
         _id: depositMethodA_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
@@ -25,7 +24,6 @@ export const getDepositMethodMock = jest
       return Promise.resolve({
         ...depositMethodB,
         _id: depositMethodB_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
@@ -33,11 +31,10 @@ export const getDepositMethodMock = jest
       return Promise.resolve({
         ...depositMethodC,
         _id: depositMethodC_id,
-        __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),
       })
     } else {
-      return Promise.reject(new HttpException(404, 'Deposit method not found'))
+      return Promise.reject(new NotFoundError('Deposit method not found'))
     }
   })

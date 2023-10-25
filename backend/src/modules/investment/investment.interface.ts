@@ -1,6 +1,6 @@
 import { InvestmentStatus } from '@/modules/investment/investment.enum'
-import { IPlanObject } from '@/modules/plan/plan.interface'
-import { IUserObject } from '@/modules/user/user.interface'
+import { IPlan, IPlanObject } from '@/modules/plan/plan.interface'
+import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { ForecastStatus } from '../forecast/forecast.enum'
 import { FilterQuery, ObjectId, Types } from 'mongoose'
@@ -10,8 +10,8 @@ import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
 
 export interface IInvestmentObject extends baseObjectInterface {
-  plan: IPlanObject
-  user: IUserObject
+  plan: IPlan['_id']
+  user: IUser['_id']
   minRunTime: number
   gas: number
   status: InvestmentStatus

@@ -236,9 +236,7 @@ class ForecastService implements IForecastService {
       if (!plan) throw new NotFoundError('The plan no longer exist')
 
       if (plan.forecastStatus && plan.forecastStatus !== ForecastStatus.SETTLED)
-        throw new BadRequestError(
-          'This plan already has an unsettled forecast running'
-        )
+        throw new BadRequestError('This plan already has an unsettled forecast')
 
       if (!pair) throw new NotFoundError('The selected pair no longer exist')
 

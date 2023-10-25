@@ -143,12 +143,13 @@ class ReferralService implements IReferralService {
         UserEnvironment.LIVE
       )
 
-      return referral
+      return (await referral.populate('user')).populate('referrer')
     } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to register referral transactions, please try again'
-      )
+      throw err
+      // throw new ServiceError(
+      //   err,
+      //   'Failed to register referral transactions, please try again'
+      // )
     }
   }
 
@@ -181,16 +182,9 @@ class ReferralService implements IReferralService {
           referralEarnings[index].earnings += transation.amount
         } else {
           referralEarnings.push({
-            user: {
-              _id: transation.user._id,
-              username: transation.user.username,
-              createdAt: transation.user.createdAt,
-            },
+            user: transation.user,
             earnings: transation.amount,
-            referrer: {
-              _id: transation.referrer._id,
-              username: transation.referrer.username,
-            },
+            referrer: transation.referrer,
           })
         }
       })
@@ -221,11 +215,7 @@ class ReferralService implements IReferralService {
           referralLeaderboard[index].earnings += transation.amount
         } else {
           referralLeaderboard.push({
-            user: {
-              _id: transation.referrer._id,
-              username: transation.referrer.username,
-              createdAt: transation.referrer.createdAt,
-            },
+            user: transation.referrer,
             earnings: transation.amount,
           })
         }

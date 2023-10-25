@@ -124,7 +124,7 @@ class DepositMethodService implements IDepositMethodService {
     } catch (err: any) {
       throw new ServiceError(
         err,
-        'Failed to get deposit method, please try again'
+        'Failed to fetch deposit method, please try again'
       )
     }
   }
