@@ -74,7 +74,7 @@ class TransactionController implements IController {
     const transaction = await this.transactionService.delete({
       _id: transactionId,
     })
-    return new SuccessResponse('Transaction delted successfully', {
+    return new SuccessResponse('Transaction deleted successfully', {
       transaction,
     }).send(res)
   })

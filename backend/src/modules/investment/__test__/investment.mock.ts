@@ -43,3 +43,7 @@ export const fetchInvestmentMock = jest
 export const fundInvestmentMock = jest
   .spyOn(investmentService, 'fund')
   .mockResolvedValue(investmentAObj)
+
+export const updateInvestmentStatusMock = jest
+  .spyOn(investmentService, 'updateStatus')
+  .mockResolvedValue(investmentAObj)

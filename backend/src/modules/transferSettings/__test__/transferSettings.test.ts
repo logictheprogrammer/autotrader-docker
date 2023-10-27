@@ -1,11 +1,14 @@
+import { StatusCode } from '../../../core/apiResponse'
+import Cryptograph from '../../../core/cryptograph'
 import transferSettingsModel from '../../../modules/transferSettings/transferSettings.model'
 import { request } from '../../../test'
-import Encryption from '../../../utils/encryption'
-import { HttpResponseStatus } from '../../http/http.enum'
-import { adminA, userA } from '../../user/__test__/user.payload'
-import { IUser } from '../../user/user.interface'
+import {
+  adminA,
+  adminAInput,
+  userA,
+  userAInput,
+} from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
-import { ITransferSettings } from '../transferSettings.interface'
 import {
   transferSettingsA,
   transferSettingsB,
@@ -13,6 +16,7 @@ import {
 
 describe('transfer settings', () => {
   const baseUrl = '/api/transfer-settings'
+  const masterUrl = '/api/master/transfer-settings'
   describe('get transfer settings', () => {
     const url = `${baseUrl}`
     describe('a get request', () => {
@@ -20,18 +24,18 @@ describe('transfer settings', () => {
         await transferSettingsModel.create(transferSettingsA)
         const { statusCode, body } = await request.get(url)
 
-        expect(body.message).toBe('Transfer Settings fetched')
+        expect(body.message).toBe('Transfer status fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
       })
     })
   })
   describe('update transfer settings', () => {
-    const url = `${baseUrl}/update`
+    const url = `${masterUrl}/update`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const payload = {}
 
@@ -42,14 +46,14 @@ describe('transfer settings', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given input are not valid', () => {
       it('should return a 400', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const payload = {
           fee: 15,
@@ -62,14 +66,14 @@ describe('transfer settings', () => {
 
         expect(body.message).toBe('"approval" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('on success entry', () => {
       it('should return a payload', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         await transferSettingsModel.create(transferSettingsA)
 
@@ -80,14 +84,20 @@ describe('transfer settings', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Transfer Settings Updated')
+        expect(body.message).toBe('Transfer settings updated successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.transferSettings.approval).toBe(
           transferSettingsB.approval
         )
         expect(body.data.transferSettings.fee).toBe(transferSettingsB.fee)
+
+        const transferSettingsCount = await transferSettingsModel.count(
+          transferSettingsB
+        )
+
+        expect(transferSettingsCount).toBe(1)
       })
     })
   })

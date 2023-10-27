@@ -1,4 +1,3 @@
-import { ITrade } from '../../../modules/trade/trade.interface'
 import { ForecastStatus } from '../../forecast/forecast.enum'
 import { request } from '../../../test'
 import { userA } from '../../user/__test__/user.payload'
@@ -10,20 +9,17 @@ import investmentModel from '../../investment/investment.model'
 import { investmentA } from '../../investment/__test__/investment.payload'
 import pairModel from '../../pair/pair.model'
 import { pairA } from '../../pair/__test__/pair.payload'
-import { IUser } from '../../user/user.interface'
-import { IPair } from '../../pair/pair.interface'
-import { IInvestment } from '../../investment/investment.interface'
 import { Types } from 'mongoose'
 
 describe('trade', () => {
-  describe('_createTransaction', () => {
+  describe('create', () => {
     it('should return a trade transaction instance', async () => {
       request
       const user = await userModel.create(userA)
       const investment = await investmentModel.create(investmentA)
       const pair = await pairModel.create(pairA)
 
-      const tradeInstance = await tradeService._createTransaction(
+      const tradeInstance = await tradeService.create(
         user.toObject({ getters: true }),
         investment.toObject({ getters: true }),
         pair.toObject({ getters: true }),
@@ -31,7 +27,7 @@ describe('trade', () => {
         tradeA.outcome,
         tradeA.profit,
         tradeA.percentage,
-        tradeA.investmentPercentage,
+        tradeA.percentageProfit,
         tradeA.environment
       )
 
@@ -47,7 +43,7 @@ describe('trade', () => {
       )
     })
   })
-  describe('_updateStatusTransaction', () => {
+  describe('updateStatus', () => {
     describe('given trade id those not exist', () => {
       it('should throw a 404 error', async () => {
         request
@@ -56,7 +52,7 @@ describe('trade', () => {
         expect(trade.status).toBe(ForecastStatus.PREPARING)
 
         await expect(
-          tradeService._updateStatusTransaction(
+          tradeService.updateStatus(
             new Types.ObjectId(),
             ForecastStatus.RUNNING
           )
@@ -74,10 +70,7 @@ describe('trade', () => {
         expect(trade.status).toBe(ForecastStatus.SETTLED)
 
         await expect(
-          tradeService._updateStatusTransaction(
-            trade._id,
-            ForecastStatus.ON_HOLD
-          )
+          tradeService.updateStatus(trade._id, ForecastStatus.ON_HOLD)
         ).rejects.toThrow('This trade has already been settled')
       })
     })
@@ -88,7 +81,7 @@ describe('trade', () => {
 
         expect(trade.status).toBe(ForecastStatus.PREPARING)
 
-        const tradeInstance = await tradeService._updateStatusTransaction(
+        const tradeInstance = await tradeService.updateStatus(
           trade._id,
           ForecastStatus.ON_HOLD
         )

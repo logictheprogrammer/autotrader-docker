@@ -1,27 +1,35 @@
-import FormatString from '../../../utils/formats/formatString'
 import { request } from '../../../test'
-import Encryption from '../../../utils/encryption'
-import { HttpResponseStatus } from '../../http/http.enum'
 import { UserAccount, UserStatus } from '../user.enum'
 import userModel from '../user.model'
-import { adminA, adminB, editedUser, userA, userB } from './user.payload'
+import {
+  adminAInput,
+  adminBInput,
+  editedUser,
+  userA,
+  userAInput,
+  userB,
+  userBInput,
+} from './user.payload'
 import { sendMailMock } from '../../mail/__test__/mail.mock'
 import renderFile from '../../../utils/renderFile'
-import ParseString from '../../../utils/parsers/parseString'
 import { SiteConstants } from '../../config/config.constants'
 import { Types } from 'mongoose'
+import Cryptograph from '../../../core/cryptograph'
+import { StatusCode } from '../../../core/apiResponse'
+import Helpers from '../../../utils/helpers'
 
 describe('users', () => {
   const baseUrl = '/api/users'
+  const masterUrl = '/api/master/users'
   describe('Fund User', () => {
-    // const url = `${baseUrl}/:userId/force-fund-user`
+    // const url = `${masterUrl}/fund/:userId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const url = `${baseUrl}/userId/force-fund-user`
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
+        const url = `${masterUrl}/fund/userId`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -30,7 +38,7 @@ describe('users', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given inputs are incorrect', () => {
@@ -39,10 +47,10 @@ describe('users', () => {
           account: UserAccount.MAIN_BALANCE,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/userId/force-fund-user`
+        // const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/fund/userId`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -51,7 +59,7 @@ describe('users', () => {
 
         expect(body.message).toBe('"amount" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given user those not exist', () => {
@@ -61,10 +69,10 @@ describe('users', () => {
           amount: 1000,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/force-fund-user`
+        // const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/fund/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -73,7 +81,7 @@ describe('users', () => {
 
         expect(body.message).toBe('User not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given user those not have sufficient balance', () => {
@@ -83,10 +91,10 @@ describe('users', () => {
           amount: -(userA.mainBalance + 10),
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${user._id}/force-fund-user`
+        const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/fund/${user._id}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -94,12 +102,12 @@ describe('users', () => {
           .send(payload)
 
         expect(body.message).toBe(
-          `insufficient balance in ${FormatString.fromCamelToTitleCase(
+          `Insufficient balance in ${Helpers.fromCamelToTitleCase(
             payload.account
           )} Account`
         )
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success entry', () => {
@@ -110,23 +118,30 @@ describe('users', () => {
           amount: 1000,
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${user._id}/force-fund-user`
+        const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/fund/${user._id}`
 
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe(`User has been credited successfully`)
+        expect(body.message).toBe(`User credited successfully`)
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.user[payload.account]).toBe(
           user[payload.account] + payload.amount
         )
+
+        const userCount = await userModel.count({
+          _id: user._id,
+          [UserAccount.MAIN_BALANCE]: user[payload.account] + payload.amount,
+        })
+
+        expect(userCount).toBe(1)
       })
     })
   })
@@ -140,7 +155,7 @@ describe('users', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given invalid inputs', () => {
@@ -149,8 +164,8 @@ describe('users', () => {
           username: editedUser.username,
         }
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
         const { statusCode, body } = await request
           .put(url)
           .set('Authorization', `Bearer ${token}`)
@@ -158,7 +173,7 @@ describe('users', () => {
 
         expect(body.message).toBe('"name" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given username already exist', () => {
@@ -169,17 +184,17 @@ describe('users', () => {
           country: editedUser.country,
         }
 
-        await userModel.create(userB)
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        await userModel.create(userBInput)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
         const { statusCode, body } = await request
           .put(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Username already exist')
+        expect(body.message).toBe('A user with this username already exist')
         expect(statusCode).toBe(409)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success entry', () => {
@@ -189,8 +204,8 @@ describe('users', () => {
           username: editedUser.username,
         }
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
         const { statusCode, body } = await request
           .put(url)
           .set('Authorization', `Bearer ${token}`)
@@ -198,22 +213,30 @@ describe('users', () => {
 
         expect(body.message).toBe('Profile updated successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.user.name).toBe(payload.name)
         expect(body.data.user.username).toBe(payload.username)
+
+        const userCount = await userModel.count({
+          _id: user._id,
+          name: payload.name,
+          username: payload.username,
+        })
+
+        expect(userCount).toBe(1)
       })
     })
   })
   describe('update user profile', () => {
-    // const url = `${baseUrl}/:userId/update-user-profile`
+    // const url = `${masterUrl}/update-profile/:userId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const url = `${baseUrl}/userId/update-user-profile`
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
+        const url = `${masterUrl}/update-profile/userId`
 
         const { statusCode, body } = await request
           .put(url)
@@ -222,7 +245,7 @@ describe('users', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given inputs are incorrect', () => {
@@ -231,10 +254,10 @@ describe('users', () => {
           username: editedUser.username,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/userId/update-user-profile`
+        // const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-profile/userId`
 
         const { statusCode, body } = await request
           .put(url)
@@ -243,7 +266,7 @@ describe('users', () => {
 
         expect(body.message).toBe('"name" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given user those not exist', () => {
@@ -251,13 +274,12 @@ describe('users', () => {
         const payload = {
           name: editedUser.name,
           username: editedUser.username,
-          country: editedUser.country,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/update-user-profile`
+        // const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-profile/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .put(url)
@@ -266,7 +288,7 @@ describe('users', () => {
 
         expect(body.message).toBe('User not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given username already exist', () => {
@@ -274,23 +296,22 @@ describe('users', () => {
         const payload = {
           name: editedUser.name,
           username: userB.username,
-          country: editedUser.country,
         }
 
-        await userModel.create(userB)
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${user._id}/update-user-profile`
+        await userModel.create(userBInput)
+        const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-profile/${user._id}`
 
         const { statusCode, body } = await request
           .put(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Username already exist')
+        expect(body.message).toBe('A user with this username already exist')
         expect(statusCode).toBe(409)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success entry', () => {
@@ -300,10 +321,10 @@ describe('users', () => {
           username: editedUser.username,
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${user._id}/update-user-profile`
+        const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-profile/${user._id}`
 
         const { statusCode, body } = await request
           .put(url)
@@ -312,22 +333,30 @@ describe('users', () => {
 
         expect(body.message).toBe('Profile updated successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.user.name).toBe(payload.name)
         expect(body.data.user.username).toBe(payload.username)
+
+        const userCount = await userModel.count({
+          _id: user._id,
+          name: payload.name,
+          username: payload.username,
+        })
+
+        expect(userCount).toBe(1)
       })
     })
   })
   describe('update user email', () => {
-    // const url = `${baseUrl}/:userId/update-user-email`
+    // const url = `${masterUrl}/update-email/:userId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const url = `${baseUrl}/userId/update-user-email`
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
+        const url = `${masterUrl}/update-email/userId`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -336,7 +365,7 @@ describe('users', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given inputs are incorrect', () => {
@@ -345,10 +374,10 @@ describe('users', () => {
           //   email: editedUser.email,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/userId/update-user-email`
+        // const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-email/userId`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -357,7 +386,7 @@ describe('users', () => {
 
         expect(body.message).toBe('"email" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given user those not exist', () => {
@@ -366,10 +395,10 @@ describe('users', () => {
           email: editedUser.email,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/update-user-email`
+        // const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-email/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -378,7 +407,7 @@ describe('users', () => {
 
         expect(body.message).toBe('User not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given email already exist', () => {
@@ -387,20 +416,20 @@ describe('users', () => {
           email: userB.email,
         }
 
-        await userModel.create(userB)
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${user._id}/update-user-email`
+        await userModel.create(userBInput)
+        const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-email/${user._id}`
 
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Email already exist')
+        expect(body.message).toBe('A user with this email already exist')
         expect(statusCode).toBe(409)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success entry', () => {
@@ -409,10 +438,10 @@ describe('users', () => {
           email: editedUser.email,
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${user._id}/update-user-email`
+        const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-email/${user._id}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -421,21 +450,28 @@ describe('users', () => {
 
         expect(body.message).toBe('Email updated successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.user.email).toBe(payload.email)
+
+        const userCount = await userModel.count({
+          _id: user._id,
+          email: payload.email,
+        })
+
+        expect(userCount).toBe(1)
       })
     })
   })
   describe('update user status', () => {
-    // const url = `${baseUrl}/:userId/update-user-status`
+    // const url = `${masterUrl}/update-status/:userId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const url = `${baseUrl}/userId/update-user-status`
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
+        const url = `${masterUrl}/update-status/userId`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -444,7 +480,7 @@ describe('users', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given inputs are incorrect', () => {
@@ -453,10 +489,10 @@ describe('users', () => {
           //   status: UserStatus.SUSPENDED,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/userId/update-user-status`
+        // const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-status/userId`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -465,7 +501,7 @@ describe('users', () => {
 
         expect(body.message).toBe('"status" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given user those not exist', () => {
@@ -474,10 +510,10 @@ describe('users', () => {
           status: UserStatus.SUSPENDED,
         }
 
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/update-user-status`
+        // const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-status/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -486,7 +522,7 @@ describe('users', () => {
 
         expect(body.message).toBe('User not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given user is admin', () => {
@@ -495,11 +531,11 @@ describe('users', () => {
           status: UserStatus.SUSPENDED,
         }
 
-        // const user = await userModel.create(userA)
-        const admin2 = await userModel.create(adminB)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${admin2._id}/update-user-status`
+        // const user = await userModel.create(userAInput)
+        const admin2 = await userModel.create(adminBInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-status/${admin2._id}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -508,7 +544,7 @@ describe('users', () => {
 
         expect(body.message).toBe('Users with admin role can not be suspended')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success entry', () => {
@@ -517,10 +553,10 @@ describe('users', () => {
           status: UserStatus.SUSPENDED,
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${user._id}/update-user-status`
+        const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/update-status/${user._id}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -529,21 +565,28 @@ describe('users', () => {
 
         expect(body.message).toBe('Status updated successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.user.status).toBe(payload.status)
+
+        const userCount = await userModel.count({
+          _id: user._id,
+          status: payload.status,
+        })
+
+        expect(userCount).toBe(1)
       })
     })
   })
   describe('delete user', () => {
-    // const url = `${baseUrl}/:userId/delete-user`
+    // const url = `${masterUrl}/delete/:userId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const url = `${baseUrl}/userId/delete-user`
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
+        const url = `${masterUrl}/delete/userId`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -552,15 +595,15 @@ describe('users', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given user those not exist', () => {
       it('should return a 404 error', async () => {
-        // const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}/delete-user`
+        // const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/delete/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -568,17 +611,17 @@ describe('users', () => {
 
         expect(body.message).toBe('User not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given user is an admin', () => {
       it('should return a 400 error', async () => {
-        // const user = await userModel.create(userA)
+        // const user = await userModel.create(userAInput)
 
-        const admin2 = await userModel.create(adminB)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${admin2._id}/delete-user`
+        const admin2 = await userModel.create(adminBInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/delete/${admin2._id}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -586,15 +629,15 @@ describe('users', () => {
 
         expect(body.message).toBe('Users with admin role can not be deleted')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success entry', () => {
       it('should return a 200', async () => {
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${user._id}/delete-user`
+        const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/delete/${user._id}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -602,10 +645,9 @@ describe('users', () => {
 
         expect(body.message).toBe('User deleted successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         const userCount = await userModel.count()
-
         expect(userCount).toBe(1)
       })
     })
@@ -618,30 +660,30 @@ describe('users', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success', () => {
       it('should return an array of the referred users', async () => {
         await userModel.create({
-          ...userB,
+          ...userBInput,
           referred: new Types.ObjectId().toString(),
         })
 
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const user2 = await userModel.create({
-          ...userB,
+          ...userBInput,
           referred: user._id,
         })
 
-        const token = Encryption.createToken(user)
+        const token = Cryptograph.createToken(user)
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Referred users fetched successfully')
+        expect(body.message).toBe('Users fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.users.length).toBe(1)
         expect(body.data.users[0].username).toBe(user2.username)
@@ -649,11 +691,11 @@ describe('users', () => {
     })
   })
   describe('get all referred users', () => {
-    const url = `${baseUrl}/all-referred-users`
+    const url = `${masterUrl}/referred-users`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
@@ -661,36 +703,36 @@ describe('users', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success', () => {
       it('should return an array of the referred users', async () => {
         const user2 = await userModel.create({
-          ...userB,
+          ...userBInput,
           referred: new Types.ObjectId().toString(),
         })
 
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Referred users fetched successfully')
+        expect(body.message).toBe('Users fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.users[0].username).toBe(user2.username)
       })
     })
   })
   describe('get all users', () => {
-    const url = `${baseUrl}`
+    const url = `${masterUrl}`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
@@ -698,92 +740,40 @@ describe('users', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success', () => {
       it('should return an array of the referred users', async () => {
-        const user2 = await userModel.create(userB)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const user2 = await userModel.create(userBInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Users fetched')
+        expect(body.message).toBe('Users fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.users[0].username).toBe(user2.username)
       })
     })
   })
-  describe('get one user', () => {
-    // const url = `${baseUrl}/userId`
-    describe('given logged in user is not an admin', () => {
-      it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const url = `${baseUrl}/userId`
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Unauthorized')
-        expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-      })
-    })
-    describe('given user those not exist', () => {
-      it('should return a 404 error', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/${new Types.ObjectId().toString()}`
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('User not found')
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-      })
-    })
-    describe('on success', () => {
-      it('should return an array of the referred users', async () => {
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-
-        const url = `${baseUrl}/${user._id}`
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('User fetched')
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-
-        expect(body.data.user.username).toBe(user.username)
-      })
-    })
-  })
   describe('send user email', () => {
-    // const url = `${baseUrl}/userId`
+    // const url = `${masterUrl}/send-email/userId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const url = `${baseUrl}/send-email/userId`
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
+        const url = `${masterUrl}/send-email/userId`
 
         const { statusCode, body } = await request
           .post(url)
           .set('Authorization', `Bearer ${token}`)
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
@@ -794,9 +784,9 @@ describe('users', () => {
           heading: 'heading',
         }
 
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/send-email/userId`
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/send-email/userId`
 
         const { statusCode, body } = await request
           .post(url)
@@ -805,7 +795,7 @@ describe('users', () => {
 
         expect(body.message).toBe('"content" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
@@ -817,9 +807,9 @@ describe('users', () => {
           content: 'content',
         }
 
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = `${baseUrl}/send-email/${new Types.ObjectId().toString()}`
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+        const url = `${masterUrl}/send-email/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .post(url)
@@ -828,7 +818,7 @@ describe('users', () => {
 
         expect(body.message).toBe('User not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success', () => {
@@ -839,21 +829,21 @@ describe('users', () => {
           content: 'content',
         }
 
-        const user = await userModel.create(userA)
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const user = await userModel.create(userAInput)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
-        const url = `${baseUrl}/send-email/${user._id}`
+        const url = `${masterUrl}/send-email/${user._id}`
 
         const { statusCode, body } = await request
           .post(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Email has been sent successfully')
+        expect(body.message).toBe('Email successfully sent')
 
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(sendMailMock).toHaveBeenCalledTimes(1)
 
@@ -867,7 +857,7 @@ describe('users', () => {
         expect(sendMailMock).toHaveBeenCalledWith({
           subject: payload.subject,
           to: user.email,
-          text: ParseString.clearHtml(emailContent),
+          text: Helpers.clearHtml(emailContent),
           html: emailContent,
         })
       })

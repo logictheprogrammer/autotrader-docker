@@ -334,6 +334,16 @@ describe('investment', () => {
 
           expect(body.data.investment.amount).toBe(payload.amount)
           expect(body.data.investment.account).toBe(payload.account)
+          expect(body.data.investment.environment).toBe(UserEnvironment.DEMO)
+          expect(body.data.investment.user._id).toBe(user._id.toString())
+
+          const investmentCount = await investmentModel.count({
+            _id: body.data.investment._id,
+            user: user._id,
+            plan: payload.planId,
+            environment: UserEnvironment.DEMO,
+          })
+          expect(investmentCount).toBe(1)
 
           expect(fetchPlanMock).toHaveBeenCalledTimes(1)
           expect(fetchPlanMock).toHaveBeenCalledWith({
@@ -476,6 +486,14 @@ describe('investment', () => {
 
           expect(body.data.investment._id).toBe(investment._id.toString())
           expect(body.data.investment.status).toBe(status)
+          expect(body.data.investment.user._id).toBe(user._id.toString())
+
+          const investmentCount = await investmentModel.count({
+            _id: body.data.investment._id,
+            user: user._id,
+            status: status,
+          })
+          expect(investmentCount).toBe(1)
 
           expect(fundUserMock).toHaveBeenCalledTimes(0)
 
@@ -534,6 +552,14 @@ describe('investment', () => {
           expect(body.status).toBe(StatusCode.SUCCESS)
           expect(body.data.investment._id).toBe(investment._id.toString())
           expect(body.data.investment.status).toBe(status)
+          expect(body.data.investment.user._id).toBe(user._id.toString())
+
+          const investmentCount = await investmentModel.count({
+            _id: body.data.investment._id,
+            user: user._id,
+            status: status,
+          })
+          expect(investmentCount).toBe(1)
 
           expect(fundUserMock).toHaveBeenCalledTimes(1)
           expect(fundUserMock).toHaveBeenCalledWith(
@@ -608,6 +634,14 @@ describe('investment', () => {
           expect(body.status).toBe(StatusCode.SUCCESS)
           expect(body.data.investment._id).toBe(investment._id.toString())
           expect(body.data.investment.status).toBe(status)
+          expect(body.data.investment.user._id).toBe(user._id.toString())
+
+          const investmentCount = await investmentModel.count({
+            _id: body.data.investment._id,
+            user: user._id,
+            status: status,
+          })
+          expect(investmentCount).toBe(1)
 
           expect(fundUserMock).toHaveBeenCalledTimes(1)
           expect(fundUserMock).toHaveBeenNthCalledWith(
@@ -738,6 +772,12 @@ describe('investment', () => {
         expect(body.data.investment.balance).toBe(
           payload.amount + investmentA.balance
         )
+
+        const investmentCount = await investmentModel.count({
+          _id: body.data.investment._id,
+          balance: payload.amount + investmentA.balance,
+        })
+        expect(investmentCount).toBe(1)
       })
     })
   })
@@ -816,6 +856,11 @@ describe('investment', () => {
         expect(body.message).toBe('Investment deleted successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(StatusCode.SUCCESS)
+
+        const investmentCount = await investmentModel.count({
+          _id: body.data.investment._id,
+        })
+        expect(investmentCount).toBe(0)
       })
     })
   })

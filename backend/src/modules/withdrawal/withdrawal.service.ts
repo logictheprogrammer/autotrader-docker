@@ -89,7 +89,7 @@ class WithdrawalService implements IWithdrawalService {
         UserEnvironment.LIVE
       )
 
-      return withdrawal.populate('user')
+      return (await withdrawal.populate('user')).populate('withdrawalMethod')
     } catch (err: any) {
       throw new ServiceError(
         err,

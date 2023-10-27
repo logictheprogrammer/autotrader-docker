@@ -4,7 +4,12 @@ import {
   IMailOptionObject,
   IMailOptionService,
 } from '@/modules/mailOption/mailOption.interface'
-import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
+import {
+  BadRequestError,
+  NotFoundError,
+  RequestConflictError,
+  ServiceError,
+} from '@/core/apiError'
 import { FilterQuery } from 'mongoose'
 import MailOptionModel from '@/modules/mailOption/mailOption.model'
 
@@ -27,7 +32,7 @@ export default class MailOptionService implements IMailOptionService {
       })
 
       if (mailOptionExist)
-        throw new BadRequestError('Name or Username already exist')
+        throw new RequestConflictError('Name or Username already exist')
 
       const mailOption = await this.mailOptionModel.create({
         name,

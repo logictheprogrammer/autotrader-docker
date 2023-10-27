@@ -70,7 +70,9 @@ class ReferralController implements IController {
       if (byAdmin) {
         referrals = await this.referralService.fetchAll({})
       } else {
-        referrals = await this.referralService.fetchAll({ user: req.user._id })
+        referrals = await this.referralService.fetchAll({
+          referrer: req.user._id,
+        })
       }
       return new SuccessResponse('Referrals fetched successfully', {
         referrals,
@@ -84,7 +86,7 @@ class ReferralController implements IController {
         referralEarnings = await this.referralService.earnings({})
       } else {
         referralEarnings = await this.referralService.earnings({
-          user: req.user._id,
+          referrer: req.user._id,
         })
       }
       return new SuccessResponse('Referral earnings fetched successfully', {

@@ -231,6 +231,8 @@ class TransferService implements ITransferService {
 
       transfer.status = status
 
+      await transfer.save()
+
       // Add transaction instance
       await this.transactionService.updateStatus(transfer._id, status)
 

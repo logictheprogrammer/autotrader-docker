@@ -1,7 +1,5 @@
 import { NotFoundError } from '../../../core/apiError'
 import { userService } from '../../../setup'
-import { IUser } from '../user.interface'
-import userModel from '../user.model'
 
 import {
   notFoundUser,

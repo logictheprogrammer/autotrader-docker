@@ -85,7 +85,7 @@ class UserController implements IController {
 
     // Get All Referred Users
     this.router.get(
-      `/master${this.path}/referred-users/:userId`,
+      `/master${this.path}/referred-users`,
       routePermission(UserRole.ADMIN),
       this.getReferredUsers(true)
     )
@@ -161,7 +161,10 @@ class UserController implements IController {
       const userId = req.params.userId as unknown as ObjectId
       const { account, amount } = req.body
       const user = await this.userService.fund({ _id: userId }, account, amount)
-      return new SuccessResponse('User funded successfully', { user }).send(res)
+      return new SuccessResponse(
+        `User ${amount > 0 ? 'credited' : 'debited'} successfully`,
+        { user }
+      ).send(res)
     }
   )
 
@@ -169,9 +172,7 @@ class UserController implements IController {
     asyncHandler(async (req, res): Promise<void | Response> => {
       let users
       if (byAdmin) {
-        users = await this.userService.fetchAll({
-          referred: req.params.userId,
-        })
+        users = await this.userService.fetchAll({})
       } else {
         users = await this.userService.fetchAll({ referred: req.user._id })
       }

@@ -56,6 +56,8 @@ class ReferralSettingsService implements IReferralSettingsService {
       referralSettings.investment = investment
       referralSettings.completedPackageEarnings = completedPackageEarnings
 
+      await referralSettings.save()
+
       return referralSettings
     } catch (err: any) {
       throw new ServiceError(

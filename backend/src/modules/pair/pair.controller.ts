@@ -56,13 +56,13 @@ class PairController implements IController {
 
   private create = asyncHandler(async (req, res): Promise<Response | void> => {
     const { assetType, baseAssetId, quoteAssetId } = req.body
-    const asset = await this.pairService.create(
+    const pair = await this.pairService.create(
       assetType,
       baseAssetId,
       quoteAssetId
     )
     return new SuccessCreatedResponse('Pair created successfully', {
-      asset,
+      pair,
     }).send(res)
   })
 

@@ -1,25 +1,25 @@
+import Helpers from '../../../utils/helpers'
 import { MailOptionName } from '../../../modules/mailOption/mailOption.enum'
 import renderFile from '../../../utils/renderFile'
-import ParseString from '../../../utils/parsers/parseString'
 import { request } from '../../../test'
-import Encryption from '../../../utils/encryption'
-import { HttpResponseStatus } from '../../http/http.enum'
 import { sendMailMock, setSenderMock } from '../../mail/__test__/mail.mock'
-import { adminA, userA } from '../../user/__test__/user.payload'
+import { adminAInput, userAInput } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { SiteConstants } from '../../config/config.constants'
-import { IUser } from '../../user/user.interface'
+import Cryptograph from '../../../core/cryptograph'
+import { StatusCode } from '../../../core/apiResponse'
 
 describe('send mail', () => {
   const baseUrl = '/api/send-email'
+  const masterUrl = '/api/master/send-email'
   describe('send custom mail', () => {
-    const url = `${baseUrl}`
+    const url = `${masterUrl}`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
@@ -28,7 +28,7 @@ describe('send mail', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given invalid inputs', () => {
@@ -39,8 +39,8 @@ describe('send mail', () => {
           heading: 'heading',
         }
 
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const { statusCode, body } = await request
           .post(url)
@@ -49,7 +49,7 @@ describe('send mail', () => {
 
         expect(body.message).toBe('"content" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
@@ -62,17 +62,17 @@ describe('send mail', () => {
           content: 'content',
         }
 
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const { statusCode, body } = await request
           .post(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Email has been sent successfully')
+        expect(body.message).toBe('Mail sent successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(setSenderMock).toHaveBeenCalledTimes(1)
 
@@ -89,7 +89,7 @@ describe('send mail', () => {
         expect(sendMailMock.mock.calls[0][0]).toEqual({
           subject: payload.subject,
           to: payload.email,
-          text: ParseString.clearHtml(emailContent),
+          text: Helpers.clearHtml(emailContent),
           html: emailContent,
         })
       })

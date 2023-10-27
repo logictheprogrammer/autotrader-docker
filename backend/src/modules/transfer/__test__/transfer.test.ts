@@ -1,22 +1,24 @@
-import { ITransferSettings } from '../../../modules/transferSettings/transferSettings.interface'
-import { createTransactionNotificationMock } from '../../notification/__test__/notification.mock'
+import { userBInput } from './../../user/__test__/user.payload'
+import Helpers from '../../../utils/helpers'
+import Cryptograph from '../../../core/cryptograph'
+import { createNotificationMock } from '../../notification/__test__/notification.mock'
 import {
-  createTransactionTransactionMock,
-  updateStatusTransactionTransactionMock,
+  createTransactionMock,
+  updateTransactionStatusMock,
 } from '../../transaction/__test__/transaction.mock'
 import transferModel from '../../transfer/transfer.model'
 import {
   NotificationCategory,
   NotificationForWho,
 } from '../../notification/notification.enum'
-import formatNumber from '../../../utils/formats/formatNumber'
 import { TransactionCategory } from '../../transaction/transaction.enum'
 import { TransferStatus } from '../../transfer/transfer.enum'
 import { request } from '../../../test'
 import {
-  adminA,
+  adminAInput,
   notFoundUser,
   userA,
+  userAInput,
   userAObj,
   userA_id,
   userB,
@@ -25,34 +27,23 @@ import {
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 
-import { executeTransactionManagerMock } from '../../transactionManager/__test__/transactionManager.mock'
-import {
-  transferA,
-  transferA_id,
-  transferModelReturn,
-  transferAObj,
-} from './transfer.payload'
-import {
-  createTransactionTransferMock,
-  updateStatusTransactionTransferMock,
-} from './transfer.mock'
-import { HttpResponseStatus } from '../../http/http.enum'
-import Encryption from '../../../utils/encryption'
-import { fundTransactionUserMock } from '../../user/__test__/user.mock'
+import { transferA, transferA_id, transferAObj } from './transfer.payload'
+
+import { fundUserMock } from '../../user/__test__/user.mock'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
 
-import Helpers from '../../../utils/helpers/helpers'
 import transferSettingsModel from '../../transferSettings/transferSettings.model'
 import {
   transferSettingsA,
   transferSettingsB,
 } from '../../transferSettings/__test__/transferSettings.payload'
-import { IUser } from '../../user/user.interface'
-import { ITransfer } from '../transfer.interface'
+
 import { Types } from 'mongoose'
+import { StatusCode } from '../../../core/apiResponse'
 
 describe('transfer', () => {
   const baseUrl = '/api/transfer/'
+  const masterUrl = '/api/master/transfer/'
   describe('create transfer', () => {
     const url = baseUrl + 'create'
     describe('given user is not loggedin', () => {
@@ -62,7 +53,7 @@ describe('transfer', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given payload are not valid', () => {
@@ -73,8 +64,8 @@ describe('transfer', () => {
           // amount: 1000,
         }
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
@@ -83,7 +74,7 @@ describe('transfer', () => {
 
         expect(body.message).toBe('"amount" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given the recipient was not found', () => {
@@ -96,19 +87,17 @@ describe('transfer', () => {
 
         await transferSettingsModel.create(transferSettingsA)
 
-        const user = await userModel.create({ ...userA, _id: userA_id })
-        const token = Encryption.createToken(user)
+        const user = await userModel.create({ ...userAInput, _id: userA_id })
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe(
-          `No Recipient with the username of ${notFoundUser.username} was found`
-        )
+        expect(body.message).toBe(`User not found`)
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given the user tried transferring to its own account', () => {
@@ -121,8 +110,8 @@ describe('transfer', () => {
 
         await transferSettingsModel.create(transferSettingsA)
 
-        const user = await userModel.create({ ...userA, _id: userA_id })
-        const token = Encryption.createToken(user)
+        const user = await userModel.create({ ...userAInput, _id: userA_id })
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
@@ -131,7 +120,7 @@ describe('transfer', () => {
 
         expect(body.message).toBe('You can not transfer to your own account')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given all validations passed', () => {
@@ -148,40 +137,50 @@ describe('transfer', () => {
 
           const status = TransferStatus.SUCCESSFUL
 
-          const user = await userModel.create({ ...userA, _id: userA_id })
+          const user = await userModel.create({ ...userAInput, _id: userA_id })
+          const user2 = await userModel.create({ ...userBInput, _id: userB_id })
 
           const fromUser = userAObj
           const toUser = userBObj
 
-          const token = Encryption.createToken(user)
+          const token = Cryptograph.createToken(user)
 
           const { statusCode, body } = await request
             .post(url)
             .set('Authorization', `Bearer ${token}`)
             .send(payload)
 
-          expect(body.message).toBe('Transfer has been registered successfully')
+          expect(body.message).toBe('Transfer registered successfully')
           expect(statusCode).toBe(201)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+          expect(body.status).toBe(StatusCode.SUCCESS)
+          expect(body.data.transfer.amount).toBe(payload.amount)
+          expect(body.data.transfer.account).toBe(payload.account)
+          expect(body.data.transfer.toUser.username).toBe(
+            payload.toUserUsername
+          )
+          expect(body.data.transfer.fromUser.username).toBe(user.username)
 
-          expect(createTransactionTransferMock).toHaveBeenCalledTimes(1)
+          const transferCount = await transferModel.count({
+            _id: body.data.transfer._id,
+          })
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(2)
-          expect(fundTransactionUserMock.mock.calls[0]).toEqual([
-            user._id,
+          expect(transferCount).toBe(1)
+
+          expect(fundUserMock).toHaveBeenCalledTimes(2)
+          expect(fundUserMock.mock.calls[0]).toEqual([
+            { _id: user._id },
             payload.account,
             -(payload.amount + transferSettingsA.fee),
           ])
-          expect(fundTransactionUserMock.mock.calls[1]).toEqual([
-            payload.toUserUsername,
+          expect(fundUserMock.mock.calls[1]).toEqual([
+            { _id: user2._id },
             UserAccount.MAIN_BALANCE,
             payload.amount,
-            expect.any(String),
           ])
 
-          expect(createTransactionTransactionMock).toHaveBeenCalledTimes(2)
+          expect(createTransactionMock).toHaveBeenCalledTimes(2)
 
-          expect(createTransactionTransactionMock.mock.calls[0]).toEqual([
+          expect(createTransactionMock.mock.calls[0]).toEqual([
             expect.objectContaining(fromUser),
             status,
             TransactionCategory.TRANSFER_OUT,
@@ -190,7 +189,7 @@ describe('transfer', () => {
             UserEnvironment.LIVE,
             undefined,
           ])
-          expect(createTransactionTransactionMock.mock.calls[1]).toEqual([
+          expect(createTransactionMock.mock.calls[1]).toEqual([
             expect.objectContaining(toUser),
             status,
             TransactionCategory.TRANSFER_IN,
@@ -200,9 +199,9 @@ describe('transfer', () => {
             undefined,
           ])
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(3)
-          expect(createTransactionNotificationMock.mock.calls[0]).toEqual([
-            `Your transfer of ${formatNumber.toDollar(payload.amount)} to ${
+          expect(createNotificationMock).toHaveBeenCalledTimes(3)
+          expect(createNotificationMock.mock.calls[0]).toEqual([
+            `Your transfer of ${Helpers.toDollar(payload.amount)} to ${
               payload.toUserUsername
             } was successful.`,
             NotificationCategory.TRANSFER,
@@ -213,8 +212,8 @@ describe('transfer', () => {
             fromUser,
           ])
 
-          expect(createTransactionNotificationMock.mock.calls[1]).toEqual([
-            `${fromUser.username} just sent you ${formatNumber.toDollar(
+          expect(createNotificationMock.mock.calls[1]).toEqual([
+            `${fromUser.username} just sent you ${Helpers.toDollar(
               payload.amount
             )}.`,
             NotificationCategory.TRANSFER,
@@ -225,10 +224,10 @@ describe('transfer', () => {
             toUser,
           ])
 
-          expect(createTransactionNotificationMock.mock.calls[2]).toEqual([
+          expect(createNotificationMock.mock.calls[2]).toEqual([
             `${
               fromUser.username
-            } just made a successful transfer of ${formatNumber.toDollar(
+            } just made a successful transfer of ${Helpers.toDollar(
               payload.amount
             )} to ${toUser.username}`,
             NotificationCategory.TRANSFER,
@@ -238,10 +237,6 @@ describe('transfer', () => {
             UserEnvironment.LIVE,
             undefined,
           ])
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(executeTransactionManagerMock.mock.calls[0][0].length).toBe(8)
         })
       })
       describe('given transfer approval is enabled', () => {
@@ -257,35 +252,46 @@ describe('transfer', () => {
 
           const status = TransferStatus.PENDING
 
-          await userModel.create(userB)
-          const user = await userModel.create({ ...userA, _id: userA_id })
+          await userModel.create(userBInput)
+          const user = await userModel.create({ ...userAInput, _id: userA_id })
 
           const fromUser = userAObj
           const toUser = userBObj
 
-          const token = Encryption.createToken(user)
+          const token = Cryptograph.createToken(user)
 
           const { statusCode, body } = await request
             .post(url)
             .set('Authorization', `Bearer ${token}`)
             .send(payload)
 
-          expect(body.message).toBe('Transfer has been registered successfully')
+          expect(body.message).toBe('Transfer registered successfully')
           expect(statusCode).toBe(201)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+          expect(body.status).toBe(StatusCode.SUCCESS)
 
-          expect(createTransactionTransferMock).toHaveBeenCalledTimes(1)
+          expect(body.data.transfer.amount).toBe(payload.amount)
+          expect(body.data.transfer.account).toBe(payload.account)
+          expect(body.data.transfer.toUser.username).toBe(
+            payload.toUserUsername
+          )
+          expect(body.data.transfer.fromUser.username).toBe(user.username)
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(1)
-          expect(fundTransactionUserMock.mock.calls[0]).toEqual([
-            user._id,
+          const transferCount = await transferModel.count({
+            _id: body.data.transfer._id,
+          })
+
+          expect(transferCount).toBe(1)
+
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
+          expect(fundUserMock.mock.calls[0]).toEqual([
+            { _id: user._id },
             payload.account,
             -(payload.amount + transferSettingsB.fee),
           ])
 
-          expect(createTransactionTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
 
-          expect(createTransactionTransactionMock.mock.calls[0]).toEqual([
+          expect(createTransactionMock.mock.calls[0]).toEqual([
             expect.objectContaining(fromUser),
             status,
             TransactionCategory.TRANSFER_OUT,
@@ -295,9 +301,9 @@ describe('transfer', () => {
             undefined,
           ])
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(2)
-          expect(createTransactionNotificationMock.mock.calls[0]).toEqual([
-            `Your transfer of ${formatNumber.toDollar(payload.amount)} to ${
+          expect(createNotificationMock).toHaveBeenCalledTimes(2)
+          expect(createNotificationMock.mock.calls[0]).toEqual([
+            `Your transfer of ${Helpers.toDollar(payload.amount)} to ${
               payload.toUserUsername
             } is ongoing.`,
             NotificationCategory.TRANSFER,
@@ -308,10 +314,10 @@ describe('transfer', () => {
             fromUser,
           ])
 
-          expect(createTransactionNotificationMock.mock.calls[1]).toEqual([
+          expect(createNotificationMock.mock.calls[1]).toEqual([
             `${
               fromUser.username
-            } just made a transfer request of ${formatNumber.toDollar(
+            } just made a transfer request of ${Helpers.toDollar(
               payload.amount
             )} to ${toUser.username} awaiting for your approver`,
             NotificationCategory.TRANSFER,
@@ -321,27 +327,24 @@ describe('transfer', () => {
             UserEnvironment.LIVE,
             undefined,
           ])
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(executeTransactionManagerMock.mock.calls[0][0].length).toBe(5)
         })
       })
     })
   })
 
   describe('update transfer status', () => {
-    const url = baseUrl + 'update-status'
+    // const url = masterUrl + `update-status/:transferId`
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const payload = {
-          transferId: '',
           status: '',
         }
+
+        const url = masterUrl + `update-status/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -350,38 +353,41 @@ describe('transfer', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given payload is not valid', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const payload = {
-          transferId: '',
           status: '',
         }
+
+        const url = masterUrl + `update-status/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('"transferId" is not allowed to be empty')
+        expect(body.message).toBe(
+          '"status" must be one of [successful, reversed]'
+        )
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       describe('given status was reversed', () => {
         it('should execute 3 transactions', async () => {
-          const admin = await userModel.create(adminA)
-          const user = await userModel.create({ ...userA, _id: userA_id })
+          const admin = await userModel.create(adminAInput)
+          const user = await userModel.create({ ...userAInput, _id: userA_id })
 
-          const token = Encryption.createToken(admin)
+          const token = Cryptograph.createToken(admin)
 
           const transfer = await transferModel.create({
             ...transferA,
@@ -392,9 +398,10 @@ describe('transfer', () => {
           const status = TransferStatus.REVERSED
 
           const payload = {
-            transferId: transfer._id,
             status,
           }
+
+          const url = masterUrl + `update-status/${transfer._id}`
 
           const { statusCode, body } = await request
             .patch(url)
@@ -403,63 +410,52 @@ describe('transfer', () => {
 
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-          expect(body.data).toEqual({
-            transfer: {
-              _id: transferModelReturn._id,
-              collection: transferModelReturn.collection,
-            },
+          expect(body.status).toBe(StatusCode.SUCCESS)
+          expect(body.data.transfer._id).toBe(transfer._id.toString())
+          expect(body.data.transfer.status).toBe(status)
+
+          const transferCount = await transferModel.count({
+            _id: body.data.transfer._id,
+            status: payload.status,
           })
 
-          expect(updateStatusTransactionTransferMock).toHaveBeenCalledTimes(1)
-          expect(updateStatusTransactionTransferMock).toHaveBeenCalledWith(
-            transfer._id.toString(),
-            status
-          )
+          expect(transferCount).toBe(1)
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(1)
-          expect(fundTransactionUserMock).toHaveBeenCalledWith(
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
+          expect(fundUserMock).toHaveBeenCalledWith(
             transferAObj.fromUser,
             transferAObj.account,
-            +(transferAObj.amount + transferAObj.fee),
-            undefined
+            +(transferAObj.amount + transferAObj.fee)
           )
 
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledTimes(
-            1
-          )
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledWith(
-            transferAObj._id,
+          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
+          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
+            transfer._id,
             status
           )
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
-          expect(createTransactionNotificationMock).toHaveBeenCalledWith(
-            `Your transfer of ${formatNumber.toDollar(
+          expect(createNotificationMock).toHaveBeenCalledTimes(1)
+          expect(createNotificationMock).toHaveBeenCalledWith(
+            `Your transfer of ${Helpers.toDollar(
               transferAObj.amount
             )} was ${status}`,
             NotificationCategory.TRANSFER,
-            transferAObj,
+            expect.objectContaining({
+              _id: transfer._id,
+            }),
             NotificationForWho.USER,
             TransferStatus.REVERSED,
             UserEnvironment.LIVE,
             expect.any(Object)
           )
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(
-            JSON.stringify(
-              executeTransactionManagerMock.mock.calls[0][0].length
-            )
-          ).toBe(JSON.stringify(4))
         })
       })
       describe('given status was successful', () => {
         it('should return a 200 and the transfer payload', async () => {
-          const admin = await userModel.create(adminA)
-          const token = Encryption.createToken(admin)
-          const user = await userModel.create({ ...userA, _id: userA_id })
+          const admin = await userModel.create(adminAInput)
+          const token = Cryptograph.createToken(admin)
+          const user = await userModel.create({ ...userAInput, _id: userA_id })
+          const user2 = await userModel.create({ ...userBInput, _id: userB_id })
 
           const transfer = await transferModel.create({
             ...transferA,
@@ -470,9 +466,10 @@ describe('transfer', () => {
           const status = TransferStatus.SUCCESSFUL
 
           const payload = {
-            transferId: transfer._id,
             status,
           }
+
+          const url = masterUrl + `update-status/${transfer._id}`
 
           const { statusCode, body } = await request
             .patch(url)
@@ -481,76 +478,70 @@ describe('transfer', () => {
 
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-          expect(body.data).toEqual({
-            transfer: {
-              _id: transferModelReturn._id,
-              collection: transferModelReturn.collection,
-            },
+          expect(body.status).toBe(StatusCode.SUCCESS)
+          expect(body.data.transfer._id).toBe(transfer._id.toString())
+          expect(body.data.transfer.status).toBe(payload.status)
+
+          const transferCount = await transferModel.count({
+            _id: body.data.transfer._id,
+            status: payload.status,
           })
 
-          expect(updateStatusTransactionTransferMock).toHaveBeenCalledTimes(1)
-          expect(updateStatusTransactionTransferMock).toHaveBeenCalledWith(
-            transfer._id.toString(),
-            status
-          )
+          expect(transferCount).toBe(1)
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(1)
-          expect(fundTransactionUserMock).toHaveBeenCalledWith(
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
+          expect(fundUserMock).toHaveBeenCalledWith(
             transferAObj.toUser,
             UserAccount.MAIN_BALANCE,
-            +transferAObj.amount,
-            undefined
+            +transferAObj.amount
           )
 
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledTimes(
-            1
-          )
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledWith(
-            transferAObj._id,
+          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
+          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
+            transfer._id,
             status
           )
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(2)
-          expect(createTransactionNotificationMock.mock.calls[0]).toEqual([
-            `${
-              transferAObj.fromUserObject.username
-            } just sent you ${formatNumber.toDollar(transfer.amount)}.`,
+          expect(createNotificationMock).toHaveBeenCalledTimes(2)
+          expect(createNotificationMock).toHaveBeenNthCalledWith(
+            1,
+            `${userAInput.username} just sent you ${Helpers.toDollar(
+              transfer.amount
+            )}.`,
             NotificationCategory.TRANSFER,
             expect.any(Object),
             NotificationForWho.USER,
             status,
             UserEnvironment.LIVE,
-            expect.any(Object),
-          ])
-          expect(createTransactionNotificationMock.mock.calls[1]).toEqual([
-            `Your transfer of ${formatNumber.toDollar(
+            expect.any(Object)
+          )
+          expect(createNotificationMock).toHaveBeenNthCalledWith(
+            2,
+            `Your transfer of ${Helpers.toDollar(
               transferAObj.amount
             )} was ${status}`,
             NotificationCategory.TRANSFER,
-            transferAObj,
+            expect.objectContaining({
+              _id: transfer._id,
+            }),
             NotificationForWho.USER,
             status,
             UserEnvironment.LIVE,
-            expect.any(Object),
-          ])
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(executeTransactionManagerMock.mock.calls[0][0].length).toBe(6)
+            expect.any(Object)
+          )
         })
       })
     })
   })
 
   describe('delete transfer', () => {
-    // const url = baseUrl + `delete/:transferId`
+    // const url = masterUrl + `delete/:transferId`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
-        const url = baseUrl + `delete/transferId`
+        const url = masterUrl + `delete/transferId`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -558,35 +549,35 @@ describe('transfer', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given transfer id those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
-        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
+        const url = masterUrl + `delete/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Transfer transaction not found')
+        expect(body.message).toBe('Transfer not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given transfer has not been settled', () => {
       it('should return a 400', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const transfer = await transferModel.create(transferA)
 
-        const url = baseUrl + `delete/${transfer._id}`
+        const url = masterUrl + `delete/${transfer._id}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -594,20 +585,20 @@ describe('transfer', () => {
 
         expect(body.message).toBe('Transfer has not been settled yet')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given all validations passed', () => {
       it('should return a 200 and the transfer payload', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const transfer = await transferModel.create({
           ...transferA,
           status: TransferStatus.SUCCESSFUL,
         })
 
-        const url = baseUrl + `delete/${transfer._id}`
+        const url = masterUrl + `delete/${transfer._id}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -615,18 +606,18 @@ describe('transfer', () => {
 
         expect(body.message).toBe('Transfer deleted successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
       })
     })
   })
 
   describe('get all users transfer transactions', () => {
-    const url = baseUrl + `master`
+    const url = masterUrl
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
@@ -634,22 +625,22 @@ describe('transfer', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of transfer payload', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Transfer history fetched successfully')
+        expect(body.message).toBe('Transfer fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data).toEqual({
           transfers: [],
         })
@@ -659,20 +650,20 @@ describe('transfer', () => {
         expect(transferCounts).toBe(0)
       })
       it('should return a 200 and an array of transfer payload', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
-        await userModel.create({ ...userA, _id: userA_id })
-        await userModel.create({ ...userB, _id: userB_id })
+        await userModel.create({ ...userAInput, _id: userA_id })
+        await userModel.create({ ...userBInput, _id: userB_id })
         const transfer = await transferModel.create(transferA)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Transfer history fetched successfully')
+        expect(body.message).toBe('Transfer fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.transfers.length).toBe(1)
         expect(body.data.transfers[0].account).toBe(transfer.account)
@@ -682,192 +673,16 @@ describe('transfer', () => {
           transfer.fromUser.toString()
         )
         expect(body.data.transfers[0].fromUser.username).toBe(
-          transfer.fromUserObject.username
+          userAInput.username
         )
         expect(body.data.transfers[0].toUser._id).toBe(
           transfer.toUser.toString()
         )
-        expect(body.data.transfers[0].toUser.username).toBe(
-          transfer.toUserObject.username
-        )
+        expect(body.data.transfers[0].toUser.username).toBe(userBInput.username)
 
         const transferCounts = await transferModel.count()
 
         expect(transferCounts).toBe(1)
-      })
-    })
-  })
-
-  describe('get one transfer transaction', () => {
-    // const url = baseUrl + `:transfer`
-    describe('given user is not logged in', () => {
-      it('should throw a 401 Unauthorized', async () => {
-        const url = baseUrl + 'transferId'
-        const { statusCode, body } = await request.get(url)
-
-        expect(body.message).toBe('Unauthorized')
-        expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-      })
-    })
-
-    describe('given transfer those not exist', () => {
-      it('should throw a 404 error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const url = baseUrl + new Types.ObjectId().toString()
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Transfer transaction not found')
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-      })
-    })
-
-    describe('given transfer those not belongs to logged in user', () => {
-      it('should throw a 404 error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const transfer = await transferModel.create(transferA)
-
-        const url = baseUrl + transfer._id
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Transfer transaction not found')
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-
-        const transferCounts = await transferModel.count()
-
-        expect(transferCounts).toBe(1)
-      })
-    })
-
-    describe('given all validations passed', () => {
-      describe('given from user', () => {
-        it('should return a 200 and the transfer payload', async () => {
-          const user = await userModel.create(userA)
-          const token = Encryption.createToken(user)
-          const transfer = await transferModel.create({
-            ...transferA,
-            fromUser: user._id,
-          })
-
-          const url = baseUrl + transfer._id
-
-          const { statusCode, body } = await request
-            .get(url)
-            .set('Authorization', `Bearer ${token}`)
-
-          expect(body.message).toBe('Transfer history fetched successfully')
-          expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-
-          body.data.transfer.id = transfer._id.toString()
-
-          expect(Helpers.deepClone(body.data.transfer)).toEqual(
-            Helpers.deepClone(transfer.toObject({ getters: true }))
-          )
-
-          const transferCounts = await transferModel.count()
-
-          expect(transferCounts).toBe(1)
-        })
-      })
-      describe('given to user', () => {
-        it('should return a 200 and the transfer payload', async () => {
-          const user = await userModel.create(userA)
-          const token = Encryption.createToken(user)
-          const transfer = await transferModel.create({
-            ...transferA,
-            toUser: user._id,
-          })
-
-          const url = baseUrl + transfer._id
-
-          const { statusCode, body } = await request
-            .get(url)
-            .set('Authorization', `Bearer ${token}`)
-
-          expect(body.message).toBe('Transfer history fetched successfully')
-          expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-
-          body.data.transfer.id = transfer._id.toString()
-          expect(Helpers.deepClone(body.data.transfer)).toEqual(
-            Helpers.deepClone(transfer.toObject({ getters: true }))
-          )
-
-          const transferCounts = await transferModel.count()
-
-          expect(transferCounts).toBe(1)
-        })
-      })
-    })
-  })
-
-  describe('get one user transfer transaction', () => {
-    // const url = baseUrl + `master/:transfer`
-    describe('given user is not an admin', () => {
-      it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Unauthorized')
-        expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-      })
-    })
-
-    describe('given transfer those not exist', () => {
-      it('should throw a 404 error', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Transfer transaction not found')
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-      })
-    })
-
-    describe('given all validations passed', () => {
-      it('should return a 200 and the transfer payload', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
-        const transfer = await transferModel.create(transferA)
-        const url = baseUrl + `master/${transfer._id}`
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Transfer history fetched successfully')
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-
-        body.data.transfer.id = transfer._id.toString()
-
-        expect(Helpers.deepClone(body.data)).toEqual(
-          Helpers.deepClone({
-            transfer: transfer.toObject({ getters: true }),
-          })
-        )
       })
     })
   })
@@ -880,28 +695,28 @@ describe('transfer', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and the an empty array of transfer payload', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Transfer history fetched successfully')
+        expect(body.message).toBe('Transfer fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.transfers).toEqual([])
       })
 
       it('should return a 200 and the an array of transfer payload', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
         await transferModel.create({
           ...transferA,
           fromUser: user._id,
@@ -932,10 +747,10 @@ describe('transfer', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Transfer history fetched successfully')
+        expect(body.message).toBe('Transfer fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-        expect(body.data.transfers.length).toBe(2)
+        expect(body.status).toBe(StatusCode.SUCCESS)
+        expect(body.data.transfers.length).toBe(3)
       })
     })
   })

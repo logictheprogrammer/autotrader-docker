@@ -124,7 +124,7 @@ class NotificationController implements IController {
         })
       }
 
-      return new SuccessResponse('Notifications deleted successfully', {
+      return new SuccessResponse('Notification deleted successfully', {
         notification,
       }).send(res)
     })
