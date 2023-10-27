@@ -1,5 +1,5 @@
-import EmailVerificationService from '../emailVerification.service'
+import { emailVerificationService } from '../../../setup'
 
 export const createEmailVerificationMock = jest
-  .spyOn(EmailVerificationService.prototype, 'create')
+  .spyOn(emailVerificationService, 'create')
   .mockResolvedValue('email verification link')

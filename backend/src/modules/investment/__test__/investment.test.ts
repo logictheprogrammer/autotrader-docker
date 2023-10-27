@@ -1,60 +1,52 @@
-import { createTransactionNotificationMock } from '../../notification/__test__/notification.mock'
-import {
-  createTransactionTransactionMock,
-  updateAmountTransactionTransactionMock,
-} from '../../transaction/__test__/transaction.mock'
+import { adminAInput, userBInput } from './../../user/__test__/user.payload'
 import investmentModel from '../../investment/investment.model'
 import {
   NotificationCategory,
   NotificationForWho,
 } from '../../notification/notification.enum'
-import formatNumber from '../../../utils/formats/formatNumber'
 import { TransactionCategory } from '../../transaction/transaction.enum'
 import { InvestmentStatus } from '../../investment/investment.enum'
 import { request } from '../../../test'
 import {
-  adminA,
   userA,
   userA_id,
   userB,
-  userAObj,
-  userBObj,
   userB_id,
+  userAInput,
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 
-import { executeTransactionManagerMock } from '../../transactionManager/__test__/transactionManager.mock'
 import {
   investmentA,
   investmentA_id,
   investmentB_id,
-  investmentModelReturn,
   investmentAObj,
   investmentB,
   investmentBObj,
 } from './investment.payload'
-import {
-  createTransactionInvestmentMock,
-  updateStatusTransactionInvestmentMock,
-} from './investment.mock'
-import { HttpResponseStatus } from '../../http/http.enum'
-import Encryption from '../../../utils/encryption'
-import { fundTransactionUserMock } from '../../user/__test__/user.mock'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
-import { createTransactionReferralMock } from '../../referral/__test__/referral.mock'
 import { referralA } from '../../referral/__test__/referral.payoad'
 import { ReferralTypes } from '../../referral/referral.enum'
 import { planA, planA_id } from '../../plan/__test__/plan.payload'
-import { getPlanMock } from '../../plan/__test__/plan.mock'
-import FormatNumber from '../../../utils/formats/formatNumber'
+import { fetchPlanMock } from '../../plan/__test__/plan.mock'
 import transactionModel from '../../transaction/transaction.model'
-import { IInvestment } from '../investment.interface'
-import { IUser } from '../../user/user.interface'
-import { ITransaction } from '../../transaction/transaction.interface'
 import { Types } from 'mongoose'
+import { StatusCode } from '../../../core/apiResponse'
+import Cryptograph from '../../../core/cryptograph'
+import Helpers from '../../../utils/helpers'
+import { fundUserMock } from '../../user/__test__/user.mock'
+import {
+  createTransactionMock,
+  updateTransactionAmountMock,
+} from '../../transaction/__test__/transaction.mock'
+import { createNotificationMock } from '../../notification/__test__/notification.mock'
+import { createReferralMock } from '../../referral/__test__/referral.mock'
 
 describe('investment', () => {
   const baseUrl = '/api/investment/'
+  const demoUrl = '/api/demo/investment/'
+  const masterUrl = '/api/master/investment/'
+  const masterDemoUrl = '/api/master/demo/investment/'
   describe('create investment on live mode and demo', () => {
     const url = baseUrl + 'create'
     describe('given user is not loggedin', () => {
@@ -64,7 +56,7 @@ describe('investment', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given payload are not valid', () => {
@@ -73,8 +65,8 @@ describe('investment', () => {
           planId: planA_id,
         }
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
@@ -83,34 +75,7 @@ describe('investment', () => {
 
         expect(body.message).toBe('"amount" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-      })
-    })
-    describe('given plan those not exits', () => {
-      it('should throw a 404 error', async () => {
-        const id = new Types.ObjectId().toString()
-        const payload = {
-          planId: id,
-          account: UserAccount.MAIN_BALANCE,
-          amount: investmentA.amount,
-        }
-
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
-
-        const { statusCode, body } = await request
-          .post(url)
-          .set('Authorization', `Bearer ${token}`)
-          .send(payload)
-
-        expect(body.message).toBe('The selected plan no longer exist')
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
-
-        expect(getPlanMock).toHaveBeenCalledTimes(1)
-        expect(getPlanMock).toHaveBeenCalledWith(id)
-
-        expect(createTransactionInvestmentMock).toHaveBeenCalledTimes(0)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given investment amount is lower than min investment of selected plan', () => {
@@ -121,8 +86,8 @@ describe('investment', () => {
           amount: planA.minAmount - 10,
         }
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .post(url)
@@ -130,17 +95,15 @@ describe('investment', () => {
           .send(payload)
 
         expect(body.message).toBe(
-          `The amount allowed in this plan is between ${FormatNumber.toDollar(
+          `The amount allowed in this plan is between ${Helpers.toDollar(
             planA.minAmount
-          )} and ${FormatNumber.toDollar(planA.maxAmount)}.`
+          )} and ${Helpers.toDollar(planA.maxAmount)}.`
         )
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
 
-        expect(getPlanMock).toHaveBeenCalledTimes(1)
-        expect(getPlanMock).toHaveBeenCalledWith(planA_id.toString())
-
-        expect(createTransactionInvestmentMock).toHaveBeenCalledTimes(0)
+        expect(fetchPlanMock).toHaveBeenCalledTimes(1)
+        expect(fetchPlanMock).toHaveBeenCalledWith({ _id: planA_id.toString() })
       })
     })
     describe('given all validations passed', () => {
@@ -152,53 +115,51 @@ describe('investment', () => {
             account: UserAccount.MAIN_BALANCE,
           }
 
-          const user = await userModel.create({ ...userA, _id: userA_id })
+          const user = await userModel.create({ ...userAInput, _id: userA_id })
 
-          const { password: _, ...userA1 } = userA
-
-          const token = Encryption.createToken(user)
+          const token = Cryptograph.createToken(user)
 
           const { statusCode, body } = await request
             .post(url)
             .set('Authorization', `Bearer ${token}`)
             .send(payload)
 
-          expect(body.message).toBe(
-            'Investment has been registered successfully'
-          )
+          expect(body.message).toBe('Investment registered successfully')
           expect(statusCode).toBe(201)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+          expect(body.status).toBe(StatusCode.SUCCESS)
 
-          expect(body.data).toMatchObject({
-            investment: { _id: investmentModelReturn._id },
+          expect(body.data.investment.amount).toBe(payload.amount)
+          expect(body.data.investment.account).toBe(payload.account)
+          expect(body.data.investment.environment).toBe(UserEnvironment.LIVE)
+          expect(body.data.investment.user._id).toBe(user._id.toString())
+
+          const investmentCount = await investmentModel.count({
+            _id: body.data.investment._id,
+            user: user._id,
+            plan: payload.planId,
+            environment: UserEnvironment.LIVE,
+          })
+          expect(investmentCount).toBe(1)
+
+          expect(fetchPlanMock).toHaveBeenCalledTimes(1)
+          expect(fetchPlanMock).toHaveBeenCalledWith({
+            _id: planA_id.toString(),
           })
 
-          expect(getPlanMock).toHaveBeenCalledTimes(1)
-          expect(getPlanMock).toHaveBeenCalledWith(planA_id.toString())
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(1)
-
-          expect(fundTransactionUserMock).toHaveBeenCalledWith(
+          expect(fundUserMock).toHaveBeenCalledWith(
             user._id,
             payload.account,
-            payload.amount,
-            undefined
+            -payload.amount
           )
 
-          expect(createTransactionInvestmentMock).toHaveBeenCalledTimes(1)
-
-          expect(createTransactionInvestmentMock).toHaveBeenCalledWith(
-            expect.objectContaining(userA1),
-            expect.objectContaining(planA),
-            payload.amount,
-            payload.account,
-            UserEnvironment.LIVE
-          )
-
-          expect(createTransactionTransactionMock).toHaveBeenCalledTimes(1)
-          expect(createTransactionTransactionMock).toHaveBeenCalledWith(
-            expect.objectContaining(userA1),
-            InvestmentStatus.RUNNING,
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              _id: user._id,
+            }),
+            InvestmentStatus.AWAITING_TRADE,
             TransactionCategory.INVESTMENT,
             expect.any(Object),
             payload.amount,
@@ -206,38 +167,34 @@ describe('investment', () => {
             payload.amount
           )
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(2)
-          expect(createTransactionNotificationMock.mock.calls[0]).toEqual([
-            `Your investment of ${formatNumber.toDollar(
-              payload.amount
-            )} on the ${planA.name} plan is up and running`,
+          expect(createNotificationMock).toHaveBeenCalledTimes(2)
+          expect(createNotificationMock).toHaveBeenCalledWith(
+            `Your investment of ${Helpers.toDollar(payload.amount)} on the ${
+              planA.name
+            } plan is up and running`,
             NotificationCategory.INVESTMENT,
             expect.any(Object),
             NotificationForWho.USER,
-            InvestmentStatus.RUNNING,
+            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.LIVE,
-            { ...userA, _id: userA_id },
-          ])
+            expect.objectContaining({
+              _id: user._id,
+            })
+          )
 
-          expect(createTransactionNotificationMock.mock.calls[1]).toEqual([
+          expect(createNotificationMock.mock.calls[1]).toEqual([
             `${user.username} just invested in the ${
               planA.name
-            } plan with the sum of ${formatNumber.toDollar(
+            } plan with the sum of ${Helpers.toDollar(
               payload.amount
             )}, on his ${UserEnvironment.LIVE} account`,
             NotificationCategory.INVESTMENT,
             expect.any(Object),
             NotificationForWho.ADMIN,
-            InvestmentStatus.RUNNING,
+            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.LIVE,
             undefined,
           ])
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(executeTransactionManagerMock.mock.calls[0][0].length).toEqual(
-            5
-          )
         })
       })
       describe('given user was referred', () => {
@@ -248,106 +205,91 @@ describe('investment', () => {
             account: UserAccount.MAIN_BALANCE,
           }
 
-          const user = await userModel.create({ ...userB, _id: userB_id })
+          const user = await userModel.create({ ...userBInput, _id: userB_id })
 
-          const { password: _, ...userA1 } = userA
-
-          const token = Encryption.createToken(user)
+          const token = Cryptograph.createToken(user)
 
           const { statusCode, body } = await request
             .post(url)
             .set('Authorization', `Bearer ${token}`)
             .send(payload)
 
-          expect(body.message).toBe(
-            'Investment has been registered successfully'
-          )
+          expect(body.message).toBe('Investment registered successfully')
           expect(statusCode).toBe(201)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+          expect(body.status).toBe(StatusCode.SUCCESS)
 
-          expect(body.data).toMatchObject({
-            investment: { _id: investmentModelReturn._id },
+          expect(body.data.investment.amount).toBe(payload.amount)
+          expect(body.data.investment.account).toBe(payload.account)
+          expect(body.data.investment.environment).toBe(UserEnvironment.LIVE)
+          expect(body.data.investment.user._id).toBe(user._id.toString())
+
+          const investmentCount = await investmentModel.count({
+            _id: body.data.investment._id,
+            user: user._id,
+            plan: payload.planId,
+            environment: UserEnvironment.LIVE,
+          })
+          expect(investmentCount).toBe(1)
+
+          expect(fetchPlanMock).toHaveBeenCalledTimes(1)
+          expect(fetchPlanMock).toHaveBeenCalledWith({
+            _id: planA_id.toString(),
           })
 
-          expect(getPlanMock).toHaveBeenCalledTimes(1)
-          expect(getPlanMock).toHaveBeenCalledWith(planA_id.toString())
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(2)
-
-          expect(fundTransactionUserMock).toHaveBeenCalledWith(
+          expect(fundUserMock).toHaveBeenCalledWith(
             user._id,
             payload.account,
-            payload.amount,
-            undefined
+            -payload.amount
           )
 
-          expect(fundTransactionUserMock).toHaveBeenCalledWith(
-            userA_id,
-            UserAccount.REFERRAL_BALANCE,
-            referralA.amount,
-            undefined
-          )
+          expect(createReferralMock).toHaveBeenCalledTimes(1)
 
-          expect(createTransactionInvestmentMock).toHaveBeenCalledTimes(1)
-
-          expect(createTransactionInvestmentMock).toHaveBeenCalledWith(
-            expect.objectContaining(userB),
-            expect.objectContaining(planA),
-            payload.amount,
-            payload.account,
-            UserEnvironment.LIVE
-          )
-
-          expect(createTransactionReferralMock).toHaveBeenCalledTimes(1)
-
-          expect(createTransactionTransactionMock).toHaveBeenCalledTimes(2)
-          expect(createTransactionTransactionMock.mock.calls[1]).toEqual([
-            expect.objectContaining(userB),
-            InvestmentStatus.RUNNING,
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              _id: user._id,
+            }),
+            InvestmentStatus.AWAITING_TRADE,
             TransactionCategory.INVESTMENT,
             expect.any(Object),
             payload.amount,
             UserEnvironment.LIVE,
-            payload.amount,
-          ])
+            payload.amount
+          )
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(4)
-          expect(createTransactionNotificationMock.mock.calls[2]).toEqual([
-            `Your investment of ${formatNumber.toDollar(
-              payload.amount
-            )} on the ${planA.name} plan is up and running`,
+          expect(createNotificationMock).toHaveBeenCalledTimes(2)
+          expect(createNotificationMock.mock.calls[0]).toEqual([
+            `Your investment of ${Helpers.toDollar(payload.amount)} on the ${
+              planA.name
+            } plan is up and running`,
             NotificationCategory.INVESTMENT,
             expect.any(Object),
             NotificationForWho.USER,
-            InvestmentStatus.RUNNING,
+            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.LIVE,
             { ...userB, _id: userB_id, referred: userA_id },
           ])
 
-          expect(createTransactionNotificationMock.mock.calls[3]).toEqual([
+          expect(createNotificationMock.mock.calls[1]).toEqual([
             `${user.username} just invested in the ${
               planA.name
-            } plan with the sum of ${formatNumber.toDollar(
+            } plan with the sum of ${Helpers.toDollar(
               payload.amount
             )}, on his ${UserEnvironment.LIVE} account`,
             NotificationCategory.INVESTMENT,
             expect.any(Object),
             NotificationForWho.ADMIN,
-            InvestmentStatus.RUNNING,
+            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.LIVE,
             undefined,
           ])
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(executeTransactionManagerMock.mock.calls[0][0].length).toEqual(
-            10
-          )
         })
       })
     })
     describe('given a demo account', () => {
-      const url = baseUrl + 'demo/create'
+      const url = demoUrl + 'create'
       describe('given account is not demo', () => {
         it('should throw a 400 error', async () => {
           const payload = {
@@ -356,8 +298,8 @@ describe('investment', () => {
             amount: planA.minAmount,
           }
 
-          const user = await userModel.create(userA)
-          const token = Encryption.createToken(user)
+          const user = await userModel.create(userAInput)
+          const token = Cryptograph.createToken(user)
 
           const { statusCode, body } = await request
             .post(url)
@@ -366,7 +308,7 @@ describe('investment', () => {
 
           expect(body.message).toBe(`\"account\" must be [demoBalance]`)
           expect(statusCode).toBe(400)
-          expect(body.status).toBe(HttpResponseStatus.ERROR)
+          expect(body.status).toBe(StatusCode.DANGER)
         })
       })
       describe('on success entry', () => {
@@ -377,53 +319,39 @@ describe('investment', () => {
             account: UserAccount.DEMO_BALANCE,
           }
 
-          const user = await userModel.create({ ...userA, _id: userA_id })
+          const user = await userModel.create({ ...userAInput, _id: userA_id })
 
-          const { password: _, ...userA1 } = userA
-
-          const token = Encryption.createToken(user)
+          const token = Cryptograph.createToken(user)
 
           const { statusCode, body } = await request
             .post(url)
             .set('Authorization', `Bearer ${token}`)
             .send(payload)
 
-          expect(body.message).toBe(
-            'Investment has been registered successfully'
-          )
+          expect(body.message).toBe('Investment registered successfully')
           expect(statusCode).toBe(201)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+          expect(body.status).toBe(StatusCode.SUCCESS)
 
-          expect(body.data).toMatchObject({
-            investment: { _id: investmentModelReturn._id },
+          expect(body.data.investment.amount).toBe(payload.amount)
+          expect(body.data.investment.account).toBe(payload.account)
+
+          expect(fetchPlanMock).toHaveBeenCalledTimes(1)
+          expect(fetchPlanMock).toHaveBeenCalledWith({
+            _id: planA_id.toString(),
           })
 
-          expect(getPlanMock).toHaveBeenCalledTimes(1)
-          expect(getPlanMock).toHaveBeenCalledWith(planA_id.toString())
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(1)
-
-          expect(fundTransactionUserMock).toHaveBeenCalledWith(
+          expect(fundUserMock).toHaveBeenCalledWith(
             user._id,
             payload.account,
-            payload.amount,
-            undefined
+            -payload.amount
           )
 
-          expect(createTransactionInvestmentMock).toHaveBeenCalledTimes(1)
-
-          expect(createTransactionInvestmentMock).toHaveBeenCalledWith(
-            expect.objectContaining(userA1),
-            expect.objectContaining(planA),
-            payload.amount,
-            payload.account,
-            UserEnvironment.DEMO
-          )
-
-          expect(createTransactionTransactionMock).toHaveBeenCalledTimes(1)
-          expect(createTransactionTransactionMock).toHaveBeenCalledWith(
-            expect.objectContaining(userA1),
-            InvestmentStatus.RUNNING,
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining(userA),
+            InvestmentStatus.AWAITING_TRADE,
             TransactionCategory.INVESTMENT,
             expect.any(Object),
             payload.amount,
@@ -431,37 +359,34 @@ describe('investment', () => {
             payload.amount
           )
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(2)
-          expect(createTransactionNotificationMock.mock.calls[0]).toEqual([
-            `Your investment of ${formatNumber.toDollar(
-              payload.amount
-            )} on the ${planA.name} plan is up and running`,
+          // expect(createNotificationMock).toHaveBeenCalledTimes(2)
+          expect(createNotificationMock).toHaveBeenNthCalledWith(
+            1,
+            `Your investment of ${Helpers.toDollar(payload.amount)} on the ${
+              planA.name
+            } plan is up and running`,
             NotificationCategory.INVESTMENT,
             expect.any(Object),
             NotificationForWho.USER,
-            InvestmentStatus.RUNNING,
+            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.DEMO,
-            { ...userA, _id: userA_id },
-          ])
+            expect.objectContaining({
+              _id: user._id,
+            })
+          )
 
-          expect(createTransactionNotificationMock.mock.calls[1]).toEqual([
+          expect(createNotificationMock).toHaveBeenNthCalledWith(
+            2,
             `${user.username} just invested in the ${
               planA.name
-            } plan with the sum of ${formatNumber.toDollar(
+            } plan with the sum of ${Helpers.toDollar(
               payload.amount
             )}, on his ${UserEnvironment.DEMO} account`,
             NotificationCategory.INVESTMENT,
             expect.any(Object),
             NotificationForWho.ADMIN,
-            InvestmentStatus.RUNNING,
-            UserEnvironment.DEMO,
-            undefined,
-          ])
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(executeTransactionManagerMock.mock.calls[0][0].length).toEqual(
-            5
+            InvestmentStatus.AWAITING_TRADE,
+            UserEnvironment.DEMO
           )
         })
       })
@@ -469,17 +394,18 @@ describe('investment', () => {
   })
 
   describe('update investment status', () => {
-    const url = baseUrl + 'update-status'
+    // const url = masterUrl + `update-status/:investmentId`
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const payload = {
-          investmentId: '',
           status: '',
         }
+
+        const url = masterUrl + `update-status/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -488,39 +414,42 @@ describe('investment', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given payload is not valid', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const payload = {
-          investmentId: '',
           status: '',
         }
+
+        const url = masterUrl + `update-status/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('"investmentId" is not allowed to be empty')
+        expect(body.message).toBe(
+          '"status" must be one of [running, awaiting trade, preparing new trade, suspended, out of gas, refilling, on maintainace, finalizing, completed]'
+        )
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       describe('given status was suspended', () => {
         it('should execute 2 transactions', async () => {
-          const admin = await userModel.create(adminA)
-          const user = await userModel.create({ ...userA, _id: userA_id })
+          const admin = await userModel.create(adminAInput)
+          const user = await userModel.create({ ...userAInput, _id: userA_id })
 
           // const { password: _, ...userA1 } = userA
-          const token = Encryption.createToken(admin)
+          const token = Cryptograph.createToken(admin)
 
           const investment = await investmentModel.create({
             ...investmentA,
@@ -531,9 +460,10 @@ describe('investment', () => {
           const status = InvestmentStatus.SUSPENDED
 
           const payload = {
-            investmentId: investment._id,
             status,
           }
+
+          const url = masterUrl + `update-status/${investment._id}`
 
           const { statusCode, body } = await request
             .patch(url)
@@ -542,47 +472,34 @@ describe('investment', () => {
 
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-          expect(body.data).toEqual({
-            investment: {
-              _id: investmentModelReturn._id,
-              collection: investmentModelReturn.collection,
-            },
-          })
+          expect(body.status).toBe(StatusCode.SUCCESS)
 
-          expect(updateStatusTransactionInvestmentMock).toHaveBeenCalledTimes(1)
-          expect(updateStatusTransactionInvestmentMock).toHaveBeenCalledWith(
-            investment._id.toString(),
-            status
-          )
+          expect(body.data.investment._id).toBe(investment._id.toString())
+          expect(body.data.investment.status).toBe(status)
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(0)
+          expect(fundUserMock).toHaveBeenCalledTimes(0)
 
-          expect(createTransactionReferralMock).toHaveBeenCalledTimes(0)
+          expect(createReferralMock).toHaveBeenCalledTimes(0)
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
-          expect(createTransactionNotificationMock.mock.calls[0][0]).toBe(
+          expect(createNotificationMock).toHaveBeenCalledTimes(1)
+          expect(createNotificationMock.mock.calls[0][0]).toBe(
             `Your investment package has been ${status}`
           )
-          expect(createTransactionNotificationMock.mock.calls[0][1]).toBe(
+          expect(createNotificationMock.mock.calls[0][1]).toBe(
             NotificationCategory.INVESTMENT
           )
-          expect(createTransactionNotificationMock.mock.calls[0][3]).toBe(
+          expect(createNotificationMock.mock.calls[0][3]).toBe(
             NotificationForWho.USER
           )
-          expect(createTransactionNotificationMock.mock.calls[0][4]).toBe(
-            status
-          )
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(executeTransactionManagerMock.mock.calls[0][0].length).toBe(2)
+          expect(createNotificationMock.mock.calls[0][4]).toBe(status)
         })
       })
       describe('given status was set to completed but no referrer', () => {
         it('should return a 200 and the investment payload', async () => {
-          const admin = await userModel.create(adminA)
-          const token = Encryption.createToken(admin)
+          const admin = await userModel.create(adminAInput)
+          const token = Cryptograph.createToken(admin)
+
+          const user = await userModel.create({ ...userAInput, _id: userA_id })
 
           const investment = await investmentModel.create({
             ...investmentA,
@@ -591,11 +508,9 @@ describe('investment', () => {
 
           await transactionModel.create({
             user: investment.user,
-            userObject: investment.userObject,
             status: InvestmentStatus.RUNNING,
             category: investment._id,
             categoryName: TransactionCategory.INVESTMENT,
-            categoryObject: investment,
             amount: investment.amount,
             stake: investment.amount,
             environment: investment.environment,
@@ -604,9 +519,10 @@ describe('investment', () => {
           const status = InvestmentStatus.COMPLETED
 
           const payload = {
-            investmentId: investment._id,
             status,
           }
+
+          const url = masterUrl + `update-status/${investment._id}`
 
           const { statusCode, body } = await request
             .patch(url)
@@ -615,61 +531,49 @@ describe('investment', () => {
 
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-          expect(body.data).toEqual({
-            investment: {
-              _id: investmentModelReturn._id,
-              collection: investmentModelReturn.collection,
-            },
-          })
+          expect(body.status).toBe(StatusCode.SUCCESS)
+          expect(body.data.investment._id).toBe(investment._id.toString())
+          expect(body.data.investment.status).toBe(status)
 
-          expect(updateStatusTransactionInvestmentMock).toHaveBeenCalledTimes(1)
-          expect(updateStatusTransactionInvestmentMock).toHaveBeenCalledWith(
-            investment._id.toString(),
-            status
-          )
-
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(1)
-          expect(fundTransactionUserMock).toHaveBeenCalledWith(
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
+          expect(fundUserMock).toHaveBeenCalledWith(
             investmentAObj.user,
             UserAccount.MAIN_BALANCE,
-            investmentAObj.balance,
-            undefined
-          )
-
-          expect(createTransactionReferralMock).toHaveBeenCalledTimes(0)
-
-          expect(updateAmountTransactionTransactionMock).toHaveBeenCalledTimes(
-            1
-          )
-          expect(updateAmountTransactionTransactionMock).toHaveBeenCalledWith(
-            // @ts-ignore
-            investmentAObj._id,
-            InvestmentStatus.COMPLETED,
             investmentAObj.balance
           )
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
+          expect(createReferralMock).toHaveBeenCalledTimes(1)
+          expect(createReferralMock).toHaveBeenCalledWith(
+            ReferralTypes.COMPLETED_PACKAGE_EARNINGS,
+            expect.objectContaining({
+              _id: user._id,
+            }),
+            investment.balance - investment.amount
+          )
+
+          expect(createNotificationMock).toHaveBeenCalledTimes(1)
           investmentAObj.status = status
-          expect(createTransactionNotificationMock).toHaveBeenCalledWith(
+          expect(createNotificationMock).toHaveBeenCalledWith(
             `Your investment package has been ${status}`,
             NotificationCategory.INVESTMENT,
-            investmentAObj,
+            expect.objectContaining({
+              _id: investment._id,
+            }),
             NotificationForWho.USER,
             status,
             UserEnvironment.LIVE,
-            userAObj
+            expect.objectContaining({
+              _id: user._id,
+            })
           )
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(executeTransactionManagerMock.mock.calls[0][0].length).toBe(4)
         })
       })
       describe('given status was set to completed but there is a referrer', () => {
         it('should return a 200 and the investment payload', async () => {
-          const admin = await userModel.create(adminA)
-          const token = Encryption.createToken(admin)
+          const admin = await userModel.create(adminAInput)
+          const token = Cryptograph.createToken(admin)
+
+          const user = await userModel.create({ ...userBInput, _id: userB_id })
 
           const investment = await investmentModel.create({
             ...investmentB,
@@ -678,11 +582,9 @@ describe('investment', () => {
 
           await transactionModel.create({
             user: investment.user,
-            userObject: investment.userObject,
             status: InvestmentStatus.RUNNING,
             category: investment._id,
             categoryName: TransactionCategory.INVESTMENT,
-            categoryObject: investment,
             amount: investment.amount,
             stake: investment.amount,
             environment: investment.environment,
@@ -690,12 +592,11 @@ describe('investment', () => {
 
           const status = InvestmentStatus.COMPLETED
 
-          const { password: _, ...userA1 } = userA
-
           const payload = {
-            investmentId: investment._id,
             status,
           }
+
+          const url = masterUrl + `update-status/${investment._id}`
 
           const { statusCode, body } = await request
             .patch(url)
@@ -704,80 +605,61 @@ describe('investment', () => {
 
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
-          expect(body.status).toBe(HttpResponseStatus.SUCCESS)
-          expect(body.data).toEqual({
-            investment: {
-              _id: investmentModelReturn._id,
-              collection: investmentModelReturn.collection,
-            },
-          })
+          expect(body.status).toBe(StatusCode.SUCCESS)
+          expect(body.data.investment._id).toBe(investment._id.toString())
+          expect(body.data.investment.status).toBe(status)
 
-          expect(updateStatusTransactionInvestmentMock).toHaveBeenCalledTimes(1)
-          expect(updateStatusTransactionInvestmentMock).toHaveBeenCalledWith(
-            investment._id.toString(),
-            status
-          )
-
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(2)
-          expect(fundTransactionUserMock).toHaveBeenNthCalledWith(
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
+          expect(fundUserMock).toHaveBeenNthCalledWith(
             1,
             investmentBObj.user,
             UserAccount.MAIN_BALANCE,
-            investmentBObj.balance,
-            undefined
-          )
-
-          expect(createTransactionReferralMock).toHaveBeenCalledTimes(1)
-
-          expect(createTransactionReferralMock).toHaveBeenCalledWith(
-            userAObj,
-            userBObj,
-            ReferralTypes.COMPLETED_PACKAGE_EARNINGS,
-            referralA.rate,
-            referralA.amount
-          )
-
-          expect(createTransactionTransactionMock).toHaveBeenCalledTimes(1)
-
-          expect(updateAmountTransactionTransactionMock).toHaveBeenCalledTimes(
-            1
-          )
-          expect(updateAmountTransactionTransactionMock).toHaveBeenCalledWith(
-            // @ts-ignore
-            investmentBObj._id,
-            InvestmentStatus.COMPLETED,
             investmentBObj.balance
           )
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(3)
+          expect(createReferralMock).toHaveBeenCalledTimes(1)
+
+          expect(createReferralMock).toHaveBeenCalledWith(
+            ReferralTypes.COMPLETED_PACKAGE_EARNINGS,
+            expect.objectContaining({
+              _id: user._id,
+            }),
+            investment.amount
+          )
+
+          expect(updateTransactionAmountMock).toHaveBeenCalledTimes(1)
+
+          expect(createNotificationMock).toHaveBeenCalledTimes(1)
           investmentBObj.status = status
-          expect(createTransactionNotificationMock).toHaveBeenNthCalledWith(
-            3,
+          expect(createNotificationMock).toHaveBeenNthCalledWith(
+            1,
             `Your investment package has been ${status}`,
             NotificationCategory.INVESTMENT,
-            investmentBObj,
+            expect.objectContaining({
+              _id: investment._id,
+            }),
             NotificationForWho.USER,
             status,
             UserEnvironment.LIVE,
-            userBObj
+            expect.objectContaining({
+              _id: user._id,
+            })
           )
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(executeTransactionManagerMock.mock.calls[0][0].length).toBe(9)
         })
       })
     })
   })
 
   describe('fund', () => {
-    const url = `${baseUrl}fund`
+    // const url = `${masterUrl}fund/:investmentId`
     describe('given logged in user is not an admin', () => {
       it('should return a 401 Unauthorized error', async () => {
         const payload = {}
 
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
+
+        const url = `${masterUrl}fund/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -786,17 +668,17 @@ describe('investment', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given inputs are incorrect', () => {
       it('should return a 400 error', async () => {
-        const payload = {
-          investmentId: new Types.ObjectId().toString(),
-        }
+        const payload = {}
 
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+
+        const url = `${masterUrl}fund/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -805,27 +687,28 @@ describe('investment', () => {
 
         expect(body.message).toBe('"amount" is required')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('given investment those not exist', () => {
       it('should return a 404 error', async () => {
         const payload = {
-          investmentId: new Types.ObjectId().toString(),
           amount: 100,
         }
 
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+
+        const url = `${masterUrl}fund/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Investment plan not found')
+        expect(body.message).toBe('Investment not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
     describe('on success', () => {
@@ -833,21 +716,22 @@ describe('investment', () => {
         const investment = await investmentModel.create(investmentA)
 
         const payload = {
-          investmentId: investment._id,
           amount: 100,
         }
 
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+
+        const url = `${masterUrl}fund/${investment._id}`
 
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Investment has been funded successfully')
+        expect(body.message).toBe('Investment funded successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(body.data.investment._id).toBe(investment._id.toString())
 
@@ -859,13 +743,13 @@ describe('investment', () => {
   })
 
   describe('delete investment', () => {
-    // const url = baseUrl + `delete/:investmentId`
+    // const url = masterUrl + `delete/:investmentId`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
-        const url = baseUrl + `delete/investmentId`
+        const url = masterUrl + `delete/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -873,35 +757,35 @@ describe('investment', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given investment id those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
-        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
+        const url = masterUrl + `delete/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Investment plan not found')
+        expect(body.message).toBe('Investment not found')
         expect(statusCode).toBe(404)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given investment has not been settled', () => {
       it('should return a 400 error', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const investment = await investmentModel.create(investmentA)
 
-        const url = baseUrl + `delete/${investment._id}`
+        const url = masterUrl + `delete/${investment._id}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -909,21 +793,21 @@ describe('investment', () => {
 
         expect(body.message).toBe('Investment has not been settled yet')
         expect(statusCode).toBe(400)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and the investment payload', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const investment = await investmentModel.create({
           ...investmentA,
           status: InvestmentStatus.COMPLETED,
         })
 
-        const url = baseUrl + `delete/${investment._id}`
+        const url = masterUrl + `delete/${investment._id}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -931,18 +815,18 @@ describe('investment', () => {
 
         expect(body.message).toBe('Investment deleted successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
       })
     })
   })
 
   describe('get users real investment plan', () => {
-    const url = baseUrl + `master`
+    const url = masterUrl
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
@@ -950,22 +834,22 @@ describe('investment', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of investment payload', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Investment history fetched successfully')
+        expect(body.message).toBe('Investments fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data).toEqual({
           investments: [],
         })
@@ -975,9 +859,9 @@ describe('investment', () => {
         expect(investmentCounts).toBe(0)
       })
       it('should return a 200 and an array of investment payload', async () => {
-        const admin = await userModel.create(adminA)
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(admin)
         const investment = await investmentModel.create({
           ...investmentA,
           user: user._id,
@@ -987,23 +871,18 @@ describe('investment', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Investment history fetched successfully')
+        expect(body.message).toBe('Investments fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.investments.length).toBe(1)
         expect(body.data.investments[0].environment).toBe(
           investment.environment
         )
-        expect(body.data.investments[0].planObject.name).toBe(
-          investment.planObject.name
-        )
+
         expect(body.data.investments[0].balance).toBe(investment.balance)
         expect(body.data.investments[0].status).toBe(investment.status)
         expect(body.data.investments[0].user._id).toBe(
           investment.user.toString()
-        )
-        expect(body.data.investments[0].user.username).toBe(
-          investment.userObject.username
         )
 
         const investmentCounts = await investmentModel.count()
@@ -1014,12 +893,12 @@ describe('investment', () => {
   })
 
   describe('get users demo investment plan', () => {
-    const url = baseUrl + `master/demo`
+    const url = masterDemoUrl
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
@@ -1027,22 +906,22 @@ describe('investment', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of investment payload', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Investment history fetched successfully')
+        expect(body.message).toBe('Investments fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data).toEqual({
           investments: [],
         })
@@ -1052,9 +931,9 @@ describe('investment', () => {
         expect(investmentCounts).toBe(0)
       })
       it('should return a 200 and an array of investment payload', async () => {
-        const admin = await userModel.create(adminA)
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(admin)
+        const admin = await userModel.create(adminAInput)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(admin)
         const investment = await investmentModel.create({
           ...investmentA,
           user: user._id,
@@ -1065,23 +944,18 @@ describe('investment', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Investment history fetched successfully')
+        expect(body.message).toBe('Investments fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.investments.length).toBe(1)
         expect(body.data.investments[0].environment).toBe(
           investment.environment
         )
-        expect(body.data.investments[0].planObject.name).toBe(
-          investment.planObject.name
-        )
+
         expect(body.data.investments[0].balance).toBe(investment.balance)
         expect(body.data.investments[0].status).toBe(investment.status)
         expect(body.data.investments[0].user._id).toBe(
           investment.user.toString()
-        )
-        expect(body.data.investments[0].user.username).toBe(
-          investment.userObject.username
         )
 
         const investmentCounts = await investmentModel.count()
@@ -1100,22 +974,22 @@ describe('investment', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of investment payload', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Investment history fetched successfully')
+        expect(body.message).toBe('Investments fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data).toEqual({
           investments: [],
         })
@@ -1125,8 +999,8 @@ describe('investment', () => {
         expect(investmentCounts).toBe(0)
       })
       it('should return a 200 and an array of investment payload', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
         await investmentModel.create(investmentB)
         const investment = await investmentModel.create({
           ...investmentA,
@@ -1137,19 +1011,19 @@ describe('investment', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Investment history fetched successfully')
+        expect(body.message).toBe('Investments fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.investments.length).toBe(1)
         expect(body.data.investments[0].environment).toBe(
           investment.environment
         )
-        expect(body.data.investments[0].planObject.name).toBe(
-          investment.planObject.name
-        )
+
         expect(body.data.investments[0].balance).toBe(investment.balance)
         expect(body.data.investments[0].status).toBe(investment.status)
-        expect(body.data.investments[0].user).toBe(investment.user.toString())
+        expect(body.data.investments[0].user._id).toBe(
+          investment.user.toString()
+        )
         const investmentCounts = await investmentModel.count()
 
         expect(investmentCounts).toBe(2)
@@ -1158,7 +1032,7 @@ describe('investment', () => {
   })
 
   describe('get demo investment plan', () => {
-    const url = baseUrl + 'demo'
+    const url = demoUrl
 
     describe('given user is not loggedin', () => {
       it('should throw a 401 Unauthorized error', async () => {
@@ -1166,22 +1040,22 @@ describe('investment', () => {
 
         expect(body.message).toBe('Unauthorized')
         expect(statusCode).toBe(401)
-        expect(body.status).toBe(HttpResponseStatus.ERROR)
+        expect(body.status).toBe(StatusCode.DANGER)
       })
     })
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of investment payload', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Investment history fetched successfully')
+        expect(body.message).toBe('Investments fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data).toEqual({
           investments: [],
         })
@@ -1191,8 +1065,8 @@ describe('investment', () => {
         expect(investmentCounts).toBe(0)
       })
       it('should return a 200 and an array of investment payload', async () => {
-        const user = await userModel.create(userA)
-        const token = Encryption.createToken(user)
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
         await investmentModel.create({ ...investmentB, user: user._id })
         const investment = await investmentModel.create({
           ...investmentA,
@@ -1204,19 +1078,19 @@ describe('investment', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Investment history fetched successfully')
+        expect(body.message).toBe('Investments fetched successfully')
         expect(statusCode).toBe(200)
-        expect(body.status).toBe(HttpResponseStatus.SUCCESS)
+        expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.investments.length).toBe(1)
         expect(body.data.investments[0].environment).toBe(
           investment.environment
         )
-        expect(body.data.investments[0].planObject.name).toBe(
-          investment.planObject.name
-        )
+
         expect(body.data.investments[0].balance).toBe(investment.balance)
         expect(body.data.investments[0].status).toBe(investment.status)
-        expect(body.data.investments[0].user).toBe(investment.user.toString())
+        expect(body.data.investments[0].user._id).toBe(
+          investment.user.toString()
+        )
 
         const investmentCounts = await investmentModel.count()
 

@@ -1,4 +1,4 @@
-import PairService from '../../pair/pair.service'
+import { pairService } from '../../../setup'
 import {
   pairA,
   pairA_id,
@@ -9,7 +9,7 @@ import {
 } from './pair.payload'
 
 export const fetchPairMock = jest
-  .spyOn(PairService.prototype, 'fetch')
+  .spyOn(pairService, 'fetch')
   // @ts-ignore
   .mockImplementation(({ _id: pairId }) => {
     if (pairId.toString() === pairA_id.toString()) {

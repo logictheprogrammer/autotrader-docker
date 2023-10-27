@@ -1,13 +1,12 @@
-import ReferralService from '../../../modules/referral/referral.service'
-import { IReferralObject } from '../referral.interface'
+import { referralService } from '../../../setup'
 import { referralA, referralAObj } from './referral.payoad'
 
 export const createReferralMock = jest
-  .spyOn(ReferralService.prototype, 'create')
+  .spyOn(referralService, 'create')
   .mockResolvedValue(referralAObj)
 
 export const calcAmountEarnReferralMock = jest
-  .spyOn(ReferralService.prototype, '_calcAmountEarn')
+  .spyOn(referralService, '_calcAmountEarn')
   .mockResolvedValue({
     earn: referralA.amount,
     rate: referralA.rate,

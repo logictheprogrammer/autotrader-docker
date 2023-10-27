@@ -1,5 +1,5 @@
-import resetPasswordService from '../resetPassword.service'
+import { resetPasswordService } from '../../../setup'
 
 export const createResetPasswordMock = jest
-  .spyOn(resetPasswordService.prototype, 'create')
+  .spyOn(resetPasswordService, 'create')
   .mockResolvedValue('password reset link')

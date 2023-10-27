@@ -1,9 +1,9 @@
-import MailService from '../../../modules/mail/mail.service'
+import { mailService } from '../../../setup'
 
 export const sendMailMock = jest
-  .spyOn(MailService.prototype, 'sendMail')
+  .spyOn(mailService, 'sendMail')
   .mockImplementation()
 
 export const setSenderMock = jest
-  .spyOn(MailService.prototype, 'setSender')
+  .spyOn(mailService, 'setSender')
   .mockImplementation()

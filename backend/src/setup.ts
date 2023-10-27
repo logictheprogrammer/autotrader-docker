@@ -75,9 +75,9 @@ import TradeService from '@/modules/trade/trade.service'
 import TradeController from '@/modules/trade/trade.controller'
 import { IForecastService } from '@/modules/forecast/forecast.interface'
 import ForecastService from '@/modules/forecast/forecast.service'
-import MathUtility from './modules/math/math.utility'
-import ForecastController from './modules/forecast/forecast.controller'
-import { IController } from './core/utils'
+import MathUtility from '@/modules/math/math.utility'
+import ForecastController from '@/modules/forecast/forecast.controller'
+import { IController } from '@/core/utils'
 
 export const mathUtility = Container.get<IMathUtility>(MathUtility)
 Container.set<IMathUtility>(ServiceToken.MATH_UTILITY, mathUtility)

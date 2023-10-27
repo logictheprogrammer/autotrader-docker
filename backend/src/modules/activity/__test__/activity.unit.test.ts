@@ -19,7 +19,7 @@ describe('activity', () => {
         message
       )
 
-      expect(result.user).toEqual(user)
+      expect(result.user._id).toEqual(user._id)
       expect(result.category).toEqual(ActivityCategory.PROFILE)
       expect(result.forWho).toEqual(ActivityForWho.USER)
       expect(result.message).toEqual(message)

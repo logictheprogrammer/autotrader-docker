@@ -1,4 +1,4 @@
-import AssetService from '../../../modules/asset/asset.service'
+import { assetService } from '../../../setup'
 import {
   assetA,
   assetA_id,
@@ -9,7 +9,7 @@ import {
 } from './asset.payload'
 
 export const fetchAssetMock = jest
-  .spyOn(AssetService.prototype, 'fetch')
+  .spyOn(assetService, 'fetch')
   // @ts-ignore
   .mockImplementation(({ _id, type }) => {
     if (_id.toString() === assetA_id.toString()) {

@@ -1,5 +1,5 @@
+import { notificationService } from '../../../setup'
 import { INotificationObject } from '../notification.interface'
-import NotificationService from '../notification.service'
 import { notificationA, notificationA_id } from './notification.payload'
 
 // @ts-ignore
@@ -10,5 +10,5 @@ const notificationObj: INotificationObject = {
 }
 
 export const createNotificationMock = jest
-  .spyOn(NotificationService.prototype, 'create')
+  .spyOn(notificationService, 'create')
   .mockResolvedValue(notificationObj)

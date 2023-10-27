@@ -89,7 +89,9 @@ class DepositService implements IDepositService {
         UserEnvironment.LIVE
       )
 
-      return deposit
+      return (
+        await (await deposit.populate('user')).populate('depositMethod')
+      ).populate('currency')
     } catch (err: any) {
       throw new ServiceError(
         err,
@@ -100,10 +102,7 @@ class DepositService implements IDepositService {
 
   public async delete(filter: FilterQuery<IDeposit>): Promise<IDepositObject> {
     try {
-      const deposit = await this.depositModel
-        .findOne(filter)
-        .populate('user')
-        .populate('depositMethod')
+      const deposit = await this.depositModel.findOne(filter)
 
       if (!deposit) throw new NotFoundError('Deposit not found')
 
@@ -145,7 +144,7 @@ class DepositService implements IDepositService {
       let user: IUserObject
       if (status === DepositStatus.APPROVED) {
         user = await this.userService.fund(
-          deposit.user._id,
+          { _id: deposit.user._id },
           UserAccount.MAIN_BALANCE,
           deposit.amount - deposit.fee
         )

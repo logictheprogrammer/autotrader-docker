@@ -1,5 +1,5 @@
 import { NotFoundError } from '../../../core/apiError'
-import UserService from '../../../modules/user/user.service'
+import { userService } from '../../../setup'
 import { IUser } from '../user.interface'
 import userModel from '../user.model'
 
@@ -12,7 +12,8 @@ import {
 } from './user.payload'
 
 export const fundUserMock = jest
-  .spyOn(UserService.prototype, 'fund')
+  .spyOn(userService, 'fund')
+  // @ts-ignore
   .mockImplementation(({ _id: userId, username }) => {
     if (
       userId.toString() === userA_id.toString() ||

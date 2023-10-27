@@ -1,4 +1,4 @@
-import PlanService from '../../../modules/plan/plan.service'
+import { planService } from '../../../setup'
 import {
   planA,
   planA_id,
@@ -9,7 +9,7 @@ import {
 } from './plan.payload'
 
 export const fetchPlanMock = jest
-  .spyOn(PlanService.prototype, 'fetch')
+  .spyOn(planService, 'fetch')
   // @ts-ignore
   .mockImplementation(({ _id: key }) => {
     if (key.toString() === planA_id.toString()) {

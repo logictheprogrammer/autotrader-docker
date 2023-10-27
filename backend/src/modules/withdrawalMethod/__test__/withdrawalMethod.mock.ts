@@ -1,4 +1,4 @@
-import WithdrawalMethodService from '../../../modules/withdrawalMethod/withdrawalMethod.service'
+import { withdrawalMethodService } from '../../../setup'
 import {
   withdrawalMethodA,
   withdrawalMethodA_id,
@@ -9,7 +9,7 @@ import {
 } from './withdrawalMethod.payload'
 
 export const fetchWithdrawalMethodMock = jest
-  .spyOn(WithdrawalMethodService.prototype, 'fetch')
+  .spyOn(withdrawalMethodService, 'fetch')
   // @ts-ignore
   .mockImplementation(({ _id: key }) => {
     if (key.toString() === withdrawalMethodA_id.toString()) {

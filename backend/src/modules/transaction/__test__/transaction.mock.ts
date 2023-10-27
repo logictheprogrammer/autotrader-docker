@@ -1,4 +1,4 @@
-import TransactionService from '../transaction.service'
+import { transactionService } from '../../../setup'
 import { transactionA, transactionA_id } from './transaction.payload'
 
 // @ts-ignore
@@ -8,14 +8,14 @@ const transactionObj: INotificationObj = {
   _id: transactionA_id,
 }
 
-export const createTransactionTransactionMock = jest
-  .spyOn(TransactionService.prototype, 'create')
+export const createTransactionMock = jest
+  .spyOn(transactionService, 'create')
   .mockResolvedValue(transactionObj)
 
-export const updateStatusTransactionTransactionMock = jest
-  .spyOn(TransactionService.prototype, 'updateStatus')
+export const updateTransactionStatusMock = jest
+  .spyOn(transactionService, 'updateStatus')
   .mockResolvedValue(transactionObj)
 
-export const updateAmountTransactionTransactionMock = jest
-  .spyOn(TransactionService.prototype, 'updateAmount')
+export const updateTransactionAmountMock = jest
+  .spyOn(transactionService, 'updateAmount')
   .mockResolvedValue(transactionObj)

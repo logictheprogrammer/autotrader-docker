@@ -1,5 +1,5 @@
 import { NotFoundError } from '../../../core/apiError'
-import DepositMethodService from '../../../modules/depositMethod/depositMethod.service'
+import { depositMethodService } from '../../../setup'
 import {
   depositMethodA,
   depositMethodA_id,
@@ -10,7 +10,7 @@ import {
 } from './depositMethod.payload'
 
 export const fetchDepositMethodMock = jest
-  .spyOn(DepositMethodService.prototype, 'fetch')
+  .spyOn(depositMethodService, 'fetch')
   // @ts-ignore
   .mockImplementation(({ _id: key }) => {
     if (key.toString() === depositMethodA_id.toString()) {

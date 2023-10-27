@@ -1,5 +1,5 @@
+import { currencyService } from '../../../setup'
 import { NotFoundError } from './../../../core/apiError'
-import CurrencyService from '../../../modules/currency/currency.service'
 import {
   currencyA,
   currencyA_id,
@@ -10,7 +10,7 @@ import {
 } from './currency.payload'
 
 export const fetchCurrencyMock = jest
-  .spyOn(CurrencyService.prototype, 'fetch')
+  .spyOn(currencyService, 'fetch')
   // @ts-ignore
   .mockImplementation(({ _id: key }) => {
     if (key.toString() === currencyA_id.toString()) {

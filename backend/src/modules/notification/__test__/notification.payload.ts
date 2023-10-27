@@ -19,15 +19,3 @@ export const notificationA = {
   status: DepositStatus.APPROVED,
   environment: UserEnvironment.LIVE,
 }
-
-export const notificationInstance = {
-  model: notificationModelReturn,
-  onFailed: 'delete notification',
-  async callback() {},
-}
-
-export const notificationInstanceFailedSave = {
-  model: notificationModelReturnFailed,
-  onFailed: 'delete notification',
-  async callback() {},
-}

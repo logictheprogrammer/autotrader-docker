@@ -92,7 +92,7 @@ class DepositController implements IController {
         { _id: depositId as unknown as ObjectId },
         status
       )
-      return new SuccessResponse('deposit status upated successfully', {
+      return new SuccessResponse('Status updated successfully', {
         deposit,
       }).send(res)
     }

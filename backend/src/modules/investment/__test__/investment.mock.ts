@@ -1,5 +1,5 @@
 import { NotFoundError } from '../../../core/apiError'
-import InvestmentService from '../investment.service'
+import { investmentService } from '../../../setup'
 import {
   investmentAObj,
   investmentA_id,
@@ -11,7 +11,7 @@ import {
 } from './investment.payload'
 
 export const fetchInvestmentMock = jest
-  .spyOn(InvestmentService.prototype, 'fetch')
+  .spyOn(investmentService, 'fetch')
   // @ts-ignore
   .mockImplementation(({ _id: key }) => {
     if (key.toString() === investmentA_id.toString()) {
@@ -41,5 +41,5 @@ export const fetchInvestmentMock = jest
   })
 
 export const fundInvestmentMock = jest
-  .spyOn(InvestmentService.prototype, 'fund')
+  .spyOn(investmentService, 'fund')
   .mockResolvedValue(investmentAObj)

@@ -1,5 +1,5 @@
-import ActivityService from '../activity.service'
+import { activityService } from '../../../setup'
 
 export const setActivityMock = jest
-  .spyOn(ActivityService.prototype, 'create')
+  .spyOn(activityService, 'create')
   .mockImplementation()

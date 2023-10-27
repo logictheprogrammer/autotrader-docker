@@ -1,13 +1,13 @@
-import AuthService from '../../../modules/auth/auth.service'
+import { authService } from '../../../setup'
 
 export const sendEmailVerificationMailMock = jest
-  .spyOn(AuthService.prototype, 'sendEmailVerificationMail')
+  .spyOn(authService, 'sendEmailVerificationMail')
   .mockImplementation()
 
 export const sendWelcomeMailMock = jest
-  .spyOn(AuthService.prototype, 'sendWelcomeMail')
+  .spyOn(authService, 'sendWelcomeMail')
   .mockImplementation()
 
 export const sendResetPasswordMailMock = jest
-  .spyOn(AuthService.prototype, 'sendResetPasswordMail')
+  .spyOn(authService, 'sendResetPasswordMail')
   .mockImplementation()

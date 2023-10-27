@@ -1,7 +1,9 @@
-import { createTransactionNotificationMock } from './../../notification/__test__/notification.mock'
+import { userBInput } from './../../user/__test__/user.payload'
+import Helpers from '../../../utils/helpers'
+import { createNotificationMock } from './../../notification/__test__/notification.mock'
 import {
-  createTransactionTransactionMock,
-  updateStatusTransactionTransactionMock,
+  createTransactionMock,
+  updateTransactionStatusMock,
 } from './../../transaction/__test__/transaction.mock'
 import depositModel from '../../../modules/deposit/deposit.model'
 import {
@@ -13,41 +15,38 @@ import { DepositStatus } from '../../../modules/deposit/deposit.enum'
 import { depositMethodA_id } from './../../depositMethod/__test__/depositMethod.payload'
 import { request } from '../../../test'
 import {
-  adminA,
   userA,
   userA_id,
+  userB_id,
   userB,
   userAObj,
   userBObj,
+  userAInput,
+  adminAInput,
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
-import { getDepositMethodMock } from '../../depositMethod/__test__/depositMethod.mock'
+import { fetchDepositMethodMock } from '../../depositMethod/__test__/depositMethod.mock'
 import {
   depositA,
   depositA_id,
   depositB_id,
-  depositModelReturn,
   depositAObj,
   depositB,
   depositBObj,
 } from './deposit.payload'
-import { transactionModelReturn } from '../../transaction/__test__/transaction.payload'
-import { notificationModelReturn } from '../../notification/__test__/notification.payload'
-import { fundTransactionUserMock } from '../../user/__test__/user.mock'
+import { fundUserMock } from '../../user/__test__/user.mock'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
-import { createTransactionReferralMock } from '../../referral/__test__/referral.mock'
-import {
-  referralA,
-  referralAObj,
-  referralModelReturn,
-} from '../../referral/__test__/referral.payoad'
-import { ReferralStatus, ReferralTypes } from '../../referral/referral.enum'
+import { createReferralMock } from '../../referral/__test__/referral.mock'
+
+import { ReferralTypes } from '../../referral/referral.enum'
 import { Types } from 'mongoose'
 import { StatusCode } from '../../../core/apiResponse'
 import Cryptograph from '../../../core/cryptograph'
+import { DepositMethodStatus } from '../../depositMethod/depositMethod.enum'
 
 describe('deposit', () => {
   const baseUrl = '/api/deposit/'
+  const masterUrl = '/api/master/deposit/'
   describe('create deposit', () => {
     const url = baseUrl + 'create'
     describe('given user is not loggedin', () => {
@@ -66,7 +65,7 @@ describe('deposit', () => {
           depositMethodId: depositMethodA_id,
         }
 
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
@@ -87,7 +86,7 @@ describe('deposit', () => {
           amount: 30,
         }
 
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
@@ -99,8 +98,11 @@ describe('deposit', () => {
         expect(statusCode).toBe(404)
         expect(body.status).toBe(StatusCode.DANGER)
 
-        expect(getDepositMethodMock).toHaveBeenCalledTimes(1)
-        expect(getDepositMethodMock).toHaveBeenCalledWith(id)
+        expect(fetchDepositMethodMock).toHaveBeenCalledTimes(1)
+        expect(fetchDepositMethodMock).toHaveBeenCalledWith({
+          _id: id,
+          status: DepositMethodStatus.ENABLED,
+        })
       })
     })
     describe('given deposit amount is lower than min deposit of selected method', () => {
@@ -110,7 +112,7 @@ describe('deposit', () => {
           amount: 30,
         }
 
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
@@ -124,10 +126,11 @@ describe('deposit', () => {
         expect(statusCode).toBe(400)
         expect(body.status).toBe(StatusCode.DANGER)
 
-        expect(getDepositMethodMock).toHaveBeenCalledTimes(1)
-        expect(getDepositMethodMock).toHaveBeenCalledWith(
-          depositMethodA_id.toString()
-        )
+        expect(fetchDepositMethodMock).toHaveBeenCalledTimes(1)
+        expect(fetchDepositMethodMock).toHaveBeenCalledWith({
+          _id: depositMethodA_id.toString(),
+          status: DepositMethodStatus.ENABLED,
+        })
       })
     })
     describe('given all validations passed', () => {
@@ -137,7 +140,7 @@ describe('deposit', () => {
           amount: 40,
         }
 
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const { ...userA1 } = userA
 
         const token = Cryptograph.createToken(user)
@@ -147,92 +150,65 @@ describe('deposit', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('Deposit has been registered successfully')
+        expect(body.message).toBe('Deposit registered successfully')
         expect(statusCode).toBe(201)
         expect(body.status).toBe(StatusCode.SUCCESS)
 
-        expect(body.data).toMatchObject({
-          deposit: { _id: depositModelReturn._id.toString() },
+        expect(body.data.deposit.amount).toBe(payload.amount)
+        expect(body.data.deposit.user._id).toBe(user._id.toString())
+
+        const depositCount = await depositModel.count({
+          _id: body.data.deposit._id,
+          amount: body.data.deposit.amount,
+          depositMethod: payload.depositMethodId,
         })
 
-        expect(createTransactionDepositMock).toHaveBeenCalledTimes(1)
+        expect(depositCount).toBe(1)
 
-        expect(getDepositMethodMock).toHaveBeenCalledTimes(1)
-        expect(getDepositMethodMock).toHaveBeenCalledWith(
-          depositMethodA_id.toString()
-        )
+        expect(fetchDepositMethodMock).toHaveBeenCalledTimes(1)
+        expect(fetchDepositMethodMock).toHaveBeenCalledWith({
+          _id: depositMethodA_id.toString(),
+          status: DepositMethodStatus.ENABLED,
+        })
 
-        expect(createTransactionTransactionMock).toHaveBeenCalledTimes(1)
-        expect(createTransactionTransactionMock).toHaveBeenCalledWith(
+        expect(createTransactionMock).toHaveBeenCalledTimes(1)
+        expect(createTransactionMock).toHaveBeenCalledWith(
           expect.objectContaining(userA1),
           DepositStatus.PENDING,
           TransactionCategory.DEPOSIT,
           expect.any(Object),
           payload.amount,
-          UserEnvironment.LIVE,
-          undefined
+          UserEnvironment.LIVE
         )
 
-        expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
-        expect(createTransactionNotificationMock).toHaveBeenCalledWith(
-          `${
-            user.username
-          } just made a deposit request of ${formatNumber.toDollar(
+        expect(createNotificationMock).toHaveBeenCalledTimes(1)
+        expect(createNotificationMock).toHaveBeenCalledWith(
+          `${user.username} just made a deposit request of ${Helpers.toDollar(
             payload.amount
           )} awaiting for your approval`,
           NotificationCategory.DEPOSIT,
           expect.any(Object),
           NotificationForWho.ADMIN,
           DepositStatus.PENDING,
-          UserEnvironment.LIVE,
-          undefined
-        )
-
-        const depositInstance = {
-          model: depositModelReturn,
-          onFailed: 'delete deposit',
-          async callback() {},
-        }
-
-        const transactionInstance = {
-          model: transactionModelReturn,
-          onFailed: 'delete transaction',
-          async callback() {},
-        }
-
-        const notificationInstance = {
-          model: notificationModelReturn,
-          onFailed: 'delete notification',
-          async callback() {},
-        }
-
-        expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-        expect(
-          JSON.stringify(executeTransactionManagerMock.mock.calls[0][0])
-        ).toEqual(
-          JSON.stringify([
-            depositInstance,
-            transactionInstance,
-            notificationInstance,
-          ])
+          UserEnvironment.LIVE
         )
       })
     })
   })
 
   describe('update deposit status', () => {
-    const url = baseUrl + 'update-status'
+    // const url = masterUrl + `update-status/${}`
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const token = Cryptograph.createToken(user)
 
         const payload = {
-          depositId: '',
           status: '',
         }
+
+        const url = masterUrl + `update-status/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .patch(url)
@@ -247,20 +223,21 @@ describe('deposit', () => {
 
     describe('given payload is not valid', () => {
       it('should throw a 400 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userModel.create(adminAInput)
         const token = Cryptograph.createToken(admin)
 
         const payload = {
-          depositId: '',
           status: '',
         }
+
+        const url = masterUrl + `update-status/${new Types.ObjectId()}`
 
         const { statusCode, body } = await request
           .patch(url)
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('"depositId" is not allowed to be empty')
+        expect(body.message).toBe('"status" must be one of [verifield, failed]')
         expect(statusCode).toBe(400)
         expect(body.status).toBe(StatusCode.DANGER)
       })
@@ -269,8 +246,8 @@ describe('deposit', () => {
     describe('given all validations passed', () => {
       describe('given status was cancelled', () => {
         it('should execute 3 transactions', async () => {
-          const admin = await userModel.create(adminA)
-          const user = await userModel.create({ ...userA, _id: userA_id })
+          const admin = await userModel.create(adminAInput)
+          const user = await userModel.create({ ...userAInput, _id: userA_id })
 
           const token = Cryptograph.createToken(admin)
 
@@ -283,9 +260,10 @@ describe('deposit', () => {
           const status = DepositStatus.CANCELLED
 
           const payload = {
-            depositId: deposit._id,
             status,
           }
+
+          const url = masterUrl + `update-status/${deposit._id}`
 
           const { statusCode, body } = await request
             .patch(url)
@@ -295,78 +273,43 @@ describe('deposit', () => {
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
           expect(body.status).toBe(StatusCode.SUCCESS)
-          expect(body.data).toEqual({
-            deposit: {
-              _id: depositModelReturn._id.toString(),
-              collection: depositModelReturn.collection,
-            },
+          expect(body.data.deposit.status).toBe(status)
+          expect(body.data.deposit._id).toBe(deposit._id.toString())
+
+          const depositCount = await depositModel.count({
+            _id: body.data.deposit._id,
+            status: DepositStatus.CANCELLED,
           })
 
-          expect(updateStatusTransactionDepositMock).toHaveBeenCalledTimes(1)
-          expect(updateStatusTransactionDepositMock).toHaveBeenCalledWith(
-            deposit._id.toString(),
+          expect(depositCount).toBe(1)
+
+          expect(fundUserMock).toHaveBeenCalledTimes(0)
+
+          expect(createReferralMock).toHaveBeenCalledTimes(0)
+
+          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
+          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
+            { category: depositAObj._id },
             status
           )
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(0)
-
-          expect(createTransactionReferralMock).toHaveBeenCalledTimes(0)
-
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledTimes(
-            1
-          )
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledWith(
-            depositAObj._id,
-            status
-          )
-
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
-          expect(createTransactionNotificationMock).toHaveBeenCalledWith(
-            `Your deposit of ${formatNumber.toDollar(
+          expect(createNotificationMock).toHaveBeenCalledTimes(1)
+          expect(createNotificationMock).toHaveBeenCalledWith(
+            `Your deposit of ${Helpers.toDollar(
               depositAObj.amount
             )} was ${status}`,
             NotificationCategory.DEPOSIT,
-            depositAObj,
+            expect.objectContaining({ _id: deposit._id }),
             NotificationForWho.USER,
             status,
             UserEnvironment.LIVE,
             expect.any(Object)
           )
-
-          const depositInstance = {
-            model: depositModelReturn,
-            onFailed: 'change deposit status to old status',
-            async callback() {},
-          }
-
-          const transactionInstance = {
-            model: transactionModelReturn,
-            onFailed: 'change transaction status to old status',
-            async callback() {},
-          }
-
-          const notificationInstance = {
-            model: notificationModelReturn,
-            onFailed: 'delete notification',
-            async callback() {},
-          }
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(
-            JSON.stringify(executeTransactionManagerMock.mock.calls[0][0])
-          ).toEqual(
-            JSON.stringify([
-              depositInstance,
-              transactionInstance,
-              notificationInstance,
-            ])
-          )
         })
       })
       describe('given status was approved but no referrer', () => {
         it('should return a 200 and the deposit payload', async () => {
-          const admin = await userModel.create(adminA)
+          const admin = await userModel.create(adminAInput)
           const token = Cryptograph.createToken(admin)
 
           const deposit = await depositModel.create({
@@ -374,12 +317,15 @@ describe('deposit', () => {
             _id: depositA_id,
           })
 
+          await userModel.create({ ...userAInput, _id: userA_id })
+
           const status = DepositStatus.APPROVED
 
           const payload = {
-            depositId: deposit._id,
             status,
           }
+
+          const url = masterUrl + `update-status/${deposit._id}`
 
           const { statusCode, body } = await request
             .patch(url)
@@ -389,92 +335,51 @@ describe('deposit', () => {
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
           expect(body.status).toBe(StatusCode.SUCCESS)
-          expect(body.data).toEqual({
-            deposit: {
-              _id: depositModelReturn._id.toString(),
-              collection: depositModelReturn.collection,
-            },
+          expect(body.data.deposit._id).toBe(deposit._id.toString())
+          expect(body.data.deposit.status).toBe(status)
+
+          const depositCount = await depositModel.count({
+            _id: body.data.deposit._id,
+            status: body.data.deposit.status,
           })
 
-          expect(updateStatusTransactionDepositMock).toHaveBeenCalledTimes(1)
-          expect(updateStatusTransactionDepositMock).toHaveBeenCalledWith(
-            deposit._id.toString(),
-            status
-          )
+          expect(depositCount).toBe(1)
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(1)
-          expect(fundTransactionUserMock).toHaveBeenCalledWith(
-            depositAObj.user,
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
+          expect(fundUserMock).toHaveBeenCalledWith(
+            { _id: depositAObj.user },
             UserAccount.MAIN_BALANCE,
-            depositAObj.amount - depositAObj.fee,
-            undefined
+            depositAObj.amount - depositAObj.fee
           )
 
-          expect(createTransactionReferralMock).toHaveBeenCalledTimes(0)
+          expect(createReferralMock).toHaveBeenCalledTimes(1)
 
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledTimes(
-            1
-          )
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledWith(
-            depositAObj._id,
+          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
+          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
+            { category: depositAObj._id },
             status
           )
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(1)
-          expect(createTransactionNotificationMock).toHaveBeenCalledWith(
-            `Your deposit of ${formatNumber.toDollar(
+          expect(createNotificationMock).toHaveBeenCalledTimes(1)
+          expect(createNotificationMock).toHaveBeenCalledWith(
+            `Your deposit of ${Helpers.toDollar(
               depositAObj.amount
             )} was ${status}`,
             NotificationCategory.DEPOSIT,
-            depositAObj,
+            expect.objectContaining({ _id: deposit._id }),
             NotificationForWho.USER,
             status,
             UserEnvironment.LIVE,
             userAObj
           )
-
-          const depositInstance = {
-            model: depositModelReturn,
-            onFailed: 'change deposit status to old status',
-            async callback() {},
-          }
-
-          const userInstance = {
-            model: userModelReturn,
-            onFailed: 'return deposit',
-            async callback() {},
-          }
-
-          const transactionInstance = {
-            model: transactionModelReturn,
-            onFailed: 'change transaction status to old status',
-            async callback() {},
-          }
-
-          const notificationInstance = {
-            model: notificationModelReturn,
-            onFailed: 'delete notification',
-            async callback() {},
-          }
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(
-            JSON.stringify(executeTransactionManagerMock.mock.calls[0][0])
-          ).toEqual(
-            JSON.stringify([
-              depositInstance,
-              userInstance,
-              transactionInstance,
-              notificationInstance,
-            ])
-          )
         })
       })
       describe('given status was approved and there is a referrer', () => {
         it('should return a 200 and the deposit payload', async () => {
-          const admin = await userModel.create(adminA)
+          const admin = await userModel.create(adminAInput)
           const token = Cryptograph.createToken(admin)
+
+          await userModel.create({ ...userBInput, _id: userB_id })
 
           const deposit = await depositModel.create({
             ...depositB,
@@ -484,9 +389,10 @@ describe('deposit', () => {
           const status = DepositStatus.APPROVED
 
           const payload = {
-            depositId: deposit._id,
             status,
           }
+
+          const url = masterUrl + `update-status/${deposit._id}`
 
           const { statusCode, body } = await request
             .patch(url)
@@ -496,175 +402,49 @@ describe('deposit', () => {
           expect(body.message).toBe('Status updated successfully')
           expect(statusCode).toBe(200)
           expect(body.status).toBe(StatusCode.SUCCESS)
-          expect(body.data).toEqual({
-            deposit: {
-              _id: depositModelReturn._id.toString(),
-              collection: depositModelReturn.collection,
-            },
+          expect(body.data.deposit._id).toBe(deposit._id.toString())
+          expect(body.data.deposit.status).toBe(status)
+
+          const depositCount = await depositModel.count({
+            _id: body.data.deposit._id,
+            status: body.data.deposit.status,
           })
 
-          expect(updateStatusTransactionDepositMock).toHaveBeenCalledTimes(1)
-          expect(updateStatusTransactionDepositMock).toHaveBeenCalledWith(
-            deposit._id.toString(),
-            status
-          )
+          expect(depositCount).toBe(1)
 
-          expect(fundTransactionUserMock).toHaveBeenCalledTimes(2)
-          expect(fundTransactionUserMock.mock.calls[0]).toEqual([
-            depositBObj.user,
+          expect(fundUserMock).toHaveBeenCalledTimes(1)
+          expect(fundUserMock.mock.calls[0]).toEqual([
+            { _id: depositBObj.user },
             UserAccount.MAIN_BALANCE,
             depositBObj.amount - depositBObj.fee,
           ])
-          expect(fundTransactionUserMock.mock.calls[1]).toEqual([
-            userA_id,
-            UserAccount.REFERRAL_BALANCE,
-            referralA.amount,
-          ])
 
-          expect(createTransactionReferralMock).toHaveBeenCalledTimes(1)
+          expect(createReferralMock).toHaveBeenCalledTimes(1)
 
-          expect(createTransactionReferralMock).toHaveBeenCalledWith(
-            userAObj,
-            userBObj,
+          expect(createReferralMock).toHaveBeenCalledWith(
             ReferralTypes.DEPOSIT,
-            referralA.rate,
-            referralA.amount
+            userBObj,
+            deposit.amount
           )
 
-          expect(createTransactionTransactionMock).toHaveBeenCalledTimes(1)
-
-          expect(createTransactionTransactionMock).toHaveBeenCalledWith(
-            userAObj,
-            ReferralStatus.SUCCESS,
-            TransactionCategory.REFERRAL,
-            referralAObj,
-            referralA.amount,
-            UserEnvironment.LIVE,
-            undefined
-          )
-
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledTimes(
-            1
-          )
-          expect(updateStatusTransactionTransactionMock).toHaveBeenCalledWith(
-            depositBObj._id,
+          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
+          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
+            { category: depositBObj._id },
             status
           )
 
-          expect(createTransactionNotificationMock).toHaveBeenCalledTimes(3)
+          expect(createNotificationMock).toHaveBeenCalledTimes(1)
 
-          expect(createTransactionNotificationMock.mock.calls[0]).toEqual([
-            `Your referral account has been credited with ${formatNumber.toDollar(
-              referralA.amount
-            )}, from ${userB.username} ${FormatString.fromCamelToTitleCase(
-              ReferralTypes.DEPOSIT
-            )} of ${formatNumber.toDollar(depositB.amount)}`,
-            NotificationCategory.REFERRAL,
-            referralAObj,
-            NotificationForWho.USER,
-            ReferralStatus.SUCCESS,
-            UserEnvironment.LIVE,
-            userAObj,
-          ])
-
-          expect(createTransactionNotificationMock.mock.calls[1]).toEqual([
-            `${
-              userAObj.username
-            } referral account has been credited with ${formatNumber.toDollar(
-              referralAObj.amount
-            )}, from ${userBObj.username} ${
-              NotificationCategory.DEPOSIT
-            } of ${formatNumber.toDollar(depositB.amount)}`,
-            NotificationCategory.REFERRAL,
-            referralAObj,
-            NotificationForWho.ADMIN,
-            ReferralStatus.SUCCESS,
-            UserEnvironment.LIVE,
-            undefined,
-          ])
-
-          expect(createTransactionNotificationMock.mock.calls[2]).toEqual([
-            `Your deposit of ${formatNumber.toDollar(
+          expect(createNotificationMock).toHaveBeenCalledWith(
+            `Your deposit of ${Helpers.toDollar(
               depositBObj.amount
             )} was ${status}`,
             NotificationCategory.DEPOSIT,
-            depositBObj,
+            expect.objectContaining({ _id: deposit._id }),
             NotificationForWho.USER,
             status,
             UserEnvironment.LIVE,
-            userBObj,
-          ])
-
-          const depositInstance = {
-            model: depositModelReturn,
-            onFailed: 'change deposit status to old status',
-            async callback() {},
-          }
-
-          const userInstance = {
-            model: userModelReturn,
-            onFailed: 'return deposit',
-            async callback() {},
-          }
-
-          const userReferrerInstance = {
-            model: userModelReturn,
-            onFailed: 'return deposit',
-            async callback() {},
-          }
-
-          const transactionInstance = {
-            model: transactionModelReturn,
-            onFailed: 'change transaction status to old status',
-            async callback() {},
-          }
-
-          const userReferrerTransactionInstance = {
-            model: transactionModelReturn,
-            onFailed: 'delete transaction',
-            async callback() {},
-          }
-
-          const referralTransactionInstance = {
-            model: referralModelReturn,
-            onFailed: 'delete referral',
-            async callback() {},
-          }
-
-          const notificationInstance = {
-            model: notificationModelReturn,
-            onFailed: 'delete notification',
-            async callback() {},
-          }
-
-          const userReferrerNotificationInstance = {
-            model: notificationModelReturn,
-            onFailed: 'delete notification',
-            async callback() {},
-          }
-
-          const adminNotificationInstance = {
-            model: notificationModelReturn,
-            onFailed: 'delete notification',
-            async callback() {},
-          }
-
-          expect(executeTransactionManagerMock).toHaveBeenCalledTimes(1)
-
-          expect(
-            JSON.stringify(executeTransactionManagerMock.mock.calls[0][0])
-          ).toEqual(
-            JSON.stringify([
-              depositInstance,
-              userInstance,
-              userReferrerInstance,
-              referralTransactionInstance,
-              userReferrerNotificationInstance,
-              adminNotificationInstance,
-              userReferrerTransactionInstance,
-              transactionInstance,
-              notificationInstance,
-            ])
+            userBObj
           )
         })
       })
@@ -672,13 +452,13 @@ describe('deposit', () => {
   })
 
   describe('delete deposit', () => {
-    // const url = baseUrl + `delete/:depositId`
+    // const url = masterUrl + `delete/:depositId`
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const token = Cryptograph.createToken(user)
 
-        const url = baseUrl + `delete/depositId`
+        const url = masterUrl + `delete/depositId`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -692,16 +472,16 @@ describe('deposit', () => {
 
     describe('given deposit id those not exist', () => {
       it('should throw a 404 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userModel.create(adminAInput)
         const token = Cryptograph.createToken(admin)
 
-        const url = baseUrl + `delete/${new Types.ObjectId().toString()}`
+        const url = masterUrl + `delete/${new Types.ObjectId().toString()}`
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Deposit transaction not found')
+        expect(body.message).toBe('Deposit not found')
         expect(statusCode).toBe(404)
         expect(body.status).toBe(StatusCode.DANGER)
       })
@@ -709,12 +489,12 @@ describe('deposit', () => {
 
     describe('given deposit has not been settled', () => {
       it('should return a 400 error', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userModel.create(adminAInput)
         const token = Cryptograph.createToken(admin)
 
         const deposit = await depositModel.create(depositA)
 
-        const url = baseUrl + `delete/${deposit._id}`
+        const url = masterUrl + `delete/${deposit._id}`
 
         const { statusCode, body } = await request
           .delete(url)
@@ -728,7 +508,7 @@ describe('deposit', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the deposit payload', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userModel.create(adminAInput)
         const token = Cryptograph.createToken(admin)
 
         const deposit = await depositModel.create({
@@ -736,25 +516,29 @@ describe('deposit', () => {
           status: DepositStatus.APPROVED,
         })
 
-        const url = baseUrl + `delete/${deposit._id}`
+        const url = masterUrl + `delete/${deposit._id}`
 
         const { statusCode, body } = await request
           .delete(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Deposit deleted successfully')
+        expect(body.message).toBe('Deposit transcation deleted successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(StatusCode.SUCCESS)
+
+        const depositCount = await depositModel.count()
+
+        expect(depositCount).toBe(0)
       })
     })
   })
 
   describe('get all users deposit transactions', () => {
-    const url = baseUrl + `master`
+    const url = masterUrl
 
     describe('given user is not an admin', () => {
       it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
@@ -769,14 +553,14 @@ describe('deposit', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and an empty array of deposit payload', async () => {
-        const admin = await userModel.create(adminA)
+        const admin = await userModel.create(adminAInput)
         const token = Cryptograph.createToken(admin)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Deposit history fetched successfully')
+        expect(body.message).toBe('Deposit transactions fetched successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data).toEqual({
@@ -788,8 +572,8 @@ describe('deposit', () => {
         expect(depositCounts).toBe(0)
       })
       it('should return a 200 and an array of deposit payload', async () => {
-        const admin = await userModel.create(adminA)
-        const user = await userModel.create(userA)
+        const admin = await userModel.create(adminAInput)
+        const user = await userModel.create(userAInput)
         const token = Cryptograph.createToken(admin)
         const deposit = await depositModel.create({
           ...depositA,
@@ -800,166 +584,18 @@ describe('deposit', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Deposit history fetched successfully')
+        expect(body.message).toBe('Deposit transactions fetched successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.deposits.length).toBe(1)
         expect(body.data.deposits[0].amount).toBe(deposit.amount)
         expect(body.data.deposits[0].status).toBe(deposit.status)
-
-        expect(body.data.deposits[0].depositMethodObject.address).toBe(
-          deposit.depositMethodObject.address
-        )
-        expect(body.data.deposits[0].user._id).toBe(deposit.user.toString())
-        expect(body.data.deposits[0].user.username).toBe(
-          deposit.userObject.username
-        )
+        expect(body.data.deposits[0].user._id).toBe(user._id.toString())
+        expect(body.data.deposits[0].user.username).toBe(user.username)
 
         const depositCounts = await depositModel.count()
 
         expect(depositCounts).toBe(1)
-      })
-    })
-  })
-
-  describe('get one deposit transaction', () => {
-    // const url = baseUrl + `:deposit`
-    describe('given user is not logged in', () => {
-      it('should throw a 401 Unauthorized', async () => {
-        const url = baseUrl + 'depositId'
-        const { statusCode, body } = await request.get(url)
-
-        expect(body.message).toBe('Unauthorized')
-        expect(statusCode).toBe(401)
-        expect(body.status).toBe(StatusCode.DANGER)
-      })
-    })
-
-    describe('given deposit those not exist', () => {
-      it('should throw a 404 error', async () => {
-        const user = await userModel.create(userA)
-        const token = Cryptograph.createToken(user)
-        const url = baseUrl + new Types.ObjectId().toString()
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Deposit transaction not found')
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(StatusCode.DANGER)
-      })
-    })
-
-    describe('given deposit those not belongs to logged in user', () => {
-      it('should throw a 404 error', async () => {
-        const user = await userModel.create(userA)
-        const token = Cryptograph.createToken(user)
-        const deposit = await depositModel.create(depositA)
-
-        const url = baseUrl + deposit._id
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Deposit transaction not found')
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(StatusCode.DANGER)
-
-        const depositCounts = await depositModel.count()
-
-        expect(depositCounts).toBe(1)
-      })
-    })
-
-    describe('given all validations passed', () => {
-      it('should return a 200 and the deposit payload', async () => {
-        const user = await userModel.create(userA)
-        const token = Cryptograph.createToken(user)
-        const deposit = await depositModel.create({
-          ...depositA,
-          user: user._id,
-        })
-
-        const url = baseUrl + deposit._id
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Deposit fetched successfully')
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(StatusCode.SUCCESS)
-        expect(body.data.deposit.amount).toBe(deposit.amount)
-        expect(body.data.deposit.status).toBe(deposit.status)
-
-        expect(body.data.deposit.depositMethodObject.address).toBe(
-          deposit.depositMethodObject.address
-        )
-
-        const depositCounts = await depositModel.count()
-
-        expect(depositCounts).toBe(1)
-      })
-    })
-  })
-
-  describe('get one user deposit transaction', () => {
-    // const url = baseUrl + `master/:deposit`
-    describe('given user is not an admin', () => {
-      it('should throw a 401 Unauthorized error', async () => {
-        const user = await userModel.create(userA)
-        const token = Cryptograph.createToken(user)
-        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Unauthorized')
-        expect(statusCode).toBe(401)
-        expect(body.status).toBe(StatusCode.DANGER)
-      })
-    })
-
-    describe('given deposit those not exist', () => {
-      it('should throw a 404 error', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Cryptograph.createToken(admin)
-        const url = baseUrl + `master/${new Types.ObjectId().toString()}`
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Deposit transaction not found')
-        expect(statusCode).toBe(404)
-        expect(body.status).toBe(StatusCode.DANGER)
-      })
-    })
-
-    describe('given all validations passed', () => {
-      it('should return a 200 and the deposit payload', async () => {
-        const admin = await userModel.create(adminA)
-        const token = Cryptograph.createToken(admin)
-        const deposit = await depositModel.create(depositA)
-        const url = baseUrl + `master/${deposit._id}`
-
-        const { statusCode, body } = await request
-          .get(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Deposit fetched successfully')
-        expect(statusCode).toBe(200)
-        expect(body.status).toBe(StatusCode.SUCCESS)
-
-        expect(body.data.deposit.amount).toBe(deposit.amount)
-        expect(body.data.deposit.status).toBe(deposit.status)
-
-        expect(body.data.deposit.depositMethodObject.address).toBe(
-          deposit.depositMethodObject.address
-        )
       })
     })
   })
@@ -978,21 +614,21 @@ describe('deposit', () => {
 
     describe('given all validations passed', () => {
       it('should return a 200 and the an empty array of deposit payload', async () => {
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const token = Cryptograph.createToken(user)
 
         const { statusCode, body } = await request
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Deposit history fetched successfully')
+        expect(body.message).toBe('Deposit transactions fetched successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.deposits).toEqual([])
       })
 
       it('should return a 200 and the an array of deposit payload', async () => {
-        const user = await userModel.create(userA)
+        const user = await userModel.create(userAInput)
         const token = Cryptograph.createToken(user)
         const deposit = await depositModel.create({
           ...depositA,
@@ -1003,16 +639,12 @@ describe('deposit', () => {
           .get(url)
           .set('Authorization', `Bearer ${token}`)
 
-        expect(body.message).toBe('Deposit history fetched successfully')
+        expect(body.message).toBe('Deposit transactions fetched successfully')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(StatusCode.SUCCESS)
         expect(body.data.deposits.length).toBe(1)
         expect(body.data.deposits[0].amount).toBe(deposit.amount)
         expect(body.data.deposits[0].status).toBe(deposit.status)
-
-        expect(body.data.deposits[0].depositMethodObject.address).toBe(
-          deposit.depositMethodObject.address
-        )
       })
     })
   })
