@@ -6,39 +6,28 @@ export interface IMathService {
     breakpoint: number
   ): number[]
 
-  _getValuesProbability(
+  _getValuesProbability(breakpoint: number, probability: number): number[]
+
+  _getNegativeUnit(spread: number, breakpoint: number): number
+
+  _getPercentageLoss(
     spread: number,
     breakpoint: number,
     probability: number
-  ): number[]
-
-  _getMainProbability(
-    averageValueOne: number,
-    averageValueTwo: number,
-    spread: number,
-    breakpoint: number,
-    winProbability: number
   ): number
 
-  _getNegativeUnit(
-    averageValueOne: number,
-    averageValueTwo: number,
-    spread: number,
+  dynamicRangeOptions(winRate: number): {
+    spread: number
     breakpoint: number
-  ): number
+    probability: number
+  }
 
-  _dynamicRange(
+  dynamicRange(
     minValue: number,
     maxValue: number,
     spread: number,
     breakpoint: number,
     accuracy: number
-  ): number
-
-  probabilityValue(
-    averageValueOne: number,
-    averageValueTwo: number,
-    positiveValueProbability: number
   ): number
 }
 
