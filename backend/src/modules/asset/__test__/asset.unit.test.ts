@@ -16,7 +16,7 @@ describe('asset', () => {
             type: AssetType.CRYPTO,
           })
         } catch (error: any) {
-          expect(error.error.message).toBe('Asset not found')
+          expect(error.message).toBe('Asset not found')
         }
       })
     })
@@ -28,7 +28,7 @@ describe('asset', () => {
         try {
           await assetService.fetch({ _id: asset._id, type: AssetType.FOREX })
         } catch (error: any) {
-          expect(error.error.message).toBe('Asset not found')
+          expect(error.message).toBe('Asset not found')
         }
       })
     })

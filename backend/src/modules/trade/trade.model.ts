@@ -1,6 +1,7 @@
 import { ITrade } from '@/modules/trade/trade.interface'
 import { Schema, Types, model } from 'mongoose'
 import { ForecastStatus } from '@/modules/forecast/forecast.enum'
+import { PlanMode } from '../plan/plan.enum'
 
 const TradeSchema = new Schema<ITrade>(
   {
@@ -85,10 +86,11 @@ const TradeSchema = new Schema<ITrade>(
       required: true,
       trim: true,
     },
-    manualMode: {
-      type: Boolean,
+    mode: {
+      type: String,
       required: true,
-      default: false,
+      enum: Object.values(PlanMode),
+      default: PlanMode.AUTOMATIC,
     },
   },
   {

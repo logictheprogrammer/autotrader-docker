@@ -1,6 +1,8 @@
+import { tradeA } from './../../trade/__test__/trade.payload'
+import TradeModel from '../../../modules/trade/trade.model'
 import { InvestmentStatus } from '../../investment/investment.enum'
 import { request } from '../../../test'
-import { userA, userAInput, userA_id } from '../../user/__test__/user.payload'
+import { userAInput, userA_id } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { investmentService } from '../../../setup'
 import investmentModel from '../investment.model'
@@ -34,35 +36,6 @@ describe('investment', () => {
       expect(investmentObj.account).toBe(account)
     })
   })
-  describe('fund', () => {
-    describe('given investment id those not exist', () => {
-      it('should throw a 404 error', async () => {
-        request
-        const amount = 1000
-
-        try {
-          await investmentService.fund({ _id: new Types.ObjectId() }, amount)
-        } catch (error: any) {
-          expect(error.error.message).toBe('Investment not found')
-        }
-      })
-    })
-
-    describe('on success', () => {
-      it('should a funded investment transaction instance', async () => {
-        request
-        const investment = await investmentModel.create(investmentA)
-        const amount = 1000
-
-        const result = await investmentService.fund(
-          { _id: investment._id },
-          amount
-        )
-
-        expect(result.balance).toBe(investment.balance + amount)
-      })
-    })
-  })
   describe('updateStatus', () => {
     describe('given investment id those not exist', () => {
       it('should throw a 404 error', async () => {
@@ -80,7 +53,7 @@ describe('investment', () => {
             InvestmentStatus.RUNNING
           )
         } catch (error: any) {
-          expect(error.error.message).toBe('Investment not found')
+          expect(error.message).toBe('Investment not found')
         }
       })
     })
@@ -100,9 +73,7 @@ describe('investment', () => {
             InvestmentStatus.SUSPENDED
           )
         } catch (error: any) {
-          expect(error.error.message).toBe(
-            'Investment plan has already been settled'
-          )
+          expect(error.message).toBe('Investment plan has already been settled')
         }
       })
     })
@@ -121,6 +92,99 @@ describe('investment', () => {
         )
 
         expect(investmentObj.status).toBe(InvestmentStatus.SUSPENDED)
+      })
+    })
+  })
+  describe('updateTradeDetails', () => {
+    describe('given investment those not exist', () => {
+      it('should throw a 404 error', async () => {
+        request
+        const trade = await TradeModel.create(tradeA)
+
+        try {
+          await investmentService.updateTradeDetails(
+            { _id: new Types.ObjectId() },
+            trade
+          )
+        } catch (error: any) {
+          expect(error.message).toBe('Investment not found')
+        }
+      })
+    })
+    describe('on success', () => {
+      it('should return a investment payload', async () => {
+        request
+
+        await userModel.create({ ...userAInput, _id: userA_id })
+        const investment = await investmentModel.create(investmentA)
+        const trade = await TradeModel.create(tradeA)
+
+        const investmentObj = await investmentService.updateTradeDetails(
+          { _id: investment._id },
+          trade
+        )
+
+        expect(investmentObj.currentTrade._id.toString()).toBe(
+          trade._id.toString()
+        )
+      })
+    })
+  })
+  describe('fund', () => {
+    describe('given investment id those not exist', () => {
+      it('should throw a 404 error', async () => {
+        request
+        const amount = 1000
+
+        try {
+          await investmentService.fund({ _id: new Types.ObjectId() }, amount)
+        } catch (error: any) {
+          expect(error.message).toBe('Investment not found')
+        }
+      })
+    })
+
+    describe('on success', () => {
+      it('should a funded investment transaction instance', async () => {
+        request
+        const investment = await investmentModel.create(investmentA)
+        const amount = 1000
+
+        const result = await investmentService.fund(
+          { _id: investment._id },
+          amount
+        )
+
+        expect(result.balance).toBe(investment.balance + amount)
+      })
+    })
+  })
+  describe('refill', () => {
+    describe('given investment id those not exist', () => {
+      it('should throw a 404 error', async () => {
+        request
+        const gas = 1000
+
+        try {
+          await investmentService.refill({ _id: new Types.ObjectId() }, gas)
+        } catch (error: any) {
+          expect(error.message).toBe('Investment not found')
+        }
+      })
+    })
+
+    describe('on success', () => {
+      it('should a refill investment', async () => {
+        request
+        const investment = await investmentModel.create(investmentA)
+        const gas = 1000
+
+        const result = await investmentService.refill(
+          { _id: investment._id },
+          gas
+        )
+
+        expect(result.gas).toBe(investment.gas + gas)
       })
     })
   })

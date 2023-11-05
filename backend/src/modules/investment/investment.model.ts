@@ -3,6 +3,7 @@ import { Schema, Types, model } from 'mongoose'
 import { UserAccount, UserEnvironment } from '../user/user.enum'
 import { InvestmentStatus } from './investment.enum'
 import { ForecastStatus } from '../forecast/forecast.enum'
+import { PlanMode } from '../plan/plan.enum'
 
 const InvestmentSchema = new Schema<IInvestment>(
   {
@@ -50,10 +51,11 @@ const InvestmentSchema = new Schema<IInvestment>(
       type: Number,
       required: true,
     },
-    manualMode: {
-      type: Boolean,
+    mode: {
+      type: String,
       required: true,
-      default: false,
+      enum: Object.values(PlanMode),
+      default: PlanMode.AUTOMATIC,
     },
     runTime: {
       type: Number,

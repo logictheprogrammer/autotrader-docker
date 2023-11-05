@@ -19,7 +19,6 @@ import {
   ForbiddenError,
   NotFoundError,
   RequestConflictError,
-  ServiceError,
 } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
 import Cryptograph from '@/core/cryptograph'
@@ -43,24 +42,17 @@ class AuthService implements IAuthService {
   private async emailVerification(
     user: IUser
   ): Promise<{ email: string; message: string }> {
-    try {
-      const verifyLink = await this.emailVerificationService.create(user)
+    const verifyLink = await this.emailVerificationService.create(user)
 
-      const username = user.username
-      const email = user.email
+    const username = user.username
+    const email = user.email
 
-      await this.sendEmailVerificationMail(email, username, verifyLink)
+    await this.sendEmailVerificationMail(email, username, verifyLink)
 
-      return {
-        email: Helpers.mask(email, 2, 3),
-        message:
-          'Verify your email to continue, an email verification link has been sent to your email address',
-      }
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Unable to send verification email, please try again'
-      )
+    return {
+      email: Helpers.mask(email, 2, 3),
+      message:
+        'Verify your email to continue, an email verification link has been sent to your email address',
     }
   }
 
@@ -78,54 +70,49 @@ class AuthService implements IAuthService {
     bonusBalance: number,
     invite?: string
   ): Promise<{ email: string; message: string }> {
-    try {
-      let referred
-      if (invite) {
-        referred = await this.userModel.findOne({ refer: invite })
-        if (!referred) throw new BadRequestError('Invalid referral code')
-      }
-
-      const refer = Cryptograph.generateCode({ length: 10 })[0]
-
-      const emailExist = await this.userModel.findOne({ email })
-
-      if (emailExist) throw new RequestConflictError('Email already exist')
-
-      const usernameExist = await this.userModel.findOne({ username })
-
-      if (usernameExist)
-        throw new RequestConflictError('Username already exist')
-
-      const key = Cryptograph.randomBytes(16).toString('hex')
-
-      const user = await this.userModel.create({
-        name,
-        email,
-        username,
-        country,
-        password,
-        role,
-        status,
-        refer,
-        mainBalance,
-        referralBalance,
-        demoBalance,
-        bonusBalance,
-        referred,
-        key,
-      })
-
-      this.activityService.create(
-        user,
-        ActivityForWho.USER,
-        ActivityCategory.PROFILE,
-        'your account was created'
-      )
-
-      return await this.emailVerification(user)
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to register, please try again')
+    let referred
+    if (invite) {
+      referred = await this.userModel.findOne({ refer: invite })
+      if (!referred) throw new BadRequestError('Invalid referral code')
     }
+
+    const refer = Cryptograph.generateCode({ length: 10 })[0]
+
+    const emailExist = await this.userModel.findOne({ email })
+
+    if (emailExist) throw new RequestConflictError('Email already exist')
+
+    const usernameExist = await this.userModel.findOne({ username })
+
+    if (usernameExist) throw new RequestConflictError('Username already exist')
+
+    const key = Cryptograph.randomBytes(16).toString('hex')
+
+    const user = await this.userModel.create({
+      name,
+      email,
+      username,
+      country,
+      password,
+      role,
+      status,
+      refer,
+      mainBalance,
+      referralBalance,
+      demoBalance,
+      bonusBalance,
+      referred,
+      key,
+    })
+
+    this.activityService.create(
+      user,
+      ActivityForWho.USER,
+      ActivityCategory.PROFILE,
+      'your account was created'
+    )
+
+    return await this.emailVerification(user)
   }
 
   public async login(
@@ -135,41 +122,37 @@ class AuthService implements IAuthService {
     | { email: string; message: string }
     | { accessToken: string; expiresIn: number }
   > {
-    try {
-      const user = await this.userModel.findOne(filter)
+    const user = await this.userModel.findOne(filter)
 
-      if (!user)
-        throw new NotFoundError(
-          'Could not find a user with that Email or Username'
-        )
+    if (!user)
+      throw new NotFoundError(
+        'Could not find a user with that Email or Username'
+      )
 
-      if (!(await user.isValidPassword(password)))
-        throw new BadRequestError('Incorrect password')
+    if (!(await user.isValidPassword(password)))
+      throw new BadRequestError('Incorrect password')
 
-      if (user.status !== UserStatus.ACTIVE) {
-        throw new ForbiddenError(
-          'Your account is under review, please check in later',
-          undefined,
-          StatusCode.INFO
-        )
-      }
-
-      if (user.verifield) {
-        this.activityService.create(
-          user,
-          ActivityForWho.USER,
-          ActivityCategory.PROFILE,
-          'you logged in to your account'
-        )
-        const accessToken = Cryptograph.createToken(user)
-        const expiresIn = 1000 * 60 * 60 * 24 + new Date().getTime()
-        return { accessToken, expiresIn }
-      }
-
-      return await this.emailVerification(user)
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to login, please try again')
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenError(
+        'Your account is under review, please check in later',
+        undefined,
+        StatusCode.INFO
+      )
     }
+
+    if (user.verifield) {
+      this.activityService.create(
+        user,
+        ActivityForWho.USER,
+        ActivityCategory.PROFILE,
+        'you logged in to your account'
+      )
+      const accessToken = Cryptograph.createToken(user)
+      const expiresIn = 1000 * 60 * 60 * 24 + new Date().getTime()
+      return { accessToken, expiresIn }
+    }
+
+    return await this.emailVerification(user)
   }
 
   public async updatePassword(
@@ -177,60 +160,52 @@ class AuthService implements IAuthService {
     password: string,
     oldPassword?: string
   ): Promise<IUserObject> {
-    try {
-      const user = await this.userModel.findOne(filter)
+    const user = await this.userModel.findOne(filter)
 
-      if (!user) throw new NotFoundError('User not found')
+    if (!user) throw new NotFoundError('User not found')
 
-      if (
-        oldPassword &&
-        !(await Cryptograph.isValidHash(oldPassword, user.password))
-      )
-        throw new BadRequestError('Incorrect password')
+    if (
+      oldPassword &&
+      !(await Cryptograph.isValidHash(oldPassword, user.password))
+    )
+      throw new BadRequestError('Incorrect password')
 
-      if (!oldPassword && user.role >= UserRole.ADMIN)
-        throw new ForbiddenError('This action can not be performed on an admin')
+    if (!oldPassword && user.role >= UserRole.ADMIN)
+      throw new ForbiddenError('This action can not be performed on an admin')
 
-      user.password = await Cryptograph.setHash(password)
+    user.password = await Cryptograph.setHash(password)
 
-      await user.save()
+    await user.save()
 
-      this.activityService.create(
-        user,
-        ActivityForWho.USER,
-        ActivityCategory.PROFILE,
-        'you updated your password'
-      )
+    this.activityService.create(
+      user,
+      ActivityForWho.USER,
+      ActivityCategory.PROFILE,
+      'you updated your password'
+    )
 
-      return user
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to update password, please try again')
-    }
+    return user
   }
 
   public async forgetPassword(
     filter: FilterQuery<IUser>
   ): Promise<{ email: string }> {
-    try {
-      const user = await this.userModel.findOne(filter)
+    const user = await this.userModel.findOne(filter)
 
-      if (!user)
-        throw new NotFoundError(
-          'Could not find a user with that Email or Username'
-        )
+    if (!user)
+      throw new NotFoundError(
+        'Could not find a user with that Email or Username'
+      )
 
-      const resetLink = await this.resetPasswordService.create(user)
+    const resetLink = await this.resetPasswordService.create(user)
 
-      const username = user.username
-      const email = user.email
+    const username = user.username
+    const email = user.email
 
-      await this.sendResetPasswordMail(email, username, resetLink)
+    await this.sendResetPasswordMail(email, username, resetLink)
 
-      return {
-        email: Helpers.mask(email, 2, 3),
-      }
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to reset password, please try again')
+    return {
+      email: Helpers.mask(email, 2, 3),
     }
   }
 
@@ -239,80 +214,68 @@ class AuthService implements IAuthService {
     verifyToken: string,
     password: string
   ): Promise<void> {
-    try {
-      await this.resetPasswordService.verify(key, verifyToken)
+    await this.resetPasswordService.verify(key, verifyToken)
 
-      const user = await this.userModel.findOne({ key }).select('-password')
+    const user = await this.userModel.findOne({ key }).select('-password')
 
-      if (!user) throw new NotFoundError('User not found')
+    if (!user) throw new NotFoundError('User not found')
 
-      user.password = password
+    user.password = password
 
-      await user.save()
+    await user.save()
 
-      this.activityService.create(
-        user,
-        ActivityForWho.USER,
-        ActivityCategory.PROFILE,
-        'you reset your password'
-      )
+    this.activityService.create(
+      user,
+      ActivityForWho.USER,
+      ActivityCategory.PROFILE,
+      'you reset your password'
+    )
 
-      return
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to update password, please try again')
-    }
+    return
   }
 
   public async verifyEmail(key: string, verifyToken: string): Promise<void> {
-    try {
-      await this.emailVerificationService.verify(key, verifyToken)
+    await this.emailVerificationService.verify(key, verifyToken)
 
-      const user = await this.userModel.findOne({ key })
+    const user = await this.userModel.findOne({ key })
 
-      if (!user) throw new NotFoundError('User not found')
+    if (!user) throw new NotFoundError('User not found')
 
-      user.verifield = true
+    user.verifield = true
 
-      await user.save()
+    await user.save()
 
-      this.sendWelcomeMail(user)
+    this.sendWelcomeMail(user)
 
-      this.activityService.create(
-        user,
-        ActivityForWho.USER,
-        ActivityCategory.PROFILE,
-        'you verifield your email address'
-      )
+    this.activityService.create(
+      user,
+      ActivityForWho.USER,
+      ActivityCategory.PROFILE,
+      'you verifield your email address'
+    )
 
-      return
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to verify email, please try again')
-    }
+    return
   }
 
   public async sendWelcomeMail(user: IUser): Promise<void> {
-    try {
-      const name = Helpers.toTitleCase(user.name)
-      const btnLink = `${SiteConstants.siteApi}users`
-      const siteName = SiteConstants.siteName
-      const subject = 'Welcome to ' + siteName
+    const name = Helpers.toTitleCase(user.name)
+    const btnLink = `${SiteConstants.siteApi}users`
+    const siteName = SiteConstants.siteName
+    const subject = 'Welcome to ' + siteName
 
-      const emailContent = await renderFile('email/welcome', {
-        btnLink,
-        name,
-        siteName,
-        config: SiteConstants,
-      })
+    const emailContent = await renderFile('email/welcome', {
+      btnLink,
+      name,
+      siteName,
+      config: SiteConstants,
+    })
 
-      this.mailService.sendMail({
-        subject,
-        to: user.email,
-        text: Helpers.clearHtml(emailContent),
-        html: emailContent,
-      })
-    } catch (err: any) {
-      throw new ServiceError(err, 'Failed to send email, please try again')
-    }
+    this.mailService.sendMail({
+      subject,
+      to: user.email,
+      text: Helpers.clearHtml(emailContent),
+      html: emailContent,
+    })
   }
 
   public async sendResetPasswordMail(

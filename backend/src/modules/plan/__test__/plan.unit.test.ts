@@ -13,7 +13,7 @@ describe('plan', () => {
       it('should throw an error', async () => {
         await expect(
           planService.fetch({ _id: new Types.ObjectId() })
-        ).rejects.toThrowError('Unable to fetch plan, please try again')
+        ).rejects.toThrowError('Plan not found')
       })
     })
 

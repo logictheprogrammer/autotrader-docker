@@ -41,7 +41,7 @@ export const tradeA = {
   timeStamps: [],
   startTime: new Date(),
   environment: investmentA.environment,
-  manualMode: false,
+  mode: investmentA.mode,
 }
 
 export const tradeB_id = '1236de5d5b1f5b3a5c1b539b'
@@ -65,7 +65,7 @@ export const tradeB = {
   timeStamps: [],
   startTime: new Date(),
   environment: investmentB.environment,
-  manualMode: false,
+  mode: investmentB.mode,
 }
 
 export const tradeC_id = '1236de5d5b1f5b3a5c1b539c'
@@ -89,7 +89,7 @@ export const tradeC = {
   timeStamps: [],
   startTime: new Date(),
   environment: investmentC.environment,
-  manualMode: false,
+  mode: investmentC.mode,
 }
 
 const id1 = new Types.ObjectId().toString()

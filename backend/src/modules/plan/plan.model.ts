@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose'
 import { IPlan } from '@/modules/plan/plan.interface'
-import { PlanStatus } from '@/modules/plan/plan.enum'
+import { PlanMode, PlanStatus } from '@/modules/plan/plan.enum'
 import { Types } from 'mongoose'
 import { ForecastStatus } from '../forecast/forecast.enum'
 
@@ -44,7 +44,13 @@ const PlanSchema = new Schema<IPlan>(
       type: Number,
       required: true,
     },
-    duration: {
+    winRate: {
+      type: Number,
+      required: true,
+      min: 0.77,
+      max: 0.95,
+    },
+    tradingDays: {
       type: Number,
       required: true,
     },
@@ -72,10 +78,11 @@ const PlanSchema = new Schema<IPlan>(
         ref: 'Asset',
       },
     ],
-    manualMode: {
-      type: Boolean,
+    mode: {
+      type: String,
       required: true,
-      default: false,
+      enum: Object.values(PlanMode),
+      default: PlanMode.AUTOMATIC,
     },
     investors: [
       {

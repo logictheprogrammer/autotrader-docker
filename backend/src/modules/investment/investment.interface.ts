@@ -8,6 +8,7 @@ import { FilterQuery, ObjectId, Types } from 'mongoose'
 import { ITrade, ITradeObject } from '../trade/trade.interface'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
+import { PlanMode } from '../plan/plan.enum'
 
 export interface IInvestmentObject extends baseObjectInterface {
   plan: IPlan['_id']
@@ -19,7 +20,7 @@ export interface IInvestmentObject extends baseObjectInterface {
   balance: number
   account: UserAccount
   environment: UserEnvironment
-  manualMode: boolean
+  mode: PlanMode
   currentTrade?: ITrade['_id']
   runTime: number
   tradeStatus?: ForecastStatus

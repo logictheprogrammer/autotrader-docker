@@ -12,7 +12,7 @@ describe('currency', () => {
         try {
           await currencyService.fetch(new Types.ObjectId())
         } catch (error: any) {
-          expect(error.error.message).toBe('Currency not found')
+          expect(error.message).toBe('Currency not found')
         }
       })
     })

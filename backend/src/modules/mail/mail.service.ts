@@ -3,7 +3,7 @@ import nodemailer, { Transporter } from 'nodemailer'
 import { Inject, Service } from 'typedi'
 import { IMailDetails, IMailService } from '@/modules/mail/mail.interface'
 import { IMailOptionService } from '@/modules/mailOption/mailOption.interface'
-import { NotFoundError, ServiceError } from '@/core/apiError'
+import { NotFoundError } from '@/core/apiError'
 import ServiceToken from '@/core/serviceToken'
 
 @Service()
@@ -43,42 +43,34 @@ class MailService implements IMailService {
 
   // CONFIGURE TRANSPORTER
   public async setSender(sender: string): Promise<void> {
-    try {
-      const mailOption = await this.mailOptionService.fetch({ name: sender })
-      if (!mailOption) throw new NotFoundError('Mail option not found')
+    const mailOption = await this.mailOptionService.fetch({ name: sender })
+    if (!mailOption) throw new NotFoundError('Mail option not found')
 
-      this.username = mailOption.username
-      this.transporter = nodemailer.createTransport({
-        host: mailOption.host,
-        port: mailOption.port,
-        secure: mailOption.secure,
-        auth: {
-          user: mailOption.username,
-          pass: mailOption.password,
-        },
-        tls: {
-          rejectUnauthorized: mailOption.tls,
-        },
-      })
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to configure mail, please try again')
-    }
+    this.username = mailOption.username
+    this.transporter = nodemailer.createTransport({
+      host: mailOption.host,
+      port: mailOption.port,
+      secure: mailOption.secure,
+      auth: {
+        user: mailOption.username,
+        pass: mailOption.password,
+      },
+      tls: {
+        rejectUnauthorized: mailOption.tls,
+      },
+    })
   }
 
   //SEND MAIL
   async sendMail(details: IMailDetails) {
-    try {
-      const info = await this.transporter.sendMail({
-        from: `${SiteConstants.siteName} <${this.username}>`,
-        to: details.to,
-        subject: details.subject,
-        text: details.text,
-        html: details.html,
-      })
-      console.log('Message sent: %s', info.messageId)
-    } catch (err) {
-      console.log(err)
-    }
+    const info = await this.transporter.sendMail({
+      from: `${SiteConstants.siteName} <${this.username}>`,
+      to: details.to,
+      subject: details.subject,
+      text: details.text,
+      html: details.html,
+    })
+    console.log('Message sent: %s', info.messageId)
   }
   //VERIFY CONNECTION
   async verifyConnection() {

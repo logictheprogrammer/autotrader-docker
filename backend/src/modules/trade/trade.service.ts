@@ -19,7 +19,7 @@ import {
 } from '../investment/investment.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
 import { IForecastObject } from '../forecast/forecast.interface'
-import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
+import { BadRequestError, NotFoundError } from '@/core/apiError'
 import ServiceToken from '@/core/serviceToken'
 import TradeModel from '@/modules/trade/trade.model'
 
@@ -64,12 +64,15 @@ class TradeService implements ITradeService {
       percentage,
       percentageProfit: forecast.percentageProfit,
       environment: investment.environment,
-      manualMode: investment.manualMode,
+      mode: investment.mode,
     })
 
     // Investment Transaction Instance
 
-    await this.investmentService.updateTradeDetails(trade.investment._id, trade)
+    await this.investmentService.updateTradeDetails(
+      { _id: trade.investment._id },
+      trade
+    )
 
     // Transaction Transaction Instance
     await this.transactionService.create(
@@ -129,7 +132,10 @@ class TradeService implements ITradeService {
 
     await trade.save()
 
-    await this.investmentService.updateTradeDetails(trade.investment._id, trade)
+    await this.investmentService.updateTradeDetails(
+      { _id: trade.investment._id },
+      trade
+    )
 
     return (await trade.populate('user')).populate('investment')
   }
@@ -167,7 +173,10 @@ class TradeService implements ITradeService {
     const user = await this.userService.fetch({ _id: trade.user._id })
 
     // Investment Transaction Instance
-    await this.investmentService.updateTradeDetails(trade.investment._id, trade)
+    await this.investmentService.updateTradeDetails(
+      { _id: trade.investment._id },
+      trade
+    )
 
     // Transaction Transaction Instance
     await this.transactionService.updateAmount(
@@ -208,36 +217,22 @@ class TradeService implements ITradeService {
   }
 
   public async delete(filter: FilterQuery<ITrade>): Promise<ITradeObject> {
-    try {
-      const trade = await this.tradeModel.findOne(filter)
+    const trade = await this.tradeModel.findOne(filter)
 
-      if (!trade) throw new NotFoundError('Trade not found')
+    if (!trade) throw new NotFoundError('Trade not found')
 
-      if (trade.status !== ForecastStatus.SETTLED)
-        throw new BadRequestError('Trade has not been settled yet')
+    if (trade.status !== ForecastStatus.SETTLED)
+      throw new BadRequestError('Trade has not been settled yet')
 
-      await trade.deleteOne()
-      return trade
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to delete this trade, please try again'
-      )
-    }
+    await trade.deleteOne()
+    return trade
   }
 
   public async fetchAll(filter: FilterQuery<ITrade>): Promise<ITradeObject[]> {
-    try {
-      return await this.tradeModel
-        .find(filter)
-        .populate('user')
-        .populate('investment')
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch trade history, please try again'
-      )
-    }
+    return await this.tradeModel
+      .find(filter)
+      .populate('user')
+      .populate('investment')
   }
 }
 

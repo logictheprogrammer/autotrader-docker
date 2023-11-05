@@ -24,8 +24,8 @@ export const investmentA: IInvestmentObject = {
   account: UserAccount.MAIN_BALANCE,
   environment: UserEnvironment.LIVE,
   tradeStartTime: undefined,
-  manualMode: false,
-  minRunTime: planA.duration * 24 * 60 * 60 * 1000,
+  mode: planA.mode,
+  minRunTime: planA.tradingDays * 24 * 60 * 60 * 1000,
   tradeStatus: undefined,
 }
 
@@ -41,8 +41,8 @@ export const investmentB: IInvestmentObject = {
   account: UserAccount.MAIN_BALANCE,
   environment: UserEnvironment.LIVE,
   tradeStartTime: undefined,
-  manualMode: false,
-  minRunTime: planB.duration * 24 * 60 * 60 * 1000,
+  mode: planB.mode,
+  minRunTime: planB.tradingDays * 24 * 60 * 60 * 1000,
   tradeStatus: undefined,
 }
 

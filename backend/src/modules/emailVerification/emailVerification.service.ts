@@ -3,7 +3,7 @@ import { Service } from 'typedi'
 import { IUser } from '@/modules/user/user.interface'
 import { SiteConstants } from '@/modules/config/config.constants'
 import Cryptograph from '@/core/cryptograph'
-import { BadRequestError, ServiceError } from '@/core/apiError'
+import { BadRequestError } from '@/core/apiError'
 import EmailVerificationModel from '@/modules/emailVerification/emailVerification.model'
 
 @Service()
@@ -27,28 +27,24 @@ class EmailVerificationService implements IEmailVerificationService {
   }
 
   public async verify(key: string, verifyToken: string): Promise<void> {
-    try {
-      const emailVerification = await this.emailVerificationModel.findOne({
-        key,
-      })
+    const emailVerification = await this.emailVerificationModel.findOne({
+      key,
+    })
 
-      if (!emailVerification)
-        throw new BadRequestError('Invalid or expired token')
+    if (!emailVerification)
+      throw new BadRequestError('Invalid or expired token')
 
-      const expires = emailVerification.expires
+    const expires = emailVerification.expires
 
-      if (expires < new Date().getTime()) {
-        emailVerification.deleteOne()
-        throw new BadRequestError('Invalid or expired token')
-      }
-
-      if (!(await emailVerification.isValidToken(verifyToken)))
-        throw new BadRequestError('Invalid or expired token')
-
+    if (expires < new Date().getTime()) {
       emailVerification.deleteOne()
-    } catch (err) {
-      throw new ServiceError(err, 'Unable to verify email, please try again')
+      throw new BadRequestError('Invalid or expired token')
     }
+
+    if (!(await emailVerification.isValidToken(verifyToken)))
+      throw new BadRequestError('Invalid or expired token')
+
+    emailVerification.deleteOne()
   }
 }
 

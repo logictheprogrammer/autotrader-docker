@@ -4,11 +4,7 @@ import { IAssetService } from '../asset/asset.interface'
 import { AssetType } from '../asset/asset.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
 import ServiceToken from '@/core/serviceToken'
-import {
-  NotFoundError,
-  RequestConflictError,
-  ServiceError,
-} from '@/core/apiError'
+import { NotFoundError, RequestConflictError } from '@/core/apiError'
 import PairModel from '@/modules/pair/pair.model'
 
 @Service()
@@ -21,18 +17,14 @@ class PairService implements IPairService {
   ) {}
 
   public async fetch(query: FilterQuery<IPair>): Promise<IPairObject> {
-    try {
-      const pair = await this.pairModel
-        .findOne(query)
-        .populate('baseAsset')
-        .populate('quoteAsset')
+    const pair = await this.pairModel
+      .findOne(query)
+      .populate('baseAsset')
+      .populate('quoteAsset')
 
-      if (!pair) throw new NotFoundError('Pair not found')
+    if (!pair) throw new NotFoundError('Pair not found')
 
-      return pair
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to fetch pair, please try again')
-    }
+    return pair
   }
 
   public async create(
@@ -40,47 +32,41 @@ class PairService implements IPairService {
     baseAssetId: ObjectId,
     quoteAssetId: ObjectId
   ): Promise<IPairObject> {
-    try {
-      const baseAsset = await this.assetService.fetch({
-        _id: baseAssetId,
-        type: assetType,
-      })
+    const baseAsset = await this.assetService.fetch({
+      _id: baseAssetId,
+      type: assetType,
+    })
 
-      if (!baseAsset) throw new NotFoundError('Base Asset not found')
+    if (!baseAsset) throw new NotFoundError('Base Asset not found')
 
-      if (baseAssetId.toString() === quoteAssetId.toString())
-        throw new RequestConflictError(
-          'Base and quote assets can not be thesame'
-        )
+    if (baseAssetId.toString() === quoteAssetId.toString())
+      throw new RequestConflictError('Base and quote assets can not be thesame')
 
-      const quoteAsset = await this.assetService.fetch({
-        _id: quoteAssetId,
-        type: assetType,
-      })
+    const quoteAsset = await this.assetService.fetch({
+      _id: quoteAssetId,
+      type: assetType,
+    })
 
-      if (!quoteAsset) throw new NotFoundError('Quote Asset not found')
+    if (!quoteAsset) throw new NotFoundError('Quote Asset not found')
 
-      const pairExist = await this.pairModel.findOne({
-        baseAsset,
-        quoteAsset,
-        assetType,
-      })
+    const pairExist = await this.pairModel.findOne({
+      baseAsset,
+      quoteAsset,
+      assetType,
+    })
 
-      if (pairExist) throw new RequestConflictError('Pair already exist')
+    if (pairExist) throw new RequestConflictError('Pair already exist')
 
-      const pair = await this.pairModel.create({
-        assetType,
-        baseAsset,
-        quoteAsset,
-      })
+    const pair = await this.pairModel.create({
+      assetType,
+      baseAsset,
+      quoteAsset,
+    })
 
-      await pair.populate('baseAsset')
-      await pair.populate('quoteAsset')
+    await pair.populate('baseAsset')
+    await pair.populate('quoteAsset')
 
-      return pair
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to save new pair, please try again')
-    }
+    return pair
   }
 
   public async update(
@@ -89,57 +75,49 @@ class PairService implements IPairService {
     baseAssetId: ObjectId,
     quoteAssetId: ObjectId
   ): Promise<IPairObject> {
-    try {
-      const pair = await this.pairModel.findOne(filter)
+    const pair = await this.pairModel.findOne(filter)
 
-      if (!pair) throw new NotFoundError('Pair not found')
+    if (!pair) throw new NotFoundError('Pair not found')
 
-      const pairExist = await this.pairModel.findOne({
-        $and: [
-          { _id: { $ne: pair._id } },
-          { assetType },
-          { baseAsset: baseAssetId },
-          { quoteAsset: quoteAssetId },
-        ],
-      })
+    const pairExist = await this.pairModel.findOne({
+      $and: [
+        { _id: { $ne: pair._id } },
+        { assetType },
+        { baseAsset: baseAssetId },
+        { quoteAsset: quoteAssetId },
+      ],
+    })
 
-      if (pairExist) throw new RequestConflictError('Pair already exist')
+    if (pairExist) throw new RequestConflictError('Pair already exist')
 
-      const baseAsset = await this.assetService.fetch({
-        _id: baseAssetId,
-        type: assetType,
-      })
+    const baseAsset = await this.assetService.fetch({
+      _id: baseAssetId,
+      type: assetType,
+    })
 
-      if (!baseAsset) throw new NotFoundError('Base Asset not found')
+    if (!baseAsset) throw new NotFoundError('Base Asset not found')
 
-      const quoteAsset = await this.assetService.fetch({
-        _id: quoteAssetId,
-        type: assetType,
-      })
+    const quoteAsset = await this.assetService.fetch({
+      _id: quoteAssetId,
+      type: assetType,
+    })
 
-      if (!quoteAsset) throw new NotFoundError('Quote Asset not found')
+    if (!quoteAsset) throw new NotFoundError('Quote Asset not found')
 
-      pair.assetType = assetType
-      pair.baseAsset = baseAsset
-      pair.quoteAsset = quoteAsset
+    pair.assetType = assetType
+    pair.baseAsset = baseAsset
+    pair.quoteAsset = quoteAsset
 
-      await pair.save()
+    await pair.save()
 
-      return pair
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to update pair, please try again')
-    }
+    return pair
   }
 
   public async fetchAll(query: FilterQuery<IPair>): Promise<IPairObject[]> {
-    try {
-      return await this.pairModel
-        .find(query)
-        .populate('baseAsset')
-        .populate('quoteAsset')
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to fetch pair, please try again')
-    }
+    return await this.pairModel
+      .find(query)
+      .populate('baseAsset')
+      .populate('quoteAsset')
   }
 }
 

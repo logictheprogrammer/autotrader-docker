@@ -13,7 +13,7 @@ import { UserEnvironment } from '@/modules/user/user.enum'
 import { NotificationStatus } from './notification.type'
 import { FilterQuery } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
-import { InternalError, NotFoundError, ServiceError } from '@/core/apiError'
+import { InternalError, NotFoundError } from '@/core/apiError'
 import NotificationModel from '@/modules/notification/notification.model'
 
 @Service()
@@ -29,91 +29,63 @@ class NotificationService implements INotificationService {
     environment: UserEnvironment,
     user?: IUserObject
   ): Promise<INotificationObject> {
-    try {
-      if (forWho === NotificationForWho.USER && !user)
-        throw new InternalError(
-          'User object must be provided when forWho is equal to user'
-        )
-
-      const notification = await this.notificationModel.create({
-        user,
-        message,
-        categoryName,
-        category: categoryObject,
-        forWho,
-        status,
-        environment,
-      })
-
-      return notification
-    } catch (err) {
-      throw new ServiceError(
-        err,
-        'Failed to send notification, please try again'
+    if (forWho === NotificationForWho.USER && !user)
+      throw new InternalError(
+        'User object must be provided when forWho is equal to user'
       )
-    }
+
+    const notification = await this.notificationModel.create({
+      user,
+      message,
+      categoryName,
+      category: categoryObject,
+      forWho,
+      status,
+      environment,
+    })
+
+    return notification
   }
 
   public async delete(
     filter: FilterQuery<INotification>
   ): Promise<INotificationObject> {
-    try {
-      const notification = await this.notificationModel
-        .findOne(filter)
-        .populate('user')
+    const notification = await this.notificationModel
+      .findOne(filter)
+      .populate('user')
 
-      if (!notification) throw new NotFoundError('Notification not found')
+    if (!notification) throw new NotFoundError('Notification not found')
 
-      await notification.deleteOne()
+    await notification.deleteOne()
 
-      return notification
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to delete notification, please try again'
-      )
-    }
+    return notification
   }
 
   public async read(
     filter: FilterQuery<INotification>
   ): Promise<INotificationObject> {
-    try {
-      const notification = await this.notificationModel
-        .findOne(filter)
-        .populate('user')
+    const notification = await this.notificationModel
+      .findOne(filter)
+      .populate('user')
 
-      if (!notification) throw new NotFoundError('Notification not found')
+    if (!notification) throw new NotFoundError('Notification not found')
 
-      notification.read = true
+    notification.read = true
 
-      await notification.save()
+    await notification.save()
 
-      return notification
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to read notification, please try again'
-      )
-    }
+    return notification
   }
 
   public async fetchAll(
     filter: FilterQuery<INotification>
   ): Promise<INotificationObject[]> {
-    try {
-      const notifications = await this.notificationModel
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .populate('user')
+    const notifications = await this.notificationModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .populate('user')
 
-      return notifications
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch notifications, please try again'
-      )
-    }
+    return notifications
   }
 }
 

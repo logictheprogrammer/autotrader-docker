@@ -32,4 +32,8 @@ const fund = Joi.object({
   amount: Joi.number().positive().required(),
 })
 
-export default { create, updateStatus, fund, createDemo }
+const refill = Joi.object({
+  gas: Joi.number().positive().required(),
+})
+
+export default { create, updateStatus, fund, refill, createDemo }

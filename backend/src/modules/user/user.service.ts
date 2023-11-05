@@ -17,7 +17,6 @@ import {
   ForbiddenError,
   NotFoundError,
   RequestConflictError,
-  ServiceError,
 } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
 import UserModel from '@/modules/user/user.model'
@@ -66,40 +65,25 @@ class UserService implements IUserService {
     account: UserAccount,
     amount: number
   ): Promise<IUserObject> {
-    try {
-      const user = await this.userModel.findOne(filter)
+    const user = await this.userModel.findOne(filter)
 
-      if (!user) throw new NotFoundError('User not found')
+    if (!user) throw new NotFoundError('User not found')
 
-      const fundedUser = await this.setFund(user, account, amount)
+    const fundedUser = await this.setFund(user, account, amount)
 
-      return fundedUser
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        `Unable to ${amount > 0 ? 'credit' : 'debit'} user, please try again`
-      )
-    }
+    return fundedUser
   }
 
   public async fetchAll(filter: FilterQuery<IUser>): Promise<IUserObject[]> {
-    try {
-      return await this.userModel.find(filter)
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to get users, please try again')
-    }
+    return await this.userModel.find(filter)
   }
 
   public async fetch(filter: FilterQuery<IUser>): Promise<IUserObject> {
-    try {
-      const user = await this.userModel.findOne(filter)
+    const user = await this.userModel.findOne(filter)
 
-      if (!user) throw new NotFoundError('User not found')
+    if (!user) throw new NotFoundError('User not found')
 
-      return user
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to get user, please try again')
-    }
+    return user
   }
 
   public async updateProfile(
@@ -108,114 +92,93 @@ class UserService implements IUserService {
     username: string,
     byAdmin: boolean
   ): Promise<IUserObject> {
-    try {
-      const user = await this.userModel.findOne(filter)
+    const user = await this.userModel.findOne(filter)
 
-      if (!user) throw new NotFoundError('User not found')
+    if (!user) throw new NotFoundError('User not found')
 
-      const usernameExit = await this.userModel.findOne({
-        username,
-        _id: { $ne: user._id },
-      })
+    const usernameExit = await this.userModel.findOne({
+      username,
+      _id: { $ne: user._id },
+    })
 
-      if (usernameExit)
-        throw new RequestConflictError(
-          'A user with this username already exist'
-        )
+    if (usernameExit)
+      throw new RequestConflictError('A user with this username already exist')
 
-      if (byAdmin && user.role >= UserRole.ADMIN)
-        throw new ForbiddenError('This action can not be performed on an admin')
+    if (byAdmin && user.role >= UserRole.ADMIN)
+      throw new ForbiddenError('This action can not be performed on an admin')
 
-      user.name = name
-      user.username = username
-      await user.save()
+    user.name = name
+    user.username = username
+    await user.save()
 
-      this.activityService.create(
-        user,
-        ActivityForWho.USER,
-        ActivityCategory.PROFILE,
-        'You updated your profile details'
-      )
+    this.activityService.create(
+      user,
+      ActivityForWho.USER,
+      ActivityCategory.PROFILE,
+      'You updated your profile details'
+    )
 
-      return user
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to update profile, please try again')
-    }
+    return user
   }
 
   public async updateEmail(
     filter: FilterQuery<IUser>,
     email: string
   ): Promise<IUserObject> {
-    try {
-      const user = await this.userModel.findOne(filter)
-      if (!user) throw new NotFoundError('User not found')
+    const user = await this.userModel.findOne(filter)
+    if (!user) throw new NotFoundError('User not found')
 
-      const emailExit = await this.userModel.findOne({
-        email,
-        _id: { $ne: user._id },
-      })
+    const emailExit = await this.userModel.findOne({
+      email,
+      _id: { $ne: user._id },
+    })
 
-      if (emailExit)
-        throw new RequestConflictError('A user with this email already exist')
+    if (emailExit)
+      throw new RequestConflictError('A user with this email already exist')
 
-      user.email = email
-      await user.save()
+    user.email = email
+    await user.save()
 
-      this.activityService.create(
-        user,
-        ActivityForWho.USER,
-        ActivityCategory.PROFILE,
-        'Your updated your email address'
-      )
+    this.activityService.create(
+      user,
+      ActivityForWho.USER,
+      ActivityCategory.PROFILE,
+      'Your updated your email address'
+    )
 
-      return user
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to update email, please try again')
-    }
+    return user
   }
 
   public async updateStatus(
     filter: FilterQuery<IUser>,
     status: UserStatus
   ): Promise<IUserObject> {
-    try {
-      const user = await this.userModel.findOne(filter)
-      if (!user) throw new NotFoundError('User not found')
+    const user = await this.userModel.findOne(filter)
+    if (!user) throw new NotFoundError('User not found')
 
-      if (user.role >= UserRole.ADMIN && status === UserStatus.SUSPENDED)
-        throw new BadRequestError('Users with admin role can not be suspended')
+    if (user.role >= UserRole.ADMIN && status === UserStatus.SUSPENDED)
+      throw new BadRequestError('Users with admin role can not be suspended')
 
-      user.status = status
-      await user.save()
+    user.status = status
+    await user.save()
 
-      return user
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Unable to update user status, please try again'
-      )
-    }
+    return user
   }
 
   public async delete(filter: FilterQuery<IUser>): Promise<IUserObject> {
-    try {
-      const user = await this.userModel.findOne(filter)
-      if (!user) throw new NotFoundError('User not found')
+    const user = await this.userModel.findOne(filter)
+    if (!user) throw new NotFoundError('User not found')
 
-      if (user.role >= UserRole.ADMIN)
-        throw new BadRequestError('Users with admin role can not be deleted')
+    if (user.role >= UserRole.ADMIN)
+      throw new BadRequestError('Users with admin role can not be deleted')
 
-      await this.userModel.deleteOne({ _id: user._id })
+    await this.userModel.deleteOne({ _id: user._id })
 
-      await this.notificationModel.deleteMany({ user: user._id })
+    await this.notificationModel.deleteMany({ user: user._id })
 
-      await this.activityModel.deleteMany({ user: user._id })
+    await this.activityModel.deleteMany({ user: user._id })
 
-      return user
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to delete user, please try again')
-    }
+    return user
   }
 
   public async sendEmail(
@@ -224,29 +187,25 @@ class UserService implements IUserService {
     heading: string,
     content: string
   ): Promise<IUserObject> {
-    try {
-      const user = await this.userModel.findOne(filter)
-      if (!user) throw new NotFoundError('User not found')
+    const user = await this.userModel.findOne(filter)
+    if (!user) throw new NotFoundError('User not found')
 
-      this.mailService.setSender(MailOptionName.TEST)
+    this.mailService.setSender(MailOptionName.TEST)
 
-      const emailContent = await renderFile('email/custom', {
-        heading,
-        content,
-        config: SiteConstants,
-      })
+    const emailContent = await renderFile('email/custom', {
+      heading,
+      content,
+      config: SiteConstants,
+    })
 
-      this.mailService.sendMail({
-        subject: subject,
-        to: user.email,
-        text: Helpers.clearHtml(emailContent),
-        html: emailContent,
-      })
+    this.mailService.sendMail({
+      subject: subject,
+      to: user.email,
+      text: Helpers.clearHtml(emailContent),
+      html: emailContent,
+    })
 
-      return user
-    } catch (err: any) {
-      throw new ServiceError(err, 'Unable to send email, please try again')
-    }
+    return user
   }
 }
 

@@ -1,6 +1,7 @@
 import { IForecast } from '@/modules/forecast/forecast.interface'
 import { Schema, Types, model } from 'mongoose'
 import { ForecastStatus } from '@/modules/forecast/forecast.enum'
+import { PlanMode } from '../plan/plan.enum'
 
 const ForecastSchema = new Schema<IForecast>(
   {
@@ -56,10 +57,11 @@ const ForecastSchema = new Schema<IForecast>(
     startTime: {
       type: Date,
     },
-    manualMode: {
-      type: Boolean,
+    mode: {
+      type: String,
       required: true,
-      default: false,
+      enum: Object.values(PlanMode),
+      default: PlanMode.AUTOMATIC,
     },
   },
   {

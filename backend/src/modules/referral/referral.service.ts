@@ -19,7 +19,7 @@ import { ITransactionService } from '@/modules/transaction/transaction.interface
 import { TransactionCategory } from '@/modules/transaction/transaction.enum'
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { FilterQuery, isValidObjectId } from 'mongoose'
-import { NotFoundError, ServiceError } from '@/core/apiError'
+import { NotFoundError } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
 import ServiceToken from '@/core/serviceToken'
 
@@ -40,17 +40,10 @@ class ReferralService implements IReferralService {
   private async findAll(
     filter: FilterQuery<IReferral>
   ): Promise<IReferralObject[]> {
-    try {
-      return await this.referralModel
-        .find(filter)
-        .populate('user')
-        .populate('referrer')
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch referral transactions, please try again'
-      )
-    }
+    return await this.referralModel
+      .find(filter)
+      .populate('user')
+      .populate('referrer')
   }
 
   public async _calcAmountEarn(
@@ -73,182 +66,146 @@ class ReferralService implements IReferralService {
     user: IUserObject,
     amount: number
   ): Promise<IReferralObject | undefined> {
+    const userReferrerId = user.referred
+    if (!userReferrerId || !isValidObjectId(userReferrerId)) return
+
+    const { earn, rate } = await this._calcAmountEarn(type, amount)
+
+    let userReferrer
     try {
-      const userReferrerId = user.referred
-      if (!userReferrerId || !isValidObjectId(userReferrerId)) return
-
-      const { earn, rate } = await this._calcAmountEarn(type, amount)
-
-      let userReferrer
-      try {
-        userReferrer = await this.userService.fund(
-          userReferrerId,
-          UserAccount.REFERRAL_BALANCE,
-          earn
-        )
-      } catch (error) {
-        if (!(error instanceof NotFoundError)) throw error
-      }
-
-      if (!userReferrer) return
-
-      const referral = new this.referralModel({
-        rate,
-        type,
-        referrer: userReferrer,
-        user,
-        amount: earn,
-      })
-
-      const message = `Your referral account has been credited with ${Helpers.toDollar(
+      userReferrer = await this.userService.fund(
+        userReferrerId,
+        UserAccount.REFERRAL_BALANCE,
         earn
-      )}, from ${user.username} ${Helpers.fromCamelToTitleCase(
-        type
-      )} of ${Helpers.toDollar(amount)}`
-      const category = NotificationCategory.REFERRAL
-      const forWho = NotificationForWho.USER
-      const status = ReferralStatus.SUCCESS
-
-      await this.notificationService.create(
-        message,
-        category,
-        referral,
-        forWho,
-        status,
-        UserEnvironment.LIVE,
-        userReferrer
       )
-
-      const adminMessage = `${
-        userReferrer.username
-      } referral account has been credited with ${Helpers.toDollar(
-        earn
-      )}, from ${user.username} ${type} of ${Helpers.toDollar(amount)}`
-
-      await this.notificationService.create(
-        adminMessage,
-        category,
-        referral,
-        NotificationForWho.ADMIN,
-        ReferralStatus.SUCCESS,
-        UserEnvironment.LIVE
-      )
-
-      await this.transactionService.create(
-        userReferrer,
-        ReferralStatus.SUCCESS,
-        TransactionCategory.REFERRAL,
-        referral,
-        earn,
-        UserEnvironment.LIVE
-      )
-
-      return (await referral.populate('user')).populate('referrer')
-    } catch (err: any) {
-      throw err
-      // throw new ServiceError(
-      //   err,
-      //   'Failed to register referral transactions, please try again'
-      // )
+    } catch (error) {
+      if (!(error instanceof NotFoundError)) throw error
     }
+
+    if (!userReferrer) return
+
+    const referral = new this.referralModel({
+      rate,
+      type,
+      referrer: userReferrer,
+      user,
+      amount: earn,
+    })
+
+    const message = `Your referral account has been credited with ${Helpers.toDollar(
+      earn
+    )}, from ${user.username} ${Helpers.fromCamelToTitleCase(
+      type
+    )} of ${Helpers.toDollar(amount)}`
+    const category = NotificationCategory.REFERRAL
+    const forWho = NotificationForWho.USER
+    const status = ReferralStatus.SUCCESS
+
+    await this.notificationService.create(
+      message,
+      category,
+      referral,
+      forWho,
+      status,
+      UserEnvironment.LIVE,
+      userReferrer
+    )
+
+    const adminMessage = `${
+      userReferrer.username
+    } referral account has been credited with ${Helpers.toDollar(earn)}, from ${
+      user.username
+    } ${type} of ${Helpers.toDollar(amount)}`
+
+    await this.notificationService.create(
+      adminMessage,
+      category,
+      referral,
+      NotificationForWho.ADMIN,
+      ReferralStatus.SUCCESS,
+      UserEnvironment.LIVE
+    )
+
+    await this.transactionService.create(
+      userReferrer,
+      ReferralStatus.SUCCESS,
+      TransactionCategory.REFERRAL,
+      referral,
+      earn,
+      UserEnvironment.LIVE
+    )
+
+    return (await referral.populate('user')).populate('referrer')
   }
 
   public async fetchAll(
     filter: FilterQuery<IReferral>
   ): Promise<IReferralObject[]> {
-    try {
-      return await this.findAll(filter)
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch referral transactions, please try again'
-      )
-    }
+    return await this.findAll(filter)
   }
 
   public async earnings(
     filter: FilterQuery<IReferral>
   ): Promise<IReferralEarnings[]> {
-    try {
-      const referralTransactions = await this.findAll(filter)
+    const referralTransactions = await this.findAll(filter)
 
-      const referralEarnings: IReferralEarnings[] = []
+    const referralEarnings: IReferralEarnings[] = []
 
-      referralTransactions.forEach((transation) => {
-        const index = referralEarnings.findIndex(
-          (obj) => obj.user._id.toString() === transation.user._id.toString()
-        )
-        if (index !== -1) {
-          referralEarnings[index].earnings += transation.amount
-        } else {
-          referralEarnings.push({
-            user: transation.user,
-            earnings: transation.amount,
-            referrer: transation.referrer,
-          })
-        }
-      })
-
-      return referralEarnings
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch referral transactions, please try again'
+    referralTransactions.forEach((transation) => {
+      const index = referralEarnings.findIndex(
+        (obj) => obj.user._id.toString() === transation.user._id.toString()
       )
-    }
+      if (index !== -1) {
+        referralEarnings[index].earnings += transation.amount
+      } else {
+        referralEarnings.push({
+          user: transation.user,
+          earnings: transation.amount,
+          referrer: transation.referrer,
+        })
+      }
+    })
+
+    return referralEarnings
   }
 
   public async leaderboard(
     filter: FilterQuery<IReferral>
   ): Promise<IReferralLeaderboard[]> {
-    try {
-      const referralTransactions = await this.findAll(filter)
+    const referralTransactions = await this.findAll(filter)
 
-      const referralLeaderboard: IReferralLeaderboard[] = []
+    const referralLeaderboard: IReferralLeaderboard[] = []
 
-      referralTransactions.forEach((transation) => {
-        const index = referralLeaderboard.findIndex(
-          (obj) =>
-            obj.user._id.toString() === transation.referrer._id.toString()
-        )
-        if (index !== -1) {
-          referralLeaderboard[index].earnings += transation.amount
-        } else {
-          referralLeaderboard.push({
-            user: transation.referrer,
-            earnings: transation.amount,
-          })
-        }
-      })
-
-      return referralLeaderboard
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch referral transactions, please try again'
+    referralTransactions.forEach((transation) => {
+      const index = referralLeaderboard.findIndex(
+        (obj) => obj.user._id.toString() === transation.referrer._id.toString()
       )
-    }
+      if (index !== -1) {
+        referralLeaderboard[index].earnings += transation.amount
+      } else {
+        referralLeaderboard.push({
+          user: transation.referrer,
+          earnings: transation.amount,
+        })
+      }
+    })
+
+    return referralLeaderboard
   }
+
   public async delete(
     filter: FilterQuery<IReferral>
   ): Promise<IReferralObject> {
-    try {
-      const referral = await this.referralModel
-        .findOne(filter)
-        .populate('user')
-        .populate('referrer')
+    const referral = await this.referralModel
+      .findOne(filter)
+      .populate('user')
+      .populate('referrer')
 
-      if (!referral) throw new NotFoundError('Referral transcation not found')
+    if (!referral) throw new NotFoundError('Referral transcation not found')
 
-      await referral.deleteOne()
+    await referral.deleteOne()
 
-      return referral
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to delete this referral, please try again'
-      )
-    }
+    return referral
   }
 }
 

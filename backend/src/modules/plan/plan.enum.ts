@@ -3,3 +3,8 @@ export enum PlanStatus {
   SUSPENDED = 'suspended',
   ON_MAINTENANCE = 'on maintenance',
 }
+
+export enum PlanMode {
+  MANUAL = 'manual',
+  AUTOMATIC = 'automatic',
+}

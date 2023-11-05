@@ -104,23 +104,23 @@ export abstract class ApiError extends Error {
   }
 }
 
-export class ServiceError extends Error {
-  public name = 'ServiceError'
-  public error: any
+// export class ServiceError extends Error {
+//   public name = 'ServiceError'
+//   public error: any
 
-  constructor(error: any, public message: string = 'error') {
-    let err = error
-    while (true) {
-      if (err instanceof ServiceError) err = err.error
-      else break
-    }
-    super(message)
+//   constructor(error: any, public message: string = 'error') {
+//     let err = error
+//     while (true) {
+//       if (err instanceof ServiceError) err = err.error
+//       else break
+//     }
+//     super(message)
 
-    this.error = err
+//     this.error = err
 
-    Object.setPrototypeOf(this, ServiceError.prototype)
-  }
-}
+//     Object.setPrototypeOf(this, ServiceError.prototype)
+//   }
+// }
 
 export class UnauthorizedError extends ApiError {
   constructor(

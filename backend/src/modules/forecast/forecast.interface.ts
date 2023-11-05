@@ -6,6 +6,7 @@ import { IPair, IPairObject } from '@/modules/pair/pair.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
+import { PlanMode } from '../plan/plan.enum'
 
 export interface IForecastObject extends baseObjectInterface {
   plan: IPlan['_id']
@@ -20,7 +21,7 @@ export interface IForecastObject extends baseObjectInterface {
   runTime: number
   timeStamps: number[]
   startTime?: Date
-  manualMode: boolean
+  mode: PlanMode
 }
 
 // @ts-ignore

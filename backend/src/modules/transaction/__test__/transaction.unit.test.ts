@@ -59,7 +59,7 @@ describe('transaction', () => {
             DepositStatus.APPROVED
           )
         } catch (error: any) {
-          expect(error.error.message).toBe('Transaction not found')
+          expect(error.message).toBe('Transaction not found')
         }
       })
     })
@@ -130,7 +130,7 @@ describe('transaction', () => {
             1000
           )
         } catch (error: any) {
-          expect(error.error.message).toBe('Transaction not found')
+          expect(error.message).toBe('Transaction not found')
         }
       })
     })

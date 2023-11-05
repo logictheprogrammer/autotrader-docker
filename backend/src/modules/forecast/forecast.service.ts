@@ -9,20 +9,14 @@ import forecastModel from '@/modules/forecast/forecast.model'
 import { ForecastMove, ForecastStatus } from '@/modules/forecast/forecast.enum'
 import { IPlanObject, IPlanService } from '@/modules/plan/plan.interface'
 import { IPairObject, IPairService } from '../pair/pair.interface'
-import { IMathService } from '../math/math.interface'
+import { IMathService, IMathUtility } from '../math/math.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
 import { IAssetObject } from '../asset/asset.interface'
 import { ITradeService } from '../trade/trade.interface'
-import InvestmentService from '../investment/investment.service'
-import {
-  BadRequestError,
-  InternalError,
-  NotFoundError,
-  ServiceError,
-} from '@/core/apiError'
+import { BadRequestError, InternalError, NotFoundError } from '@/core/apiError'
 import ServiceToken from '@/core/serviceToken'
 import Helpers from '@/utils/helpers'
-import { PlanStatus } from '../plan/plan.enum'
+import { PlanMode, PlanStatus } from '../plan/plan.enum'
 import { InvestmentStatus } from '../investment/investment.enum'
 
 @Service()
@@ -31,11 +25,9 @@ class ForecastService implements IForecastService {
 
   public static minStakeRate = 0.1
   public static maxStakeRate = 0.25
-  public static minDailyWaitTime =
-    InvestmentService.minWaitHour * 60 * 60 * 1000
-  public static maxDailyWaitTime =
-    InvestmentService.minWaitHour * 60 * 60 * 1000
-  public static profitProbability = 0.5
+  public static minDailyWaitTime = 4 * 60 * 60 * 1000
+  public static maxDailyWaitTime = 8 * 60 * 60 * 1000
+  // public static profitProbability = 0.5
 
   public constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
@@ -44,23 +36,24 @@ class ForecastService implements IForecastService {
     private pairService: IPairService,
     @Inject(ServiceToken.MATH_SERVICE)
     private mathService: IMathService,
+    @Inject(ServiceToken.MATH_UTILITY)
+    private mathUtility: IMathUtility,
     @Inject(ServiceToken.INVESTMENT_SERVICE)
     private investmentService: IInvestmentService,
     @Inject(ServiceToken.TRADE_SERVICE)
     private tradeService: ITradeService
   ) {}
 
-  private getForecastWaitTime(dailyForcast: number, duration: number): number {
+  private getForecastWaitTime(dailyForcast: number): number {
     const min = ForecastService.minDailyWaitTime / dailyForcast
     const max = ForecastService.maxDailyWaitTime / dailyForcast
-    return this.mathService.probabilityValue(min, max, 0.76)
+    return this.mathUtility.getRandomNumberFromRange(min, max)
   }
 
   private getDurationTime(plan: IPlanObject): number {
     return (
-      plan.duration * 24 * 60 * 60 * 1000 -
-      this.getForecastWaitTime(plan.dailyForecasts, plan.duration) *
-        plan.duration
+      plan.tradingDays * 24 * 60 * 60 * 1000 -
+      this.getForecastWaitTime(1) * plan.tradingDays
     )
   }
 
@@ -90,13 +83,16 @@ class ForecastService implements IForecastService {
       market: pair.assetType,
       percentageProfit,
       stakeRate,
-      manualMode: plan.manualMode,
+      mode: plan.mode,
     })
 
-    await this.planService.updateForecastDetails(forecast.plan._id, forecast)
+    await this.planService.updateForecastDetails(
+      { _id: forecast.plan._id },
+      forecast
+    )
 
     const activePlanInvestments = await this.investmentService.fetchAll({
-      manualMode: false,
+      mode: plan.mode,
       status: InvestmentStatus.AWAITING_TRADE,
       plan: forecast.plan._id,
       tradeStatus: { $in: [ForecastStatus.SETTLED, undefined] },
@@ -129,7 +125,7 @@ class ForecastService implements IForecastService {
 
     try {
       const plans = await this.planService.fetchAll({
-        manualMode: false,
+        mode: PlanMode.AUTOMATIC,
         status: PlanStatus.ACTIVE,
         forecastStatus: { $or: [ForecastStatus.SETTLED, undefined] },
       })
@@ -138,21 +134,18 @@ class ForecastService implements IForecastService {
         const plan = plans[index]
 
         // check if its time to set the forecast
-        const totalForecast = plan.dailyForecasts * plan.duration
-
         const todaysForecast = await this.getTodaysTotalForecast(plan)
-        const playedRate = todaysForecast / plan.dailyForecasts
+        const tradeRate = todaysForecast / plan.dailyForecasts
 
         const startOfDayTime = new Date().setHours(0, 0, 0, 0)
         const endOfDayTime = new Date().setHours(23, 59, 59, 999)
         const currentTime =
-          new Date().getTime() -
-          this.getForecastWaitTime(plan.dailyForecasts, plan.duration)
+          new Date().getTime() - this.getForecastWaitTime(plan.dailyForecasts)
 
         const timeRate =
           (startOfDayTime - currentTime) / (startOfDayTime - endOfDayTime)
 
-        if (timeRate < playedRate) continue
+        if (timeRate < tradeRate) continue
 
         let pair
         let assets = plan.assets
@@ -191,6 +184,8 @@ class ForecastService implements IForecastService {
           continue
         }
 
+        const totalForecast = plan.dailyForecasts * plan.tradingDays
+
         const minPercentageProfit = plan.minPercentageProfit / totalForecast
         const maxPercentageProfit = plan.maxPercentageProfit / totalForecast
 
@@ -199,10 +194,14 @@ class ForecastService implements IForecastService {
           ForecastService.maxStakeRate
         )
 
-        const percentageProfit = this.mathService.probabilityValue(
+        const options = this.mathService.dynamicRangeOptions(plan.winRate)
+
+        const percentageProfit = this.mathService.dynamicRange(
           minPercentageProfit,
           maxPercentageProfit,
-          0.76
+          options.spread,
+          options.breakpoint,
+          options.probability
         )
 
         const { forecast, errors: createErrors } = await this.create(
@@ -229,31 +228,24 @@ class ForecastService implements IForecastService {
     percentageProfit: number,
     stakeRate: number
   ): Promise<{ forecast: IForecastObject; errors: any[] }> {
-    try {
-      const plan = await this.planService.fetch({ _id: planId })
-      const pair = await this.pairService.fetch({ _id: pairId })
+    const plan = await this.planService.fetch({ _id: planId })
+    const pair = await this.pairService.fetch({ _id: pairId })
 
-      if (!plan) throw new NotFoundError('The plan no longer exist')
+    if (!plan) throw new NotFoundError('The plan no longer exist')
 
-      if (plan.forecastStatus && plan.forecastStatus !== ForecastStatus.SETTLED)
-        throw new BadRequestError('This plan already has an unsettled forecast')
+    if (plan.forecastStatus && plan.forecastStatus !== ForecastStatus.SETTLED)
+      throw new BadRequestError('This plan already has an unsettled forecast')
 
-      if (!pair) throw new NotFoundError('The selected pair no longer exist')
+    if (!pair) throw new NotFoundError('The selected pair no longer exist')
 
-      if (pair.assetType !== plan.assetType)
-        throw new BadRequestError(
-          'The pair is not compatible with this plan plan'
-        )
-
-      const result = await this.create(plan, pair, percentageProfit, stakeRate)
-
-      return result
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to create this forecast, please try again'
+    if (pair.assetType !== plan.assetType)
+      throw new BadRequestError(
+        'The pair is not compatible with this plan plan'
       )
-    }
+
+    const result = await this.create(plan, pair, percentageProfit, stakeRate)
+
+    return result
   }
 
   public async update(
@@ -265,36 +257,34 @@ class ForecastService implements IForecastService {
     openingPrice?: number,
     closingPrice?: number
   ): Promise<IForecastObject> {
-    try {
-      const pair = await this.pairService.fetch({ _id: pairId })
-      if (!pair) throw new NotFoundError('The selected pair no longer exist')
+    const pair = await this.pairService.fetch({ _id: pairId })
+    if (!pair) throw new NotFoundError('The selected pair no longer exist')
 
-      const forecast = await this.forecastModel.findOne(filter)
+    const forecast = await this.forecastModel.findOne(filter)
 
-      if (!forecast) throw new NotFoundError('Forecast not found')
+    if (!forecast) throw new NotFoundError('Forecast not found')
 
-      if (pair.assetType !== forecast.market)
-        throw new BadRequestError(
-          `The pair is not compatible with this forecast, use a ${forecast.market} pair`
-        )
-
-      forecast.pair = pair
-      forecast.market = pair.assetType
-      forecast.move = move
-      forecast.percentageProfit = percentageProfit
-      forecast.stakeRate = stakeRate
-      forecast.openingPrice = openingPrice
-      forecast.closingPrice = closingPrice
-
-      await forecast.save()
-
-      return forecast
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to update this forecast, please try again'
+    if (pair.assetType !== forecast.market)
+      throw new BadRequestError(
+        `The pair is not compatible with this forecast, use a ${forecast.market} pair`
       )
-    }
+
+    forecast.pair = pair
+    forecast.market = pair.assetType
+    forecast.move = move
+    forecast.percentageProfit = percentageProfit
+    forecast.stakeRate = stakeRate
+    forecast.openingPrice = openingPrice
+    forecast.closingPrice = closingPrice
+
+    await this.planService.updateForecastDetails(
+      { _id: forecast.plan._id },
+      forecast
+    )
+
+    await forecast.save()
+
+    return forecast
   }
 
   public async updateStatus(
@@ -349,7 +339,10 @@ class ForecastService implements IForecastService {
 
     forecast.status = status
 
-    await this.planService.updateForecastDetails(forecast.plan._id, forecast)
+    await this.planService.updateForecastDetails(
+      { _id: forecast.plan._id },
+      forecast
+    )
 
     const activePlanInvestments = await this.investmentService.fetchAll({
       manualMode: false,
@@ -395,7 +388,7 @@ class ForecastService implements IForecastService {
       for (let index = 0; index < plans.length; index++) {
         const plan = plans[index]
 
-        const totalForecast = plan.dailyForecasts * plan.duration
+        const totalForecast = plan.dailyForecasts * plan.tradingDays
 
         const durationTime = this.getDurationTime(plan)
 
@@ -493,36 +486,25 @@ class ForecastService implements IForecastService {
   public async delete(
     filter: FilterQuery<IForecast>
   ): Promise<IForecastObject> {
-    try {
-      const forecast = await this.forecastModel.findOne(filter)
+    const forecast = await this.forecastModel.findOne(filter)
 
-      if (!forecast) throw new NotFoundError('Forecast not found')
+    if (!forecast) throw new NotFoundError('Forecast not found')
 
-      if (forecast.status !== ForecastStatus.SETTLED)
-        throw new BadRequestError('Forecast has not been settled yet')
+    if (forecast.status !== ForecastStatus.SETTLED)
+      throw new BadRequestError('Forecast has not been settled yet')
 
-      await this.forecastModel.deleteOne({ _id: forecast._id })
+    await this.forecastModel.deleteOne({ _id: forecast._id })
 
-      return forecast
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to delete this forecast, please try again'
-      )
-    }
+    return forecast
   }
 
   public async fetchAll(
     filter: FilterQuery<IForecast>
   ): Promise<IForecastObject[]> {
-    try {
-      return await this.forecastModel
-        .find(filter)
-        .populate('plan')
-        .populate('pair')
-    } catch (err: any) {
-      throw new ServiceError(err, 'Failed to fetch forecast, please try again')
-    }
+    return await this.forecastModel
+      .find(filter)
+      .populate('plan')
+      .populate('pair')
   }
 }
 

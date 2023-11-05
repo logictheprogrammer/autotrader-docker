@@ -17,7 +17,7 @@ import {
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
 import ServiceToken from '@/core/serviceToken'
-import { BadRequestError, NotFoundError, ServiceError } from '@/core/apiError'
+import { BadRequestError, NotFoundError } from '@/core/apiError'
 import Helpers from '@/utils/helpers'
 import WithdrawalModel from '@/modules/withdrawal/withdrawal.model'
 
@@ -42,181 +42,144 @@ class WithdrawalService implements IWithdrawalService {
     address: string,
     amount: number
   ): Promise<IWithdrawalObject> {
-    try {
-      const withdrawalMethod = await this.withdrawalMethodService.fetch({
-        _id: withdrawalMethodId,
-      })
+    const withdrawalMethod = await this.withdrawalMethodService.fetch({
+      _id: withdrawalMethodId,
+    })
 
-      if (withdrawalMethod.minWithdrawal > amount)
-        throw new BadRequestError(
-          'Amount is lower than the min withdrawal of the selected withdrawal method'
-        )
-
-      const user = await this.userService.fund(
-        { _id: userId },
-        account,
-        -(amount + withdrawalMethod.fee)
+    if (withdrawalMethod.minWithdrawal > amount)
+      throw new BadRequestError(
+        'Amount is lower than the min withdrawal of the selected withdrawal method'
       )
 
-      const withdrawal = await this.withdrawalModel.create({
-        withdrawalMethod,
-        currency: withdrawalMethod.currency,
-        user,
-        account,
-        address,
-        amount,
-        fee: withdrawalMethod.fee,
-        status: WithdrawalStatus.PENDING,
-      })
+    const user = await this.userService.fund(
+      { _id: userId },
+      account,
+      -(amount + withdrawalMethod.fee)
+    )
 
-      await this.transactionService.create(
-        user,
-        withdrawal.status,
-        TransactionCategory.WITHDRAWAL,
-        withdrawal,
-        amount,
-        UserEnvironment.LIVE
-      )
+    const withdrawal = await this.withdrawalModel.create({
+      withdrawalMethod,
+      currency: withdrawalMethod.currency,
+      user,
+      account,
+      address,
+      amount,
+      fee: withdrawalMethod.fee,
+      status: WithdrawalStatus.PENDING,
+    })
 
-      await this.notificationService.create(
-        `${user.username} just made a withdrawal request of ${Helpers.toDollar(
-          amount
-        )} awaiting for your approval`,
-        NotificationCategory.WITHDRAWAL,
-        withdrawal,
-        NotificationForWho.ADMIN,
-        withdrawal.status,
-        UserEnvironment.LIVE
-      )
+    await this.transactionService.create(
+      user,
+      withdrawal.status,
+      TransactionCategory.WITHDRAWAL,
+      withdrawal,
+      amount,
+      UserEnvironment.LIVE
+    )
 
-      return (await withdrawal.populate('user')).populate('withdrawalMethod')
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to register this withdrawal, please try again'
-      )
-    }
+    await this.notificationService.create(
+      `${user.username} just made a withdrawal request of ${Helpers.toDollar(
+        amount
+      )} awaiting for your approval`,
+      NotificationCategory.WITHDRAWAL,
+      withdrawal,
+      NotificationForWho.ADMIN,
+      withdrawal.status,
+      UserEnvironment.LIVE
+    )
+
+    return (await withdrawal.populate('user')).populate('withdrawalMethod')
   }
 
   public async delete(
     filter: FilterQuery<IWithdrawal>
   ): Promise<IWithdrawalObject> {
-    try {
-      const withdrawal = await this.withdrawalModel.findOne(filter)
+    const withdrawal = await this.withdrawalModel.findOne(filter)
 
-      if (!withdrawal) throw new NotFoundError('Withdrawal not found')
+    if (!withdrawal) throw new NotFoundError('Withdrawal not found')
 
-      if (withdrawal.status === WithdrawalStatus.PENDING)
-        throw new BadRequestError('Withdrawal has not been settled yet')
+    if (withdrawal.status === WithdrawalStatus.PENDING)
+      throw new BadRequestError('Withdrawal has not been settled yet')
 
-      await withdrawal.deleteOne()
+    await withdrawal.deleteOne()
 
-      return withdrawal
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to delete this withdrawal, please try again'
-      )
-    }
+    return withdrawal
   }
 
   public async updateStatus(
     filter: FilterQuery<IWithdrawal>,
     status: WithdrawalStatus
   ): Promise<IWithdrawalObject> {
-    try {
-      const withdrawal = await this.withdrawalModel
-        .findOne(filter)
-        .populate('user')
-        .populate('withdrawalMethod')
-        .populate('currency')
+    const withdrawal = await this.withdrawalModel
+      .findOne(filter)
+      .populate('user')
+      .populate('withdrawalMethod')
+      .populate('currency')
 
-      if (!withdrawal) throw new NotFoundError('Withdrawal not found')
+    if (!withdrawal) throw new NotFoundError('Withdrawal not found')
 
-      const oldStatus = withdrawal.status
+    const oldStatus = withdrawal.status
 
-      if (oldStatus !== WithdrawalStatus.PENDING)
-        throw new BadRequestError('Withdrawal as already been settled')
+    if (oldStatus !== WithdrawalStatus.PENDING)
+      throw new BadRequestError('Withdrawal as already been settled')
 
-      withdrawal.status = status
+    withdrawal.status = status
 
-      await withdrawal.save()
+    await withdrawal.save()
 
-      await this.transactionService.updateStatus(
-        { category: withdrawal._id },
-        status
+    await this.transactionService.updateStatus(
+      { category: withdrawal._id },
+      status
+    )
+
+    let user
+
+    if (status === WithdrawalStatus.CANCELLED) {
+      user = await this.userService.fund(
+        withdrawal.user._id,
+        withdrawal.account,
+        withdrawal.amount + withdrawal.fee
       )
-
-      let user
-
-      if (status === WithdrawalStatus.CANCELLED) {
-        user = await this.userService.fund(
-          withdrawal.user._id,
-          withdrawal.account,
-          withdrawal.amount + withdrawal.fee
-        )
-      } else {
-        user = await this.userService.fetch({ _id: withdrawal.user._id })
-      }
-
-      await this.notificationService.create(
-        `Your withdrawal of ${Helpers.toDollar(
-          withdrawal.amount
-        )} was ${status}`,
-        NotificationCategory.WITHDRAWAL,
-        withdrawal,
-        NotificationForWho.USER,
-        status,
-        UserEnvironment.LIVE,
-        user
-      )
-
-      return withdrawal
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to update this withdrawal status, please try again'
-      )
+    } else {
+      user = await this.userService.fetch({ _id: withdrawal.user._id })
     }
+
+    await this.notificationService.create(
+      `Your withdrawal of ${Helpers.toDollar(withdrawal.amount)} was ${status}`,
+      NotificationCategory.WITHDRAWAL,
+      withdrawal,
+      NotificationForWho.USER,
+      status,
+      UserEnvironment.LIVE,
+      user
+    )
+
+    return withdrawal
   }
 
   public async fetch(
     filter: FilterQuery<IWithdrawal>
   ): Promise<IWithdrawalObject> {
-    try {
-      const withdrawal = await this.withdrawalModel
-        .findOne(filter)
-        .populate('user')
-        .populate('withdrawalMethod')
-        .populate('currency')
+    const withdrawal = await this.withdrawalModel
+      .findOne(filter)
+      .populate('user')
+      .populate('withdrawalMethod')
+      .populate('currency')
 
-      if (!withdrawal) throw new NotFoundError('Withdrawal not found')
+    if (!withdrawal) throw new NotFoundError('Withdrawal not found')
 
-      return withdrawal
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch withdrawal history, please try again'
-      )
-    }
+    return withdrawal
   }
 
   public async fetchAll(
     filter: FilterQuery<IWithdrawal>
   ): Promise<IWithdrawalObject[]> {
-    try {
-      return await this.withdrawalModel
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .populate('user')
-        .populate('withdrawalMethod')
-        .populate('currency')
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch withdrawal history, please try again'
-      )
-    }
+    return await this.withdrawalModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .populate('user')
+      .populate('withdrawalMethod')
+      .populate('currency')
   }
 }
 

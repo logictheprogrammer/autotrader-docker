@@ -12,7 +12,7 @@ class MathService implements IMathService {
    * Get A Random array of numbers that meets a condition
    * @param {number} averageValueOne An Average Range Values to use as a reference
    * @param {number} averageValueTwo An Average Range Values to use as a reference
-   * @param {number} spread How far should the lowest value go in relative to zero, 1 will be the length for the lowest value to be zero, so the minimun should be 2
+   * @param {number} spread How far should the lowest value go in relative to zero, 1 will be the length for the lowest value to be zero
    * @param {number} breakpoint How many sub values will be generated to get to the last value
    * @returns {number} An array of Random number that meets a condition
    */
@@ -25,7 +25,6 @@ class MathService implements IMathService {
     // sanitizing inputs
     breakpoint = Math.abs(Math.ceil(breakpoint)) || 1
     spread = Math.abs(spread)
-    spread = spread < 2 ? 2 : spread
     averageValueOne = Math.abs(averageValueOne)
     averageValueTwo = Math.abs(averageValueTwo)
 

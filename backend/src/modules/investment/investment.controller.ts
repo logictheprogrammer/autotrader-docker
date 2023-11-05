@@ -58,6 +58,13 @@ class InvestmentController implements IController {
     )
 
     this.router.patch(
+      `/master${this.path}/refill/:investmentId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.refill),
+      this.refill
+    )
+
+    this.router.patch(
       `/master${this.path}/update-status/:investmentId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updateStatus),
@@ -139,6 +146,18 @@ class InvestmentController implements IController {
       amount
     )
     return new SuccessResponse('Investment funded successfully', {
+      investment,
+    }).send(res)
+  })
+
+  private refill = asyncHandler(async (req, res): Promise<Response | void> => {
+    const { gas } = req.body
+    const { investmentId } = req.params
+    const investment = await this.investmentService.refill(
+      { _id: investmentId },
+      gas
+    )
+    return new SuccessResponse('Investment has been refilled successfully', {
       investment,
     }).send(res)
   })

@@ -12,13 +12,11 @@ import { IController } from '@/core/utils'
 import { doubleCsrfProtection, invalidCsrfTokenError } from '@/helpers/csrf'
 import {
   ApiError,
-  BadRequestError,
   InternalError,
   InvalidCsrfTokenError,
   MongooseCastError,
   NotFoundError,
   SchemaValidationError,
-  ServiceError,
 } from '@/core/apiError'
 
 class App {
@@ -88,11 +86,6 @@ class App {
     // Catch thrown Errors
     this.express.use(
       (err: Error, req: Request, res: Response, next: NextFunction) => {
-        let defaultMessage
-        if (err instanceof ServiceError) {
-          defaultMessage = err.message
-          err = err.error
-        }
         if (err instanceof ApiError) {
           ApiError.handle(err, res)
         } else if (err === invalidCsrfTokenError) {
@@ -100,10 +93,10 @@ class App {
         } else if (err instanceof ValidationError) {
           ApiError.handle(new SchemaValidationError(err), res)
         } else if (err instanceof Error.CastError) {
-          ApiError.handle(new MongooseCastError(defaultMessage), res)
+          ApiError.handle(new MongooseCastError(), res)
         } else {
           ApiError.notifyDeveloper(err)
-          ApiError.handle(new InternalError(defaultMessage), res)
+          ApiError.handle(new InternalError(), res)
         }
       }
     )

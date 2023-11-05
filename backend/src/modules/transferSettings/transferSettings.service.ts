@@ -4,7 +4,7 @@ import {
   ITransferSettingsObject,
   ITransferSettingsService,
 } from '@/modules/transferSettings/transferSettings.interface'
-import { NotFoundError, ServiceError } from '@/core/apiError'
+import { NotFoundError } from '@/core/apiError'
 import { FilterQuery } from 'mongoose'
 import TransferSettingsModel from '@/modules/transferSettings/transferSettings.model'
 
@@ -16,60 +16,39 @@ class TransferSettingsService implements ITransferSettingsService {
     approval: boolean,
     fee: number
   ): Promise<ITransferSettingsObject> {
-    try {
-      const transferSettings = await this.transferSettingsModel.create({
-        approval,
-        fee,
-      })
+    const transferSettings = await this.transferSettingsModel.create({
+      approval,
+      fee,
+    })
 
-      return transferSettings
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Unable to create transfer settings, please try again'
-      )
-    }
+    return transferSettings
   }
 
   public async update(
     approval: boolean,
     fee: number
   ): Promise<ITransferSettingsObject> {
-    try {
-      const transferSettings = await this.transferSettingsModel.findOne()
-      if (!transferSettings)
-        throw new NotFoundError('Transfer settings not found')
+    const transferSettings = await this.transferSettingsModel.findOne()
+    if (!transferSettings)
+      throw new NotFoundError('Transfer settings not found')
 
-      transferSettings.approval = approval
-      transferSettings.fee = fee
+    transferSettings.approval = approval
+    transferSettings.fee = fee
 
-      await transferSettings.save()
+    await transferSettings.save()
 
-      return transferSettings
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Unable to update transfer settings, please try again'
-      )
-    }
+    return transferSettings
   }
 
   public async fetch(
     filter: FilterQuery<ITransferSettings>
   ): Promise<ITransferSettingsObject> {
-    try {
-      const transferSettings = await this.transferSettingsModel.findOne(filter)
+    const transferSettings = await this.transferSettingsModel.findOne(filter)
 
-      if (!transferSettings)
-        throw new NotFoundError('Transfer settings not found')
+    if (!transferSettings)
+      throw new NotFoundError('Transfer settings not found')
 
-      return transferSettings
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Unable to fetch transfer settings, please try again'
-      )
-    }
+    return transferSettings
   }
 }
 

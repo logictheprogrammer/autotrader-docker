@@ -25,7 +25,6 @@ import {
   investmentBObj,
 } from './investment.payload'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
-import { referralA } from '../../referral/__test__/referral.payoad'
 import { ReferralTypes } from '../../referral/referral.enum'
 import { planA, planA_id } from '../../plan/__test__/plan.payload'
 import { fetchPlanMock } from '../../plan/__test__/plan.mock'
@@ -147,11 +146,19 @@ describe('investment', () => {
           })
 
           expect(fundUserMock).toHaveBeenCalledTimes(1)
-
           expect(fundUserMock).toHaveBeenCalledWith(
             user._id,
             payload.account,
             -payload.amount
+          )
+
+          expect(createReferralMock).toHaveBeenCalledTimes(1)
+          expect(createReferralMock).toHaveBeenCalledWith(
+            ReferralTypes.INVESTMENT,
+            expect.objectContaining({
+              _id: user._id,
+            }),
+            payload.amount
           )
 
           expect(createTransactionMock).toHaveBeenCalledTimes(1)
@@ -245,6 +252,13 @@ describe('investment', () => {
           )
 
           expect(createReferralMock).toHaveBeenCalledTimes(1)
+          expect(createReferralMock).toHaveBeenCalledWith(
+            ReferralTypes.INVESTMENT,
+            expect.objectContaining({
+              _id: user._id,
+            }),
+            payload.amount
+          )
 
           expect(createTransactionMock).toHaveBeenCalledTimes(1)
           expect(createTransactionMock).toHaveBeenCalledWith(
@@ -358,6 +372,8 @@ describe('investment', () => {
             -payload.amount
           )
 
+          expect(createReferralMock).toHaveBeenCalledTimes(0)
+
           expect(createTransactionMock).toHaveBeenCalledTimes(1)
           expect(createTransactionMock).toHaveBeenCalledWith(
             expect.objectContaining(userA),
@@ -447,6 +463,67 @@ describe('investment', () => {
         expect(body.message).toBe(
           '"status" must be one of [running, awaiting trade, preparing new trade, suspended, out of gas, refilling, on maintainace, finalizing, completed]'
         )
+        expect(statusCode).toBe(400)
+        expect(body.status).toBe(StatusCode.DANGER)
+      })
+    })
+
+    describe('given investment those not exist', () => {
+      it('should throw a 404 error', async () => {
+        const admin = await userModel.create(adminAInput)
+        const user = await userModel.create({ ...userAInput, _id: userA_id })
+
+        // const { password: _, ...userA1 } = userA
+        const token = Cryptograph.createToken(admin)
+
+        const status = InvestmentStatus.SUSPENDED
+
+        const payload = {
+          status,
+        }
+
+        const url = masterUrl + `update-status/${new Types.ObjectId()}`
+
+        const { statusCode, body } = await request
+          .patch(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Investment not found')
+        expect(statusCode).toBe(404)
+        expect(body.status).toBe(StatusCode.DANGER)
+      })
+    })
+
+    describe('given investment has already been completed', () => {
+      it('should throw a 400 error', async () => {
+        const admin = await userModel.create(adminAInput)
+        const user = await userModel.create({ ...userAInput, _id: userA_id })
+
+        const investment = await investmentModel.create({
+          ...investmentA,
+          status: InvestmentStatus.COMPLETED,
+          _id: investmentA_id,
+          user: user._id,
+        })
+
+        // const { password: _, ...userA1 } = userA
+        const token = Cryptograph.createToken(admin)
+
+        const status = InvestmentStatus.SUSPENDED
+
+        const payload = {
+          status,
+        }
+
+        const url = masterUrl + `update-status/${investment._id}`
+
+        const { statusCode, body } = await request
+          .patch(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Investment plan has already been settled')
         expect(statusCode).toBe(400)
         expect(body.status).toBe(StatusCode.DANGER)
       })
@@ -563,7 +640,7 @@ describe('investment', () => {
 
           expect(fundUserMock).toHaveBeenCalledTimes(1)
           expect(fundUserMock).toHaveBeenCalledWith(
-            investmentAObj.user,
+            { _id: investmentAObj.user },
             UserAccount.MAIN_BALANCE,
             investmentAObj.balance
           )
@@ -646,7 +723,7 @@ describe('investment', () => {
           expect(fundUserMock).toHaveBeenCalledTimes(1)
           expect(fundUserMock).toHaveBeenNthCalledWith(
             1,
-            investmentBObj.user,
+            { _id: investmentBObj.user },
             UserAccount.MAIN_BALANCE,
             investmentBObj.balance
           )
@@ -782,6 +859,102 @@ describe('investment', () => {
     })
   })
 
+  describe('refill', () => {
+    // const url = `${masterUrl}refill/:investmentId`
+    describe('given logged in user is not an admin', () => {
+      it('should return a 401 Unauthorized error', async () => {
+        const payload = {}
+
+        const user = await userModel.create(userAInput)
+        const token = Cryptograph.createToken(user)
+
+        const url = `${masterUrl}refill/${new Types.ObjectId()}`
+
+        const { statusCode, body } = await request
+          .patch(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Unauthorized')
+        expect(statusCode).toBe(401)
+        expect(body.status).toBe(StatusCode.DANGER)
+      })
+    })
+    describe('given inputs are incorrect', () => {
+      it('should return a 400 error', async () => {
+        const payload = {}
+
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+
+        const url = `${masterUrl}refill/${new Types.ObjectId()}`
+
+        const { statusCode, body } = await request
+          .patch(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('"gas" is required')
+        expect(statusCode).toBe(400)
+        expect(body.status).toBe(StatusCode.DANGER)
+      })
+    })
+    describe('given investment those not exist', () => {
+      it('should return a 404 error', async () => {
+        const payload = {
+          gas: 100,
+        }
+
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+
+        const url = `${masterUrl}refill/${new Types.ObjectId()}`
+
+        const { statusCode, body } = await request
+          .patch(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Investment not found')
+        expect(statusCode).toBe(404)
+        expect(body.status).toBe(StatusCode.DANGER)
+      })
+    })
+    describe('on success', () => {
+      it('should return a 200 and an investment payload', async () => {
+        const investment = await investmentModel.create(investmentA)
+
+        const payload = {
+          gas: 100,
+        }
+
+        const admin = await userModel.create(adminAInput)
+        const token = Cryptograph.createToken(admin)
+
+        const url = `${masterUrl}refill/${investment._id}`
+
+        const { statusCode, body } = await request
+          .patch(url)
+          .set('Authorization', `Bearer ${token}`)
+          .send(payload)
+
+        expect(body.message).toBe('Investment has been refilled successfully')
+        expect(statusCode).toBe(200)
+        expect(body.status).toBe(StatusCode.SUCCESS)
+
+        expect(body.data.investment._id).toBe(investment._id.toString())
+
+        expect(body.data.investment.gas).toBe(payload.gas + investmentA.gas)
+
+        const investmentCount = await investmentModel.count({
+          _id: body.data.investment._id,
+          gas: payload.gas + investmentA.gas,
+        })
+        expect(investmentCount).toBe(1)
+      })
+    })
+  })
+
   describe('delete investment', () => {
     // const url = masterUrl + `delete/:investmentId`
     describe('given user is not an admin', () => {
@@ -865,7 +1038,7 @@ describe('investment', () => {
     })
   })
 
-  describe('get users real investment plan', () => {
+  describe('get users investment plan', () => {
     const url = masterUrl
 
     describe('given user is not an admin', () => {
@@ -1010,7 +1183,7 @@ describe('investment', () => {
     })
   })
 
-  describe('get real investment plan', () => {
+  describe('get investment plan', () => {
     const url = baseUrl
 
     describe('given user is not loggedin', () => {

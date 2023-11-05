@@ -13,7 +13,7 @@ describe('withdrawal method', () => {
         try {
           await withdrawalMethodService.fetch({ _id: new Types.ObjectId() })
         } catch (error: any) {
-          expect(error.error.message).toBe('Withdrawal method not found')
+          expect(error.message).toBe('Withdrawal method not found')
         }
       })
     })

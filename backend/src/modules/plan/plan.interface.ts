@@ -1,11 +1,8 @@
-import { PlanStatus } from '@/modules/plan/plan.enum'
+import { PlanMode, PlanStatus } from '@/modules/plan/plan.enum'
 import { AssetType } from '@/modules/asset/asset.enum'
-import {
-  IInvestment,
-  IInvestmentObject,
-} from '../investment/investment.interface'
+import { IInvestment } from '../investment/investment.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
-import { IAsset, IAssetObject } from '../asset/asset.interface'
+import { IAsset } from '../asset/asset.interface'
 import { IForecast, IForecastObject } from '../forecast/forecast.interface'
 import { ForecastStatus } from '../forecast/forecast.enum'
 import baseObjectInterface from '@/core/baseObjectInterface'
@@ -19,14 +16,15 @@ export interface IPlanObject extends baseObjectInterface {
   maxAmount: number
   minPercentageProfit: number
   maxPercentageProfit: number
-  duration: number
+  winRate: number
+  tradingDays: number
   dailyForecasts: number
   gas: number
   description: string
   assetType: AssetType
   assets: IAsset['_id'][]
   status: PlanStatus
-  manualMode: boolean
+  mode: PlanMode
   investors: IInvestment['_id'][]
   dummyInvestors: number
   runTime: number
@@ -48,7 +46,8 @@ export interface IPlanService {
     maxAmount: number,
     minPercentageProfit: number,
     maxPercentageProfit: number,
-    duration: number,
+    winRate: number,
+    tradingDays: number,
     dailyForecasts: number,
     gas: number,
     description: string,
@@ -65,7 +64,8 @@ export interface IPlanService {
     maxAmount: number,
     minPercentageProfit: number,
     maxPercentageProfit: number,
-    duration: number,
+    winRate: number,
+    tradingDays: number,
     dailyForecasts: number,
     gas: number,
     description: string,

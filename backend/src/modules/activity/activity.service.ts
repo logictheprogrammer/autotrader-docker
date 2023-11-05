@@ -11,7 +11,7 @@ import {
 } from '@/modules/activity/activity.interface'
 import { IUserObject } from '@/modules/user/user.interface'
 import { FilterQuery } from 'mongoose'
-import { NotFoundError, ServiceError } from '@/core/apiError'
+import { NotFoundError } from '@/core/apiError'
 import ActivityModel from './activity.model'
 
 @Service()
@@ -24,95 +24,65 @@ class ActivityService implements IActivityService {
     category: ActivityCategory,
     message: string
   ): Promise<IActivityObject> {
-    try {
-      const activity = await this.activityModel.create({
-        user,
-        category,
-        message,
-        forWho,
-      })
+    const activity = await this.activityModel.create({
+      user,
+      category,
+      message,
+      forWho,
+    })
 
-      return activity.populate('user')
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to register activity, please try again'
-      )
-    }
+    return activity.populate('user')
   }
 
   public async fetchAll(
     filter: FilterQuery<IActivity>
   ): Promise<IActivityObject[]> {
-    try {
-      const activities = await this.activityModel.find(filter).populate('user')
+    const activities = await this.activityModel.find(filter).populate('user')
 
-      return activities
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch activities, please try again'
-      )
-    }
+    return activities
   }
 
   public async hide(filter: FilterQuery<IActivity>): Promise<IActivityObject> {
-    try {
-      const activity = await this.activityModel.findOne(filter).populate('user')
+    const activity = await this.activityModel.findOne(filter).populate('user')
 
-      if (!activity) throw new NotFoundError('Activity not found')
+    if (!activity) throw new NotFoundError('Activity not found')
 
-      activity.status = ActivityStatus.HIDDEN
+    activity.status = ActivityStatus.HIDDEN
 
-      await activity.save()
+    await activity.save()
 
-      return activity
-    } catch (err: any) {
-      throw new ServiceError(err, 'Failed to delete, please try again')
-    }
+    return activity
   }
 
   public async hideAll(filter: FilterQuery<IActivity>): Promise<void> {
-    try {
-      const activities = await this.activityModel.find(filter).populate('user')
+    const activities = await this.activityModel.find(filter).populate('user')
 
-      if (!activities.length) throw new NotFoundError('No Activities found')
+    if (!activities.length) throw new NotFoundError('No Activities found')
 
-      for (const activity of activities) {
-        activity.status = ActivityStatus.HIDDEN
-        await activity.save()
-      }
-    } catch (err: any) {
-      throw new ServiceError(err, 'Failed to delete, please try again')
+    for (const activity of activities) {
+      activity.status = ActivityStatus.HIDDEN
+      await activity.save()
     }
   }
 
   public async delete(
     filter: FilterQuery<IActivity>
   ): Promise<IActivityObject> {
-    try {
-      const activity = await this.activityModel.findOne(filter).populate('user')
-      if (!activity) throw new NotFoundError('Activity not found')
+    const activity = await this.activityModel.findOne(filter).populate('user')
+    if (!activity) throw new NotFoundError('Activity not found')
 
-      await this.activityModel.deleteOne({ _id: activity._id })
+    await this.activityModel.deleteOne({ _id: activity._id })
 
-      return activity
-    } catch (err: any) {
-      throw new ServiceError(err, 'Failed to delete, please try again')
-    }
+    return activity
   }
 
   public async deleteAll(filter: FilterQuery<IActivity>): Promise<void> {
-    try {
-      let activities = await this.activityModel.find(filter).populate('user')
+    let activities = await this.activityModel.find(filter).populate('user')
 
-      if (!activities.length) throw new NotFoundError('No Activities found')
+    if (!activities.length) throw new NotFoundError('No Activities found')
 
-      for (const activity of activities) {
-        await this.activityModel.deleteOne({ _id: activity._id })
-      }
-    } catch (err: any) {
-      throw new ServiceError(err, 'Failed to delete, please try again')
+    for (const activity of activities) {
+      await this.activityModel.deleteOne({ _id: activity._id })
     }
   }
 }

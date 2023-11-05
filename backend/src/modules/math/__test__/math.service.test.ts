@@ -324,6 +324,9 @@ describe('Math Service', () => {
 
         expect(result.breakpoint).toBeGreaterThanOrEqual(1)
         expect(result.breakpoint).toBeLessThanOrEqual(7)
+
+        expect(result.probability).toBeGreaterThanOrEqual(0.5)
+        expect(result.probability).toBeLessThanOrEqual(0.9)
       }
     )
   })

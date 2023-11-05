@@ -4,12 +4,7 @@ import {
   IMailOptionObject,
   IMailOptionService,
 } from '@/modules/mailOption/mailOption.interface'
-import {
-  BadRequestError,
-  NotFoundError,
-  RequestConflictError,
-  ServiceError,
-} from '@/core/apiError'
+import { NotFoundError, RequestConflictError } from '@/core/apiError'
 import { FilterQuery } from 'mongoose'
 import MailOptionModel from '@/modules/mailOption/mailOption.model'
 
@@ -26,62 +21,41 @@ export default class MailOptionService implements IMailOptionService {
     username: string,
     password: string
   ): Promise<IMailOptionObject> {
-    try {
-      const mailOptionExist = await this.mailOptionModel.findOne({
-        $or: [{ name }, { username }],
-      })
+    const mailOptionExist = await this.mailOptionModel.findOne({
+      $or: [{ name }, { username }],
+    })
 
-      if (mailOptionExist)
-        throw new RequestConflictError('Name or Username already exist')
+    if (mailOptionExist)
+      throw new RequestConflictError('Name or Username already exist')
 
-      const mailOption = await this.mailOptionModel.create({
-        name,
-        host,
-        port,
-        tls,
-        secure,
-        username,
-        password,
-      })
+    const mailOption = await this.mailOptionModel.create({
+      name,
+      host,
+      port,
+      tls,
+      secure,
+      username,
+      password,
+    })
 
-      return mailOption
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Unable to create new mail option, please try again'
-      )
-    }
+    return mailOption
   }
 
   public async fetch(
     filter: FilterQuery<IMailOption>
   ): Promise<IMailOptionObject> {
-    try {
-      const mailOption = await this.mailOptionModel.findOne(filter)
+    const mailOption = await this.mailOptionModel.findOne(filter)
 
-      if (!mailOption) throw new NotFoundError('Mail Option not found')
-      mailOption.password = mailOption.getPassword()
+    if (!mailOption) throw new NotFoundError('Mail Option not found')
+    mailOption.password = mailOption.getPassword()
 
-      return mailOption
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Unable to fetch mail option, please try again'
-      )
-    }
+    return mailOption
   }
 
   public async fetchAll(
     filter: FilterQuery<IMailOption>
   ): Promise<IMailOptionObject[]> {
-    try {
-      const mailOptions = await this.mailOptionModel.find(filter)
-      return mailOptions
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Unable to fetch mail options, please try again'
-      )
-    }
+    const mailOptions = await this.mailOptionModel.find(filter)
+    return mailOptions
   }
 }

@@ -1,10 +1,9 @@
 import { IResetPasswordService } from '@/modules/resetPassword/resetPassword.interface'
-import resetPasswordModel from '@/modules/resetPassword/resetPassword.model'
 import { Service } from 'typedi'
 import { IUser } from '@/modules/user/user.interface'
 import { SiteConstants } from '@/modules/config/config.constants'
 import Cryptograph from '@/core/cryptograph'
-import { BadRequestError, ServiceError } from '@/core/apiError'
+import { BadRequestError } from '@/core/apiError'
 import ResetPasswordModel from '@/modules/resetPassword/resetPassword.model'
 
 @Service()
@@ -29,27 +28,23 @@ class resetPasswordService implements IResetPasswordService {
   }
 
   public async verify(key: string, verifyToken: string): Promise<void> {
-    try {
-      const resetPassword = await this.resetPasswordModel.findOne({
-        key,
-      })
+    const resetPassword = await this.resetPasswordModel.findOne({
+      key,
+    })
 
-      if (!resetPassword) throw new BadRequestError('Invalid or expired token')
+    if (!resetPassword) throw new BadRequestError('Invalid or expired token')
 
-      const expires = resetPassword.expires
+    const expires = resetPassword.expires
 
-      if (expires < new Date().getTime()) {
-        resetPassword.deleteOne()
-        throw new BadRequestError('Invalid or expired token')
-      }
-
-      if (!(await resetPassword.isValidToken(verifyToken)))
-        throw new BadRequestError('Invalid or expired token')
-
+    if (expires < new Date().getTime()) {
       resetPassword.deleteOne()
-    } catch (err) {
-      throw new ServiceError(err, 'Unable to change password, please try again')
+      throw new BadRequestError('Invalid or expired token')
     }
+
+    if (!(await resetPassword.isValidToken(verifyToken)))
+      throw new BadRequestError('Invalid or expired token')
+
+    resetPassword.deleteOne()
   }
 }
 

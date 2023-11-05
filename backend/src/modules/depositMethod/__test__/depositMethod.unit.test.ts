@@ -13,7 +13,7 @@ describe('deposit method', () => {
         try {
           await depositMethodService.fetch({ _id: new Types.ObjectId() })
         } catch (error: any) {
-          expect(error.error.message).toBe('Deposit method not found')
+          expect(error.message).toBe('Deposit method not found')
         }
       })
     })

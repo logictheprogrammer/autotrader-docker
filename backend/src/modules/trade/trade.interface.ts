@@ -3,14 +3,15 @@ import {
   IInvestment,
   IInvestmentObject,
 } from '@/modules/investment/investment.interface'
-import { IUser, IUserObject } from '@/modules/user/user.interface'
+import { IUser } from '@/modules/user/user.interface'
 import { UserEnvironment } from '@/modules/user/user.enum'
 import { AssetType } from '../asset/asset.enum'
-import { IPair, IPairObject } from '../pair/pair.interface'
+import { IPair } from '../pair/pair.interface'
 import { FilterQuery, ObjectId } from 'mongoose'
 import { IForecast, IForecastObject } from '../forecast/forecast.interface'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
+import { PlanMode } from '../plan/plan.enum'
 
 export interface ITradeObject extends baseObjectInterface {
   investment: IInvestment['_id']
@@ -31,7 +32,7 @@ export interface ITradeObject extends baseObjectInterface {
   timeStamps: number[]
   startTime?: Date
   environment: UserEnvironment
-  manualMode: boolean
+  mode: PlanMode
 }
 
 // @ts-ignore

@@ -12,7 +12,6 @@ import {
   BadRequestError,
   NotFoundError,
   RequestConflictError,
-  ServiceError,
 } from '@/core/apiError'
 import WithdrawalMethodModel from '@/modules/withdrawalMethod/withdrawalMethod.model'
 
@@ -31,34 +30,27 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
     fee: number,
     minWithdrawal: number
   ): Promise<IWithdrawalMethodObject> {
-    try {
-      if (fee >= minWithdrawal)
-        throw new BadRequestError('Min withdrawal must be greater than the fee')
+    if (fee >= minWithdrawal)
+      throw new BadRequestError('Min withdrawal must be greater than the fee')
 
-      const currency = await this.currencyService.fetch({ _id: currencyId })
+    const currency = await this.currencyService.fetch({ _id: currencyId })
 
-      const withdrawalMethodExist = await this.withdrawalMethodModel.findOne({
-        currency: currency._id,
-        network,
-      })
+    const withdrawalMethodExist = await this.withdrawalMethodModel.findOne({
+      currency: currency._id,
+      network,
+    })
 
-      if (withdrawalMethodExist)
-        throw new RequestConflictError('This withdrawal method already exist')
+    if (withdrawalMethodExist)
+      throw new RequestConflictError('This withdrawal method already exist')
 
-      const withdrawalMethod = await this.withdrawalMethodModel.create({
-        currency,
-        network,
-        fee,
-        minWithdrawal,
-        status: WithdrawalMethodStatus.ENABLED,
-      })
-      return withdrawalMethod.populate('currency')
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to add this withdrawal method, please try again'
-      )
-    }
+    const withdrawalMethod = await this.withdrawalMethodModel.create({
+      currency,
+      network,
+      fee,
+      minWithdrawal,
+      status: WithdrawalMethodStatus.ENABLED,
+    })
+    return withdrawalMethod.populate('currency')
   }
 
   public async update(
@@ -68,113 +60,78 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
     fee: number,
     minWithdrawal: number
   ): Promise<IWithdrawalMethodObject> {
-    try {
-      if (fee >= minWithdrawal)
-        throw new BadRequestError('Min withdrawal must be greater than the fee')
+    if (fee >= minWithdrawal)
+      throw new BadRequestError('Min withdrawal must be greater than the fee')
 
-      const withdrawalMethod = await this.withdrawalMethodModel.findOne(filter)
+    const withdrawalMethod = await this.withdrawalMethodModel.findOne(filter)
 
-      if (!withdrawalMethod)
-        throw new NotFoundError('Withdrawal method not found')
+    if (!withdrawalMethod)
+      throw new NotFoundError('Withdrawal method not found')
 
-      const currency = await this.currencyService.fetch({ _id: currencyId })
+    const currency = await this.currencyService.fetch({ _id: currencyId })
 
-      const withdrawalMethodExist = await this.withdrawalMethodModel.findOne({
-        currency: currency._id,
-        network,
-        _id: { $ne: withdrawalMethod._id },
-      })
+    const withdrawalMethodExist = await this.withdrawalMethodModel.findOne({
+      currency: currency._id,
+      network,
+      _id: { $ne: withdrawalMethod._id },
+    })
 
-      if (withdrawalMethodExist)
-        throw new RequestConflictError('This withdrawal method already exist')
+    if (withdrawalMethodExist)
+      throw new RequestConflictError('This withdrawal method already exist')
 
-      withdrawalMethod.currency = currency
-      withdrawalMethod.network = network
-      withdrawalMethod.fee = fee
-      withdrawalMethod.minWithdrawal = minWithdrawal
+    withdrawalMethod.currency = currency
+    withdrawalMethod.network = network
+    withdrawalMethod.fee = fee
+    withdrawalMethod.minWithdrawal = minWithdrawal
 
-      await withdrawalMethod.save()
+    await withdrawalMethod.save()
 
-      return withdrawalMethod.populate('currency')
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to update this withdrawal method, please try again'
-      )
-    }
+    return withdrawalMethod.populate('currency')
   }
 
   public async fetch(
     filter: FilterQuery<IWithdrawalMethod>
   ): Promise<IWithdrawalMethodObject> {
-    try {
-      const withdrawalMethod = await this.withdrawalMethodModel
-        .findOne(filter)
-        .populate('currency')
-      if (!withdrawalMethod)
-        throw new NotFoundError('Withdrawal method not found')
+    const withdrawalMethod = await this.withdrawalMethodModel
+      .findOne(filter)
+      .populate('currency')
+    if (!withdrawalMethod)
+      throw new NotFoundError('Withdrawal method not found')
 
-      return withdrawalMethod
-    } catch (error) {
-      throw new ServiceError(
-        error,
-        'Unable to fetch withdrawal method, please try again'
-      )
-    }
+    return withdrawalMethod
   }
 
   public async delete(
     filter: FilterQuery<IWithdrawalMethod>
   ): Promise<IWithdrawalMethodObject> {
-    try {
-      const withdrawalMethod = await this.withdrawalMethodModel.findOne(filter)
-      if (!withdrawalMethod)
-        throw new NotFoundError('Withdrawal method not found')
+    const withdrawalMethod = await this.withdrawalMethodModel.findOne(filter)
+    if (!withdrawalMethod)
+      throw new NotFoundError('Withdrawal method not found')
 
-      await withdrawalMethod.deleteOne()
-      return withdrawalMethod
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to delete this withdrawal method, please try again'
-      )
-    }
+    await withdrawalMethod.deleteOne()
+    return withdrawalMethod
   }
 
   public async updateStatus(
     filter: FilterQuery<IWithdrawalMethod>,
     status: WithdrawalMethodStatus
   ): Promise<IWithdrawalMethodObject> {
-    try {
-      const withdrawalMethod = await this.withdrawalMethodModel
-        .findOne(filter)
-        .populate('currency')
-      if (!withdrawalMethod)
-        throw new NotFoundError('Withdrawal method not found')
+    const withdrawalMethod = await this.withdrawalMethodModel
+      .findOne(filter)
+      .populate('currency')
+    if (!withdrawalMethod)
+      throw new NotFoundError('Withdrawal method not found')
 
-      withdrawalMethod.status = status
-      await withdrawalMethod.save()
+    withdrawalMethod.status = status
+    await withdrawalMethod.save()
 
-      return withdrawalMethod
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to update this withdrawal method status, please try again'
-      )
-    }
+    return withdrawalMethod
   }
 
   public async fetchAll(
     filter: FilterQuery<IWithdrawalMethod>
   ): Promise<IWithdrawalMethodObject[]> {
-    try {
-      return await this.withdrawalMethodModel.find(filter)
-    } catch (err: any) {
-      throw new ServiceError(
-        err,
-        'Failed to fetch withdrawal method, please try again'
-      )
-    }
+    return await this.withdrawalMethodModel.find(filter)
   }
 }
 

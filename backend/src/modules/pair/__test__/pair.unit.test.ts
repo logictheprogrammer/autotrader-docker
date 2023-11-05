@@ -11,7 +11,7 @@ describe('pair', () => {
       it('should throw an error', async () => {
         await expect(
           pairService.fetch({ _id: new Types.ObjectId() })
-        ).rejects.toThrowError('Unable to fetch pair, please try again')
+        ).rejects.toThrowError('Pair not found')
       })
     })
 

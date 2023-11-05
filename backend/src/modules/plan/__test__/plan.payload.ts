@@ -5,7 +5,7 @@ import {
   assetC_id,
 } from '../../asset/__test__/asset.payload'
 import { AssetType } from '../../asset/asset.enum'
-import { PlanStatus } from '../plan.enum'
+import { PlanMode, PlanStatus } from '../plan.enum'
 import { Types } from 'mongoose'
 
 export const planA_id = new Types.ObjectId('6145de5d5c4f5b3abc1b539a')
@@ -18,7 +18,8 @@ export const planA: IPlanObject = {
   maxAmount: 200,
   minPercentageProfit: 10,
   maxPercentageProfit: 15,
-  duration: 5,
+  winRate: 0.85,
+  tradingDays: 5,
   dailyForecasts: 2,
   gas: 200,
   description: 'this is plan a',
@@ -26,7 +27,7 @@ export const planA: IPlanObject = {
   assets: [assetA_id, assetB_id],
   status: PlanStatus.ACTIVE,
 
-  manualMode: false,
+  mode: PlanMode.AUTOMATIC,
   investors: [],
   dummyInvestors: 0,
   currentForecast: undefined,
@@ -45,15 +46,15 @@ export const planB: IPlanObject = {
   maxAmount: 300,
   minPercentageProfit: 12,
   maxPercentageProfit: 19,
-  duration: 7,
+  winRate: 0.85,
+  tradingDays: 7,
   dailyForecasts: 3,
   gas: 300,
   description: 'this is plan b',
   assetType: AssetType.CRYPTO,
   assets: [assetB_id, assetC_id],
   status: PlanStatus.ACTIVE,
-
-  manualMode: false,
+  mode: PlanMode.AUTOMATIC,
   investors: [],
   dummyInvestors: 0,
   currentForecast: undefined,
@@ -72,7 +73,8 @@ export const planC: IPlanObject = {
   maxAmount: 350,
   minPercentageProfit: 15,
   maxPercentageProfit: 25,
-  duration: 14,
+  winRate: 0.85,
+  tradingDays: 14,
   dailyForecasts: 6,
   gas: 500,
   description: 'this is plan c',
@@ -80,7 +82,7 @@ export const planC: IPlanObject = {
   assets: [assetC_id, assetA_id],
   status: PlanStatus.ACTIVE,
 
-  manualMode: false,
+  mode: PlanMode.AUTOMATIC,
   investors: [],
   dummyInvestors: 0,
   currentForecast: undefined,
