@@ -5,3 +5,13 @@ export const dynamicRangeMock = jest
   .mockImplementation((minValue, ...restParams) => {
     return minValue
   })
+
+export const dynamicRangeOptionsMock = jest
+  .spyOn(MathService.prototype, 'dynamicRangeOptions')
+  .mockImplementation((winRate) => {
+    return {
+      breakpoint: 1,
+      spread: 2,
+      probability: 0.5,
+    }
+  })

@@ -33,7 +33,6 @@ const ForecastSchema = new Schema<IForecast>(
     },
     percentageProfit: {
       type: Number,
-      required: true,
     },
     stakeRate: {
       type: Number,

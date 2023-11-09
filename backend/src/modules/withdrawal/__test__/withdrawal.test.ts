@@ -1,16 +1,13 @@
 import Helpers from '../../../utils/helpers'
 import Cryptograph from '../../../core/cryptograph'
 import { createNotificationMock } from './../../notification/__test__/notification.mock'
-import {
-  createTransactionMock,
-  updateTransactionStatusMock,
-} from './../../transaction/__test__/transaction.mock'
+import { createTransactionMock } from './../../transaction/__test__/transaction.mock'
 import withdrawalModel from '../../../modules/withdrawal/withdrawal.model'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from './../../notification/notification.enum'
-import { TransactionCategory } from './../../transaction/transaction.enum'
+import { TransactionTitle } from './../../transaction/transaction.enum'
 import { WithdrawalStatus } from '../../../modules/withdrawal/withdrawal.enum'
 import {
   withdrawalMethodA,
@@ -148,15 +145,7 @@ describe('withdrawal', () => {
           -(payload.amount + withdrawalMethodA.fee)
         )
 
-        expect(createTransactionMock).toHaveBeenCalledTimes(1)
-        expect(createTransactionMock).toHaveBeenCalledWith(
-          expect.objectContaining(userA1),
-          WithdrawalStatus.PENDING,
-          TransactionCategory.WITHDRAWAL,
-          expect.any(Object),
-          payload.amount,
-          UserEnvironment.LIVE
-        )
+        expect(createTransactionMock).toHaveBeenCalledTimes(0)
 
         expect(createNotificationMock).toHaveBeenCalledTimes(1)
         expect(createNotificationMock).toHaveBeenCalledWith(
@@ -165,10 +154,9 @@ describe('withdrawal', () => {
           } just made a withdrawal request of ${Helpers.toDollar(
             payload.amount
           )} awaiting for your approval`,
-          NotificationCategory.WITHDRAWAL,
+          NotificationTitle.WITHDRAWAL_REQUEST,
           expect.any(Object),
           NotificationForWho.ADMIN,
-          WithdrawalStatus.PENDING,
           UserEnvironment.LIVE
         )
       })
@@ -268,23 +256,25 @@ describe('withdrawal', () => {
             +(withdrawalAObj.amount + withdrawalAObj.fee)
           )
 
-          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
-          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
-            { category: withdrawalAObj._id },
-            status
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining({ _id: userA_id }),
+            TransactionTitle.WITHDRAWAL_FAILED,
+            expect.any(Object),
+            withdrawal.amount,
+            UserEnvironment.LIVE
           )
 
           expect(createNotificationMock).toHaveBeenCalledTimes(1)
           expect(createNotificationMock).toHaveBeenCalledWith(
             `Your withdrawal of ${Helpers.toDollar(
               withdrawalAObj.amount
-            )} was ${status}`,
-            NotificationCategory.WITHDRAWAL,
+            )} was not successful`,
+            NotificationTitle.WITHDRAWAL_FAILED,
             expect.objectContaining({
               _id: withdrawal._id,
             }),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             expect.any(Object)
           )
@@ -329,23 +319,24 @@ describe('withdrawal', () => {
 
           expect(fundUserMock).toHaveBeenCalledTimes(0)
 
-          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
-          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
-            { category: withdrawalAObj._id },
-            status
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining({ _id: userA_id }),
+            TransactionTitle.WITHDRAWAL_SUCCESSFUL,
+            expect.any(Object),
+            withdrawal.amount,
+            UserEnvironment.LIVE
           )
-
           expect(createNotificationMock).toHaveBeenCalledTimes(1)
           expect(createNotificationMock).toHaveBeenCalledWith(
             `Your withdrawal of ${Helpers.toDollar(
               withdrawalAObj.amount
-            )} was ${status}`,
-            NotificationCategory.WITHDRAWAL,
+            )} was successful`,
+            NotificationTitle.WITHDRAWAL_SUCCESSFUL,
             expect.objectContaining({
               _id: withdrawal._id,
             }),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             expect.any(Object)
           )

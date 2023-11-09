@@ -11,6 +11,7 @@ import planModel from '../../plan/plan.model'
 import { planA } from '../../plan/__test__/plan.payload'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
 import { Types } from 'mongoose'
+import { ForecastStatus } from '../../forecast/forecast.enum'
 
 describe('investment', () => {
   describe('create', () => {
@@ -111,23 +112,97 @@ describe('investment', () => {
         }
       })
     })
-    describe('on success', () => {
-      it('should return a investment payload', async () => {
+    describe('given investment those not exist', () => {
+      it('should throw a 404 error', async () => {
+        request
+        const trade = await TradeModel.create(tradeA)
+
+        try {
+          await investmentService.updateTradeDetails(
+            { _id: new Types.ObjectId() },
+            trade
+          )
+        } catch (error: any) {
+          expect(error.message).toBe('Investment not found')
+        }
+      })
+    })
+    describe('given trade status is settled but no profit is in trade', () => {
+      it('should throw a 400 error', async () => {
         request
 
         await userModel.create({ ...userAInput, _id: userA_id })
         const investment = await investmentModel.create(investmentA)
-        const trade = await TradeModel.create(tradeA)
+        const trade = await TradeModel.create({
+          ...tradeA,
+          status: ForecastStatus.SETTLED,
+          profit: undefined,
+        })
 
-        const investmentObj = await investmentService.updateTradeDetails(
-          { _id: investment._id },
-          trade
-        )
-
-        expect(investmentObj.currentTrade._id.toString()).toBe(
-          trade._id.toString()
-        )
+        try {
+          await investmentService.updateTradeDetails(
+            { _id: investment._id },
+            trade
+          )
+        } catch (error: any) {
+          expect(error.message).toBe(
+            'Percentage profit is required when the forecast is being settled'
+          )
+        }
       })
+    })
+    describe('on success', () => {
+      const testCases = [
+        { status: ForecastStatus.MARKET_CLOSED },
+        { status: ForecastStatus.ON_HOLD },
+        { status: ForecastStatus.PREPARING },
+        { status: ForecastStatus.RUNNING },
+        { status: ForecastStatus.SETTLED },
+      ]
+
+      test.each(testCases)(
+        'should return a investment payload based on the status $status',
+        async ({ status }) => {
+          request
+
+          await userModel.create({ ...userAInput, _id: userA_id })
+          const investment = await investmentModel.create(investmentA)
+          const trade = await TradeModel.create({ ...tradeA, status })
+
+          const investmentObj = await investmentService.updateTradeDetails(
+            { _id: investment._id },
+            trade
+          )
+
+          switch (status) {
+            case ForecastStatus.MARKET_CLOSED:
+            case ForecastStatus.ON_HOLD:
+            case ForecastStatus.SETTLED:
+              expect(investmentObj.status).toBe(InvestmentStatus.AWAITING_TRADE)
+              break
+            case ForecastStatus.PREPARING:
+              expect(investmentObj.status).toBe(
+                InvestmentStatus.PROCESSING_TRADE
+              )
+              break
+            case ForecastStatus.RUNNING:
+              expect(investmentObj.status).toBe(InvestmentStatus.RUNNING)
+              break
+          }
+
+          if (status === ForecastStatus.SETTLED) {
+            expect(investmentObj.currentTrade).toBe(undefined)
+            expect(investmentObj.tradeStatus).toBe(undefined)
+            expect(investmentObj.tradeStartTime).toBe(undefined)
+            expect(investmentObj.tradeTimeStamps).toEqual([])
+          } else {
+            expect(investmentObj.currentTrade._id.toString()).toBe(
+              trade._id.toString()
+            )
+            expect(investmentObj.tradeStatus).toBe(status)
+          }
+        }
+      )
     })
   })
   describe('fund', () => {

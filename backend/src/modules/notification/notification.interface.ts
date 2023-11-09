@@ -1,11 +1,10 @@
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
 
 import { UserEnvironment } from '@/modules/user/user.enum'
-import { NotificationStatus } from './notification.type'
 import { FilterQuery } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
@@ -14,10 +13,9 @@ export interface INotificationObject extends baseObjectInterface {
   user?: IUser['_id']
   message: string
   read: boolean
-  categoryName: NotificationCategory
-  category: baseModelInterface['_id']
+  title: NotificationTitle
+  object: baseModelInterface
   forWho: NotificationForWho
-  status: NotificationStatus
   environment: UserEnvironment
 }
 
@@ -29,10 +27,9 @@ export interface INotification
 export interface INotificationService {
   create(
     message: string,
-    categoryName: NotificationCategory,
-    categoryObject: baseObjectInterface,
+    title: NotificationTitle,
+    object: baseObjectInterface,
     forWho: NotificationForWho,
-    status: NotificationStatus,
     environment: UserEnvironment,
     user?: IUserObject
   ): Promise<INotificationObject>

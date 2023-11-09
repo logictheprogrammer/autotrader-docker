@@ -1,16 +1,13 @@
 import { userBInput } from './../../user/__test__/user.payload'
 import Helpers from '../../../utils/helpers'
 import { createNotificationMock } from './../../notification/__test__/notification.mock'
-import {
-  createTransactionMock,
-  updateTransactionStatusMock,
-} from './../../transaction/__test__/transaction.mock'
+import { createTransactionMock } from './../../transaction/__test__/transaction.mock'
 import depositModel from '../../../modules/deposit/deposit.model'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from './../../notification/notification.enum'
-import { TransactionCategory } from './../../transaction/transaction.enum'
+import { TransactionTitle } from './../../transaction/transaction.enum'
 import { DepositStatus } from '../../../modules/deposit/deposit.enum'
 import { depositMethodA_id } from './../../depositMethod/__test__/depositMethod.payload'
 import { request } from '../../../test'
@@ -18,7 +15,6 @@ import {
   userA,
   userA_id,
   userB_id,
-  userB,
   userAObj,
   userBObj,
   userAInput,
@@ -171,25 +167,14 @@ describe('deposit', () => {
           status: DepositMethodStatus.ENABLED,
         })
 
-        expect(createTransactionMock).toHaveBeenCalledTimes(1)
-        expect(createTransactionMock).toHaveBeenCalledWith(
-          expect.objectContaining(userA1),
-          DepositStatus.PENDING,
-          TransactionCategory.DEPOSIT,
-          expect.any(Object),
-          payload.amount,
-          UserEnvironment.LIVE
-        )
-
         expect(createNotificationMock).toHaveBeenCalledTimes(1)
         expect(createNotificationMock).toHaveBeenCalledWith(
           `${user.username} just made a deposit request of ${Helpers.toDollar(
             payload.amount
           )} awaiting for your approval`,
-          NotificationCategory.DEPOSIT,
+          NotificationTitle.DEPOSIT_MADE,
           expect.any(Object),
           NotificationForWho.ADMIN,
-          DepositStatus.PENDING,
           UserEnvironment.LIVE
         )
       })
@@ -287,21 +272,23 @@ describe('deposit', () => {
 
           expect(createReferralMock).toHaveBeenCalledTimes(0)
 
-          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
-          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
-            { category: depositAObj._id },
-            status
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining({ _id: userA_id }),
+            TransactionTitle.DEPOSIT_FAILED,
+            expect.any(Object),
+            deposit.amount,
+            UserEnvironment.LIVE
           )
 
           expect(createNotificationMock).toHaveBeenCalledTimes(1)
           expect(createNotificationMock).toHaveBeenCalledWith(
             `Your deposit of ${Helpers.toDollar(
               depositAObj.amount
-            )} was ${status}`,
-            NotificationCategory.DEPOSIT,
+            )} was not successful`,
+            NotificationTitle.DEPOSIT_FAILED,
             expect.objectContaining({ _id: deposit._id }),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             expect.any(Object)
           )
@@ -354,21 +341,23 @@ describe('deposit', () => {
 
           expect(createReferralMock).toHaveBeenCalledTimes(1)
 
-          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
-          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
-            { category: depositAObj._id },
-            status
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining({ _id: userA_id }),
+            TransactionTitle.DEPOSIT_SUCCESSFUL,
+            expect.any(Object),
+            deposit.amount,
+            UserEnvironment.LIVE
           )
 
           expect(createNotificationMock).toHaveBeenCalledTimes(1)
           expect(createNotificationMock).toHaveBeenCalledWith(
             `Your deposit of ${Helpers.toDollar(
               depositAObj.amount
-            )} was ${status}`,
-            NotificationCategory.DEPOSIT,
+            )} was successful`,
+            NotificationTitle.DEPOSIT_SUCCESSFUL,
             expect.objectContaining({ _id: deposit._id }),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             userAObj
           )
@@ -427,10 +416,13 @@ describe('deposit', () => {
             deposit.amount
           )
 
-          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
-          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
-            { category: depositBObj._id },
-            status
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining({ _id: userB_id }),
+            TransactionTitle.DEPOSIT_SUCCESSFUL,
+            expect.any(Object),
+            deposit.amount,
+            UserEnvironment.LIVE
           )
 
           expect(createNotificationMock).toHaveBeenCalledTimes(1)
@@ -438,11 +430,10 @@ describe('deposit', () => {
           expect(createNotificationMock).toHaveBeenCalledWith(
             `Your deposit of ${Helpers.toDollar(
               depositBObj.amount
-            )} was ${status}`,
-            NotificationCategory.DEPOSIT,
+            )} was successful`,
+            NotificationTitle.DEPOSIT_SUCCESSFUL,
             expect.objectContaining({ _id: deposit._id }),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             userBObj
           )

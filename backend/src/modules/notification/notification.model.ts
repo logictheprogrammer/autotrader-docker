@@ -1,6 +1,6 @@
 import { Schema, Types, model } from 'mongoose'
 import { INotification } from '@/modules/notification/notification.interface'
-import { NotificationCategory, NotificationForWho } from './notification.enum'
+import { NotificationTitle } from './notification.enum'
 import { UserEnvironment } from '../user/user.enum'
 
 const NotificationSchema = new Schema<INotification>(
@@ -19,24 +19,19 @@ const NotificationSchema = new Schema<INotification>(
       required: true,
       default: false,
     },
-    categoryName: {
+    title: {
       type: String,
       required: true,
-      enum: Object.values(NotificationCategory),
+      enum: Object.values(NotificationTitle),
       trim: true,
     },
-    category: {
-      type: Types.ObjectId,
+    object: {
+      type: Object,
       required: true,
     },
     forWho: {
       type: Number,
       required: true,
-    },
-    status: {
-      type: String,
-      required: true,
-      trim: true,
     },
     environment: {
       type: String,

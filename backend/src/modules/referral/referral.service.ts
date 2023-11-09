@@ -12,11 +12,11 @@ import { INotificationService } from '@/modules/notification/notification.interf
 import { IReferralSettingsService } from '@/modules/referralSettings/referralSettings.interface'
 import { IUserObject, IUserService } from '@/modules/user/user.interface'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
-import { TransactionCategory } from '@/modules/transaction/transaction.enum'
+import { TransactionTitle } from '@/modules/transaction/transaction.enum'
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
 import { FilterQuery, isValidObjectId } from 'mongoose'
 import { NotFoundError } from '@/core/apiError'
@@ -97,16 +97,14 @@ class ReferralService implements IReferralService {
     )}, from ${user.username} ${Helpers.fromCamelToTitleCase(
       type
     )} of ${Helpers.toDollar(amount)}`
-    const category = NotificationCategory.REFERRAL
+    const title = NotificationTitle.REFERRAL_EARNINGS
     const forWho = NotificationForWho.USER
-    const status = ReferralStatus.SUCCESS
 
     await this.notificationService.create(
       message,
-      category,
+      title,
       referral,
       forWho,
-      status,
       UserEnvironment.LIVE,
       userReferrer
     )
@@ -119,17 +117,15 @@ class ReferralService implements IReferralService {
 
     await this.notificationService.create(
       adminMessage,
-      category,
+      title,
       referral,
       NotificationForWho.ADMIN,
-      ReferralStatus.SUCCESS,
       UserEnvironment.LIVE
     )
 
     await this.transactionService.create(
       userReferrer,
-      ReferralStatus.SUCCESS,
-      TransactionCategory.REFERRAL,
+      TransactionTitle.REFERRAL_EARNINGS,
       referral,
       earn,
       UserEnvironment.LIVE

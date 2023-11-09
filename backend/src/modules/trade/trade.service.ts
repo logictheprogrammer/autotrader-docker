@@ -7,10 +7,10 @@ import {
 import { ForecastStatus } from '@/modules/forecast/forecast.enum'
 import { IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
-import { TransactionCategory } from '@/modules/transaction/transaction.enum'
+import { TransactionTitle } from '@/modules/transaction/transaction.enum'
 import { INotificationService } from '@/modules/notification/notification.interface'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
 import {
@@ -46,9 +46,11 @@ class TradeService implements ITradeService {
 
     const amount = investment.amount
     const stake = forecast.stakeRate * amount
-    const profit = (forecast.percentageProfit / 100) * amount
-    const outcome = stake + profit
-    const percentage = (profit * 100) / stake
+    const profit = forecast.percentageProfit
+      ? forecast.percentageProfit * amount
+      : undefined
+    const outcome = profit ? stake + profit : undefined
+    const percentage = profit ? profit / stake : undefined
 
     // Trade Transaction Instance
 
@@ -62,6 +64,7 @@ class TradeService implements ITradeService {
       outcome,
       profit,
       percentage,
+      status: forecast.status,
       percentageProfit: forecast.percentageProfit,
       environment: investment.environment,
       mode: investment.mode,
@@ -77,21 +80,18 @@ class TradeService implements ITradeService {
     // Transaction Transaction Instance
     await this.transactionService.create(
       user,
-      trade.status,
-      TransactionCategory.TRADE,
+      TransactionTitle.TRADE_STAKE,
       trade,
       stake,
-      trade.environment,
-      stake
+      trade.environment
     )
 
     // Notification Transaction Instance
     await this.notificationService.create(
       `Your ${trade.investment.plan.name} investment plan now has a pending trade to be placed`,
-      NotificationCategory.TRADE,
+      NotificationTitle.TRADE_STAKE,
       trade,
       NotificationForWho.USER,
-      trade.status,
       trade.environment,
       user
     )
@@ -105,9 +105,11 @@ class TradeService implements ITradeService {
   ): Promise<ITradeObject> {
     const amount = investment.amount
     const stake = forecast.stakeRate * amount
-    const profit = (forecast.percentageProfit / 100) * amount
-    const outcome = stake + profit
-    const percentage = (profit * 100) / stake
+    const profit = forecast.percentageProfit
+      ? forecast.percentageProfit * amount
+      : undefined
+    const outcome = profit ? stake + profit : undefined
+    const percentage = profit ? profit / stake : undefined
 
     const trade = await this.tradeModel.findOne({
       investment: investment._id,
@@ -119,6 +121,7 @@ class TradeService implements ITradeService {
         `The trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
       )
 
+    trade.status = forecast.status
     trade.pair = forecast.pair
     trade.market = forecast.market
     trade.move = forecast.move
@@ -137,7 +140,9 @@ class TradeService implements ITradeService {
       trade
     )
 
-    return (await trade.populate('user')).populate('investment')
+    return (
+      await (await trade.populate('user')).populate('investment')
+    ).populate('forecast')
   }
 
   public async updateStatus(
@@ -151,17 +156,38 @@ class TradeService implements ITradeService {
       })
       .populate('user')
       .populate('investment')
+      .populate('forecast')
 
     if (!trade)
       throw new NotFoundError(
         `The trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
       )
 
+    if (
+      forecast.status === ForecastStatus.SETTLED &&
+      !forecast.percentageProfit
+    )
+      throw new BadRequestError(
+        'Percentage profit is required when the forecast is being settled'
+      )
+
+    const amount = investment.amount
+    const stake = forecast.stakeRate * amount
+    const profit = forecast.percentageProfit
+      ? forecast.percentageProfit * amount
+      : undefined
+    const outcome = profit ? stake + profit : undefined
+    const percentage = profit ? profit / stake : undefined
+
     const oldStatus = trade.status
 
     if (oldStatus === ForecastStatus.SETTLED)
       throw new BadRequestError('This trade has already been settled')
 
+    trade.stake = stake
+    trade.outcome = outcome
+    trade.profit = profit
+    trade.percentage = percentage
     trade.status = forecast.status
     trade.startTime = forecast.startTime
     trade.timeStamps = forecast.timeStamps.slice()
@@ -178,36 +204,43 @@ class TradeService implements ITradeService {
       trade
     )
 
-    // Transaction Transaction Instance
-    await this.transactionService.updateAmount(
-      trade._id,
-      trade.status,
-      trade.outcome
-    )
+    if (trade.status === ForecastStatus.SETTLED) {
+      await this.transactionService.create(
+        user,
+        TransactionTitle.TRADE_SETTLED,
+        trade,
+        outcome!,
+        trade.environment
+      )
+    }
 
     // Notification Transaction Instance
     let notificationMessage
+    let notificationTitle
     switch (trade.status) {
       case ForecastStatus.RUNNING:
         notificationMessage = 'is now running'
+        notificationTitle = NotificationTitle.TRADE_RUNNING
         break
       case ForecastStatus.MARKET_CLOSED:
         notificationMessage = 'market has closed'
+        notificationTitle = NotificationTitle.TRADE_MARKET_CLOSED
         break
       case ForecastStatus.ON_HOLD:
         notificationMessage = 'is currently on hold'
+        notificationTitle = NotificationTitle.TRADE_ON_HOLD
         break
       case ForecastStatus.SETTLED:
         notificationMessage = 'has been settled'
+        notificationTitle = NotificationTitle.TRADE_SETTLED
         break
     }
-    if (notificationMessage) {
+    if (notificationMessage && notificationTitle) {
       await this.notificationService.create(
         `Your ${trade.investment.plan.name} investment plan current trade ${notificationMessage}`,
-        NotificationCategory.TRADE,
+        notificationTitle,
         trade,
         NotificationForWho.USER,
-        trade.status,
         trade.environment,
         user
       )

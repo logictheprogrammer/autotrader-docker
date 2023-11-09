@@ -8,11 +8,11 @@ import { DepositStatus } from '@/modules/deposit/deposit.enum'
 import { IDepositMethodService } from '@/modules/depositMethod/depositMethod.interface'
 import { IUserObject, IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
-import { TransactionCategory } from '@/modules/transaction/transaction.enum'
+import { TransactionTitle } from '@/modules/transaction/transaction.enum'
 import { IReferralService } from '@/modules/referral/referral.interface'
 import { INotificationService } from '@/modules/notification/notification.interface'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
 import { ReferralTypes } from '@/modules/referral/referral.enum'
@@ -68,23 +68,13 @@ class DepositService implements IDepositService {
       status: DepositStatus.PENDING,
     })
 
-    await this.transactionService.create(
-      user,
-      deposit.status,
-      TransactionCategory.DEPOSIT,
-      deposit,
-      amount,
-      UserEnvironment.LIVE
-    )
-
     await this.notificationService.create(
       `${user.username} just made a deposit request of ${Helpers.toDollar(
         amount
       )} awaiting for your approval`,
-      NotificationCategory.DEPOSIT,
+      NotificationTitle.DEPOSIT_MADE,
       deposit,
       NotificationForWho.ADMIN,
-      deposit.status,
       UserEnvironment.LIVE
     )
 
@@ -143,20 +133,43 @@ class DepositService implements IDepositService {
       user = await this.userService.fetch({ _id: deposit.user._id })
     }
 
-    await this.transactionService.updateStatus(
-      { category: deposit._id },
-      status
-    )
+    if (status === DepositStatus.CANCELLED) {
+      await this.notificationService.create(
+        `Your deposit of ${Helpers.toDollar(
+          deposit.amount
+        )} was not successful`,
+        NotificationTitle.DEPOSIT_FAILED,
+        deposit,
+        NotificationForWho.USER,
+        UserEnvironment.LIVE,
+        user
+      )
 
-    await this.notificationService.create(
-      `Your deposit of ${Helpers.toDollar(deposit.amount)} was ${status}`,
-      NotificationCategory.DEPOSIT,
-      deposit,
-      NotificationForWho.USER,
-      status,
-      UserEnvironment.LIVE,
-      user
-    )
+      await this.transactionService.create(
+        user,
+        TransactionTitle.DEPOSIT_FAILED,
+        deposit,
+        deposit.amount,
+        UserEnvironment.LIVE
+      )
+    } else if (status === DepositStatus.APPROVED) {
+      await this.notificationService.create(
+        `Your deposit of ${Helpers.toDollar(deposit.amount)} was successful`,
+        NotificationTitle.DEPOSIT_SUCCESSFUL,
+        deposit,
+        NotificationForWho.USER,
+        UserEnvironment.LIVE,
+        user
+      )
+
+      await this.transactionService.create(
+        user,
+        TransactionTitle.DEPOSIT_SUCCESSFUL,
+        deposit,
+        deposit.amount,
+        UserEnvironment.LIVE
+      )
+    }
 
     return deposit
   }

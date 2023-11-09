@@ -6,11 +6,10 @@ import {
 } from '@/modules/notification/notification.interface'
 import {
   NotificationForWho,
-  NotificationCategory,
+  NotificationTitle,
 } from '@/modules/notification/notification.enum'
 import { IUserObject } from '@/modules/user/user.interface'
 import { UserEnvironment } from '@/modules/user/user.enum'
-import { NotificationStatus } from './notification.type'
 import { FilterQuery } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import { InternalError, NotFoundError } from '@/core/apiError'
@@ -22,10 +21,9 @@ class NotificationService implements INotificationService {
 
   public async create(
     message: string,
-    categoryName: NotificationCategory,
-    categoryObject: baseObjectInterface,
+    title: NotificationTitle,
+    object: baseObjectInterface,
     forWho: NotificationForWho,
-    status: NotificationStatus,
     environment: UserEnvironment,
     user?: IUserObject
   ): Promise<INotificationObject> {
@@ -37,10 +35,9 @@ class NotificationService implements INotificationService {
     const notification = await this.notificationModel.create({
       user,
       message,
-      categoryName,
-      category: categoryObject,
+      title,
+      object,
       forWho,
-      status,
       environment,
     })
 
@@ -50,9 +47,7 @@ class NotificationService implements INotificationService {
   public async delete(
     filter: FilterQuery<INotification>
   ): Promise<INotificationObject> {
-    const notification = await this.notificationModel
-      .findOne(filter)
-      .populate('user')
+    const notification = await this.notificationModel.findOne(filter)
 
     if (!notification) throw new NotFoundError('Notification not found')
 

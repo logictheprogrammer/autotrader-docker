@@ -37,3 +37,7 @@ export const fetchPlanMock = jest
       return Promise.reject('Mock: plan id not handled')
     }
   })
+
+export const updatePlanForecastDetailsMock = jest
+  .spyOn(planService, 'updateForecastDetails')
+  .mockResolvedValue(planC)

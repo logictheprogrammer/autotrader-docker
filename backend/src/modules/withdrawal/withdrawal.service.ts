@@ -8,10 +8,10 @@ import { WithdrawalStatus } from '@/modules/withdrawal/withdrawal.enum'
 import { IWithdrawalMethodService } from '@/modules/withdrawalMethod/withdrawalMethod.interface'
 import { IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
-import { TransactionCategory } from '@/modules/transaction/transaction.enum'
+import { TransactionTitle } from '@/modules/transaction/transaction.enum'
 import { INotificationService } from '@/modules/notification/notification.interface'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
@@ -68,23 +68,13 @@ class WithdrawalService implements IWithdrawalService {
       status: WithdrawalStatus.PENDING,
     })
 
-    await this.transactionService.create(
-      user,
-      withdrawal.status,
-      TransactionCategory.WITHDRAWAL,
-      withdrawal,
-      amount,
-      UserEnvironment.LIVE
-    )
-
     await this.notificationService.create(
       `${user.username} just made a withdrawal request of ${Helpers.toDollar(
         amount
       )} awaiting for your approval`,
-      NotificationCategory.WITHDRAWAL,
+      NotificationTitle.WITHDRAWAL_REQUEST,
       withdrawal,
       NotificationForWho.ADMIN,
-      withdrawal.status,
       UserEnvironment.LIVE
     )
 
@@ -127,11 +117,6 @@ class WithdrawalService implements IWithdrawalService {
 
     await withdrawal.save()
 
-    await this.transactionService.updateStatus(
-      { category: withdrawal._id },
-      status
-    )
-
     let user
 
     if (status === WithdrawalStatus.CANCELLED) {
@@ -140,19 +125,47 @@ class WithdrawalService implements IWithdrawalService {
         withdrawal.account,
         withdrawal.amount + withdrawal.fee
       )
+
+      await this.transactionService.create(
+        user,
+        TransactionTitle.WITHDRAWAL_FAILED,
+        withdrawal,
+        withdrawal.amount,
+        UserEnvironment.LIVE
+      )
+
+      await this.notificationService.create(
+        `Your withdrawal of ${Helpers.toDollar(
+          withdrawal.amount
+        )} was not successful`,
+        NotificationTitle.WITHDRAWAL_FAILED,
+        withdrawal,
+        NotificationForWho.USER,
+        UserEnvironment.LIVE,
+        user
+      )
     } else {
       user = await this.userService.fetch({ _id: withdrawal.user._id })
-    }
 
-    await this.notificationService.create(
-      `Your withdrawal of ${Helpers.toDollar(withdrawal.amount)} was ${status}`,
-      NotificationCategory.WITHDRAWAL,
-      withdrawal,
-      NotificationForWho.USER,
-      status,
-      UserEnvironment.LIVE,
-      user
-    )
+      await this.transactionService.create(
+        user,
+        TransactionTitle.WITHDRAWAL_SUCCESSFUL,
+        withdrawal,
+        withdrawal.amount,
+        UserEnvironment.LIVE
+      )
+
+      await this.notificationService.create(
+        `Your withdrawal of ${Helpers.toDollar(
+          withdrawal.amount
+        )} was successful`,
+        NotificationTitle.WITHDRAWAL_SUCCESSFUL,
+        withdrawal,
+        NotificationForWho.USER,
+        UserEnvironment.LIVE,
+        user
+      )
+    }
 
     return withdrawal
   }

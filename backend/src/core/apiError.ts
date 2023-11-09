@@ -123,6 +123,7 @@ export abstract class ApiError extends Error {
 // }
 
 export class UnauthorizedError extends ApiError {
+  public name = 'UnauthorizedError'
   constructor(
     message = 'Unauthorized',
     description?: string,
@@ -135,6 +136,7 @@ export class UnauthorizedError extends ApiError {
 }
 
 export class InternalError extends ApiError {
+  public name = 'InternalError'
   constructor(
     message = 'Something went wrong, please try again later',
     description?: string,
@@ -147,6 +149,7 @@ export class InternalError extends ApiError {
 }
 
 export class RequestConflictError extends ApiError {
+  public name = 'RequestConflictError'
   constructor(
     message = 'Resource already exist',
     description?: string,
@@ -159,6 +162,7 @@ export class RequestConflictError extends ApiError {
 }
 
 export class BadRequestError extends ApiError {
+  public name = 'BadRequestError'
   constructor(
     message = 'Invalid request',
     description?: string,
@@ -171,6 +175,7 @@ export class BadRequestError extends ApiError {
 }
 
 export class NotFoundError extends ApiError {
+  public name = 'NotFoundError'
   constructor(
     message = 'Resource not found',
     description?: string,
@@ -183,6 +188,7 @@ export class NotFoundError extends ApiError {
 }
 
 export class ForbiddenError extends ApiError {
+  public name = 'ForbiddenError'
   constructor(
     message = 'Permission denied',
     description?: string,
@@ -194,6 +200,7 @@ export class ForbiddenError extends ApiError {
 }
 
 export class InvalidCsrfTokenError extends ApiError {
+  public name = 'InvalidCsrfTokenError'
   constructor() {
     super(
       ErrorType.INVALID_CSRF_ERROR,
@@ -207,6 +214,7 @@ export class InvalidCsrfTokenError extends ApiError {
 }
 
 export class SchemaValidationError extends ApiError {
+  public name = 'SchemaValidationError'
   constructor(error: ValidationError) {
     const errors: string[] = []
     error.details.forEach((err) => {
@@ -226,7 +234,8 @@ export class SchemaValidationError extends ApiError {
 }
 
 export class MongooseCastError extends ApiError {
-  constructor(message = 'Something went wrong, please try again later') {
+  public name = 'MongooseCastError'
+  constructor(message = 'Invalid details, please check and try again') {
     super(ErrorType.MONGOOSE_CAST_ERROR, message, undefined, StatusCode.DANGER)
     Object.setPrototypeOf(this, MongooseCastError.prototype)
   }

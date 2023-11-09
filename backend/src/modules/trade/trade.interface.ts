@@ -22,10 +22,10 @@ export interface ITradeObject extends baseObjectInterface {
   status: ForecastStatus
   move?: ForecastMove
   stake: number
-  outcome: number
-  profit: number
-  percentage: number
-  percentageProfit: number
+  outcome?: number
+  profit?: number
+  percentage?: number
+  percentageProfit?: number
   openingPrice?: number
   closingPrice?: number
   runTime: number

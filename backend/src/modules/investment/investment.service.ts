@@ -9,11 +9,11 @@ import { InvestmentStatus } from '@/modules/investment/investment.enum'
 import { IPlanService } from '@/modules/plan/plan.interface'
 import { IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
-import { TransactionCategory } from '@/modules/transaction/transaction.enum'
+import { TransactionTitle } from '@/modules/transaction/transaction.enum'
 import { IReferralService } from '@/modules/referral/referral.interface'
 import { INotificationService } from '@/modules/notification/notification.interface'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
 import { ReferralTypes } from '@/modules/referral/referral.enum'
@@ -105,12 +105,10 @@ class InvestmentService implements IInvestmentService {
     // Transaction Transaction Instance
     await this.transactionService.create(
       user,
-      investment.status,
-      TransactionCategory.INVESTMENT,
+      TransactionTitle.INVESTMENT_PURCHASED,
       investment,
       amount,
-      environment,
-      amount
+      environment
     )
 
     // Notification Transaction Instance
@@ -118,10 +116,9 @@ class InvestmentService implements IInvestmentService {
       `Your investment of ${Helpers.toDollar(amount)} on the ${
         plan.name
       } plan is up and running`,
-      NotificationCategory.INVESTMENT,
+      NotificationTitle.INVESTMENT_PURCHASED,
       investment,
       NotificationForWho.USER,
-      investment.status,
       environment,
       user
     )
@@ -133,10 +130,9 @@ class InvestmentService implements IInvestmentService {
       } plan with the sum of ${Helpers.toDollar(
         amount
       )}, on his ${environment} account`,
-      NotificationCategory.INVESTMENT,
+      NotificationTitle.INVESTMENT_PURCHASED,
       investment,
       NotificationForWho.ADMIN,
-      investment.status,
       environment
     )
 
@@ -174,11 +170,14 @@ class InvestmentService implements IInvestmentService {
         case ForecastStatus.RUNNING:
           investment.status = InvestmentStatus.RUNNING
           break
-        default:
-          throw new BadRequestError('Invalid forcast status')
       }
 
       if (tradeObject.status === ForecastStatus.SETTLED) {
+        if (!tradeObject.profit)
+          throw new BadRequestError(
+            'Percentage profit is required when the forecast is being settled'
+          )
+
         investment.currentTrade = undefined
         investment.tradeStatus = undefined
         investment.tradeTimeStamps = []
@@ -235,10 +234,12 @@ class InvestmentService implements IInvestmentService {
       )
 
       // Transaction Transaction Instance
-      await this.transactionService.updateAmount(
-        { category: investment._id },
-        investment.status,
-        investment.balance
+      await this.transactionService.create(
+        user,
+        TransactionTitle.INVESTMENT_COMPLETED,
+        investment,
+        investment.balance,
+        investment.environment
       )
 
       // Referral Transaction Instance
@@ -253,47 +254,55 @@ class InvestmentService implements IInvestmentService {
 
     if (sendNotice) {
       let notificationMessage
+      let notificationTitle
       switch (status) {
         case InvestmentStatus.RUNNING:
           notificationMessage = 'is now running'
+          notificationTitle = NotificationTitle.INVESTMENT_RUNNING
           break
         case InvestmentStatus.SUSPENDED:
           notificationMessage = 'has been suspended'
+          notificationTitle = NotificationTitle.INVESTMENT_SUSPENDED
           break
         case InvestmentStatus.COMPLETED:
           notificationMessage = 'has been completed'
+          notificationTitle = NotificationTitle.INVESTMENT_COMPLETED
           break
         case InvestmentStatus.INSUFFICIENT_GAS:
           notificationMessage = 'has ran out of gas'
+          notificationTitle = NotificationTitle.INVESTMENT_INSUFFICIENT_GAS
           break
         case InvestmentStatus.REFILLING:
           notificationMessage = 'is now filling'
+          notificationTitle = NotificationTitle.INVESTMENT_REFILLING
           break
         case InvestmentStatus.ON_MAINTAINACE:
           notificationMessage = 'is corrently on maintance'
+          notificationTitle = NotificationTitle.INVESTMENT_ON_MAINTANACE
           break
         case InvestmentStatus.AWAITING_TRADE:
           notificationMessage = 'is awaiting the trade'
+          notificationTitle = NotificationTitle.INVESTMENT_AWAITING_TRADE
           break
         case InvestmentStatus.PROCESSING_TRADE:
           notificationMessage = 'is processing the next trade'
+          notificationTitle = NotificationTitle.INVESTMENT_PROCESSING_TRADE
           break
       }
 
       // Notification Transaction Instance
-      if (notificationMessage) {
-        const receiver = user
+      if (notificationMessage && notificationTitle) {
+        user = user
           ? user
           : await this.userService.fetch({ _id: investment.user._id })
 
         await this.notificationService.create(
           `Your investment package ${notificationMessage}`,
-          NotificationCategory.INVESTMENT,
+          notificationTitle,
           investment,
           NotificationForWho.USER,
-          status,
           investment.environment,
-          receiver
+          user
         )
       }
     }

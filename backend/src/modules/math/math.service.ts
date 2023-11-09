@@ -244,8 +244,6 @@ class MathService implements IMathService {
       }
     }
 
-    console.log(loopRan)
-
     return { spread, breakpoint, probability }
   }
 

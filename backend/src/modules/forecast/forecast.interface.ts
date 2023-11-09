@@ -14,7 +14,7 @@ export interface IForecastObject extends baseObjectInterface {
   market: AssetType
   status: ForecastStatus
   move?: ForecastMove
-  percentageProfit: number
+  percentageProfit?: number
   stakeRate: number
   openingPrice?: number
   closingPrice?: number
@@ -28,29 +28,27 @@ export interface IForecastObject extends baseObjectInterface {
 export interface IForecast extends baseModelInterface, IForecastObject {}
 
 export interface IForecastService {
-  getTodaysTotalForecast(planObject: IPlanObject): Promise<number>
-
   create(
     plan: IPlanObject,
     pair: IPairObject,
-    percentageProfit: number,
     stakeRate: number
   ): Promise<{ forecast: IForecastObject; errors: any[] }>
 
-  autoCreate(): Promise<{ forecasts: IForecastObject[]; errors: any[] }>
+  autoCreate(
+    plan: IPlanObject
+  ): Promise<{ forecast?: IForecastObject; errors: any[] }>
 
   manualCreate(
     planId: ObjectId,
     pairId: ObjectId,
-    percentageProfit: number,
     stakeRate: number
   ): Promise<{ forecast: IForecastObject; errors: any[] }>
 
   update(
     filter: FilterQuery<IForecast>,
     pairId: ObjectId,
-    percentageProfit: number,
     stakeRate: number,
+    percentageProfit?: number,
     move?: ForecastMove,
     openingPrice?: number,
     closingPrice?: number
@@ -58,14 +56,18 @@ export interface IForecastService {
 
   updateStatus(
     filter: FilterQuery<IForecast>,
-    status: ForecastStatus
+    status: ForecastStatus,
+    percentageProfit?: number
   ): Promise<{ forecast: IForecastObject; errors: any[] }>
 
-  autoUpdateStatus(): Promise<{ forecasts: IForecastObject[]; errors: any[] }>
+  autoUpdateStatus(
+    plan: IPlanObject
+  ): Promise<{ forecast?: IForecastObject; errors: any[] }>
 
   manualUpdateStatus(
     filter: FilterQuery<IForecast>,
-    status: ForecastStatus
+    status: ForecastStatus,
+    percentageProfit?: number
   ): Promise<{ forecast: IForecastObject; errors: any[] }>
 
   fetchAll(filter: FilterQuery<IForecast>): Promise<IForecastObject[]>

@@ -1,18 +1,15 @@
-import { TransactionCategory } from '@/modules/transaction/transaction.enum'
+import { TransactionTitle } from '@/modules/transaction/transaction.enum'
 import { IUser, IUserObject } from '@/modules/user/user.interface'
 import { UserEnvironment } from '../user/user.enum'
-import { TransactionStatus } from './transaction.type'
-import { FilterQuery, ObjectId } from 'mongoose'
+import { FilterQuery } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
 
 export interface ITransactionObject extends baseObjectInterface {
   user: IUser['_id']
-  status: TransactionStatus
-  categoryName: TransactionCategory
-  category: baseModelInterface['_id']
+  title: TransactionTitle
+  object: baseModelInterface
   amount: number
-  stake: number
   environment: UserEnvironment
 }
 
@@ -22,23 +19,10 @@ export interface ITransaction extends baseModelInterface, ITransactionObject {}
 export interface ITransactionService {
   create(
     user: IUserObject,
-    status: TransactionStatus,
-    categoryName: TransactionCategory,
-    category: baseObjectInterface,
+    title: TransactionTitle,
+    object: baseObjectInterface,
     amount: number,
-    environment: UserEnvironment,
-    stake?: number
-  ): Promise<ITransactionObject>
-
-  updateAmount(
-    filter: FilterQuery<ITransaction>,
-    status: TransactionStatus,
-    amount: number
-  ): Promise<ITransactionObject>
-
-  updateStatus(
-    filter: FilterQuery<ITransaction>,
-    status: TransactionStatus
+    environment: UserEnvironment
   ): Promise<ITransactionObject>
 
   fetch(filter: FilterQuery<ITransaction>): Promise<ITransactionObject>

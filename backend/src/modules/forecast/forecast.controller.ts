@@ -70,11 +70,10 @@ class ForecastController implements IController {
   )
 
   private create = asyncHandler(async (req, res): Promise<Response | void> => {
-    const { percentageProfit, stakeRate, pairId, planId } = req.body
+    const { stakeRate, pairId, planId } = req.body
     const { forecast, errors } = await this.forecastService.manualCreate(
       planId,
       pairId,
-      percentageProfit,
       stakeRate
     )
 
@@ -100,8 +99,8 @@ class ForecastController implements IController {
     const forecast = await this.forecastService.update(
       { _id: forecastId },
       pairId,
-      percentageProfit,
       stakeRate,
+      percentageProfit,
       move,
       openingPrice,
       closingPrice
@@ -113,12 +112,13 @@ class ForecastController implements IController {
 
   private updateStatus = asyncHandler(
     async (req, res): Promise<Response | void> => {
-      const { status } = req.body
+      const { status, percentageProfit } = req.body
       const { forecastId } = req.params
       const { forecast, errors } =
         await this.forecastService.manualUpdateStatus(
           { _id: forecastId },
-          status
+          status,
+          percentageProfit
         )
 
       errors.forEach((err) => ApiError.notifyDeveloper(err))

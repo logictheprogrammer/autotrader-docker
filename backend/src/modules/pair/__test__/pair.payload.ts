@@ -26,7 +26,7 @@ export const pairB: IPairObject = {
 export const pairC_id = new Types.ObjectId('2345de5d5c4f5b3a5c1b539c')
 // @ts-ignore
 export const pairC: IPairObject = {
-  assetType: AssetType.FOREX,
+  assetType: AssetType.CRYPTO,
   baseAsset: assetA_id,
   quoteAsset: assetC_id,
 }

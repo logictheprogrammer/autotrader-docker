@@ -1,10 +1,10 @@
 import { adminAInput, userBInput } from './../../user/__test__/user.payload'
 import investmentModel from '../../investment/investment.model'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from '../../notification/notification.enum'
-import { TransactionCategory } from '../../transaction/transaction.enum'
+import { TransactionTitle } from '../../transaction/transaction.enum'
 import { InvestmentStatus } from '../../investment/investment.enum'
 import { request } from '../../../test'
 import {
@@ -28,16 +28,12 @@ import { UserAccount, UserEnvironment } from '../../user/user.enum'
 import { ReferralTypes } from '../../referral/referral.enum'
 import { planA, planA_id } from '../../plan/__test__/plan.payload'
 import { fetchPlanMock } from '../../plan/__test__/plan.mock'
-import transactionModel from '../../transaction/transaction.model'
 import { Types } from 'mongoose'
 import { StatusCode } from '../../../core/apiResponse'
 import Cryptograph from '../../../core/cryptograph'
 import Helpers from '../../../utils/helpers'
 import { fundUserMock } from '../../user/__test__/user.mock'
-import {
-  createTransactionMock,
-  updateTransactionAmountMock,
-} from '../../transaction/__test__/transaction.mock'
+import { createTransactionMock } from '../../transaction/__test__/transaction.mock'
 import { createNotificationMock } from '../../notification/__test__/notification.mock'
 import { createReferralMock } from '../../referral/__test__/referral.mock'
 
@@ -166,12 +162,10 @@ describe('investment', () => {
             expect.objectContaining({
               _id: user._id,
             }),
-            InvestmentStatus.AWAITING_TRADE,
-            TransactionCategory.INVESTMENT,
+            TransactionTitle.INVESTMENT_PURCHASED,
             expect.any(Object),
             payload.amount,
-            UserEnvironment.LIVE,
-            payload.amount
+            UserEnvironment.LIVE
           )
 
           expect(createNotificationMock).toHaveBeenCalledTimes(2)
@@ -179,10 +173,9 @@ describe('investment', () => {
             `Your investment of ${Helpers.toDollar(payload.amount)} on the ${
               planA.name
             } plan is up and running`,
-            NotificationCategory.INVESTMENT,
+            NotificationTitle.INVESTMENT_PURCHASED,
             expect.any(Object),
             NotificationForWho.USER,
-            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.LIVE,
             expect.objectContaining({
               _id: user._id,
@@ -195,10 +188,9 @@ describe('investment', () => {
             } plan with the sum of ${Helpers.toDollar(
               payload.amount
             )}, on his ${UserEnvironment.LIVE} account`,
-            NotificationCategory.INVESTMENT,
+            NotificationTitle.INVESTMENT_PURCHASED,
             expect.any(Object),
             NotificationForWho.ADMIN,
-            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.LIVE,
             undefined,
           ])
@@ -265,12 +257,10 @@ describe('investment', () => {
             expect.objectContaining({
               _id: user._id,
             }),
-            InvestmentStatus.AWAITING_TRADE,
-            TransactionCategory.INVESTMENT,
+            TransactionTitle.INVESTMENT_PURCHASED,
             expect.any(Object),
             payload.amount,
-            UserEnvironment.LIVE,
-            payload.amount
+            UserEnvironment.LIVE
           )
 
           expect(createNotificationMock).toHaveBeenCalledTimes(2)
@@ -278,10 +268,9 @@ describe('investment', () => {
             `Your investment of ${Helpers.toDollar(payload.amount)} on the ${
               planA.name
             } plan is up and running`,
-            NotificationCategory.INVESTMENT,
+            NotificationTitle.INVESTMENT_PURCHASED,
             expect.any(Object),
             NotificationForWho.USER,
-            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.LIVE,
             { ...userB, _id: userB_id, referred: userA_id },
           ])
@@ -292,10 +281,9 @@ describe('investment', () => {
             } plan with the sum of ${Helpers.toDollar(
               payload.amount
             )}, on his ${UserEnvironment.LIVE} account`,
-            NotificationCategory.INVESTMENT,
+            NotificationTitle.INVESTMENT_PURCHASED,
             expect.any(Object),
             NotificationForWho.ADMIN,
-            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.LIVE,
             undefined,
           ])
@@ -377,12 +365,10 @@ describe('investment', () => {
           expect(createTransactionMock).toHaveBeenCalledTimes(1)
           expect(createTransactionMock).toHaveBeenCalledWith(
             expect.objectContaining(userA),
-            InvestmentStatus.AWAITING_TRADE,
-            TransactionCategory.INVESTMENT,
+            TransactionTitle.INVESTMENT_PURCHASED,
             expect.any(Object),
             payload.amount,
-            UserEnvironment.DEMO,
-            payload.amount
+            UserEnvironment.DEMO
           )
 
           // expect(createNotificationMock).toHaveBeenCalledTimes(2)
@@ -391,10 +377,9 @@ describe('investment', () => {
             `Your investment of ${Helpers.toDollar(payload.amount)} on the ${
               planA.name
             } plan is up and running`,
-            NotificationCategory.INVESTMENT,
+            NotificationTitle.INVESTMENT_PURCHASED,
             expect.any(Object),
             NotificationForWho.USER,
-            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.DEMO,
             expect.objectContaining({
               _id: user._id,
@@ -408,10 +393,9 @@ describe('investment', () => {
             } plan with the sum of ${Helpers.toDollar(
               payload.amount
             )}, on his ${UserEnvironment.DEMO} account`,
-            NotificationCategory.INVESTMENT,
+            NotificationTitle.INVESTMENT_PURCHASED,
             expect.any(Object),
             NotificationForWho.ADMIN,
-            InvestmentStatus.AWAITING_TRADE,
             UserEnvironment.DEMO
           )
         })
@@ -581,12 +565,11 @@ describe('investment', () => {
             `Your investment package has been ${status}`
           )
           expect(createNotificationMock.mock.calls[0][1]).toBe(
-            NotificationCategory.INVESTMENT
+            NotificationTitle.INVESTMENT_SUSPENDED
           )
           expect(createNotificationMock.mock.calls[0][3]).toBe(
             NotificationForWho.USER
           )
-          expect(createNotificationMock.mock.calls[0][4]).toBe(status)
         })
       })
       describe('given status was set to completed but no referrer', () => {
@@ -599,16 +582,6 @@ describe('investment', () => {
           const investment = await investmentModel.create({
             ...investmentA,
             _id: investmentA_id,
-          })
-
-          await transactionModel.create({
-            user: investment.user,
-            status: InvestmentStatus.RUNNING,
-            category: investment._id,
-            categoryName: TransactionCategory.INVESTMENT,
-            amount: investment.amount,
-            stake: investment.amount,
-            environment: investment.environment,
           })
 
           const status = InvestmentStatus.COMPLETED
@@ -654,16 +627,24 @@ describe('investment', () => {
             investment.balance - investment.amount
           )
 
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining(userA),
+            TransactionTitle.INVESTMENT_COMPLETED,
+            expect.any(Object),
+            investment.balance,
+            UserEnvironment.LIVE
+          )
+
           expect(createNotificationMock).toHaveBeenCalledTimes(1)
           investmentAObj.status = status
           expect(createNotificationMock).toHaveBeenCalledWith(
-            `Your investment package has been ${status}`,
-            NotificationCategory.INVESTMENT,
+            `Your investment package has been completed`,
+            NotificationTitle.INVESTMENT_COMPLETED,
             expect.objectContaining({
               _id: investment._id,
             }),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             expect.objectContaining({
               _id: user._id,
@@ -681,16 +662,6 @@ describe('investment', () => {
           const investment = await investmentModel.create({
             ...investmentB,
             _id: investmentB_id,
-          })
-
-          await transactionModel.create({
-            user: investment.user,
-            status: InvestmentStatus.RUNNING,
-            category: investment._id,
-            categoryName: TransactionCategory.INVESTMENT,
-            amount: investment.amount,
-            stake: investment.amount,
-            environment: investment.environment,
           })
 
           const status = InvestmentStatus.COMPLETED
@@ -738,19 +709,25 @@ describe('investment', () => {
             investment.amount
           )
 
-          expect(updateTransactionAmountMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining({ _id: userB_id }),
+            TransactionTitle.INVESTMENT_COMPLETED,
+            expect.any(Object),
+            investment.balance,
+            UserEnvironment.LIVE
+          )
 
           expect(createNotificationMock).toHaveBeenCalledTimes(1)
           investmentBObj.status = status
           expect(createNotificationMock).toHaveBeenNthCalledWith(
             1,
             `Your investment package has been ${status}`,
-            NotificationCategory.INVESTMENT,
+            NotificationTitle.INVESTMENT_COMPLETED,
             expect.objectContaining({
               _id: investment._id,
             }),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             expect.objectContaining({
               _id: user._id,

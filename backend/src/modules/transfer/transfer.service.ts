@@ -7,10 +7,10 @@ import {
 import { TransferStatus } from '@/modules/transfer/transfer.enum'
 import { IUserService } from '@/modules/user/user.interface'
 import { ITransactionService } from '@/modules/transaction/transaction.interface'
-import { TransactionCategory } from '@/modules/transaction/transaction.enum'
+import { TransactionTitle } from '@/modules/transaction/transaction.enum'
 import { INotificationService } from '@/modules/notification/notification.interface'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from '@/modules/notification/notification.enum'
 
@@ -87,8 +87,7 @@ class TransferService implements ITransferService {
     if (status === TransferStatus.SUCCESSFUL) {
       await this.transactionService.create(
         fromUser,
-        status,
-        TransactionCategory.TRANSFER_OUT,
+        TransactionTitle.TRANSFER_SENT,
         transfer,
         amount,
         UserEnvironment.LIVE
@@ -99,10 +98,9 @@ class TransferService implements ITransferService {
         `Your transfer of ${Helpers.toDollar(
           amount
         )} to ${toUserUsername} was successful.`,
-        NotificationCategory.TRANSFER,
+        NotificationTitle.TRANSFER_SENT,
         transfer,
         NotificationForWho.USER,
-        status,
         UserEnvironment.LIVE,
         fromUser
       )
@@ -110,8 +108,7 @@ class TransferService implements ITransferService {
       // toUser transaction instance
       await this.transactionService.create(
         toUser,
-        status,
-        TransactionCategory.TRANSFER_IN,
+        TransactionTitle.TRANSFER_RECIEVED,
         transfer,
         amount,
         UserEnvironment.LIVE
@@ -120,10 +117,9 @@ class TransferService implements ITransferService {
       // toUser notification instance
       await this.notificationService.create(
         `${fromUser.username} just sent you ${Helpers.toDollar(amount)}.`,
-        NotificationCategory.TRANSFER,
+        NotificationTitle.TRANSFER_RECIEVED,
         transfer,
         NotificationForWho.USER,
-        status,
         UserEnvironment.LIVE,
         toUser
       )
@@ -135,18 +131,16 @@ class TransferService implements ITransferService {
         } just made a successful transfer of ${Helpers.toDollar(amount)} to ${
           toUser.username
         }`,
-        NotificationCategory.TRANSFER,
+        NotificationTitle.TRANSFER_SENT,
         transfer,
         NotificationForWho.ADMIN,
-        status,
         UserEnvironment.LIVE
       )
     } else {
       // fromUser transaction instance
       await this.transactionService.create(
         fromUser,
-        status,
-        TransactionCategory.TRANSFER_OUT,
+        TransactionTitle.TRANSFER_SENT,
         transfer,
         amount,
         UserEnvironment.LIVE
@@ -157,10 +151,9 @@ class TransferService implements ITransferService {
         `Your transfer of ${Helpers.toDollar(
           amount
         )} to ${toUserUsername} is ongoing.`,
-        NotificationCategory.TRANSFER,
+        NotificationTitle.TRANSFER_SENT,
         transfer,
         NotificationForWho.USER,
-        status,
         UserEnvironment.LIVE,
         fromUser
       )
@@ -172,10 +165,9 @@ class TransferService implements ITransferService {
         } just made a transfer request of ${Helpers.toDollar(amount)} to ${
           toUser.username
         } awaiting for your approver`,
-        NotificationCategory.TRANSFER,
+        NotificationTitle.TRANSFER_SENT,
         transfer,
         NotificationForWho.ADMIN,
-        status,
         UserEnvironment.LIVE
       )
     }
@@ -218,9 +210,6 @@ class TransferService implements ITransferService {
 
     await transfer.save()
 
-    // Add transaction instance
-    await this.transactionService.updateStatus(transfer._id, status)
-
     let fromUser
 
     if (status === TransferStatus.REVERSED) {
@@ -229,6 +218,26 @@ class TransferService implements ITransferService {
         transfer.fromUser._id,
         transfer.account,
         transfer.amount + transfer.fee
+      )
+
+      // Add toUser transaction instance
+      await this.transactionService.create(
+        fromUser,
+        TransactionTitle.TRANSFER_REVERSED,
+        transfer,
+        transfer.amount,
+        UserEnvironment.LIVE
+      )
+
+      await this.notificationService.create(
+        `Your transfer of ${Helpers.toDollar(
+          transfer.amount
+        )} was not successful`,
+        NotificationTitle.TRANSFER_REVERSED,
+        transfer,
+        NotificationForWho.USER,
+        UserEnvironment.LIVE,
+        fromUser
       )
     } else {
       fromUser = await this.userService.fetch({ _id: transfer.fromUser._id })
@@ -243,8 +252,7 @@ class TransferService implements ITransferService {
       // Add toUser transaction instance
       await this.transactionService.create(
         toUser,
-        status,
-        TransactionCategory.TRANSFER_IN,
+        TransactionTitle.TRANSFER_RECIEVED,
         transfer,
         transfer.amount,
         UserEnvironment.LIVE
@@ -255,24 +263,13 @@ class TransferService implements ITransferService {
         `${fromUser.username} just sent you ${Helpers.toDollar(
           transfer.amount
         )}.`,
-        NotificationCategory.TRANSFER,
+        NotificationTitle.TRANSFER_RECIEVED,
         transfer,
         NotificationForWho.USER,
-        status,
         UserEnvironment.LIVE,
         toUser
       )
     }
-
-    await this.notificationService.create(
-      `Your transfer of ${Helpers.toDollar(transfer.amount)} was ${status}`,
-      NotificationCategory.TRANSFER,
-      transfer,
-      NotificationForWho.USER,
-      status,
-      UserEnvironment.LIVE,
-      fromUser
-    )
 
     return transfer
   }

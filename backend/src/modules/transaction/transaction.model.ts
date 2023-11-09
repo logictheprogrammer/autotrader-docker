@@ -8,16 +8,11 @@ const TransactionSchema = new Schema<ITransaction>(
       ref: 'User',
       required: true,
     },
-    status: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    category: {
-      type: Types.ObjectId,
+    object: {
+      type: Object,
       required: true,
     },
-    categoryName: {
+    title: {
       type: String,
       required: true,
       trim: true,
@@ -30,9 +25,6 @@ const TransactionSchema = new Schema<ITransaction>(
     amount: {
       type: Number,
       required: true,
-    },
-    stake: {
-      type: Number,
     },
   },
   {

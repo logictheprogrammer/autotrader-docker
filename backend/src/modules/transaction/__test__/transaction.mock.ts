@@ -11,11 +11,3 @@ const transactionObj: INotificationObj = {
 export const createTransactionMock = jest
   .spyOn(transactionService, 'create')
   .mockResolvedValue(transactionObj)
-
-export const updateTransactionStatusMock = jest
-  .spyOn(transactionService, 'updateStatus')
-  .mockResolvedValue(transactionObj)
-
-export const updateTransactionAmountMock = jest
-  .spyOn(transactionService, 'updateAmount')
-  .mockResolvedValue(transactionObj)

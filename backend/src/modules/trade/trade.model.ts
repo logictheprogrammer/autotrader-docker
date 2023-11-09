@@ -47,19 +47,15 @@ const TradeSchema = new Schema<ITrade>(
     },
     outcome: {
       type: Number,
-      required: true,
     },
     profit: {
       type: Number,
-      required: true,
     },
     percentage: {
       type: Number,
-      required: true,
     },
     percentageProfit: {
       type: Number,
-      required: true,
     },
     openingPrice: {
       type: Number,

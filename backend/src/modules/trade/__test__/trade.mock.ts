@@ -1,17 +1,13 @@
 import { tradeService } from '../../../setup'
-import { ITrade } from '../trade.interface'
-import tradeModel from '../trade.model'
 
-import {
-  tradeAObj,
-  tradeA_id,
-  tradeBObj,
-  tradeB_id,
-  tradeModelReturn,
-} from './trade.payload'
+import { tradeAObj } from './trade.payload'
 
 export const createTradeMock = jest
   .spyOn(tradeService, 'create')
+  .mockResolvedValue(tradeAObj)
+
+export const updateStatusTradeMock = jest
+  .spyOn(tradeService, 'updateStatus')
   .mockResolvedValue(tradeAObj)
 
 // export const updateStatusTradeMock = jest

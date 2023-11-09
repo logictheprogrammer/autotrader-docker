@@ -2,16 +2,13 @@ import { userBInput } from './../../user/__test__/user.payload'
 import Helpers from '../../../utils/helpers'
 import Cryptograph from '../../../core/cryptograph'
 import { createNotificationMock } from '../../notification/__test__/notification.mock'
-import {
-  createTransactionMock,
-  updateTransactionStatusMock,
-} from '../../transaction/__test__/transaction.mock'
+import { createTransactionMock } from '../../transaction/__test__/transaction.mock'
 import transferModel from '../../transfer/transfer.model'
 import {
-  NotificationCategory,
+  NotificationTitle,
   NotificationForWho,
 } from '../../notification/notification.enum'
-import { TransactionCategory } from '../../transaction/transaction.enum'
+import { TransactionTitle } from '../../transaction/transaction.enum'
 import { TransferStatus } from '../../transfer/transfer.enum'
 import { request } from '../../../test'
 import {
@@ -179,11 +176,9 @@ describe('transfer', () => {
           ])
 
           expect(createTransactionMock).toHaveBeenCalledTimes(2)
-
           expect(createTransactionMock.mock.calls[0]).toEqual([
             expect.objectContaining(fromUser),
-            status,
-            TransactionCategory.TRANSFER_OUT,
+            TransactionTitle.TRANSFER_SENT,
             expect.any(Object),
             payload.amount,
             UserEnvironment.LIVE,
@@ -191,8 +186,7 @@ describe('transfer', () => {
           ])
           expect(createTransactionMock.mock.calls[1]).toEqual([
             expect.objectContaining(toUser),
-            status,
-            TransactionCategory.TRANSFER_IN,
+            TransactionTitle.TRANSFER_RECIEVED,
             expect.any(Object),
             payload.amount,
             UserEnvironment.LIVE,
@@ -204,10 +198,9 @@ describe('transfer', () => {
             `Your transfer of ${Helpers.toDollar(payload.amount)} to ${
               payload.toUserUsername
             } was successful.`,
-            NotificationCategory.TRANSFER,
+            NotificationTitle.TRANSFER_SENT,
             expect.any(Object),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             fromUser,
           ])
@@ -216,10 +209,9 @@ describe('transfer', () => {
             `${fromUser.username} just sent you ${Helpers.toDollar(
               payload.amount
             )}.`,
-            NotificationCategory.TRANSFER,
+            NotificationTitle.TRANSFER_RECIEVED,
             expect.any(Object),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             toUser,
           ])
@@ -230,10 +222,9 @@ describe('transfer', () => {
             } just made a successful transfer of ${Helpers.toDollar(
               payload.amount
             )} to ${toUser.username}`,
-            NotificationCategory.TRANSFER,
+            NotificationTitle.TRANSFER_SENT,
             expect.any(Object),
             NotificationForWho.ADMIN,
-            status,
             UserEnvironment.LIVE,
             undefined,
           ])
@@ -290,15 +281,12 @@ describe('transfer', () => {
           ])
 
           expect(createTransactionMock).toHaveBeenCalledTimes(1)
-
           expect(createTransactionMock.mock.calls[0]).toEqual([
             expect.objectContaining(fromUser),
-            status,
-            TransactionCategory.TRANSFER_OUT,
+            TransactionTitle.TRANSFER_SENT,
             expect.any(Object),
             payload.amount,
             UserEnvironment.LIVE,
-            undefined,
           ])
 
           expect(createNotificationMock).toHaveBeenCalledTimes(2)
@@ -306,10 +294,9 @@ describe('transfer', () => {
             `Your transfer of ${Helpers.toDollar(payload.amount)} to ${
               payload.toUserUsername
             } is ongoing.`,
-            NotificationCategory.TRANSFER,
+            NotificationTitle.TRANSFER_SENT,
             expect.any(Object),
             NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             fromUser,
           ])
@@ -320,10 +307,9 @@ describe('transfer', () => {
             } just made a transfer request of ${Helpers.toDollar(
               payload.amount
             )} to ${toUser.username} awaiting for your approver`,
-            NotificationCategory.TRANSFER,
+            NotificationTitle.TRANSFER_SENT,
             expect.any(Object),
             NotificationForWho.ADMIN,
-            status,
             UserEnvironment.LIVE,
             undefined,
           ])
@@ -428,23 +414,25 @@ describe('transfer', () => {
             +(transferAObj.amount + transferAObj.fee)
           )
 
-          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
-          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
-            transfer._id,
-            status
-          )
+          expect(createTransactionMock).toHaveBeenCalledTimes(1)
+          expect(createTransactionMock.mock.calls[0]).toEqual([
+            expect.objectContaining({ _id: userA_id }),
+            TransactionTitle.TRANSFER_REVERSED,
+            expect.any(Object),
+            transfer.amount,
+            UserEnvironment.LIVE,
+          ])
 
           expect(createNotificationMock).toHaveBeenCalledTimes(1)
           expect(createNotificationMock).toHaveBeenCalledWith(
             `Your transfer of ${Helpers.toDollar(
               transferAObj.amount
-            )} was ${status}`,
-            NotificationCategory.TRANSFER,
+            )} was not successful`,
+            NotificationTitle.TRANSFER_REVERSED,
             expect.objectContaining({
               _id: transfer._id,
             }),
             NotificationForWho.USER,
-            TransferStatus.REVERSED,
             UserEnvironment.LIVE,
             expect.any(Object)
           )
@@ -496,36 +484,15 @@ describe('transfer', () => {
             +transferAObj.amount
           )
 
-          expect(updateTransactionStatusMock).toHaveBeenCalledTimes(1)
-          expect(updateTransactionStatusMock).toHaveBeenCalledWith(
-            transfer._id,
-            status
-          )
-
-          expect(createNotificationMock).toHaveBeenCalledTimes(2)
+          expect(createNotificationMock).toHaveBeenCalledTimes(1)
           expect(createNotificationMock).toHaveBeenNthCalledWith(
             1,
             `${userAInput.username} just sent you ${Helpers.toDollar(
               transfer.amount
             )}.`,
-            NotificationCategory.TRANSFER,
+            NotificationTitle.TRANSFER_RECIEVED,
             expect.any(Object),
             NotificationForWho.USER,
-            status,
-            UserEnvironment.LIVE,
-            expect.any(Object)
-          )
-          expect(createNotificationMock).toHaveBeenNthCalledWith(
-            2,
-            `Your transfer of ${Helpers.toDollar(
-              transferAObj.amount
-            )} was ${status}`,
-            NotificationCategory.TRANSFER,
-            expect.objectContaining({
-              _id: transfer._id,
-            }),
-            NotificationForWho.USER,
-            status,
             UserEnvironment.LIVE,
             expect.any(Object)
           )

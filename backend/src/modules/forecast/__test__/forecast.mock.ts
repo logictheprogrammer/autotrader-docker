@@ -1,47 +1,11 @@
-import { IForecast } from '../forecast.interface'
-import forecastModel from '../forecast.model'
-import ForecastService from '../forecast.service'
-import {
-  forecastAObj,
-  forecastA_id,
-  forecastBObj,
-  forecastB_id,
-  forecastModelReturn,
-} from './forecast.payload'
+import { forecastService } from '../../../setup'
 
-export const createTransactionForecastMock = jest
-  .spyOn(ForecastService.prototype, '_createTransaction')
-  .mockResolvedValue({
-    object: forecastAObj,
-    instance: {
-      model: forecastModelReturn,
-      onFailed: 'delete forecast',
-      async callback() {},
-    },
-  })
+import { forecastAObj } from './forecast.payload'
 
-export const updateStatusTransactionForecastMock = jest
-  .spyOn(ForecastService.prototype, '_updateStatusTransaction')
-  .mockImplementation((forecastId) => {
-    if (forecastId.toString() === forecastA_id) {
-      return Promise.resolve({
-        object: forecastAObj,
-        instance: {
-          model: forecastModelReturn,
-          onFailed: 'change forecast status to old status',
-          async callback() {},
-        },
-      })
-    }
-    if (forecastId.toString() === forecastB_id) {
-      return Promise.resolve({
-        object: forecastBObj,
-        instance: {
-          model: forecastModelReturn,
-          onFailed: 'change forecast status to old status',
-          async callback() {},
-        },
-      })
-    }
-    return Promise.reject('Mock: unknown forecast status')
-  })
+export const autoCreateForecastMock = jest
+  .spyOn(forecastService, 'autoCreate')
+  .mockResolvedValue(forecastAObj)
+
+export const autoUpdateForecastStatusTradeMock = jest
+  .spyOn(forecastService, 'autoUpdateStatus')
+  .mockResolvedValue(forecastAObj)

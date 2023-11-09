@@ -16,7 +16,7 @@ import { ITradeService } from '../trade/trade.interface'
 import { BadRequestError, InternalError, NotFoundError } from '@/core/apiError'
 import ServiceToken from '@/core/serviceToken'
 import Helpers from '@/utils/helpers'
-import { PlanMode, PlanStatus } from '../plan/plan.enum'
+import { PlanMode } from '../plan/plan.enum'
 import { InvestmentStatus } from '../investment/investment.enum'
 
 @Service()
@@ -57,9 +57,9 @@ class ForecastService implements IForecastService {
     )
   }
 
-  public async getTodaysTotalForecast(plan: IPlanObject): Promise<number> {
+  private async getTodaysTotalForecast(plan: IPlanObject): Promise<number> {
     const today = new Date(new Date().setHours(0, 0, 0, 0))
-    return this.forecastModel
+    return await this.forecastModel
       .count({
         plan: plan._id,
         createdAt: {
@@ -72,7 +72,6 @@ class ForecastService implements IForecastService {
   public async create(
     plan: IPlanObject,
     pair: IPairObject,
-    percentageProfit: number,
     stakeRate: number
   ): Promise<{ forecast: IForecastObject; errors: any[] }> {
     const errors: any[] = []
@@ -81,7 +80,6 @@ class ForecastService implements IForecastService {
       plan,
       pair,
       market: pair.assetType,
-      percentageProfit,
       stakeRate,
       mode: plan.mode,
     })
@@ -113,119 +111,108 @@ class ForecastService implements IForecastService {
       }
     }
 
+    await forecast.populate('plan')
+    await forecast.populate('pair')
+
     return { forecast, errors }
   }
 
-  public async autoCreate(): Promise<{
-    forecasts: IForecastObject[]
+  public async autoCreate(plan: IPlanObject): Promise<{
+    forecast?: IForecastObject
     errors: any[]
   }> {
-    const forecasts: IForecastObject[] = []
+    let forecast: IForecastObject | undefined
     const errors: any[] = []
 
     try {
-      const plans = await this.planService.fetchAll({
-        mode: PlanMode.AUTOMATIC,
-        status: PlanStatus.ACTIVE,
-        forecastStatus: { $or: [ForecastStatus.SETTLED, undefined] },
-      })
+      // const plans = await this.planService.fetchAll({
+      //   mode: PlanMode.AUTOMATIC,
+      //   status: PlanStatus.ACTIVE,
+      //   forecastStatus: { $in: [ForecastStatus.SETTLED, undefined] },
+      // })
 
-      for (let index = 0; index < plans.length; index++) {
-        const plan = plans[index]
+      if (
+        plan.forecastStatus !== ForecastStatus.SETTLED &&
+        plan.forecastStatus !== undefined
+      ) {
+        const error = new BadRequestError(
+          `Plan (${plan.name} - ${plan._id}) already has an unsettled forecast`
+        )
+        errors.push(error)
+        return { forecast, errors }
+      }
 
-        // check if its time to set the forecast
-        const todaysForecast = await this.getTodaysTotalForecast(plan)
-        const tradeRate = todaysForecast / plan.dailyForecasts
+      // check if its time to set the forecast
+      const todaysForecast = await this.getTodaysTotalForecast(plan)
+      const tradeRate = todaysForecast / plan.dailyForecasts
 
-        const startOfDayTime = new Date().setHours(0, 0, 0, 0)
-        const endOfDayTime = new Date().setHours(23, 59, 59, 999)
-        const currentTime =
-          new Date().getTime() - this.getForecastWaitTime(plan.dailyForecasts)
+      const startOfDayTime = new Date().setHours(0, 0, 0, 0)
+      const endOfDayTime = new Date().setHours(23, 59, 59, 999)
+      const currentTime =
+        new Date().getTime() - this.getForecastWaitTime(plan.dailyForecasts)
 
-        const timeRate =
-          (startOfDayTime - currentTime) / (startOfDayTime - endOfDayTime)
+      const timeRate =
+        (startOfDayTime - currentTime) / (startOfDayTime - endOfDayTime)
 
-        if (timeRate < tradeRate) continue
+      if (timeRate < tradeRate) return { forecast, errors }
 
-        let pair
-        let assets = plan.assets
+      let pair
+      let assets = plan.assets
 
-        while (true) {
-          if (!assets.length) {
-            const error = new InternalError(
-              `There is no asset or assets with valid pairs in plan (${plan.name} - ${plan._id})`
-            )
-            errors.push(error)
-            break
-          }
-
-          const selectedAsset =
-            Helpers.randomPickFromArray<IAssetObject>(assets)
-
-          const validPairs = await this.pairService.fetchAll({
-            baseAsset: selectedAsset._id,
-          })
-
-          if (!validPairs.length) {
-            assets = assets.filter((cur) => cur._id !== selectedAsset._id)
-            continue
-          }
-          pair = Helpers.randomPickFromArray<IPairObject>(validPairs)
+      while (true) {
+        if (!assets.length) {
+          const error = new BadRequestError(
+            `There is no asset or assets with valid pairs in plan (${plan.name} - ${plan._id})`
+          )
+          errors.push(error)
           break
         }
 
-        if (!pair) continue
+        const selectedAsset = Helpers.randomPickFromArray<IAssetObject>(assets)
 
-        if (pair.assetType !== plan.assetType) {
-          const error = new InternalError(
-            `The pair (${pair._id}) is not compatible with this plan (${plan.name} - ${plan._id})`
-          )
-          errors.push(error)
+        const validPairs = await this.pairService.fetchAll({
+          baseAsset: selectedAsset._id,
+        })
+
+        if (!validPairs.length) {
+          assets = assets.filter((cur) => cur._id !== selectedAsset._id)
           continue
         }
-
-        const totalForecast = plan.dailyForecasts * plan.tradingDays
-
-        const minPercentageProfit = plan.minPercentageProfit / totalForecast
-        const maxPercentageProfit = plan.maxPercentageProfit / totalForecast
-
-        const stakeRate = Helpers.getRandomValue(
-          ForecastService.minStakeRate,
-          ForecastService.maxStakeRate
-        )
-
-        const options = this.mathService.dynamicRangeOptions(plan.winRate)
-
-        const percentageProfit = this.mathService.dynamicRange(
-          minPercentageProfit,
-          maxPercentageProfit,
-          options.spread,
-          options.breakpoint,
-          options.probability
-        )
-
-        const { forecast, errors: createErrors } = await this.create(
-          plan,
-          pair,
-          percentageProfit,
-          stakeRate
-        )
-
-        forecasts.push(forecast)
-
-        createErrors.forEach((err) => errors.push(err))
+        pair = Helpers.randomPickFromArray<IPairObject>(validPairs)
+        break
       }
+
+      if (!pair) return { forecast, errors }
+
+      if (pair.assetType !== plan.assetType) {
+        const error = new BadRequestError(
+          `The pair (${pair._id}) is not compatible with this plan (${plan.name} - ${plan._id})`
+        )
+        errors.push(error)
+        return { forecast, errors }
+      }
+
+      const stakeRate = this.mathUtility.getRandomNumberFromRange(
+        ForecastService.minStakeRate,
+        ForecastService.maxStakeRate
+      )
+
+      const { forecast: createdForecast, errors: createErrors } =
+        await this.create(plan, pair, stakeRate)
+
+      forecast = createdForecast
+
+      createErrors.forEach((err) => errors.push(err))
     } catch (error) {
       errors.push(error)
     }
 
-    return { forecasts, errors }
+    return { forecast, errors }
   }
 
   public async manualCreate(
     planId: ObjectId,
     pairId: ObjectId,
-    percentageProfit: number,
     stakeRate: number
   ): Promise<{ forecast: IForecastObject; errors: any[] }> {
     const plan = await this.planService.fetch({ _id: planId })
@@ -243,7 +230,7 @@ class ForecastService implements IForecastService {
         'The pair is not compatible with this plan plan'
       )
 
-    const result = await this.create(plan, pair, percentageProfit, stakeRate)
+    const result = await this.create(plan, pair, stakeRate)
 
     return result
   }
@@ -251,8 +238,8 @@ class ForecastService implements IForecastService {
   public async update(
     filter: FilterQuery<IForecast>,
     pairId: ObjectId,
-    percentageProfit: number,
     stakeRate: number,
+    percentageProfit?: number,
     move?: ForecastMove,
     openingPrice?: number,
     closingPrice?: number
@@ -271,11 +258,22 @@ class ForecastService implements IForecastService {
 
     forecast.pair = pair
     forecast.market = pair.assetType
-    forecast.move = move
-    forecast.percentageProfit = percentageProfit
     forecast.stakeRate = stakeRate
     forecast.openingPrice = openingPrice
-    forecast.closingPrice = closingPrice
+
+    if (
+      forecast.status !== ForecastStatus.SETTLED &&
+      (percentageProfit || closingPrice || move)
+    )
+      throw new BadRequestError(
+        `Percentage profit, move and closeing price can only be updated on a settled forecast`
+      )
+
+    if (forecast.status === ForecastStatus.SETTLED && percentageProfit) {
+      forecast.percentageProfit = percentageProfit
+      forecast.closingPrice = closingPrice
+      forecast.move = move
+    }
 
     await this.planService.updateForecastDetails(
       { _id: forecast.plan._id },
@@ -289,7 +287,8 @@ class ForecastService implements IForecastService {
 
   public async updateStatus(
     filter: FilterQuery<IForecast>,
-    status: ForecastStatus
+    status: ForecastStatus,
+    percentageProfit?: number
   ): Promise<{ forecast: IForecastObject; errors: any[] }> {
     const errors: any[] = []
 
@@ -317,12 +316,18 @@ class ForecastService implements IForecastService {
 
         if (oldStartTime) forecast.timeStamps = [...oldTimeStamps, runtime]
         forecast.startTime = undefined
+
         break
 
       case ForecastStatus.RUNNING:
         forecast.startTime = new Date()
-
+        break
       case ForecastStatus.SETTLED:
+        if (!percentageProfit)
+          throw new BadRequestError(
+            'Percentage profit is required when the forecast is being settled'
+          )
+        forecast.percentageProfit = percentageProfit
         runtime =
           new Date().getTime() -
           (oldStartTime?.getTime() || new Date().getTime())
@@ -333,11 +338,14 @@ class ForecastService implements IForecastService {
           0
         )
         forecast.startTime = undefined
-      //  Get the right move based on the forecast profit and an api result
-      // forecast.move = 'move'
+        //  Get the right move based on the forecast profit and an api result
+        // forecast.move = 'move'
+        break
     }
 
     forecast.status = status
+
+    await forecast.save()
 
     await this.planService.updateForecastDetails(
       { _id: forecast.plan._id },
@@ -345,7 +353,7 @@ class ForecastService implements IForecastService {
     )
 
     const activePlanInvestments = await this.investmentService.fetchAll({
-      manualMode: false,
+      mode: PlanMode.AUTOMATIC,
       status: InvestmentStatus.RUNNING,
       plan: forecast.plan._id,
       tradeStatus: ForecastStatus.RUNNING,
@@ -365,120 +373,126 @@ class ForecastService implements IForecastService {
     return { forecast, errors }
   }
 
-  public async autoUpdateStatus(): Promise<{
-    forecasts: IForecastObject[]
+  public async autoUpdateStatus(plan: IPlanObject): Promise<{
+    forecast?: IForecastObject
     errors: any[]
   }> {
-    const forecasts: IForecastObject[] = []
+    let forecast: IForecastObject | undefined
     const errors: any[] = []
 
     try {
-      const plans = await this.planService.fetchAll({
-        manualMode: false,
-        status: PlanStatus.ACTIVE,
-        forecastStatus: {
-          $or: [
-            ForecastStatus.PREPARING,
-            ForecastStatus.RUNNING,
-            ForecastStatus.MARKET_CLOSED,
-          ],
-        },
-      })
+      // const plans = await this.planService.fetchAll({
+      //   mode: PlanMode.AUTOMATIC,
+      //   status: PlanStatus.ACTIVE,
+      //   forecastStatus: {
+      //     $or: [
+      //       ForecastStatus.PREPARING,
+      //       ForecastStatus.RUNNING,
+      //       ForecastStatus.MARKET_CLOSED,
+      //     ],
+      //   },
+      // })
 
-      for (let index = 0; index < plans.length; index++) {
-        const plan = plans[index]
+      if (!plan.currentForecast) {
+        const error = new InternalError(
+          `There is no current forecast in plan (${plan.name} - ${plan._id})`
+        )
+        errors.push(error)
+        return { forecast, errors }
+      }
 
+      const totalForecast = plan.dailyForecasts * plan.tradingDays
+
+      const durationTime = this.getDurationTime(plan)
+
+      const forecastTime = durationTime / totalForecast
+
+      const forecastStatus = plan.forecastStatus
+      const forecastTimeStamps = plan.forecastTimeStamps.slice()
+      const forecastStartTime = plan.forecastStartTime
+
+      const runTime =
+        new Date().getTime() -
+        (forecastStartTime?.getTime() || new Date().getTime())
+
+      forecastTimeStamps.push(runTime)
+
+      const totalRuntime = forecastTimeStamps.reduce(
+        (acc, curr) => (acc += curr),
+        0
+      )
+
+      // SETTLE FORECAST
+      if (
+        totalRuntime >= forecastTime &&
+        forecastStatus === ForecastStatus.RUNNING
+      ) {
         const totalForecast = plan.dailyForecasts * plan.tradingDays
 
-        const durationTime = this.getDurationTime(plan)
+        const minPercentageProfit = plan.minPercentageProfit / totalForecast
+        const maxPercentageProfit = plan.maxPercentageProfit / totalForecast
 
-        const forecastTime = durationTime / totalForecast
-
-        const forecastStatus = plan.forecastStatus
-        const forecastTimeStamps = plan.forecastTimeStamps.slice()
-        const forecastStartTime = plan.forecastStartTime
-
-        const runTime =
-          new Date().getTime() -
-          (forecastStartTime?.getTime() || new Date().getTime())
-
-        forecastTimeStamps.push(runTime)
-
-        const totalRuntime = forecastTimeStamps.reduce(
-          (acc, curr) => (acc += curr),
-          0
+        const options = this.mathService.dynamicRangeOptions(plan.winRate)
+        const percentageProfit = this.mathService.dynamicRange(
+          minPercentageProfit,
+          maxPercentageProfit,
+          options.spread,
+          options.breakpoint,
+          options.probability
         )
 
-        // SETTLE FORECAST
-        if (
-          totalRuntime >= forecastTime &&
-          forecastStatus === ForecastStatus.RUNNING
-        ) {
-          if (!plan.currentForecast) {
-            const error = new InternalError(
-              `There is no current forecast in plan (${plan.name} - ${plan._id})`
-            )
-            errors.push(error)
-            continue
-          }
-
+        const { forecast: updatedForecast, errors: updateErrors } =
           await this.updateStatus(
             { _id: plan.currentForecast._id },
-            ForecastStatus.SETTLED
+            ForecastStatus.SETTLED,
+            percentageProfit
           )
-        }
 
-        // RUN FORCAST
-        else if (forecastStatus === ForecastStatus.PREPARING) {
-          if (!plan.currentForecast) {
-            const error = new InternalError(
-              `There is no current forecast in plan (${plan.name} - ${plan._id})`
-            )
-            errors.push(error)
-            continue
-          }
+        forecast = updatedForecast
+        updateErrors.forEach((err) => updateErrors.push(err))
+      }
 
-          await this.updateStatus(plan.currentForecast, ForecastStatus.RUNNING)
-        }
+      // RUN FORCAST
+      else if (forecastStatus === ForecastStatus.PREPARING) {
+        const { forecast: updatedForecast, errors: updateErrors } =
+          await this.updateStatus(
+            { _id: plan.currentForecast._id },
+            ForecastStatus.RUNNING
+          )
 
-        // CHECK IF FORECAST MARKET HAS CLOSED
-        else if (forecastStatus === ForecastStatus.RUNNING) {
-          if (!plan.currentForecast) {
-            const error = new InternalError(
-              `There is no current forecast in plan (${plan.name} - ${plan._id})`
-            )
-            errors.push(error)
-            continue
-          }
-          // LOGIC TO CHECK IF MARKET HAS CLOSED
-          // await this.updateStatus(plan.currentForecast, ForecastStatus.MARKET_CLOSED)
-        }
+        forecast = updatedForecast
 
-        // CHECK IF FORECAST MARKET HAS OPENED
-        else if (forecastStatus === ForecastStatus.MARKET_CLOSED) {
-          if (!plan.currentForecast) {
-            const error = new InternalError(
-              `There is no current forecast in plan (${plan.name} - ${plan._id})`
-            )
-            errors.push(error)
-            continue
-          }
-          // LOGIC TO CHECK IF MARKET HAS OPENED
-          // await this.updateStatus(plan.currentForecast, ForecastStatus.RUNNING)
-        }
+        updateErrors.forEach((err) => updateErrors.push(err))
+      }
+
+      // CHECK IF FORECAST MARKET HAS CLOSED
+      else if (forecastStatus === ForecastStatus.RUNNING) {
+        // LOGIC TO CHECK IF MARKET HAS CLOSED
+        // await this.updateStatus(plan.currentForecast, ForecastStatus.MARKET_CLOSED)
+      }
+
+      // CHECK IF FORECAST MARKET HAS OPENED
+      else if (forecastStatus === ForecastStatus.MARKET_CLOSED) {
+        // LOGIC TO CHECK IF MARKET HAS OPENED
+        // await this.updateStatus(plan.currentForecast, ForecastStatus.RUNNING)
       }
     } catch (error) {
       errors.push(error)
     }
 
-    return { forecasts, errors }
+    return { forecast, errors }
   }
 
   public async manualUpdateStatus(
     filter: FilterQuery<IForecast>,
-    status: ForecastStatus
+    status: ForecastStatus,
+    percentageProfit?: number
   ): Promise<{ forecast: IForecastObject; errors: any[] }> {
-    const result = await this.updateStatus(filter, status)
+    if (status === ForecastStatus.SETTLED && !percentageProfit)
+      throw new BadRequestError(
+        'Percentage profit is required when forecast is being settled'
+      )
+    const result = await this.updateStatus(filter, status, percentageProfit)
 
     return result
   }
