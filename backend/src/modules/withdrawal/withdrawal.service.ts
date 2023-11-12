@@ -194,6 +194,10 @@ class WithdrawalService implements IWithdrawalService {
       .populate('withdrawalMethod')
       .populate('currency')
   }
+
+  public async count(filter: FilterQuery<IWithdrawal>): Promise<number> {
+    return await this.withdrawalModel.count(filter)
+  }
 }
 
 export default WithdrawalService

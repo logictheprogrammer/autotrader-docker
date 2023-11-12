@@ -45,6 +45,10 @@ class CurrencyService implements ICurrencyService {
   ): Promise<ICurrencyObject[]> {
     return await this.currencyModel.find(filter)
   }
+
+  public async count(filter: FilterQuery<ICurrency>): Promise<number> {
+    return await this.currencyModel.count(filter)
+  }
 }
 
 export default CurrencyService

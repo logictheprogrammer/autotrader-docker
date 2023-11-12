@@ -65,6 +65,10 @@ class ActivityService implements IActivityService {
     }
   }
 
+  public async count(filter: FilterQuery<IActivity>): Promise<number> {
+    return await this.activityModel.count(filter)
+  }
+
   public async delete(
     filter: FilterQuery<IActivity>
   ): Promise<IActivityObject> {

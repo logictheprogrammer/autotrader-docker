@@ -207,6 +207,10 @@ class UserService implements IUserService {
 
     return user
   }
+
+  public async count(filter: FilterQuery<IUser>): Promise<number> {
+    return await this.userModel.count(filter)
+  }
 }
 
 export default UserService

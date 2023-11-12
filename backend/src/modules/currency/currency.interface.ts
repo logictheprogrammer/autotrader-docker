@@ -17,4 +17,6 @@ export interface ICurrencyService {
   fetch(filter: FilterQuery<ICurrency>): Promise<ICurrencyObject>
 
   fetchAll(filter: FilterQuery<ICurrency>): Promise<ICurrencyObject[]>
+
+  count(filter: FilterQuery<ICurrency>): Promise<number>
 }

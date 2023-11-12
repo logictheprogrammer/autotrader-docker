@@ -43,4 +43,6 @@ export interface IWithdrawalService {
   fetchAll(filter: FilterQuery<IWithdrawal>): Promise<IWithdrawalObject[]>
 
   delete(filter: FilterQuery<IWithdrawal>): Promise<IWithdrawalObject>
+
+  count(filter: FilterQuery<IWithdrawal>): Promise<number>
 }

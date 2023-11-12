@@ -119,6 +119,10 @@ class PairService implements IPairService {
       .populate('baseAsset')
       .populate('quoteAsset')
   }
+
+  public async count(query: FilterQuery<IPair>): Promise<number> {
+    return await this.pairModel.count(query)
+  }
 }
 
 export default PairService

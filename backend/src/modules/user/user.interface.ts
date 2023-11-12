@@ -47,6 +47,8 @@ export interface IUserService {
 
   delete(filter: FilterQuery<IUser>): Promise<IUserObject>
 
+  count(filter: FilterQuery<IUser>): Promise<number>
+
   fund(
     filter: FilterQuery<IUser>,
     account: UserAccount,

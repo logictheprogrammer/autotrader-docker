@@ -45,6 +45,8 @@ export interface IWithdrawalMethodService {
     filter: FilterQuery<IWithdrawalMethod>
   ): Promise<IWithdrawalMethodObject>
 
+  count(filter: FilterQuery<IWithdrawalMethod>): Promise<number>
+
   updateStatus(
     filter: FilterQuery<IWithdrawalMethod>,
     status: WithdrawalMethodStatus

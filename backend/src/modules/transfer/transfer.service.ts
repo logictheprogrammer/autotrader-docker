@@ -298,6 +298,10 @@ class TransferService implements ITransferService {
 
     return transfers
   }
+
+  public async count(filter: FilterQuery<ITransfer>): Promise<number> {
+    return await this.transferModel.count(filter)
+  }
 }
 
 export default TransferService

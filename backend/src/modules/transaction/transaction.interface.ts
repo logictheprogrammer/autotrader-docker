@@ -30,4 +30,6 @@ export interface ITransactionService {
   fetchAll(filter: FilterQuery<ITransaction>): Promise<ITransactionObject[]>
 
   delete(filter: FilterQuery<ITransaction>): Promise<ITransactionObject>
+
+  count(filter: FilterQuery<ITransaction>): Promise<number>
 }

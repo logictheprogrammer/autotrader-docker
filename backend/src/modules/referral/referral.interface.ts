@@ -45,4 +45,6 @@ export interface IReferralService {
   leaderboard(filter: FilterQuery<IReferral>): Promise<IReferralLeaderboard[]>
 
   delete(filter: FilterQuery<IReferral>): Promise<IReferralObject>
+
+  count(filter: FilterQuery<IReferral>): Promise<number>
 }

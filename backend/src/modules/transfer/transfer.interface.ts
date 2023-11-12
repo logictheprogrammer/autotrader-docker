@@ -31,6 +31,8 @@ export interface ITransferService {
 
   delete(filter: FilterQuery<ITransfer>): Promise<ITransferObject>
 
+  count(filter: FilterQuery<ITransfer>): Promise<number>
+
   updateStatus(
     filter: FilterQuery<ITransfer>,
     status: TransferStatus

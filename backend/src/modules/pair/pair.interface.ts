@@ -30,4 +30,6 @@ export interface IPairService {
   ): Promise<IPairObject>
 
   fetchAll(filter: FilterQuery<IPair>): Promise<IPairObject[]>
+
+  count(filter: FilterQuery<IPair>): Promise<number>
 }

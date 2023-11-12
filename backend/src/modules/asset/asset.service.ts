@@ -73,6 +73,10 @@ class AssetService implements IAssetService {
   public async fetchAll(filter: FilterQuery<IAsset>): Promise<IAssetObject[]> {
     return await this.assetModel.find(filter)
   }
+
+  public async count(filter: FilterQuery<IAsset>): Promise<number> {
+    return await this.assetModel.count(filter)
+  }
 }
 
 export default AssetService

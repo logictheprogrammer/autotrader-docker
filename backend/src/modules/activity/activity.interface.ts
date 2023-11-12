@@ -33,6 +33,8 @@ export interface IActivityService {
 
   hideAll(filter: FilterQuery<IActivity>): Promise<void>
 
+  count(filter: FilterQuery<IActivity>): Promise<number>
+
   delete(filter: FilterQuery<IActivity>): Promise<IActivityObject>
 
   deleteAll(filter: FilterQuery<IActivity>): Promise<void>

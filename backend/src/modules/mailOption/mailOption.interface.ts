@@ -31,4 +31,6 @@ export interface IMailOptionService {
   fetch(filter: FilterQuery<IMailOption>): Promise<IMailOptionObject>
 
   fetchAll(filter: FilterQuery<IMailOption>): Promise<IMailOptionObject[]>
+
+  count(filter: FilterQuery<IMailOption>): Promise<number>
 }

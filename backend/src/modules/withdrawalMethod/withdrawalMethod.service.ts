@@ -133,6 +133,10 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   ): Promise<IWithdrawalMethodObject[]> {
     return await this.withdrawalMethodModel.find(filter)
   }
+
+  public async count(filter: FilterQuery<IWithdrawalMethod>): Promise<number> {
+    return await this.withdrawalMethodModel.count(filter)
+  }
 }
 
 export default WithdrawalMethodService

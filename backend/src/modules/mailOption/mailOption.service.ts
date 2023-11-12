@@ -58,4 +58,8 @@ export default class MailOptionService implements IMailOptionService {
     const mailOptions = await this.mailOptionModel.find(filter)
     return mailOptions
   }
+
+  public async count(filter: FilterQuery<IMailOption>): Promise<number> {
+    return await this.mailOptionModel.count(filter)
+  }
 }

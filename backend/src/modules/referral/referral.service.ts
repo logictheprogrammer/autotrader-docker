@@ -203,6 +203,10 @@ class ReferralService implements IReferralService {
 
     return referral
   }
+
+  public async count(filter: FilterQuery<IReferral>): Promise<number> {
+    return await this.referralModel.count(filter)
+  }
 }
 
 export default ReferralService

@@ -58,4 +58,6 @@ export interface ITradeService {
   fetchAll(filter: FilterQuery<ITrade>): Promise<ITradeObject[]>
 
   delete(filter: FilterQuery<ITrade>): Promise<ITradeObject>
+
+  count(filter: FilterQuery<ITrade>): Promise<number>
 }

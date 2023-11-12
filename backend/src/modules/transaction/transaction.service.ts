@@ -68,6 +68,10 @@ class TransactionService implements ITransactionService {
 
     return transaction
   }
+
+  public async count(filter: FilterQuery<ITransaction>): Promise<number> {
+    return await this.transactionModel.count(filter)
+  }
 }
 
 export default TransactionService

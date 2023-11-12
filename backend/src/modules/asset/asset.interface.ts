@@ -33,4 +33,6 @@ export interface IAssetService {
   ): Promise<IAssetObject>
 
   fetchAll(filter: FilterQuery<IAsset>): Promise<IAssetObject[]>
+
+  count(filter: FilterQuery<IAsset>): Promise<number>
 }

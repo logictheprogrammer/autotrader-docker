@@ -32,6 +32,8 @@ export interface IDepositService {
 
   delete(filter: FilterQuery<IDeposit>): Promise<IDepositObject>
 
+  count(filter: FilterQuery<IDeposit>): Promise<number>
+
   updateStatus(
     filter: FilterQuery<IDeposit>,
     status: DepositStatus

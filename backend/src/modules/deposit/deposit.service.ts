@@ -184,6 +184,10 @@ class DepositService implements IDepositService {
       .populate('depositMethod')
       .populate('currency')
   }
+
+  public async count(filter: FilterQuery<IDeposit>): Promise<number> {
+    return await this.depositModel.count(filter)
+  }
 }
 
 export default DepositService

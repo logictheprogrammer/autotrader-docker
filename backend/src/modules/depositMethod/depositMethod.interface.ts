@@ -58,4 +58,6 @@ export interface IDepositMethodService {
     filter: FilterQuery<IDepositMethod>,
     price: number
   ): Promise<IDepositMethod>
+
+  count(filter: FilterQuery<IDepositMethod>): Promise<number>
 }

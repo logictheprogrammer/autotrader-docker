@@ -10,7 +10,7 @@
 ✔ 18. remove the object suffix from all models
 ✔ 21. change validation to schema
 ✔ 25. add service async handler and controller async handler
----- 26. add count to each service
+✔ 26. add count to each service
 ---- 27. store the controllers routes in an array to use in test
 ---- 28. add an assertion to count all the method in a class
 

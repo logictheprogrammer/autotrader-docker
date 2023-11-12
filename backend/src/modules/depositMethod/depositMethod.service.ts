@@ -180,6 +180,10 @@ class DepositMethodService implements IDepositMethodService {
   ): Promise<IDepositMethod[]> {
     return await this.depositMethodModel.find(query).populate('currency')
   }
+
+  public async count(query: FilterQuery<IDepositMethod>): Promise<number> {
+    return await this.depositMethodModel.count(query)
+  }
 }
 
 export default DepositMethodService

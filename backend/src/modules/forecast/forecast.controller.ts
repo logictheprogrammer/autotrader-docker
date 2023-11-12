@@ -5,7 +5,7 @@ import validate from '@/modules/forecast/forecast.validation'
 import { UserRole } from '@/modules/user/user.enum'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
-import { IController } from '@/core/utils'
+import { IController, IRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
@@ -16,21 +16,51 @@ class ForecastController implements IController {
   public path = '/forecast'
   public router = Router()
 
-  public x:
-    | 'all'
-    | 'get'
-    | 'post'
-    | 'put'
-    | 'delete'
-    | 'patch'
-    | 'options'
-    | 'head' = 'get'
+  public routes: IRoute[] = [
+    [
+      'get',
+      `${this.path}/plan/:planId`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(...params),
+    ],
+    [
+      'post',
+      `/master${this.path}/create`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
+      (...params) => this.create(...params),
+    ],
+    [
+      'put',
+      `/master${this.path}/update/:forecastId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
+      (...params) => this.update(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-status/:forecastId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateStatus),
+      (...params) => this.updateStatus(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:forecastId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.FORECAST_SERVICE)
     private forecastService: IForecastService
   ) {
-    this.intialiseRoutes()
+    // this.intialiseRoutes()
+
+    this.routes.forEach(([method, path, ...middleware]) => {
+      this.router[method](path, ...middleware)
+    })
   }
 
   private intialiseRoutes(): void {

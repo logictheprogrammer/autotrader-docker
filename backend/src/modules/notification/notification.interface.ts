@@ -39,4 +39,6 @@ export interface INotificationService {
   read(filter: FilterQuery<INotification>): Promise<INotificationObject>
 
   fetchAll(filter: FilterQuery<INotification>): Promise<INotificationObject[]>
+
+  count(filter: FilterQuery<INotification>): Promise<number>
 }

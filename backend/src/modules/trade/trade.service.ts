@@ -276,8 +276,6 @@ class TradeService implements ITradeService {
       currentTrade: trade._id,
     })
 
-    console.log('Count here:', tradeInvestmentCount)
-
     if (tradeInvestmentCount)
       this.investmentService.updateTradeDetails(
         { _id: trade.investment, currentTrade: trade._id },
@@ -292,6 +290,10 @@ class TradeService implements ITradeService {
       .find(filter)
       .populate('user')
       .populate('investment')
+  }
+
+  public async count(filter: FilterQuery<ITrade>): Promise<number> {
+    return await this.tradeModel.count(filter)
   }
 }
 

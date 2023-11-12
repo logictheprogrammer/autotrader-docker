@@ -82,6 +82,10 @@ class NotificationService implements INotificationService {
 
     return notifications
   }
+
+  public async count(filter: FilterQuery<INotification>): Promise<number> {
+    return await this.notificationModel.count(filter)
+  }
 }
 
 export default NotificationService
