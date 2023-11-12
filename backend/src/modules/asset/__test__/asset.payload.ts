@@ -28,3 +28,21 @@ export const assetC: IAssetObject = {
   logo: 'ltc.svg',
   type: AssetType.CRYPTO,
 }
+
+export const assetD_id = new Types.ObjectId('6145de5d5c4f5b3a5c1b539d')
+// @ts-ignore
+export const assetD: IAssetObject = {
+  name: 'usd',
+  symbol: 'usd',
+  logo: 'usd.svg',
+  type: AssetType.FOREX,
+}
+
+export const assetE_id = new Types.ObjectId('6145de5d5c4f5b3a5c1b539e')
+// @ts-ignore
+export const assetE: IAssetObject = {
+  name: 'eur',
+  symbol: 'eur',
+  logo: 'eur.svg',
+  type: AssetType.FOREX,
+}

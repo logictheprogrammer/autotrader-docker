@@ -31,8 +31,9 @@ export interface IForecastService {
   create(
     plan: IPlanObject,
     pair: IPairObject,
-    stakeRate: number
-  ): Promise<{ forecast: IForecastObject; errors: any[] }>
+    stakeRate: number,
+    mode: PlanMode
+  ): Promise<{ forecast?: IForecastObject; errors: any[] }>
 
   autoCreate(
     plan: IPlanObject
@@ -41,8 +42,9 @@ export interface IForecastService {
   manualCreate(
     planId: ObjectId,
     pairId: ObjectId,
-    stakeRate: number
-  ): Promise<{ forecast: IForecastObject; errors: any[] }>
+    stakeRate: number,
+    mode: PlanMode
+  ): Promise<{ forecast?: IForecastObject; errors: any[] }>
 
   update(
     filter: FilterQuery<IForecast>,
@@ -52,13 +54,13 @@ export interface IForecastService {
     move?: ForecastMove,
     openingPrice?: number,
     closingPrice?: number
-  ): Promise<IForecastObject>
+  ): Promise<{ forecast?: IForecastObject; errors: any[] }>
 
   updateStatus(
     filter: FilterQuery<IForecast>,
     status: ForecastStatus,
     percentageProfit?: number
-  ): Promise<{ forecast: IForecastObject; errors: any[] }>
+  ): Promise<{ forecast?: IForecastObject; errors: any[] }>
 
   autoUpdateStatus(
     plan: IPlanObject
@@ -68,9 +70,11 @@ export interface IForecastService {
     filter: FilterQuery<IForecast>,
     status: ForecastStatus,
     percentageProfit?: number
-  ): Promise<{ forecast: IForecastObject; errors: any[] }>
+  ): Promise<{ forecast?: IForecastObject; errors: any[] }>
 
   fetchAll(filter: FilterQuery<IForecast>): Promise<IForecastObject[]>
 
   delete(filter: FilterQuery<IForecast>): Promise<IForecastObject>
+
+  count(filter: FilterQuery<IForecast>): Promise<number>
 }

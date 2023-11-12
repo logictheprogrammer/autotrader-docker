@@ -7,6 +7,7 @@ import {
 import { AssetType } from '../../asset/asset.enum'
 import { PlanMode, PlanStatus } from '../plan.enum'
 import { Types } from 'mongoose'
+import { ForecastStatus } from '../../forecast/forecast.enum'
 
 export const planA_id = new Types.ObjectId('6145de5d5c4f5b3abc1b539a')
 // @ts-ignore
@@ -85,6 +86,35 @@ export const planC: IPlanObject = {
   dummyInvestors: 0,
   currentForecast: undefined,
   forecastStatus: undefined,
+  forecastStartTime: undefined,
+  forecastTimeStamps: [],
+}
+
+export const unRunningForecastPlan_id = new Types.ObjectId(
+  '6145de5d5c4f5b3abc1b539d'
+)
+// @ts-ignore
+export const unRunningForecastPlan: IPlanObject = {
+  name: 'unRunningForecastPlan',
+  icon: 'icon.png',
+  engine: 'enginec',
+  minAmount: 80,
+  maxAmount: 350,
+  minPercentageProfit: 0.15,
+  maxPercentageProfit: 0.25,
+  winRate: 0.85,
+  tradingDays: 14,
+  dailyForecasts: 6,
+  gas: 500,
+  description: 'this is unRunningForecastPlan',
+  assetType: AssetType.CRYPTO,
+  assets: [assetC_id, assetA_id],
+  status: PlanStatus.ACTIVE,
+  mode: PlanMode.AUTOMATIC,
+  investors: [],
+  dummyInvestors: 0,
+  currentForecast: undefined,
+  forecastStatus: ForecastStatus.RUNNING,
   forecastStartTime: undefined,
   forecastTimeStamps: [],
 }

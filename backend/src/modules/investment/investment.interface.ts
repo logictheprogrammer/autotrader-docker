@@ -34,7 +34,7 @@ export interface IInvestment extends baseModelInterface, IInvestmentObject {}
 export interface IInvestmentService {
   updateTradeDetails(
     filter: FilterQuery<IInvestment>,
-    tradeObject: ITradeObject
+    tradeObject: ITradeObject | null
   ): Promise<IInvestmentObject>
 
   create(
@@ -48,6 +48,8 @@ export interface IInvestmentService {
   fetchAll(filter: FilterQuery<IInvestment>): Promise<IInvestmentObject[]>
 
   fetch(filter: FilterQuery<IInvestment>): Promise<IInvestmentObject>
+
+  count(filter: FilterQuery<IInvestment>): Promise<number>
 
   delete(filter: FilterQuery<IInvestment>): Promise<IInvestmentObject>
 

@@ -3,19 +3,28 @@ import { Inject, Service } from 'typedi'
 import { Router, Response } from 'express'
 import validate from '@/modules/forecast/forecast.validation'
 import { UserRole } from '@/modules/user/user.enum'
-import { ObjectId } from 'mongoose'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
 import { IController } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import { ApiError } from '@/core/apiError'
+import { ApiError, InternalError } from '@/core/apiError'
 
 @Service()
 class ForecastController implements IController {
   public path = '/forecast'
   public router = Router()
+
+  public x:
+    | 'all'
+    | 'get'
+    | 'post'
+    | 'put'
+    | 'delete'
+    | 'patch'
+    | 'options'
+    | 'head' = 'get'
 
   constructor(
     @Inject(ServiceToken.FORECAST_SERVICE)
@@ -70,14 +79,19 @@ class ForecastController implements IController {
   )
 
   private create = asyncHandler(async (req, res): Promise<Response | void> => {
-    const { stakeRate, pairId, planId } = req.body
+    const { stakeRate, pairId, planId, mode } = req.body
     const { forecast, errors } = await this.forecastService.manualCreate(
       planId,
       pairId,
-      stakeRate
+      stakeRate,
+      mode
     )
 
-    errors.forEach((err) => ApiError.notifyDeveloper(err))
+    errors.forEach(
+      (err) => err instanceof InternalError && ApiError.notifyDeveloper(err)
+    )
+
+    if (errors.length) throw errors[0]
 
     return new SuccessCreatedResponse('Forecast created successfully', {
       forecast,
@@ -96,7 +110,7 @@ class ForecastController implements IController {
 
     const { forecastId } = req.params
 
-    const forecast = await this.forecastService.update(
+    const { forecast, errors } = await this.forecastService.update(
       { _id: forecastId },
       pairId,
       stakeRate,
@@ -105,6 +119,13 @@ class ForecastController implements IController {
       openingPrice,
       closingPrice
     )
+
+    errors.forEach(
+      (err) => err instanceof InternalError && ApiError.notifyDeveloper(err)
+    )
+
+    if (errors.length) throw errors[0]
+
     return new SuccessResponse('Forecast updated successfully', {
       forecast,
     }).send(res)
@@ -121,7 +142,11 @@ class ForecastController implements IController {
           percentageProfit
         )
 
-      errors.forEach((err) => ApiError.notifyDeveloper(err))
+      errors.forEach(
+        (err) => err instanceof InternalError && ApiError.notifyDeveloper(err)
+      )
+
+      if (errors.length) throw errors[0]
 
       return new SuccessResponse('Status updated successfully', {
         forecast,

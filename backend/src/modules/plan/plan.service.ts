@@ -163,7 +163,7 @@ class PlanService implements IPlanService {
 
   public async updateForecastDetails(
     filter: FilterQuery<IPlan>,
-    forecastObject: IForecastObject
+    forecastObject: IForecastObject | null
   ): Promise<IPlanObject> {
     const plan = await this.planModel
       .findOne(filter)
@@ -173,20 +173,24 @@ class PlanService implements IPlanService {
 
     if (!plan) throw new NotFoundError('Plan not found')
 
-    const oldForecastStatus = plan.forecastStatus
-
-    if (oldForecastStatus !== ForecastStatus.SETTLED) {
-      plan.currentForecast = forecastObject
-      plan.forecastStatus = forecastObject.status
-      plan.forecastTimeStamps = forecastObject.timeStamps.slice()
-      plan.forecastStartTime = forecastObject.startTime
-
-      if (forecastObject.status === ForecastStatus.SETTLED) {
+    if (forecastObject) {
+      if (forecastObject.status !== ForecastStatus.SETTLED) {
+        plan.currentForecast = forecastObject
+        plan.forecastStatus = forecastObject.status
+        plan.forecastTimeStamps = forecastObject.timeStamps.slice()
+        plan.forecastStartTime = forecastObject.startTime
+      } else {
         plan.forecastStatus = undefined
         plan.forecastStartTime = undefined
         plan.currentForecast = undefined
+        plan.forecastTimeStamps = []
         plan.runTime += forecastObject.runTime
       }
+    } else {
+      plan.forecastStatus = undefined
+      plan.forecastStartTime = undefined
+      plan.currentForecast = undefined
+      plan.forecastTimeStamps = []
     }
 
     await plan.save()
@@ -204,6 +208,10 @@ class PlanService implements IPlanService {
     if (!plan) throw new NotFoundError('Plan not found')
 
     return plan
+  }
+
+  public async count(filter: FilterQuery<IPlan>): Promise<number> {
+    return await this.planModel.count(filter)
   }
 
   public async delete(filter: FilterQuery<IPlan>): Promise<IPlanObject> {

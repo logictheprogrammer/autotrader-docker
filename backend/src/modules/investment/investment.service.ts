@@ -141,7 +141,7 @@ class InvestmentService implements IInvestmentService {
 
   public async updateTradeDetails(
     filter: FilterQuery<IInvestment>,
-    tradeObject: ITradeObject
+    tradeObject: ITradeObject | null
   ): Promise<IInvestmentObject> {
     const investment = await this.investmentModel
       .findOne(filter)
@@ -150,14 +150,7 @@ class InvestmentService implements IInvestmentService {
 
     if (!investment) throw new NotFoundError('Investment not found')
 
-    const oldTradeStatus = investment.tradeStatus
-
-    if (oldTradeStatus !== ForecastStatus.SETTLED) {
-      investment.currentTrade = tradeObject
-      investment.tradeStatus = tradeObject.status
-      investment.tradeTimeStamps = tradeObject.timeStamps.slice()
-      investment.tradeStartTime = tradeObject.startTime
-
+    if (tradeObject) {
       switch (tradeObject.status) {
         case ForecastStatus.MARKET_CLOSED:
         case ForecastStatus.ON_HOLD:
@@ -188,7 +181,17 @@ class InvestmentService implements IInvestmentService {
         if (investment.runTime >= investment.minRunTime) {
           investment.status = InvestmentStatus.FINALIZING
         }
+      } else {
+        investment.currentTrade = tradeObject
+        investment.tradeStatus = tradeObject.status
+        investment.tradeTimeStamps = tradeObject.timeStamps.slice()
+        investment.tradeStartTime = tradeObject.startTime
       }
+    } else {
+      investment.currentTrade = undefined
+      investment.tradeStatus = undefined
+      investment.tradeStartTime = undefined
+      investment.tradeTimeStamps = []
     }
 
     await investment.save()
@@ -369,6 +372,10 @@ class InvestmentService implements IInvestmentService {
       .find(filter)
       .populate('user')
       .populate('plan')
+  }
+
+  public async count(filter: FilterQuery<IInvestment>): Promise<number> {
+    return await this.investmentModel.count(filter)
   }
 }
 

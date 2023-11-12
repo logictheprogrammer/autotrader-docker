@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../../core/apiError'
 import { planService } from '../../../setup'
 import {
   planA,
@@ -6,6 +7,8 @@ import {
   planB_id,
   planC,
   planC_id,
+  unRunningForecastPlan_id,
+  unRunningForecastPlan,
 } from './plan.payload'
 
 export const fetchPlanMock = jest
@@ -33,8 +36,15 @@ export const fetchPlanMock = jest
         updatedAt: new Date(),
         createdAt: new Date(),
       })
+    } else if (key.toString() === unRunningForecastPlan_id.toString()) {
+      return Promise.resolve({
+        ...unRunningForecastPlan,
+        _id: unRunningForecastPlan_id,
+        updatedAt: new Date(),
+        createdAt: new Date(),
+      })
     } else {
-      return Promise.reject('Mock: plan id not handled')
+      throw new NotFoundError('Mock: Plan not found')
     }
   })
 

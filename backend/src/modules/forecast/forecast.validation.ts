@@ -1,6 +1,7 @@
 import Joi from 'joi'
 import { ForecastMove, ForecastStatus } from './forecast.enum'
 import ForecastService from './forecast.service'
+import { PlanMode } from '../plan/plan.enum'
 
 const create = Joi.object({
   planId: Joi.string().trim().required(),
@@ -10,6 +11,9 @@ const create = Joi.object({
     .min(ForecastService.minStakeRate)
     .max(ForecastService.maxStakeRate)
     .required(),
+  mode: Joi.string()
+    .trim()
+    .valid(...Object.values(PlanMode)),
 })
 
 const update = Joi.object({

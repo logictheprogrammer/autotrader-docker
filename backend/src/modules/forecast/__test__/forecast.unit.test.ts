@@ -369,7 +369,10 @@ describe('forecast', () => {
         expect(updatePlanForecastDetailsMock).toBeCalledTimes(2)
         expect(updatePlanForecastDetailsMock).toHaveBeenNthCalledWith(
           2,
-          { _id: plan1._id },
+          {
+            _id: plan1._id,
+            currentForecast: new Types.ObjectId(forecast?._id),
+          },
           result.forecast
         )
 
@@ -465,7 +468,10 @@ describe('forecast', () => {
         expect(updatePlanForecastDetailsMock).toBeCalledTimes(2)
         expect(updatePlanForecastDetailsMock).toHaveBeenNthCalledWith(
           2,
-          { _id: plan1._id },
+          {
+            _id: plan1._id,
+            currentForecast: new Types.ObjectId(forecast?._id),
+          },
           result.forecast
         )
 

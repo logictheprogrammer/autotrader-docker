@@ -87,7 +87,7 @@ describe('trade', () => {
         const forecast = await forecastModel.create(forecastA)
 
         await expect(tradeService.update(investment, forecast)).rejects.toThrow(
-          `The trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
+          `The (${forecast.mode}) trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
         )
       })
     })
@@ -104,6 +104,10 @@ describe('trade', () => {
           investment,
           forecast
         )
+
+        investment.currentTrade = oldTradeObj
+
+        await investment.save()
 
         oldTradeObj.move = undefined
         oldTradeObj.closingPrice = undefined
@@ -167,7 +171,7 @@ describe('trade', () => {
         await expect(
           tradeService.updateStatus(investment, forecast)
         ).rejects.toThrow(
-          `The trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
+          `The (${forecast.mode}) trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
         )
       })
     })
@@ -179,13 +183,39 @@ describe('trade', () => {
         const forecast = await forecastModel.create({
           ...forecastA,
           status: ForecastStatus.SETTLED,
+          percentageProfit: 0.025,
         })
 
         await tradeService.create(user._id, investment, forecast)
 
+        await forecast.save()
+
         await expect(
           tradeService.updateStatus(investment, forecast)
         ).rejects.toThrow('This trade has already been settled')
+      })
+    })
+    describe('given the status is set to settled but not percentageProfit in the forecast', () => {
+      it('should throw a 400 error', async () => {
+        request
+        const user = await userModel.create(userAInput)
+        const investment = await investmentModel.create(investmentA)
+        const forecast = await forecastModel.create({
+          ...forecastA,
+          status: ForecastStatus.RUNNING,
+        })
+
+        await tradeService.create(user._id, investment, forecast)
+
+        forecast.status = ForecastStatus.SETTLED
+
+        await forecast.save()
+
+        await expect(
+          tradeService.updateStatus(investment, forecast)
+        ).rejects.toThrow(
+          'Percentage profit is required when the forecast is being settled'
+        )
       })
     })
     describe('on success', () => {
@@ -216,6 +246,10 @@ describe('trade', () => {
           expect(oldTradeObj.runTime).toBe(0)
           expect(oldTradeObj.timeStamps).toEqual([])
 
+          investment.currentTrade = oldTradeObj
+
+          await investment.save()
+
           const payload = {
             status,
             startTime: new Date(),
@@ -229,6 +263,10 @@ describe('trade', () => {
           forecast.timeStamps = payload.timeStamps
           forecast.runTime = payload.runTime
           forecast.move = payload.move
+
+          if (status === ForecastStatus.SETTLED) {
+            forecast.percentageProfit = 0.025
+          }
 
           await forecast.save()
 

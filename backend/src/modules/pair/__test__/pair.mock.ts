@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../../core/apiError'
 import { pairService } from '../../../setup'
 import {
   pairA,
@@ -6,6 +7,8 @@ import {
   pairB_id,
   pairC,
   pairC_id,
+  pairD,
+  pairD_id,
 } from './pair.payload'
 
 export const fetchPairMock = jest
@@ -33,7 +36,14 @@ export const fetchPairMock = jest
         updatedAt: new Date(),
         createdAt: new Date(),
       })
+    } else if (pairId.toString() === pairD_id.toString()) {
+      return Promise.resolve({
+        ...pairD,
+        _id: pairD_id,
+        updatedAt: new Date(),
+        createdAt: new Date(),
+      })
     } else {
-      return Promise.reject('Mock: pair id not handled')
+      throw new NotFoundError('Mock: Pair not found')
     }
   })

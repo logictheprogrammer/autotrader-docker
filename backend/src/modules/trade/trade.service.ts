@@ -67,7 +67,7 @@ class TradeService implements ITradeService {
       status: forecast.status,
       percentageProfit: forecast.percentageProfit,
       environment: investment.environment,
-      mode: investment.mode,
+      mode: forecast.mode,
     })
 
     // Investment Transaction Instance
@@ -114,11 +114,12 @@ class TradeService implements ITradeService {
     const trade = await this.tradeModel.findOne({
       investment: investment._id,
       forecast: forecast._id,
+      mode: forecast.mode,
     })
 
     if (!trade)
       throw new NotFoundError(
-        `The trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
+        `The (${forecast.mode}) trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
       )
 
     trade.status = forecast.status
@@ -135,10 +136,17 @@ class TradeService implements ITradeService {
 
     await trade.save()
 
-    await this.investmentService.updateTradeDetails(
-      { _id: trade.investment._id },
-      trade
-    )
+    const tradeInvestmentCount = await this.investmentService.count({
+      _id: trade.investment._id,
+      currentTrade: trade._id,
+    })
+
+    if (tradeInvestmentCount) {
+      await this.investmentService.updateTradeDetails(
+        { _id: trade.investment._id, currentTrade: trade._id },
+        trade
+      )
+    }
 
     return (
       await (await trade.populate('user')).populate('investment')
@@ -153,6 +161,7 @@ class TradeService implements ITradeService {
       .findOne({
         investment: investment._id,
         forecast: forecast._id,
+        mode: forecast.mode,
       })
       .populate('user')
       .populate('investment')
@@ -160,7 +169,7 @@ class TradeService implements ITradeService {
 
     if (!trade)
       throw new NotFoundError(
-        `The trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
+        `The (${forecast.mode}) trade with a forecast of (${forecast._id}) and investment of (${investment._id}) could not be found`
       )
 
     if (
@@ -198,11 +207,17 @@ class TradeService implements ITradeService {
 
     const user = await this.userService.fetch({ _id: trade.user._id })
 
-    // Investment Transaction Instance
-    await this.investmentService.updateTradeDetails(
-      { _id: trade.investment._id },
-      trade
-    )
+    const tradeInvestmentCount = await this.investmentService.count({
+      _id: trade.investment._id,
+      currentTrade: trade._id,
+    })
+
+    if (tradeInvestmentCount) {
+      await this.investmentService.updateTradeDetails(
+        { _id: trade.investment._id, currentTrade: trade._id },
+        trade
+      )
+    }
 
     if (trade.status === ForecastStatus.SETTLED) {
       await this.transactionService.create(
@@ -254,10 +269,21 @@ class TradeService implements ITradeService {
 
     if (!trade) throw new NotFoundError('Trade not found')
 
-    if (trade.status !== ForecastStatus.SETTLED)
-      throw new BadRequestError('Trade has not been settled yet')
-
     await trade.deleteOne()
+
+    const tradeInvestmentCount = await this.investmentService.count({
+      _id: trade.investment,
+      currentTrade: trade._id,
+    })
+
+    console.log('Count here:', tradeInvestmentCount)
+
+    if (tradeInvestmentCount)
+      this.investmentService.updateTradeDetails(
+        { _id: trade.investment, currentTrade: trade._id },
+        null
+      )
+
     return trade
   }
 

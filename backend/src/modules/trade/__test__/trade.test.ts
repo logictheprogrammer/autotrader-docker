@@ -24,6 +24,7 @@ import {
 } from '../../investment/__test__/investment.payload'
 import investmentModel from '../../investment/investment.model'
 import { StatusCode } from '../../../core/apiResponse'
+import { updateInvestmentTradeDetailsMock } from '../../investment/__test__/investment.mock'
 
 describe('trade', () => {
   const baseUrl = '/api/trade/'
@@ -270,29 +271,22 @@ describe('trade', () => {
         expect(body.status).toBe(StatusCode.DANGER)
       })
     })
-    describe('given trade has not been settled', () => {
-      it('should return a 400 error', async () => {
-        const trade = await tradeModel.create(tradeA)
-        const url = `${masterUrl}delete/${trade._id}`
 
-        const admin = await userModel.create(adminAInput)
-        const token = Cryptograph.createToken(admin)
-
-        const { statusCode, body } = await request
-          .delete(url)
-          .set('Authorization', `Bearer ${token}`)
-
-        expect(body.message).toBe('Trade has not been settled yet')
-        expect(statusCode).toBe(400)
-        expect(body.status).toBe(StatusCode.DANGER)
-      })
-    })
     describe('on success entry', () => {
       it('should return a 200 with a payload', async () => {
+        const investment = await investmentModel.create({
+          ...investmentA,
+          _id: investmentA_id,
+        })
+
         const trade = await tradeModel.create({
           ...tradeA,
           status: ForecastStatus.SETTLED,
         })
+
+        investment.currentTrade = trade
+
+        await investment.save()
 
         const url = `${masterUrl}delete/${trade._id}`
 
@@ -309,6 +303,15 @@ describe('trade', () => {
         expect(body.data.trade._id).toBe(trade._id.toString())
 
         expect(await tradeModel.count()).toBe(0)
+
+        expect(updateInvestmentTradeDetailsMock).toHaveBeenCalledTimes(1)
+        expect(updateInvestmentTradeDetailsMock).toHaveBeenCalledWith(
+          {
+            _id: investmentA_id,
+            currentTrade: trade._id,
+          },
+          null
+        )
       })
     })
   })

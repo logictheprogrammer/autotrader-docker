@@ -6,6 +6,10 @@ import {
   assetB_id,
   assetC,
   assetC_id,
+  assetD,
+  assetD_id,
+  assetE,
+  assetE_id,
 } from './asset.payload'
 
 export const fetchAssetMock = jest
@@ -32,6 +36,22 @@ export const fetchAssetMock = jest
       return Promise.resolve({
         ...assetC,
         _id: assetC_id,
+        __v: 0,
+        updatedAt: new Date(),
+        createdAt: new Date(),
+      })
+    } else if (_id.toString() === assetD_id.toString()) {
+      return Promise.resolve({
+        ...assetD,
+        _id: assetD_id,
+        __v: 0,
+        updatedAt: new Date(),
+        createdAt: new Date(),
+      })
+    } else if (_id.toString() === assetE_id.toString()) {
+      return Promise.resolve({
+        ...assetE,
+        _id: assetE_id,
         __v: 0,
         updatedAt: new Date(),
         createdAt: new Date(),

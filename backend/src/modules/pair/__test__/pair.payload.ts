@@ -3,6 +3,8 @@ import {
   assetA_id,
   assetB_id,
   assetC_id,
+  assetD_id,
+  assetE_id,
 } from '../../asset/__test__/asset.payload'
 import { AssetType } from '../../asset/asset.enum'
 import { IPairObject } from '../pair.interface'
@@ -29,4 +31,12 @@ export const pairC: IPairObject = {
   assetType: AssetType.CRYPTO,
   baseAsset: assetA_id,
   quoteAsset: assetC_id,
+}
+
+export const pairD_id = new Types.ObjectId('2345de5d5c4f5b3a5c1b539d')
+// @ts-ignore
+export const pairD: IPairObject = {
+  assetType: AssetType.FOREX,
+  baseAsset: assetD_id,
+  quoteAsset: assetE_id,
 }

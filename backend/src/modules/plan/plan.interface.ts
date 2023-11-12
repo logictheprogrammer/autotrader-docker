@@ -80,10 +80,12 @@ export interface IPlanService {
 
   updateForecastDetails(
     filter: FilterQuery<IPlan>,
-    forecastObject: IForecastObject
+    forecastObject: IForecastObject | null
   ): Promise<IPlanObject>
 
   fetch(filter: FilterQuery<IPlan>): Promise<IPlanObject>
+
+  count(filter: FilterQuery<IPlan>): Promise<number>
 
   delete(filter: FilterQuery<IPlan>): Promise<IPlanObject>
 
