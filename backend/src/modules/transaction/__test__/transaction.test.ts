@@ -1,6 +1,8 @@
 import { StatusCode } from '../../../core/apiResponse'
 import Cryptograph from '../../../core/cryptograph'
+import { IControllerRoute } from '../../../core/utils'
 import transactionModel from '../../../modules/transaction/transaction.model'
+import { transactionController } from '../../../setup'
 import { request } from '../../../test'
 import { depositB, depositB_id } from '../../deposit/__test__/deposit.payload'
 import { adminAInput, userAInput } from '../../user/__test__/user.payload'
@@ -14,6 +16,33 @@ describe('transaction', () => {
   const demoUrl = '/api/demo/transaction'
   const masterUrl = '/api/master/transaction'
   const masterDemoUrl = '/api/master/demo/transaction'
+  describe('Validate routes', () => {
+    const routes = transactionController.routes as IControllerRoute[]
+    it('should expect 5 routes', () => {
+      expect(routes.length).toBe(5)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
   describe('get all users transactions', () => {
     const url = `${masterUrl}/users`
     describe('given logged in user is not an admin', () => {

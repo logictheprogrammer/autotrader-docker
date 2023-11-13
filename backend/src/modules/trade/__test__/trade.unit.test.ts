@@ -16,8 +16,23 @@ import {
   NotificationTitle,
   NotificationForWho,
 } from '../../notification/notification.enum'
+import Helpers from '../../../utils/helpers'
 
 describe('trade', () => {
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(tradeService)
+      expect(methods).toEqual([
+        'tradeModel',
+        'create',
+        'update',
+        'updateStatus',
+        'delete',
+        'fetchAll',
+        'count',
+      ])
+    })
+  })
   describe('create', () => {
     it('should return a trade transaction instance', async () => {
       request

@@ -7,20 +7,43 @@ import { UserRole } from '@/modules/user/user.enum'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
 import ServiceToken from '@/core/serviceToken'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class PairController implements IController {
+class PairController extends BaseController implements IController {
   public path = '/pair'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'post',
+      `/master${this.path}/create`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
+      (...params) => this.create(...params),
+    ],
+    [
+      'put',
+      `/master${this.path}/update/:pairId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
+      (...params) => this.update(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.PAIR_SERVICE)
     private pairService: IPairService
   ) {
-    this.intialiseRoutes()
+    super()
+    this.initialiseRoutes()
   }
 
   private intialiseRoutes(): void {

@@ -8,8 +8,22 @@ import userModel from '../../user/user.model'
 import { notificationService } from '../../../setup'
 import { depositAObj } from '../../deposit/__test__/deposit.payload'
 import { UserEnvironment } from '../../user/user.enum'
+import Helpers from '../../../utils/helpers'
 
 describe('notification', () => {
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(notificationService)
+      expect(methods).toEqual([
+        'notificationModel',
+        'create',
+        'delete',
+        'read',
+        'fetchAll',
+        'count',
+      ])
+    })
+  })
   describe('create', () => {
     it('should return a notification', async () => {
       request

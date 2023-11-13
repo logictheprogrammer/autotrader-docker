@@ -1,26 +1,94 @@
 import { IInvestmentService } from '@/modules/investment/investment.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Response } from 'express'
+import { Response } from 'express'
 import validate from '@/modules/investment/investment.validation'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import { ObjectId } from 'mongoose'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
 import asyncHandler from '@/helpers/asyncHandler'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class InvestmentController implements IController {
+class InvestmentController extends BaseController implements IController {
   public path = '/investment'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false, UserEnvironment.LIVE)(...params),
+    ],
+    [
+      'post',
+      `${this.path}/create`,
+      routePermission(UserRole.USER),
+      schemaValidator(validate.create),
+      (...params) => this.create(UserEnvironment.LIVE)(...params),
+    ],
+    [
+      'get',
+      `/demo${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false, UserEnvironment.DEMO)(...params),
+    ],
+    [
+      'post',
+      `/demo${this.path}/create`,
+      routePermission(UserRole.USER),
+      schemaValidator(validate.createDemo),
+      (...params) => this.create(UserEnvironment.DEMO)(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/fund/:investmentId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.fund),
+      (...params) => this.fund(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/refill/:investmentId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.refill),
+      (...params) => this.refill(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-status/:investmentId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateStatus),
+      (...params) => this.updateStatus(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:investmentId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(...params),
+    ],
+    [
+      'get',
+      `/master/demo${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true, UserEnvironment.DEMO)(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true, UserEnvironment.LIVE)(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.INVESTMENT_SERVICE)
     private investmentService: IInvestmentService
   ) {
-    this.intialiseRoutes()
+    super()
+    this.initialiseRoutes()
   }
 
   private intialiseRoutes(): void {

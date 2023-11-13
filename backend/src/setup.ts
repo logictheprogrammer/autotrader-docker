@@ -207,29 +207,44 @@ Container.set<IForecastService>(ServiceToken.FORECAST_SERVICE, forecastService)
 export const authService = Container.get<IAuthService>(AuthService)
 Container.set<IAuthService>(ServiceToken.AUTH_SERVICE, authService)
 
-const sendMailController = Container.get(SendMailController)
-const authController = Container.get(AuthController)
-const userController = Container.get(UserController)
-const planController = Container.get(PlanController)
-const mailOptionController = Container.get(MailOptionController)
-const configController = Container.get(ConfigController)
-const referralSettingsController = Container.get(ReferralSettingsController)
-const referralController = Container.get(ReferralController)
-const currencyController = Container.get(CurrencyController)
-const depositMethodController = Container.get(DepositMethodController)
-const withdrawalMethodController = Container.get(WithdrawalMethodController)
-const depositController = Container.get(DepositController)
-const withdrawalController = Container.get(WithdrawalController)
-const activityController = Container.get(ActivityController)
-const transactionController = Container.get(TransactionController)
-const transferSettingsController = Container.get(TransferSettingsController)
-const transferController = Container.get(TransferController)
-const assetController = Container.get(AssetController)
-const investmentController = Container.get(InvestmentController)
-const notificationController = Container.get(NotificationController)
-const pairController = Container.get(PairController)
-const tradeController = Container.get(TradeController)
-const forecastController = Container.get(ForecastController)
+export const sendMailController = Container.get<IController>(SendMailController)
+export const authController = Container.get<IController>(AuthController)
+export const userController = Container.get<IController>(UserController)
+export const planController = Container.get<IController>(PlanController)
+export const mailOptionController =
+  Container.get<IController>(MailOptionController)
+export const configController = Container.get<IController>(ConfigController)
+export const referralSettingsController = Container.get<IController>(
+  ReferralSettingsController
+)
+export const referralController = Container.get<IController>(ReferralController)
+export const currencyController = Container.get<IController>(CurrencyController)
+export const depositMethodController = Container.get<IController>(
+  DepositMethodController
+)
+export const withdrawalMethodController = Container.get<IController>(
+  WithdrawalMethodController
+)
+export const depositController = Container.get<IController>(DepositController)
+export const withdrawalController =
+  Container.get<IController>(WithdrawalController)
+export const activityController = Container.get<IController>(ActivityController)
+export const transactionController = Container.get<IController>(
+  TransactionController
+)
+export const transferSettingsController = Container.get<IController>(
+  TransferSettingsController
+)
+export const transferController = Container.get<IController>(TransferController)
+export const assetController = Container.get<IController>(AssetController)
+export const investmentController =
+  Container.get<IController>(InvestmentController)
+export const notificationController = Container.get<IController>(
+  NotificationController
+)
+export const pairController = Container.get<IController>(PairController)
+export const tradeController = Container.get<IController>(TradeController)
+export const forecastController = Container.get<IController>(ForecastController)
 
 export const controllers: IController[] = [
   referralSettingsController,

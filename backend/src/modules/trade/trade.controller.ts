@@ -3,22 +3,55 @@ import { Inject, Service } from 'typedi'
 import { Router, Response } from 'express'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import { ObjectId } from 'mongoose'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class TradeController implements IController {
+class TradeController extends BaseController implements IController {
   public path = '/trade'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false, UserEnvironment.LIVE)(...params),
+    ],
+    [
+      'get',
+      `/demo${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false, UserEnvironment.DEMO)(...params),
+    ],
+    [
+      'get',
+      `/master/demo${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true, UserEnvironment.DEMO)(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:tradeId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true, UserEnvironment.LIVE)(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.TRADE_SERVICE)
     private tradeService: ITradeService
   ) {
-    this.intialiseRoutes()
+    super()
+    this.initialiseRoutes()
   }
 
   private intialiseRoutes(): void {

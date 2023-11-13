@@ -11,8 +11,8 @@
 ✔ 21. change validation to schema
 ✔ 25. add service async handler and controller async handler
 ✔ 26. add count to each service
----- 27. store the controllers routes in an array to use in test
----- 28. add an assertion to count all the method in a class
+✔ 27. store the controllers routes in an array to use in test
+✔ 28. add an assertion to count all the method in a class
 
 * ASAP
 ✔ 1. impliment the forecast min/max daily wait time with the right logic

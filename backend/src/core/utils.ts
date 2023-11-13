@@ -4,6 +4,7 @@ import { ObjectId } from 'mongoose'
 export interface IController {
   path: string
   router: Router
+  routes: IControllerRoute[]
 }
 
 export interface IAppObject {
@@ -23,6 +24,4 @@ type httpMethod =
   | 'options'
   | 'head'
 
-type path = string
-
-export type IRoute = [httpMethod, path, ...RequestHandler[]]
+export type IControllerRoute = [httpMethod, string, ...RequestHandler[]]

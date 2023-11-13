@@ -1,21 +1,28 @@
 import { Service } from 'typedi'
 import { Response, Router } from 'express'
 import { SiteConstants } from '@/modules/config/config.constants'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import { SuccessResponse } from '@/core/apiResponse'
 import asyncHandler from '@/helpers/asyncHandler'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-export default class ConfigController implements IController {
+export default class ConfigController
+  extends BaseController
+  implements IController
+{
   public path = '/configurations'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'get',
+      `${this.path}/constants`,
+      (...params) => this.getConstants(...params),
+    ],
+  ]
 
   constructor() {
+    super()
     this.initialiseRoutes()
-  }
-
-  private initialiseRoutes = (): void => {
-    this.router.get(`${this.path}/constants`, this.getConstants)
   }
 
   private getConstants = asyncHandler(

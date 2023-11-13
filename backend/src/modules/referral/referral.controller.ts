@@ -1,67 +1,62 @@
-import { Response, Router } from 'express'
+import { Response } from 'express'
 import { Inject, Service } from 'typedi'
 import { IReferralService } from '@/modules/referral/referral.interface'
 import { UserRole } from '../user/user.enum'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class ReferralController implements IController {
+class ReferralController extends BaseController implements IController {
   public path = '/referral'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'get',
+      `${this.path}/earnings`,
+      routePermission(UserRole.USER),
+      (...params) => this.earnings(false)(...params),
+    ],
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false)(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}/earnings/users`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.earnings(true)(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}/leaderboard`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.leaderboard(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true)(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:referralId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.REFERRAL_SERVICE)
     private referralService: IReferralService
   ) {
+    super()
     this.initialiseRoutes()
-  }
-
-  private initialiseRoutes = (): void => {
-    // Get Referral Earnings
-    this.router.get(
-      `${this.path}/earnings`,
-      routePermission(UserRole.USER),
-      this.earnings(false)
-    )
-
-    // Get Referral Transactions
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false)
-    )
-
-    // Get Users Referral Earnings
-    this.router.get(
-      `/master${this.path}/earnings/users`,
-      routePermission(UserRole.ADMIN),
-      this.earnings(true)
-    )
-
-    // Get Leaderboard
-    this.router.get(
-      `/master${this.path}/leaderboard`,
-      routePermission(UserRole.ADMIN),
-      this.leaderboard
-    )
-
-    // Get Users Referral Transactions
-    this.router.get(
-      `/master${this.path}/users`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true)
-    )
-
-    // Delete Referral Transactions
-    this.router.delete(
-      `/master${this.path}/delete/:referralId`,
-      routePermission(UserRole.ADMIN),
-      this.delete
-    )
   }
 
   private fetchAll = (byAdmin: boolean) =>

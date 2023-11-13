@@ -6,23 +6,92 @@ import userValidation from '@/modules/user/user.validation'
 import { ObjectId } from 'mongoose'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class UserController implements IController {
+class UserController extends BaseController implements IController {
   public path = '/users'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'put',
+      `${this.path}/update-profile`,
+      routePermission(UserRole.USER),
+      schemaValidator(userValidation.updateProfile),
+      (...params) => this.updateProfile(false)(...params),
+    ],
+    [
+      'get',
+      `${this.path}/referred-users`,
+      routePermission(UserRole.USER),
+      (...params) => this.getReferredUsers(false)(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/fund/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.fundUser),
+      (...params) => this.fundUser(...params),
+    ],
+    [
+      'put',
+      `/master${this.path}/update-profile/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.updateProfile),
+      (...params) => this.updateProfile(true)(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-email/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.updateEmail),
+      (...params) => this.updateEmail(true)(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-status/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.updateStatus),
+      (...params) => this.updateStatus(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:userId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.deleteUser(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}/referred-users`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.getReferredUsers(true)(...params),
+    ],
+    [
+      'post',
+      `/master${this.path}/send-email/:userId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(userValidation.sendEmail),
+      (...params) => this.sendEmail(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.USER_SERVICE) private userService: IUserService
   ) {
+    super()
     this.initialiseRoutes()
   }
 
-  private initialiseRoutes = (): void => {
+  private initialisseRoutes = (): void => {
     // Update Profile
     this.router.put(
       `${this.path}/update-profile`,

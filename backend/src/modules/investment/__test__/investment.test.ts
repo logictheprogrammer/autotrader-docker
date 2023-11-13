@@ -36,12 +36,41 @@ import { fundUserMock } from '../../user/__test__/user.mock'
 import { createTransactionMock } from '../../transaction/__test__/transaction.mock'
 import { createNotificationMock } from '../../notification/__test__/notification.mock'
 import { createReferralMock } from '../../referral/__test__/referral.mock'
+import { IControllerRoute } from '../../../core/utils'
+import { investmentController } from '../../../setup'
 
 describe('investment', () => {
   const baseUrl = '/api/investment/'
   const demoUrl = '/api/demo/investment/'
   const masterUrl = '/api/master/investment/'
   const masterDemoUrl = '/api/master/demo/investment/'
+  describe('Validate routes', () => {
+    const routes = investmentController.routes as IControllerRoute[]
+    it('should expect 10 routes', () => {
+      expect(routes.length).toBe(10)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  }) 
   describe('create investment on live mode and demo', () => {
     const url = baseUrl + 'create'
     describe('given user is not loggedin', () => {

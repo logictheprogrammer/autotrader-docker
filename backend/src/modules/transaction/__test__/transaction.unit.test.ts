@@ -6,8 +6,22 @@ import { transactionService } from '../../../setup'
 import transactionModel from '../transaction.model'
 import { depositAObj } from '../../deposit/__test__/deposit.payload'
 import { UserEnvironment } from '../../user/user.enum'
+import Helpers from '../../../utils/helpers'
 
 describe('transaction', () => {
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(transactionService)
+      expect(methods).toEqual([
+        'transactionModel',
+        'create',
+        'fetch',
+        'fetchAll',
+        'delete',
+        'count',
+      ])
+    })
+  })
   describe('create', () => {
     it('should return a transaction instance', async () => {
       request

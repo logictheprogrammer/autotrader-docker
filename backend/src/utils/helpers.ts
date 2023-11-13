@@ -53,4 +53,14 @@ export default class Helpers {
 
     return text || ''
   }
+
+  public static getClassMethods(classInstance: any): string[] {
+    const methods: string[] = []
+    for (const property in classInstance) {
+      if (typeof classInstance[property] === 'function') {
+        methods.push(property)
+      }
+    }
+    return methods
+  }
 }

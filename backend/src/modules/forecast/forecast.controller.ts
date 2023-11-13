@@ -1,22 +1,22 @@
 import { IForecastService } from '@/modules/forecast/forecast.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Response } from 'express'
+import { Response } from 'express'
 import validate from '@/modules/forecast/forecast.validation'
 import { UserRole } from '@/modules/user/user.enum'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
-import { IController, IRoute } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
 import { ApiError, InternalError } from '@/core/apiError'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class ForecastController implements IController {
+class ForecastController extends BaseController implements IController {
   public path = '/forecast'
-  public router = Router()
 
-  public routes: IRoute[] = [
+  public routes: IControllerRoute[] = [
     [
       'get',
       `${this.path}/plan/:planId`,
@@ -56,46 +56,8 @@ class ForecastController implements IController {
     @Inject(ServiceToken.FORECAST_SERVICE)
     private forecastService: IForecastService
   ) {
-    // this.intialiseRoutes()
-
-    this.routes.forEach(([method, path, ...middleware]) => {
-      this.router[method](path, ...middleware)
-    })
-  }
-
-  private intialiseRoutes(): void {
-    this.router.get(
-      `${this.path}/plan/:planId`,
-      routePermission(UserRole.USER),
-      this.fetchAll
-    )
-
-    this.router.post(
-      `/master${this.path}/create`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.create),
-      this.create
-    )
-
-    this.router.put(
-      `/master${this.path}/update/:forecastId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.update),
-      this.update
-    )
-
-    this.router.patch(
-      `/master${this.path}/update-status/:forecastId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.updateStatus),
-      this.updateStatus
-    )
-
-    this.router.delete(
-      `/master${this.path}/delete/:forecastId`,
-      routePermission(UserRole.ADMIN),
-      this.delete
-    )
+    super()
+    this.initialiseRoutes()
   }
 
   private fetchAll = asyncHandler(

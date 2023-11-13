@@ -3,9 +3,22 @@ import { request } from '../../../test'
 import { currencyA } from './currency.payload'
 import { currencyService } from '../../../setup'
 import { Types } from 'mongoose'
+import Helpers from '../../../utils/helpers'
 
 describe('currency', () => {
   request
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(currencyService)
+      expect(methods).toEqual([
+        'currencyModel',
+        'create',
+        'fetch',
+        'fetchAll',
+        'count',
+      ])
+    })
+  })
   describe('fetch', () => {
     describe('given currency those not exist', () => {
       it('should throw an error', async () => {

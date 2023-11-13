@@ -14,10 +14,39 @@ import { fetchCurrencyMock } from '../../currency/__test__/currency.mock'
 import { Types } from 'mongoose'
 import Cryptograph from '../../../core/cryptograph'
 import { StatusCode } from '../../../core/apiResponse'
+import { IControllerRoute } from '../../../core/utils'
+import { depositMethodController } from '../../../setup'
 
 describe('deposit method', () => {
   const baseUrl = '/api/deposit-method/'
   const masterUrl = '/api/master/deposit-method/'
+  describe('Validate routes', () => {
+    const routes = depositMethodController.routes as IControllerRoute[]
+    it('should expect 8 routes', () => {
+      expect(routes.length).toBe(8)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
   describe('create deposit method', () => {
     const url = masterUrl + 'create'
     describe('given logged in user is not an admin', () => {

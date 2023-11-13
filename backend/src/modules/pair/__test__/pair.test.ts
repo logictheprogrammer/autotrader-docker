@@ -9,10 +9,39 @@ import { assetA, assetB } from '../../asset/__test__/asset.payload'
 import { Types } from 'mongoose'
 import Cryptograph from '../../../core/cryptograph'
 import { StatusCode } from '../../../core/apiResponse'
+import { IControllerRoute } from '../../../core/utils'
+import { pairController } from '../../../setup'
 
 describe('pair', () => {
   const baseUrl = '/api/pair/'
   const masterUrl = '/api/master/pair/'
+  describe('Validate routes', () => {
+    const routes = pairController.routes as IControllerRoute[]
+    it('should expect 3 routes', () => {
+      expect(routes.length).toBe(3)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
   describe('create', () => {
     const url = masterUrl + 'create'
     describe('given user is not an admin', () => {

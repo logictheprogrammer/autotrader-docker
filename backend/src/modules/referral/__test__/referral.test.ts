@@ -11,10 +11,39 @@ import {
 } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { referralA } from './referral.payoad'
+import { IControllerRoute } from '../../../core/utils'
+import { referralController } from '../../../setup'
 
 describe('referral', () => {
   const baseUrl = '/api/referral/'
   const masterUrl = '/api/master/referral/'
+  describe('Validate routes', () => {
+    const routes = referralController.routes as IControllerRoute[]
+    it('should expect 6 routes', () => {
+      expect(routes.length).toBe(6)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
   describe('get referral transactions', () => {
     const url = `${baseUrl}`
     describe('given user is not logged in', () => {

@@ -4,9 +4,23 @@ import { assetA } from './asset.payload'
 import { assetService } from '../../../setup'
 import { AssetType } from '../asset.enum'
 import { Types } from 'mongoose'
+import Helpers from '../../../utils/helpers'
 
 describe('asset', () => {
   request
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(assetService)
+      expect(methods).toEqual([
+        'assetModel',
+        'create',
+        'fetch',
+        'update',
+        'fetchAll',
+        'count',
+      ])
+    })
+  })
   describe('fetch', () => {
     describe('given asset those not exist', () => {
       it('should throw an error', async () => {

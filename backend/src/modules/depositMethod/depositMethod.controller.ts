@@ -7,77 +7,77 @@ import { ObjectId } from 'mongoose'
 import asyncHandler from '@/helpers/asyncHandler'
 import { DepositMethodStatus } from './depositMethod.enum'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class DepositMethodController implements IController {
+class DepositMethodController extends BaseController implements IController {
   public path = '/deposit-method'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false)(...params),
+    ],
+    [
+      'post',
+      `/master${this.path}/create`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
+      (...params) => this.create(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-status/:depositMethodId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateStatus),
+      (...params) => this.updateStatus(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-price/:depositMethodId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updatePrice),
+      (...params) => this.updatePrice(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-mode/:depositMethodId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateMode),
+      (...params) => this.updateMode(...params),
+    ],
+    [
+      'put',
+      `/master${this.path}/update/:depositMethodId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
+      (...params) => this.update(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:depositMethodId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true)(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.DEPOSIT_METHOD_SERVICE)
     private depositMethodService: IDepositMethodService
   ) {
-    this.intialiseRoutes()
-  }
-
-  private intialiseRoutes(): void {
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false)
-    )
-
-    this.router.post(
-      `/master${this.path}/create`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.create),
-      this.create
-    )
-
-    this.router.patch(
-      `/master${this.path}/update-status/:depositMethodId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.updateStatus),
-      this.updateStatus
-    )
-
-    this.router.patch(
-      `/master${this.path}/update-price/:depositMethodId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.updatePrice),
-      this.updatePrice
-    )
-
-    this.router.patch(
-      `/master${this.path}/update-mode/:depositMethodId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.updateMode),
-      this.updateMode
-    )
-
-    this.router.put(
-      `/master${this.path}/update/:depositMethodId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.update),
-      this.update
-    )
-
-    // Delete Deposit Method
-    this.router.delete(
-      `/master${this.path}/delete/:depositMethodId`,
-      routePermission(UserRole.ADMIN),
-      this.delete
-    )
-
-    this.router.get(
-      `/master${this.path}`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true)
-    )
+    super()
+    this.initialiseRoutes()
   }
 
   private fetchAll = (all: boolean) =>

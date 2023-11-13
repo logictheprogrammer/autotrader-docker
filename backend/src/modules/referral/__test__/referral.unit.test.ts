@@ -1,11 +1,27 @@
-import ReferralModel from '../../../modules/referral/referral.model'
 import { request } from '../../../test'
 import { userAInput, userBInput } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { referralService, referralSettingsService } from '../../../setup'
 import { ReferralTypes } from '../referral.enum'
+import Helpers from '../../../utils/helpers'
 
 describe('referral', () => {
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(referralService)
+      expect(methods).toEqual([
+        'referralModel',
+        'findAll',
+        '_calcAmountEarn',
+        'create',
+        'fetchAll',
+        'earnings',
+        'leaderboard',
+        'delete',
+        'count',
+      ])
+    })
+  })
   describe('create', () => {
     describe('Given user was not referred', () => {
       it('should return undefined', async () => {

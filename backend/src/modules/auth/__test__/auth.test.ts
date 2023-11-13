@@ -24,10 +24,39 @@ import { Types } from 'mongoose'
 import { StatusCode } from '../../../core/apiResponse'
 import Cryptograph from '../../../core/cryptograph'
 import { SiteConstants } from '../../config/config.constants'
+import { IControllerRoute } from '../../../core/utils'
+import { authController } from '../../../setup'
 
 describe('authentication', () => {
   const baseUrl = '/api/authentication/'
   const masterUrl = '/api/master/authentication/'
+  describe('Validate routes', () => {
+    const routes = authController.routes as IControllerRoute[]
+    it('should expect 8 routes', () => {
+      expect(routes.length).toBe(8)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
   describe('registeration', () => {
     const url = baseUrl + 'register'
     describe('given user inputs are not valid', () => {
@@ -792,6 +821,7 @@ describe('authentication', () => {
         expect(body.status).toBe(StatusCode.SUCCESS)
 
         expect(sendWelcomeMailMock).toHaveBeenCalledTimes(1)
+        // @ts-ignore
         expect(sendWelcomeMailMock.mock.calls[0][0]._id.toString()).toBe(
           userObj._id.toString()
         )

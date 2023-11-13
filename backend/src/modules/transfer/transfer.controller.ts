@@ -4,23 +4,58 @@ import { Router, Response } from 'express'
 import validate from '@/modules/transfer/transfer.validation'
 import { UserRole } from '@/modules/user/user.enum'
 import { ObjectId } from 'mongoose'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class TransferController implements IController {
+class TransferController extends BaseController implements IController {
   public path = '/transfer'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'post',
+      `${this.path}/create`,
+      routePermission(UserRole.USER),
+      schemaValidator(validate.create),
+      (...params) => this.create(...params),
+    ],
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false)(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-status/:transferId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateStatus),
+      (...params) => this.updateStatus(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:transferId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true)(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.TRANSFER_SERVICE)
     private transferService: ITransferService
   ) {
-    this.intialiseRoutes()
+    super()
+    this.initialiseRoutes()
   }
 
   private intialiseRoutes(): void {

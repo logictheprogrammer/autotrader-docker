@@ -3,21 +3,54 @@ import { Inject, Service } from 'typedi'
 import { Router, Response } from 'express'
 import { UserEnvironment, UserRole } from '@/modules/user/user.enum'
 import ServiceToken from '@/core/serviceToken'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class TransactionController implements IController {
+class TransactionController extends BaseController implements IController {
   public path = '/transaction'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false, UserEnvironment.LIVE)(...params),
+    ],
+    [
+      'get',
+      `/demo${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false, UserEnvironment.DEMO)(...params),
+    ],
+    [
+      'get',
+      `/master/demo${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true, UserEnvironment.DEMO)(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:transactionId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true, UserEnvironment.LIVE)(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.TRANSACTION_SERVICE)
     private transactionService: ITransactionService
   ) {
-    this.intialiseRoutes()
+    super()
+    this.initialiseRoutes()
   }
 
   private intialiseRoutes(): void {

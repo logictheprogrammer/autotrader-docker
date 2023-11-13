@@ -6,86 +6,130 @@ import { NotificationForWho } from './notification.enum'
 import { ObjectId } from 'mongoose'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class NotificationController implements IController {
+class NotificationController extends BaseController implements IController {
   public path = '/notification'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'delete',
+      `${this.path}/delete/:notificationId`,
+      routePermission(UserRole.USER),
+      (...params) => this.delete(false)(...params),
+    ],
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) =>
+        this.fetchAll(
+          false,
+          true,
+          UserEnvironment.LIVE,
+          NotificationForWho.USER
+        )(...params),
+    ],
+    [
+      'get',
+      `/demo${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) =>
+        this.fetchAll(
+          false,
+          true,
+          UserEnvironment.DEMO,
+          NotificationForWho.USER
+        )(...params),
+    ],
+    [
+      'get',
+      `/master/demo${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      (...params) =>
+        this.fetchAll(
+          true,
+          true,
+          UserEnvironment.DEMO,
+          NotificationForWho.USER
+        )(...params),
+    ],
+    [
+      'get',
+      `/master/demo${this.path}/user/:userId`,
+      routePermission(UserRole.ADMIN),
+      (...params) =>
+        this.fetchAll(
+          true,
+          false,
+          UserEnvironment.DEMO,
+          NotificationForWho.USER
+        )(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:notificationId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(true)(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      (...params) =>
+        this.fetchAll(
+          true,
+          true,
+          UserEnvironment.LIVE,
+          NotificationForWho.USER
+        )(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}/user/:userId`,
+      routePermission(UserRole.ADMIN),
+      (...params) =>
+        this.fetchAll(
+          true,
+          false,
+          UserEnvironment.LIVE,
+          NotificationForWho.USER
+        )(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) =>
+        this.fetchAll(
+          true,
+          true,
+          UserEnvironment.LIVE,
+          NotificationForWho.ADMIN
+        )(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.NOTIFICATION_SERVICE)
     private notificationService: INotificationService
   ) {
-    this.intialiseRoutes()
-  }
-
-  private intialiseRoutes(): void {
-    this.router.delete(
-      `${this.path}/delete/:notificationId`,
-      routePermission(UserRole.USER),
-      this.delete(false)
-    )
-
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.LIVE, NotificationForWho.USER)
-    )
-
-    this.router.get(
-      `/demo${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.DEMO, NotificationForWho.USER)
-    )
-
-    this.router.get(
-      `/master/demo${this.path}/users`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
-    )
-
-    this.router.get(
-      `/master/demo${this.path}/user/:userId`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO, NotificationForWho.USER)
-    )
-
-    this.router.delete(
-      `/master${this.path}/delete/:notificationId`,
-      routePermission(UserRole.ADMIN),
-      this.delete(true)
-    )
-
-    this.router.get(
-      `/master${this.path}/users`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.USER)
-    )
-
-    this.router.get(
-      `/master${this.path}/user/:userId`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.USER)
-    )
-
-    this.router.get(
-      `/master${this.path}`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.LIVE, NotificationForWho.ADMIN)
-    )
+    super()
+    this.initialiseRoutes()
   }
 
   private fetchAll = (
     byAdmin: boolean,
+    all: boolean,
     environment: UserEnvironment,
     forWho: NotificationForWho
   ) =>
     asyncHandler(async (req, res): Promise<Response | void> => {
       let notifications
-      if (byAdmin && req.params.userId) {
+      if (byAdmin && !all) {
         notifications = await this.notificationService.fetchAll({
           environment,
           forWho,

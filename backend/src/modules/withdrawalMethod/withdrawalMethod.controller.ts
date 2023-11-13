@@ -1,26 +1,68 @@
 import { IWithdrawalMethodService } from '@/modules/withdrawalMethod/withdrawalMethod.interface'
 import { Inject, Service } from 'typedi'
-import { Router, Response } from 'express'
+import { Response } from 'express'
 import validate from '@/modules/withdrawalMethod/withdrawalMethod.validation'
 import { UserRole } from '@/modules/user/user.enum'
 import asyncHandler from '@/helpers/asyncHandler'
 import { WithdrawalMethodStatus } from './withdrawalMethod.enum'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class WithdrawalMethodController implements IController {
+class WithdrawalMethodController extends BaseController implements IController {
   public path = '/withdrawal-method'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false)(...params),
+    ],
+    [
+      'post',
+      `/master${this.path}/create`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
+      (...params) => this.create(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-status/:withdrawalMethodId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateStatus),
+      (...params) => this.updateStatus(...params),
+    ],
+    [
+      'put',
+      `/master${this.path}/update/:withdrawalMethodId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
+      (...params) => this.update(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:withdrawalMethodId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true)(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.WITHDRAWAL_METHOD_SERVICE)
     private withdrawalMethodService: IWithdrawalMethodService
   ) {
-    this.intialiseRoutes()
+    super()
+    this.initialiseRoutes()
   }
 
   private intialiseRoutes(): void {

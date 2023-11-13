@@ -7,34 +7,35 @@ import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class CurrencyController implements IController {
+class CurrencyController extends BaseController implements IController {
   public path = '/currency'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'post',
+      `/master${this.path}/create`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
+      (...params) => this.create(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.CURRENCY_SERVICE)
     private currencyService: ICurrencyService
   ) {
-    this.intialiseRoutes()
-  }
-
-  private intialiseRoutes(): void {
-    this.router.post(
-      `/master${this.path}/create`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.create),
-      this.create
-    )
-
-    this.router.get(
-      `/master${this.path}`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll
-    )
+    super()
+    this.initialiseRoutes()
   }
 
   private fetchAll = asyncHandler(

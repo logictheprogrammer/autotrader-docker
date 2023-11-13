@@ -4,8 +4,24 @@ import { userAInput } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { ActivityCategory, ActivityForWho } from '../activity.enum'
 import { activityService } from '../../../setup'
+import Helpers from '../../../utils/helpers'
 
 describe('activity', () => {
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(activityService)
+      expect(methods).toEqual([
+        'activityModel',
+        'create',
+        'fetchAll',
+        'hide',
+        'hideAll',
+        'count',
+        'delete',
+        'deleteAll',
+      ])
+    })
+  })
   describe('create', () => {
     it('should create an activity to the database', async () => {
       request

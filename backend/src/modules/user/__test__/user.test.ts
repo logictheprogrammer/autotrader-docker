@@ -17,10 +17,39 @@ import { Types } from 'mongoose'
 import Cryptograph from '../../../core/cryptograph'
 import { StatusCode } from '../../../core/apiResponse'
 import Helpers from '../../../utils/helpers'
+import { IControllerRoute } from '../../../core/utils'
+import { userController } from '../../../setup'
 
 describe('users', () => {
   const baseUrl = '/api/users'
   const masterUrl = '/api/master/users'
+  describe('Validate routes', () => {
+    const routes = userController.routes as IControllerRoute[]
+    it('should expect 10 routes', () => {
+      expect(routes.length).toBe(10)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
   describe('Fund User', () => {
     // const url = `${masterUrl}/fund/:userId`
     describe('given logged in user is not an admin', () => {

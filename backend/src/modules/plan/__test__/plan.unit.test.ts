@@ -8,9 +8,27 @@ import { Types } from 'mongoose'
 import { ForecastStatus } from '../../forecast/forecast.enum'
 import ForecastModel from '../../forecast/forecast.model'
 import { forecastA } from '../../forecast/__test__/forecast.payload'
+import Helpers from '../../../utils/helpers'
 
 describe('plan', () => {
   request
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(planService)
+      expect(methods).toEqual([
+        'planModel',
+        'forecastModel',
+        'create',
+        'update',
+        'updateStatus',
+        'updateForecastDetails',
+        'fetch',
+        'count',
+        'delete',
+        'fetchAll',
+      ])
+    })
+  })
   describe('fetch plan', () => {
     describe('given plan those not exist', () => {
       it('should throw an error', async () => {

@@ -12,8 +12,27 @@ import { planA } from '../../plan/__test__/plan.payload'
 import { UserAccount, UserEnvironment } from '../../user/user.enum'
 import { Types } from 'mongoose'
 import { ForecastStatus } from '../../forecast/forecast.enum'
+import Helpers from '../../../utils/helpers'
 
 describe('investment', () => {
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(investmentService)
+      expect(methods).toEqual([
+        'investmentModel',
+        'tradeModel',
+        'fetch',
+        'create',
+        'updateTradeDetails',
+        'updateStatus',
+        'fund',
+        'refill',
+        'delete',
+        'fetchAll',
+        'count',
+      ])
+    })
+  })
   describe('create', () => {
     it('should return a investment', async () => {
       request

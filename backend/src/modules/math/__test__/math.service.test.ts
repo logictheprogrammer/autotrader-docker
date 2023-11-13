@@ -1,7 +1,21 @@
 import { mathService, mathUtility } from '../../../setup'
 import { request } from '../../../test'
+import Helpers from '../../../utils/helpers'
 
 describe('Math Service', () => {
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(mathService)
+      expect(methods).toEqual([
+        '_getValues',
+        '_getValuesProbability',
+        '_getNegativeUnit',
+        '_getPercentageLoss',
+        'dynamicRangeOptions',
+        'dynamicRange',
+      ])
+    })
+  })
   // _getValues
   describe('_getValues(averageValueOne, averageValueTwo, spread, breakpoint)', () => {
     request

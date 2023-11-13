@@ -3,9 +3,23 @@ import { request } from '../../../test'
 import { pairA } from './pair.payload'
 import { pairService } from '../../../setup'
 import { Types } from 'mongoose'
+import Helpers from '../../../utils/helpers'
 
 describe('pair', () => {
   request
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(pairService)
+      expect(methods).toEqual([
+        'pairModel',
+        'fetch',
+        'create',
+        'update',
+        'fetchAll',
+        'count',
+      ])
+    })
+  })
   describe('fetch', () => {
     describe('given pair those not exist', () => {
       it('should throw an error', async () => {

@@ -6,10 +6,39 @@ import { adminAInput, userAInput } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
 import { assetA, assetB } from './asset.payload'
 import { Types } from 'mongoose'
+import { IControllerRoute } from '../../../core/utils'
+import { assetController } from '../../../setup'
 
 describe('asset', () => {
   const baseUrl = '/api/asset/'
   const masterUrl = '/api/master/asset/'
+  describe('Validate routes', () => {
+    const routes = assetController.routes as IControllerRoute[]
+    it('should expect 3 routes', () => {
+      expect(routes.length).toBe(3)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
   describe('create', () => {
     const url = masterUrl + 'create'
     describe('given user is not an admin', () => {

@@ -1,3 +1,4 @@
+import { IControllerRoute } from '../../../core/utils'
 import { tradeA } from './../../trade/__test__/trade.payload'
 import {
   createTradeMock,
@@ -40,10 +41,39 @@ import investmentModel from '../../investment/investment.model'
 import { StatusCode } from '../../../core/apiResponse'
 import TradeModel from '../../trade/trade.model'
 import PairModel from '../../pair/pair.model'
+import { forecastController } from '../../../setup'
 
 describe('forecast', () => {
   const baseUrl = '/api/forecast/'
   const masterUrl = '/api/master/forecast/'
+  describe('Validate routes', () => {
+    const routes = forecastController.routes as IControllerRoute[]
+    it('should expect 5 routes', () => {
+      expect(routes.length).toBe(5)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
+
   describe('create forecast on live mode and demo', () => {
     const url = masterUrl + 'create'
     describe('given user is not an admin', () => {

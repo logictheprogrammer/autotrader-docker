@@ -8,6 +8,24 @@ import userModel from '../../user/user.model'
 import { SiteConstants } from '../../config/config.constants'
 
 describe('authentication', () => {
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(authService)
+      expect(methods).toEqual([
+        'userModel',
+        'emailVerification',
+        'register',
+        'login',
+        'updatePassword',
+        'forgetPassword',
+        'resetPassword',
+        'verifyEmail',
+        'sendWelcomeMail',
+        'sendResetPasswordMail',
+        'sendEmailVerificationMail',
+      ])
+    })
+  })
   describe('sendEmailVerificationMail', () => {
     it('should send an email verification email', async () => {
       request

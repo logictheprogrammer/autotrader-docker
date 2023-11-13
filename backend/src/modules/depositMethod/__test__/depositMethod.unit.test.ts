@@ -4,9 +4,27 @@ import depositMethodModel from '../../../modules/depositMethod/depositMethod.mod
 import { depositMethodA } from './depositMethod.payload'
 import { depositMethodService } from '../../../setup'
 import { Types } from 'mongoose'
+import Helpers from '../../../utils/helpers'
 
 describe('deposit method', () => {
   request
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(depositMethodService)
+      expect(methods).toEqual([
+        'depositMethodModel',
+        'create',
+        'update',
+        'fetch',
+        'delete',
+        'updateStatus',
+        'updateMode',
+        'updatePrice',
+        'fetchAll',
+        'count',
+      ])
+    })
+  })
   describe('fetch deposit method', () => {
     describe('given deposit method those not exist', () => {
       it('should throw an error', async () => {

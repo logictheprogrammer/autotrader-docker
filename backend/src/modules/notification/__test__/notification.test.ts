@@ -8,12 +8,41 @@ import { NotificationForWho } from '../notification.enum'
 import { notificationA } from './notification.payload'
 import Cryptograph from '../../../core/cryptograph'
 import { StatusCode } from '../../../core/apiResponse'
+import { IControllerRoute } from '../../../core/utils'
+import { notificationController } from '../../../setup'
 
 describe('notification', () => {
   const baseUrl = '/api/notification'
   const demoUrl = '/api/demo/notification'
   const masterUrl = '/api/master/notification'
   const masterDemoUrl = '/api/master/demo/notification'
+  describe('Validate routes', () => {
+    const routes = notificationController.routes as IControllerRoute[]
+    it('should expect 9 routes', () => {
+      expect(routes.length).toBe(9)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
   describe('get user notifications', () => {
     const url = `${baseUrl}`
     describe('given user is not loggedin', () => {

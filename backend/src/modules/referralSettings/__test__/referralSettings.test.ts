@@ -1,6 +1,8 @@
 import { StatusCode } from '../../../core/apiResponse'
 import Cryptograph from '../../../core/cryptograph'
+import { IControllerRoute } from '../../../core/utils'
 import referralSettingsModel from '../../../modules/referralSettings/referralSettings.model'
+import { referralSettingsController } from '../../../setup'
 import { request } from '../../../test'
 import { adminAInput, userAInput } from '../../user/__test__/user.payload'
 import userModel from '../../user/user.model'
@@ -12,6 +14,33 @@ import {
 describe('referral settings', () => {
   const baseUrl = '/api/referral-settings'
   const masterUrl = '/api/master/referral-settings'
+  describe('Validate routes', () => {
+    const routes = referralSettingsController.routes as IControllerRoute[]
+    it('should expect 2 routes', () => {
+      expect(routes.length).toBe(2)
+    })
+    test.each(routes)(
+      'should have only one occurance for method - (%s) and url - (%s)',
+      (method, url) => {
+        const occurance = routes.filter(
+          ([method1, url1]) => method === method1 && url === url1
+        )
+        expect(occurance.length).toBe(1)
+      }
+    )
+    test.each(routes)(
+      'The last middleware should only be called once where method - (%s) and url - (%s)',
+      (...middlewares) => {
+        const occurance = routes.filter((middlewares1) => {
+          return (
+            middlewares[middlewares.length - 1].toString() ===
+            middlewares1[middlewares1.length - 1].toString()
+          )
+        })
+        expect(occurance.length).toBe(1)
+      }
+    )
+  })
   describe('get referral settings', () => {
     const url = `${baseUrl}`
     describe('a get request', () => {

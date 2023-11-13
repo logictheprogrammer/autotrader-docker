@@ -1,3 +1,4 @@
+import Helpers from '../../../utils/helpers'
 import { investmentA } from './../../investment/__test__/investment.payload'
 import InvestmentModel from '../../../modules/investment/investment.model'
 import {
@@ -26,12 +27,9 @@ import AssetModel from '../../../modules/asset/asset.model'
 import { ForecastStatus } from '../../forecast/forecast.enum'
 import { request } from '../../../test'
 import { forecastService } from '../../../setup'
-import forecastModel from '../forecast.model'
-import { forecastA } from './forecast.payload'
 import pairModel from '../../pair/pair.model'
 import { pairA, pairA_id } from '../../pair/__test__/pair.payload'
 import { Types } from 'mongoose'
-import { PlanMode, PlanStatus } from '../../plan/plan.enum'
 import { AssetType } from '../../asset/asset.enum'
 import { updatePlanForecastDetailsMock } from '../../plan/__test__/plan.mock'
 import { InvestmentStatus } from '../../investment/investment.enum'
@@ -42,6 +40,27 @@ import {
 } from '../../math/__test__/math.mock'
 
 describe('forecast', () => {
+  describe('verify all methods', () => {
+    it('Should match with the result', () => {
+      const methods = Helpers.getClassMethods(forecastService)
+      expect(methods).toEqual([
+        'forecastModel',
+        'getForecastWaitTime',
+        'getDurationTime',
+        'create',
+        'autoCreate',
+        'manualCreate',
+        'update',
+        'updateStatus',
+        'autoUpdateStatus',
+        'manualUpdateStatus',
+        'delete',
+        'count',
+        'fetchAll',
+      ])
+    })
+  })
+
   describe('autocreate', () => {
     describe('given plan already has an unsettled forecast', () => {
       it('should return an empty forecast with one error', async () => {

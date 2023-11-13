@@ -3,26 +3,36 @@ import { Response, Router } from 'express'
 import { Inject, Service } from 'typedi'
 import { ISendMailService } from '@/modules/sendMail/sendMail.interface'
 import { UserRole } from '@/modules/user/user.enum'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class SendMailController implements IController {
+class SendMailController extends BaseController implements IController {
   public path = '/send-email'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'post',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.sendEmail),
+      (...params) => this.sendCustomMail(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.SEND_MAIL_SERVICE)
     private sendMailService: ISendMailService
   ) {
+    super()
     this.initialiseRoutes()
   }
 
-  private initialiseRoutes = (): void => {
+  private initiaaliseRoutes = (): void => {
     // Send Email
     this.router.post(
       `/master${this.path}`,

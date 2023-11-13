@@ -7,21 +7,63 @@ import { PlanStatus } from '@/modules/plan/plan.enum'
 import { ObjectId } from 'mongoose'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class PlanController implements IController {
+class PlanController extends BaseController implements IController {
   public path = '/plan'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(false)(...params),
+    ],
+    [
+      'post',
+      `/master${this.path}/create`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
+      (...params) => this.create(...params),
+    ],
+    [
+      'put',
+      `/master${this.path}/update/:planId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.update),
+      (...params) => this.update(...params),
+    ],
+    [
+      'patch',
+      `/master${this.path}/update-status/:planId`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.updateStatus),
+      (...params) => this.updateStatus(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:planId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(true)(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
     private planService: IPlanService
   ) {
-    this.intialiseRoutes()
+    super()
+    this.initialiseRoutes()
   }
 
   private intialiseRoutes(): void {

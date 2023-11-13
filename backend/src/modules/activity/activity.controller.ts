@@ -7,101 +7,92 @@ import {
 } from '@/modules/activity/activity.enum'
 import { UserRole } from '@/modules/user/user.enum'
 import { ObjectId } from 'mongoose'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-class ActivityController implements IController {
+class ActivityController extends BaseController implements IController {
   public path = '/activity'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'get',
+      `${this.path}`,
+      routePermission(UserRole.USER),
+      (...params) => this.fetchAll(UserRole.USER)(...params),
+    ],
+    [
+      'patch',
+      `${this.path}/hide/all`,
+      routePermission(UserRole.USER),
+      (...params) => this.hideAll(...params),
+    ],
+    [
+      'patch',
+      `${this.path}/hide/:activityId`,
+      routePermission(UserRole.USER),
+      (...params) => this.hide(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}/users`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(UserRole.ADMIN)(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}/user/:userId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(UserRole.ADMIN, false)(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAllAdmin(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/all/user/:userId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.deleteAll(false, ActivityForWho.USER)(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/user/:activityId`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.delete(UserRole.USER, ActivityForWho.USER)(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/all`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.deleteAll(false, ActivityForWho.ADMIN)(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/all/users`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.deleteAll(true, ActivityForWho.USER)(...params),
+    ],
+    [
+      'delete',
+      `/master${this.path}/delete/:activityId`,
+      routePermission(UserRole.ADMIN),
+      (...params) =>
+        this.delete(UserRole.ADMIN, ActivityForWho.ADMIN)(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.ACTIVITY_SERVICE)
     private activityService: IActivityService
   ) {
+    super()
     this.initialiseRoutes()
-  }
-
-  private initialiseRoutes = (): void => {
-    // Get Activity logs
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(UserRole.USER)
-    )
-
-    // Hide All Activity
-    this.router.patch(
-      `${this.path}/hide/all`,
-      routePermission(UserRole.USER),
-      this.hideAll
-    )
-
-    // Hide Activity
-    this.router.patch(
-      `${this.path}/hide/:activityId`,
-      routePermission(UserRole.USER),
-      this.hide
-    )
-
-    // Get All Users Activity logs
-    this.router.get(
-      `/master${this.path}/users`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(UserRole.ADMIN)
-    )
-
-    // Get A User Activity logs
-    this.router.get(
-      `/master${this.path}/user/:userId`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(UserRole.ADMIN, false)
-    )
-
-    // Get Admin Activity logs
-    this.router.get(
-      `/master${this.path}`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAllAdmin
-    )
-
-    // Delete All selected user Activity
-    this.router.delete(
-      `/master${this.path}/delete/all/user/:userId`,
-      routePermission(UserRole.ADMIN),
-      this.deleteAll(false, ActivityForWho.USER)
-    )
-
-    // Delete Activity
-    this.router.delete(
-      `/master${this.path}/delete/user/:activityId`,
-      routePermission(UserRole.ADMIN),
-      this.delete(UserRole.USER, ActivityForWho.USER)
-    )
-
-    // Delete All active Admin Activity
-    this.router.delete(
-      `/master${this.path}/delete/all`,
-      routePermission(UserRole.ADMIN),
-      this.deleteAll(false, ActivityForWho.ADMIN)
-    )
-
-    // Delete All users Activities
-    this.router.delete(
-      `/master${this.path}/delete/all/users`,
-      routePermission(UserRole.ADMIN),
-      this.deleteAll(true, ActivityForWho.USER)
-    )
-
-    // Delete Admin Activity
-    this.router.delete(
-      `/master${this.path}/delete/:activityId`,
-      routePermission(UserRole.ADMIN),
-      this.delete(UserRole.ADMIN, ActivityForWho.ADMIN)
-    )
   }
 
   private fetchAll = (role: UserRole, all: boolean = true) =>

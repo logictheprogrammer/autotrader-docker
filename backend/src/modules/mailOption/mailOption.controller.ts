@@ -6,23 +6,42 @@ import { UserRole } from '@/modules/user/user.enum'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
 import ServiceToken from '@/core/serviceToken'
-import { IController } from '@/core/utils'
+import { IController, IControllerRoute } from '@/core/utils'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
+import BaseController from '@/core/baseContoller'
 
 @Service()
-export default class MailOptionController implements IController {
+export default class MailOptionController
+  extends BaseController
+  implements IController
+{
   public path = '/mail-options'
-  public router = Router()
+  public routes: IControllerRoute[] = [
+    [
+      'post',
+      `/master${this.path}/create`,
+      routePermission(UserRole.ADMIN),
+      schemaValidator(validate.create),
+      (...params) => this.create(...params),
+    ],
+    [
+      'get',
+      `/master${this.path}`,
+      routePermission(UserRole.ADMIN),
+      (...params) => this.fetchAll(...params),
+    ],
+  ]
 
   constructor(
     @Inject(ServiceToken.MAIL_OPTION_SERVICE)
     private mailOptionService: IMailOptionService
   ) {
+    super()
     this.initialiseRoutes()
   }
 
-  private initialiseRoutes = (): void => {
+  private initialiseRouteas = (): void => {
     this.router.post(
       `/master${this.path}/create`,
       routePermission(UserRole.ADMIN),
