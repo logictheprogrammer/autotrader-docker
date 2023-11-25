@@ -8,6 +8,8 @@ export interface IUserObject extends baseObjectInterface {
   username: string
   name: string
   country: string
+  profile?: string
+  cover?: string
   role: UserRole
   status: UserStatus
   verifield: Boolean
@@ -36,6 +38,12 @@ export interface IUserService {
     name: string,
     username: string,
     byAdmin: boolean
+  ): Promise<IUserObject>
+
+  updateProfileImages(
+    filter: FilterQuery<IUser>,
+    profile?: string,
+    cover?: string
   ): Promise<IUserObject>
 
   updateEmail(filter: FilterQuery<IUser>, email: string): Promise<IUserObject>

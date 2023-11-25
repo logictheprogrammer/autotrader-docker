@@ -32,6 +32,14 @@ const UserSchema = new Schema<IUser>(
       required: true,
       trim: true,
     },
+    profile: {
+      type: String,
+      trim: true,
+    },
+    cover: {
+      type: String,
+      trim: true,
+    },
     status: {
       type: String,
       required: true,

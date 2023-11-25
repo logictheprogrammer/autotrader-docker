@@ -22,12 +22,29 @@ import Helpers from '@/utils/helpers'
 import UserModel from '@/modules/user/user.model'
 import ActivityModel from '@/modules/activity/activity.model'
 import NotificationModel from '@/modules/notification/notification.model'
+import { ImageFileSizes } from '../imageFile/imageFile.config'
+import ImageFile from '../imageFile/imageFile.service'
 
 @Service()
 class UserService implements IUserService {
   private userModel = UserModel
   private notificationModel = NotificationModel
   private activityModel = ActivityModel
+  private imageFile = new ImageFile()
+
+  static profileImageSizes = [
+    ImageFileSizes.PROFILE_CARD,
+    ImageFileSizes.PROFILE_ICON,
+    ImageFileSizes.PROFILE_MAIN,
+    ImageFileSizes.PROFILE_NAV,
+  ]
+
+  static coverImageSizes = [
+    ImageFileSizes.COVER_MAIN,
+    ImageFileSizes.COVER_MENU,
+    ImageFileSizes.COVER_CARD,
+    ImageFileSizes.COVER_PROFILE,
+  ]
 
   public constructor(
     @Inject(ServiceToken.ACTIVITY_SERVICE)
@@ -109,6 +126,47 @@ class UserService implements IUserService {
 
     user.name = name
     user.username = username
+    await user.save()
+
+    this.activityService.create(
+      user,
+      ActivityForWho.USER,
+      ActivityCategory.PROFILE,
+      'You updated your profile details'
+    )
+
+    return user
+  }
+
+  public async updateProfileImages(
+    filter: FilterQuery<IUser>,
+    profile?: string,
+    cover?: string
+  ): Promise<IUserObject> {
+    const user = await this.userModel.findOne(filter)
+
+    if (!user) throw new NotFoundError('User not found')
+
+    if (profile) {
+      this.imageFile.delete('profile', profile, UserService.profileImageSizes)
+      if (user.profile) {
+        this.imageFile.delete(
+          'profile',
+          user.profile,
+          UserService.profileImageSizes
+        )
+      }
+      user.profile = profile
+    }
+
+    if (cover) {
+      this.imageFile.delete('cover', cover, UserService.profileImageSizes)
+      if (user.cover) {
+        this.imageFile.delete('cover', user.cover, UserService.coverImageSizes)
+      }
+      user.cover = cover
+    }
+
     await user.save()
 
     this.activityService.create(

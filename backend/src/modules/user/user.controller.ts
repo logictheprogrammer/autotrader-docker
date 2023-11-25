@@ -11,10 +11,14 @@ import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
 import BaseController from '@/core/baseContoller'
+import ImageFileService from '../imageFile/imageFile.service'
+import { InternalError, NotFoundError } from '@/core/apiError'
+import UserService from './user.service'
 
 @Service()
 class UserController extends BaseController implements IController {
   public path = '/users'
+  private imageFile = new ImageFileService()
   public routes: IControllerRoute[] = [
     [
       'put',
@@ -22,6 +26,27 @@ class UserController extends BaseController implements IController {
       routePermission(UserRole.USER),
       schemaValidator(userValidation.updateProfile),
       (...params) => this.updateProfile(false)(...params),
+    ],
+    [
+      'put',
+      `${this.path}/update-profile-images`,
+      routePermission(UserRole.USER),
+      ImageFileService.validate([{ name: 'profile' }, { name: 'cover' }]),
+      ImageFileService.upload([
+        {
+          name: 'profile',
+          resize: UserService.profileImageSizes,
+        },
+        { name: 'cover', resize: UserService.coverImageSizes },
+      ]),
+      // this.imageFile.resize(
+      //   ['profile', 'cover'],
+      //   [...UserService.coverImageSizes, ...UserService.profileImageSizes]
+      // ),
+      (req, res, next) => {
+        res.send({})
+      },
+      // (...params) => this.updateProfileImages(false)(...params),
     ],
     [
       'get',
@@ -191,6 +216,44 @@ class UserController extends BaseController implements IController {
       return new SuccessResponse('Profile updated successfully', { user }).send(
         res
       )
+    })
+
+  private updateProfileImages = (isAdmin: boolean = false) =>
+    asyncHandler(async (req, res, next) => {
+      let profileImage, coverImage
+      try {
+        let userId
+        const { profile, cover } = req.body
+
+        profileImage = profile && profile[0].name
+        coverImage = cover && cover[0].name
+
+        if (isAdmin) {
+          userId = req.params.userId
+          if (!userId) throw new NotFoundError('User not found')
+        } else {
+          if (!req.user) throw new NotFoundError('User not found')
+          userId = req.user._id
+        }
+        const responce = await this.userService.updateProfileImages(
+          userId,
+          profileImage,
+          coverImage
+        )
+        res.status(200).json(responce)
+      } catch (err: any) {
+        if (profileImage)
+          this.imageFile.delete('profile', profileImage, [
+            ...UserService.coverImageSizes,
+            ...UserService.profileImageSizes,
+          ])
+        if (coverImage)
+          this.imageFile.delete('cover', coverImage, [
+            ...UserService.coverImageSizes,
+            ...UserService.profileImageSizes,
+          ])
+        next(new InternalError(err.message, undefined, err.status))
+      }
     })
 
   private updateEmail = (byAdmin: boolean) =>

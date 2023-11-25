@@ -70,6 +70,10 @@ export default class Cryptograph {
     return crypto.randomBytes(size)
   }
 
+  public static randomUUID(options?: crypto.RandomUUIDOptions): string {
+    return crypto.randomUUID(options)
+  }
+
   public static generateCode(config: {
     length?: number
     count?: number

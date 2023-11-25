@@ -1,4 +1,5 @@
 import { Response } from 'express'
+import { ErrorType } from './apiError'
 
 export enum StatusCode {
   SUCCESS = '1000',
@@ -26,7 +27,7 @@ abstract class ApiResponse {
     protected description?: string,
     protected data?: any,
     protected errors?: string[],
-    protected errorType?: string
+    protected errorType?: ErrorType
   ) {}
 
   public send(res: Response) {
@@ -43,7 +44,7 @@ abstract class ApiResponse {
 
 export class NotFoundResponse extends ApiResponse {
   constructor(
-    errorType: string,
+    errorType: ErrorType,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -63,7 +64,7 @@ export class NotFoundResponse extends ApiResponse {
 
 export class BadRequestResponse extends ApiResponse {
   constructor(
-    errorType: string,
+    errorType: ErrorType,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -83,7 +84,7 @@ export class BadRequestResponse extends ApiResponse {
 
 export class RequestConflictResponse extends ApiResponse {
   constructor(
-    errorType: string,
+    errorType: ErrorType,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -103,7 +104,7 @@ export class RequestConflictResponse extends ApiResponse {
 
 export class UnauthorizedResponse extends ApiResponse {
   constructor(
-    errorType: string,
+    errorType: ErrorType,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -123,7 +124,7 @@ export class UnauthorizedResponse extends ApiResponse {
 
 export class ForbiddenResponse extends ApiResponse {
   constructor(
-    errorType: string,
+    errorType: ErrorType,
     message: string,
     description?: string,
     statusCode?: StatusCode,
@@ -143,7 +144,7 @@ export class ForbiddenResponse extends ApiResponse {
 
 export class InternalErrorResponse extends ApiResponse {
   constructor(
-    errorType: string,
+    errorType: ErrorType,
     message: string,
     description?: string,
     statusCode?: StatusCode,
