@@ -22,7 +22,6 @@ import Helpers from '@/utils/helpers'
 import UserModel from '@/modules/user/user.model'
 import ActivityModel from '@/modules/activity/activity.model'
 import NotificationModel from '@/modules/notification/notification.model'
-import { ImageFileSizes } from '../imageFile/imageFile.config'
 import ImageFile from '../imageFile/imageFile.service'
 
 @Service()
@@ -33,17 +32,17 @@ class UserService implements IUserService {
   private imageFile = new ImageFile()
 
   static profileImageSizes = [
-    ImageFileSizes.PROFILE_CARD,
-    ImageFileSizes.PROFILE_ICON,
-    ImageFileSizes.PROFILE_MAIN,
-    ImageFileSizes.PROFILE_NAV,
+    { name: 'main', width: 164, height: 164 },
+    { name: 'card', width: 100, height: 100 },
+    { name: 'nav', width: 50, height: 50 },
+    { name: 'icon', width: 24, height: 24 },
   ]
 
   static coverImageSizes = [
-    ImageFileSizes.COVER_MAIN,
-    ImageFileSizes.COVER_MENU,
-    ImageFileSizes.COVER_CARD,
-    ImageFileSizes.COVER_PROFILE,
+    { name: 'main', width: 1920, height: 320 },
+    { name: 'profile', width: 600, height: 100 },
+    { name: 'card', width: 340, height: 100 },
+    { name: 'menu', width: 240, height: 42 },
   ]
 
   public constructor(
@@ -148,21 +147,17 @@ class UserService implements IUserService {
     if (!user) throw new NotFoundError('User not found')
 
     if (profile) {
-      this.imageFile.delete('profile', profile, UserService.profileImageSizes)
+      this.imageFile.delete('profile', profile)
       if (user.profile) {
-        this.imageFile.delete(
-          'profile',
-          user.profile,
-          UserService.profileImageSizes
-        )
+        this.imageFile.delete('profile', user.profile)
       }
       user.profile = profile
     }
 
     if (cover) {
-      this.imageFile.delete('cover', cover, UserService.profileImageSizes)
+      this.imageFile.delete('cover', cover)
       if (user.cover) {
-        this.imageFile.delete('cover', user.cover, UserService.coverImageSizes)
+        this.imageFile.delete('cover', user.cover)
       }
       user.cover = cover
     }

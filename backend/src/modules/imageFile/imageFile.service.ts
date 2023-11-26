@@ -2,42 +2,14 @@ import { NextFunction, Request, Response } from 'express'
 import path from 'path'
 import multer from 'multer'
 import MulterSharpResizer from './multerSharpResizer'
-import * as fs from 'fs-extra'
-import imageFileConfig, { ImageFileSizes } from './imageFile.config'
+import imageFileConfig from './imageFile.config'
 import { BadRequestError } from '@/core/apiError'
-
-interface ImageToValidate {
-  name: string
-  maxCount?: number
-}
-
-interface ImageSizes {
-  name: string
-  width: number | null
-  height: number | null
-}
-
-interface ImageToUploadParams {
-  name: string
-  uniqueFileFolder?: string
-  parentFolder?: string
-  resize?: ImageFileSizes[]
-  fit?: 'cover' | 'contain'
-  background?: { r: number; g: number; b: number; alpha: number }
-  defaultExtension?: string
-}
-
-export interface ImageToUpload {
-  name: string
-  uniqueFileFolder: string
-  filePath: string
-  parentFolder: string
-  sizes: typeof imageFileConfig.sizes
-  url: string
-  fit: 'cover' | 'contain'
-  background: { r: number; g: number; b: number; alpha: number }
-  defaultExtension?: string
-}
+import {
+  ImageToUpload,
+  ImageToUploadParams,
+  ImageToValidate,
+} from './imageFile.interface'
+import { rimraf } from 'rimraf'
 
 export default class ImageFileService {
   public static validate =
@@ -99,103 +71,86 @@ export default class ImageFileService {
       try {
         const imagesToUpload: ImageToUpload[] = []
 
-        const uniqueFileFolder = await imageFileConfig.getFileName(req.files)
         // Setting Defaults
-        imagesToUploadParams.forEach((imageToUploadParams, i) => {
+        for (let i = 0; i < imagesToUploadParams.length; i++) {
+          const imageToUploadParams = imagesToUploadParams[i]
+
+          imagesToUploadParams[i].getFolderName =
+            imageToUploadParams.getFolderName || imageFileConfig.getFolderName
+
           imagesToUploadParams[i].parentFolder =
             imageToUploadParams.parentFolder || imageToUploadParams.name
-          imagesToUploadParams[i].resize = imageToUploadParams.resize || [
-            ImageFileSizes.ORIGINAL,
-          ]
+
+          imagesToUploadParams[i].resize = imageToUploadParams.resize ||
+            imageFileConfig.resize || [
+              {
+                height: null,
+                width: null,
+                name: 'default',
+              },
+            ]
+
+          const uploadTo = imageFileConfig.uploadTo || 'images'
 
           imagesToUploadParams[i].fit =
-            imageToUploadParams.fit || imageFileConfig.imageFit
+            imageToUploadParams.fit || imageFileConfig.fit
           imagesToUploadParams[i].background =
-            imageToUploadParams.background || imageFileConfig.backgroundColor
-          imagesToUploadParams[i].defaultExtension =
-            imageToUploadParams.defaultExtension ||
-            imageFileConfig.defaultExtension
+            imageToUploadParams.background || imageFileConfig.background
+          imagesToUploadParams[i].extension =
+            imageToUploadParams.extension || imageFileConfig.extension
+
+          const files = req.files as {
+            [fieldname: string]: Express.Multer.File[]
+          }
+
+          const uniqueFileFolder =
+            (imagesToUploadParams[i].getFolderName &&
+              (await imagesToUploadParams[i].getFolderName!(
+                files[imageToUploadParams.name]
+              ))) ||
+            crypto.randomUUID()
 
           imagesToUpload.push({
             name: imagesToUploadParams[i].name,
             uniqueFileFolder: uniqueFileFolder,
-            background: imagesToUploadParams[i].background!,
-            fit: imagesToUploadParams[i].fit!,
-            defaultExtension: imagesToUploadParams[i].defaultExtension,
+            background: imagesToUploadParams[i].background,
+            fit: imagesToUploadParams[i].fit,
+            extension: imagesToUploadParams[i].extension,
             filePath: path.join(
               process.cwd(),
-              imageFileConfig.uploadTo,
+              uploadTo,
               imagesToUploadParams[i].parentFolder!,
               uniqueFileFolder
             ),
             parentFolder: imagesToUploadParams[i].parentFolder!,
-            sizes: imageFileConfig.sizes.filter((obj) => {
-              if (imagesToUploadParams[i].resize!.includes(obj.name))
-                return true
-            }),
-            url: `${req.protocol}://${req.get(
-              'host'
-            )}/${imageFileConfig.uploadTo.replace(
+            sizes: imagesToUploadParams[i].resize!,
+            url: `${req.protocol}://${req.get('host')}/${uploadTo.replace(
               '\\',
               '/'
-            )}/${imagesToUploadParams[i].parentFolder!}/${imagesToUploadParams[
-              i
-            ].uniqueFileFolder!}`,
+            )}/${imagesToUploadParams[i].parentFolder!}/${uniqueFileFolder}`,
           })
-        })
+        }
 
-        const resizeObject = new MulterSharpResizer(req, imagesToUpload)
-        await resizeObject.resize()
-        // const getDataUploaded = resizeObject.getData()
-        // imageNameArr.forEach((imageName: any) => {
-        //   req.body[imageName] = getDataUploaded[imageName]
-        // })
+        await new MulterSharpResizer(req, imagesToUpload).resize()
       } catch (err: any) {
-        console.log(err)
         return next(new Error(err))
       }
       next()
     }
 
-  public async delete(folder: string, filename: string, sizesArr: string[]) {
-    console.log('deleted')
-    sizesArr.forEach((size) => {
+  public async delete(parentFolder: string, fileFolder: string) {
+    try {
       const filePath = path.join(
         process.cwd(),
-        imageFileConfig.uploadTo,
-        folder,
-        size,
-        filename
+        imageFileConfig.uploadTo || 'images',
+        parentFolder,
+        fileFolder
       )
 
-      if (imageFileConfig.externalHosting) {
-        const deleteId =
-          process.env.CLOUDINARY_PROJECT +
-          '/' +
-          folder +
-          '/' +
-          size +
-          '/' +
-          filename.split('.').slice(0, -1).join('.')
-
-        // v2.uploader.destroy(deleteId).then((res) => {
-        //   console.log(res)
-        // })
-      } else {
-        fs.access(filePath, (err) => {
-          if (err) {
-            console.log(err)
-            return
-          }
-
-          fs.unlink(filePath, (err) => {
-            if (err) {
-              console.log(err)
-              throw err
-            }
-          })
-        })
-      }
-    })
+      await rimraf(filePath)
+      console.log('deleted')
+    } catch (error) {
+      console.log(error)
+    }
   }
 }

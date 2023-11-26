@@ -39,10 +39,6 @@ class UserController extends BaseController implements IController {
         },
         { name: 'cover', resize: UserService.coverImageSizes },
       ]),
-      // this.imageFile.resize(
-      //   ['profile', 'cover'],
-      //   [...UserService.coverImageSizes, ...UserService.profileImageSizes]
-      // ),
       (req, res, next) => {
         res.send({})
       },
@@ -242,16 +238,8 @@ class UserController extends BaseController implements IController {
         )
         res.status(200).json(responce)
       } catch (err: any) {
-        if (profileImage)
-          this.imageFile.delete('profile', profileImage, [
-            ...UserService.coverImageSizes,
-            ...UserService.profileImageSizes,
-          ])
-        if (coverImage)
-          this.imageFile.delete('cover', coverImage, [
-            ...UserService.coverImageSizes,
-            ...UserService.profileImageSizes,
-          ])
+        if (profileImage) this.imageFile.delete('profile', profileImage)
+        if (coverImage) this.imageFile.delete('cover', coverImage)
         next(new InternalError(err.message, undefined, err.status))
       }
     })
