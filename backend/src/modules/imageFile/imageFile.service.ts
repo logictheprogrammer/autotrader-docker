@@ -138,7 +138,7 @@ export default class ImageFileService {
       next()
     }
 
-  public async delete(parentFolder: string, fileFolder: string) {
+  public static async delete(parentFolder: string, fileFolder: string) {
     try {
       const filePath = path.join(
         process.cwd(),
@@ -148,7 +148,7 @@ export default class ImageFileService {
       )
 
       await rimraf(filePath)
-      console.log('deleted')
+      console.log('deleted:', filePath)
     } catch (error) {
       console.log(error)
     }

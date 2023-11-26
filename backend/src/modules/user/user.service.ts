@@ -23,6 +23,7 @@ import UserModel from '@/modules/user/user.model'
 import ActivityModel from '@/modules/activity/activity.model'
 import NotificationModel from '@/modules/notification/notification.model'
 import ImageFile from '../imageFile/imageFile.service'
+import ImageFileService from '../imageFile/imageFile.service'
 
 @Service()
 class UserService implements IUserService {
@@ -147,17 +148,17 @@ class UserService implements IUserService {
     if (!user) throw new NotFoundError('User not found')
 
     if (profile) {
-      this.imageFile.delete('profile', profile)
+      ImageFileService.delete('profile', profile)
       if (user.profile) {
-        this.imageFile.delete('profile', user.profile)
+        ImageFileService.delete('profile', user.profile)
       }
       user.profile = profile
     }
 
     if (cover) {
-      this.imageFile.delete('cover', cover)
+      ImageFileService.delete('cover', cover)
       if (user.cover) {
-        this.imageFile.delete('cover', user.cover)
+        ImageFileService.delete('cover', user.cover)
       }
       user.cover = cover
     }

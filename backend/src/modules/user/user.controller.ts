@@ -238,8 +238,8 @@ class UserController extends BaseController implements IController {
         )
         res.status(200).json(responce)
       } catch (err: any) {
-        if (profileImage) this.imageFile.delete('profile', profileImage)
-        if (coverImage) this.imageFile.delete('cover', coverImage)
+        if (profileImage) ImageFileService.delete('profile', profileImage)
+        if (coverImage) ImageFileService.delete('cover', coverImage)
         next(new InternalError(err.message, undefined, err.status))
       }
     })

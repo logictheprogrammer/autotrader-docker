@@ -2,6 +2,7 @@ import Cryptograph from '@/core/cryptograph'
 import path from 'path'
 import { ImageFileConfig } from './imageFile.interface'
 import { FitEnum } from './imageFile.enum'
+import ImageFileService from './imageFile.service'
 
 const imageFileConfig: ImageFileConfig = {
   mimeTypes: ['image/png', 'image/jpg', 'image/jpeg'],
@@ -14,10 +15,15 @@ const imageFileConfig: ImageFileConfig = {
   getFolderName: async (files) => {
     return Cryptograph.randomUUID()
   },
-  afterEachFileResized: async (imageDetails) => {
-    console.log(imageDetails)
+  afterEachFileResized: async (imageDetails) => {},
+  done: async ({ imagesDetails, imagesUploaded, request }) => {
+    imagesUploaded.forEach((imageUploaded) => {
+      ImageFileService.delete(
+        imageUploaded.parentFolder,
+        imageUploaded.uniqueFileFolder
+      )
+    })
   },
-  done: async ({ imagesDetails, imagesUploaded, request }) => {},
 }
 
 export default imageFileConfig
