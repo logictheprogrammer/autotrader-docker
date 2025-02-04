@@ -13,6 +13,7 @@ export const useWithdrawalMethodStore = defineStore('withdrawalMethod', () => {
   const loaded = ref(false)
 
   function setWithdrawalMethods(withdrawalMethodsArr: IWithdrawalMethod[]) {
+    console.log(withdrawalMethodsArr)
     withdrawalMethods.value = withdrawalMethodsArr
   }
 

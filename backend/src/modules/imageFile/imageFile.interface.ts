@@ -1,5 +1,4 @@
 import { Request } from 'express'
-import { FitEnum } from './imageFile.enum'
 
 export interface ImageToValidate {
   name: string
@@ -16,7 +15,7 @@ export interface ImageToUploadParams {
   name: string
   parentFolder?: string
   resize?: ImageSizes[]
-  fit?: FitEnum
+  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside'
   background?: { r: number; g: number; b: number; alpha: number }
   extension?: string
   getFolderName?(files: Express.Multer.File[]): Promise<string>
@@ -29,7 +28,7 @@ export interface ImageToUpload {
   parentFolder: string
   sizes: ImageSizes[]
   url: string
-  fit?: FitEnum
+  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside'
   background?: { r: number; g: number; b: number; alpha: number }
   extension?: string
 }
@@ -55,7 +54,7 @@ export interface ImageFileConfig {
   maxFileSize?: number
   resize?: ImageSizes[]
   uploadTo?: string
-  fit?: FitEnum
+  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside'
   background?: { r: number; g: number; b: number; alpha: number }
   extension?: string
   afterEachFileResized?(imageDetails: ImageDetails): Promise<void>

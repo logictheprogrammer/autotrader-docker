@@ -131,7 +131,7 @@ class WithdrawalMethodService implements IWithdrawalMethodService {
   public async fetchAll(
     filter: FilterQuery<IWithdrawalMethod>
   ): Promise<IWithdrawalMethodObject[]> {
-    return await this.withdrawalMethodModel.find(filter)
+    return await this.withdrawalMethodModel.find(filter).populate('currency')
   }
 
   public async count(filter: FilterQuery<IWithdrawalMethod>): Promise<number> {

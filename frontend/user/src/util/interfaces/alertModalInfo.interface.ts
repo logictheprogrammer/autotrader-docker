@@ -4,5 +4,5 @@ export interface IAlertModalInfo {
   status: ResponseStatus
   title: string
   message: string
-  onConfirm: Function
+  onConfirm: () => any
 }

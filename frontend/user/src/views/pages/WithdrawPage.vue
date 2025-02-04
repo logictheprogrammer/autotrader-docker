@@ -77,21 +77,21 @@
                     <label class="form-label">Withdrawal Method</label>
                     <MyFineSelectComponent>
                       <MyFineOptionComponent
-                        v-for="dm in withdrawalMethods"
-                        :key="dm._id"
-                        :selected="selectedWithdrawalMethod?._id === dm._id"
-                        @click="() => setSelectedWithdrawalMethod(dm)"
+                        v-for="wm in withdrawalMethods"
+                        :key="wm._id"
+                        :selected="selectedWithdrawalMethod?._id === wm._id"
+                        @click="() => setSelectedWithdrawalMethod(wm)"
                       >
                         <span class="d-block fw-bold">{{
-                          Helpers.toTitleCase(dm.name)
+                          Helpers.toTitleCase(wm.currency?.name || 'Unknown')
                         }}</span>
                         <img
                           style="height: 34px"
-                          :src="`/svg/crypto-icons/${dm.logo}`"
-                          :alt="dm.name"
+                          :src="`/svg/crypto-icons/${wm.currency?.logo}`"
+                          :alt="wm.currency?.name"
                         />
                         <span class="d-block">{{
-                          dm.network.toUpperCase()
+                          wm.network.toUpperCase()
                         }}</span>
                       </MyFineOptionComponent>
                     </MyFineSelectComponent>
@@ -185,7 +185,7 @@
                 type="text"
                 placeholder="Coin Name"
                 class="form-control"
-                :value="`${Helpers.toTitleCase(selectedWithdrawalMethod!.name)} - (${selectedWithdrawalMethod!.symbol.toUpperCase()})`"
+                :value="`${Helpers.toTitleCase(selectedWithdrawalMethod!.currency?.name || 'Unknown')} - (${selectedWithdrawalMethod!.currency?.symbol.toUpperCase()})`"
                 readonly
               />
             </div>
@@ -296,29 +296,25 @@
                   <td>
                     <div class="d-flex">
                       <img
-                        :src="`/icons/crypto-svg/${withdrawal.withdrawalMethodObject.logo}`"
+                        :src="`/icons/crypto-svg/${withdrawal.currency?.logo}`"
                         class="me-3"
-                        :alt="withdrawal.withdrawalMethodObject.name"
+                        :alt="withdrawal.currency?.name"
                         width="24"
                       />
                       <div class="d-flex flex-column">
                         <span class="fw-bold">{{
                           Helpers.toTitleCase(
-                            withdrawal.withdrawalMethodObject.name
+                            withdrawal.currency?.name || 'Unknown'
                           )
                         }}</span>
                         <span class="fs-14"
-                          >{{
-                            withdrawal.withdrawalMethodObject.symbol.toUpperCase()
-                          }}
+                          >{{ withdrawal.currency?.symbol.toUpperCase() }}
                         </span>
                       </div>
                     </div>
                   </td>
                   <td>
-                    {{
-                      withdrawal.withdrawalMethodObject.network.toUpperCase()
-                    }}
+                    {{ withdrawal.withdrawalMethod?.network.toUpperCase() }}
                   </td>
                   <td>{{ withdrawal.address }}</td>
                   <td>

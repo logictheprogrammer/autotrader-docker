@@ -1,19 +1,13 @@
+import { IBaseObject } from '@/util/interface'
+import { ICurrency } from '../currency/currency.interface'
 import type { WithdrawalMethodStatus } from './withdrawalMethod.enum'
 
-export interface IWithdrawalMethod {
-  __v: number
-  _id: string
-  currency: string
-  updatedAt: string
-  createdAt: string
-  name: string
-  symbol: string
-  logo: string
+export interface IWithdrawalMethod extends IBaseObject {
+  currency?: ICurrency
   network: string
   status: WithdrawalMethodStatus
   fee: number
   minWithdrawal: number
-  autoUpdate: boolean
 }
 
 export interface IAddNewWithdrawalMethod {

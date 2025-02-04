@@ -8,6 +8,7 @@ export const useDepositMethodStore = defineStore('depositMethod', () => {
   const loaded = ref(false)
 
   function setDepositMethods(depositMethodsArr: IDepositMethod[]) {
+    console.log(depositMethodsArr)
     depositMethods.value = depositMethodsArr
   }
 

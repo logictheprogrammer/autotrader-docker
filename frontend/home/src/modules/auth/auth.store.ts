@@ -41,15 +41,18 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(form: ILogin, contex: SubmissionContext) {
     try {
+      console.log('hi')
       httpStore.setPost(true)
       const result = await axios.post(`${basePath}/login`, form)
       contex.resetForm()
+      console.log(result.data.status)
       if (result.data.status !== ResponseStatus.SUCCESS)
         return httpStore.handlePost(result)
       httpStore.setGet(true)
       const data = result.data.data
       writeUserDataToLocalStorage(data.accessToken, data.expiresIn)
       Cookies.set('request_code', '100')
+      console.log('hello')
       window.location.href = userPath
     } catch (error: any) {
       console.error(error)

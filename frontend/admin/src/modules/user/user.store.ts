@@ -6,13 +6,14 @@ import type {
   IUser,
 } from './user.interface'
 import type { UserStatus } from './user.enum'
+import type { Ref } from 'vue'
 // import type { SubmissionContext } from 'vee-validate'
 
 export const useUserStore = defineStore('user', () => {
   const httpStore = useHttpStore()
   const basePath = 'users'
   const users = ref<IUser[]>([])
-  const loaded = ref(false)
+  const loaded: Ref<boolean> = ref(false)
 
   function setUsers(usersArr: IUser[]) {
     users.value = usersArr

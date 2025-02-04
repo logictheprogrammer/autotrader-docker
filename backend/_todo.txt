@@ -14,5 +14,14 @@
 ✔ 27. store the controllers routes in an array to use in test
 ✔ 28. add an assertion to count all the method in a class
 
+29. add a baseService to all services
+30. use service params to all services
+31. add an optional before delete method to the base services
+32. add options params to all service fetch methods
+
 * ASAP
 ✔ 1. impliment the forecast min/max daily wait time with the right logic
+
+
+
+    "test": "jest --detectOpenHandles",

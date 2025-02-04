@@ -49,12 +49,12 @@
                       @click="() => setSelectedDepositMethod(dm)"
                     >
                       <span class="d-block fw-bold">{{
-                        Helpers.toTitleCase(dm.name)
+                        Helpers.toTitleCase(dm.currency?.name || 'Unknown')
                       }}</span>
                       <img
                         style="height: 34px"
-                        :src="`/svg/crypto-icons/${dm.logo}`"
-                        :alt="dm.name"
+                        :src="`/svg/crypto-icons/${dm.currency?.logo}`"
+                        :alt="dm.currency?.name"
                       />
                       <span class="d-block">{{
                         dm.network.toUpperCase()
@@ -150,7 +150,7 @@
                 type="text"
                 placeholder="Coin Name"
                 class="form-control"
-                :value="`${Helpers.toTitleCase(selectedDepositMethod!.name)} - (${selectedDepositMethod!.symbol.toUpperCase()})`"
+                :value="`${Helpers.toTitleCase(selectedDepositMethod!.currency?.name || 'Unknown')} - (${selectedDepositMethod!.currency?.symbol.toUpperCase()})`"
                 readonly
               />
             </div>
@@ -258,25 +258,25 @@
                   <td>
                     <div class="d-flex">
                       <img
-                        :src="`/icons/crypto-svg/${deposit.depositMethodObject.logo}`"
+                        :src="`/icons/crypto-svg/${deposit.currency?.logo}`"
                         class="me-3"
-                        :alt="deposit.depositMethodObject.name"
+                        :alt="deposit.currency?.name"
                         width="24"
                       />
                       <div class="d-flex flex-column">
                         <span class="fw-bold">{{
-                          Helpers.toTitleCase(deposit.depositMethodObject.name)
+                          Helpers.toTitleCase(
+                            deposit.currency?.name || 'Unknown'
+                          )
                         }}</span>
                         <span class="fs-14"
-                          >{{
-                            deposit.depositMethodObject.symbol.toUpperCase()
-                          }}
+                          >{{ deposit.currency?.symbol.toUpperCase() }}
                         </span>
                       </div>
                     </div>
                   </td>
                   <td>
-                    {{ deposit.depositMethodObject.network.toUpperCase() }}
+                    {{ deposit.depositMethod?.network.toUpperCase() }}
                   </td>
                   <td>
                     {{ Helpers.toNiceDate(deposit.createdAt) }}

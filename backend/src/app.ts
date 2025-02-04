@@ -57,7 +57,7 @@ class App {
     this.express.use(express.urlencoded({ extended: false }))
     this.express.use(compression())
     this.express.use(cookieParser())
-    if (!this.isTest) this.express.use(doubleCsrfProtection)
+    // if (!this.isTest) this.express.use(doubleCsrfProtection)
     this.express.get('/api/token', (req, res, next) => {
       res.json({ token: req.csrfToken && req.csrfToken() })
     })

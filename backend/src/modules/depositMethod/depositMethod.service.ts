@@ -55,7 +55,7 @@ class DepositMethodService implements IDepositMethodService {
       price: 1,
     })
 
-    return depositMethod
+    return depositMethod.populate('currency')
   }
 
   public async update(
@@ -92,7 +92,7 @@ class DepositMethodService implements IDepositMethodService {
 
     await depositMethod.save()
 
-    return depositMethod
+    return depositMethod.populate('currency')
   }
 
   public async fetch(

@@ -1,14 +1,9 @@
+import { IBaseObject } from '@/util/interface'
+import { ICurrency } from '../currency/currency.interface'
 import type { DepositMethodStatus } from './depositMethod.enum'
 
-export interface IDepositMethod {
-  __v: number
-  _id: string
-  currency: string
-  updatedAt: string
-  createdAt: string
-  name: string
-  symbol: string
-  logo: string
+export interface IDepositMethod extends IBaseObject {
+  currency?: ICurrency
   address: string
   network: string
   status: DepositMethodStatus
