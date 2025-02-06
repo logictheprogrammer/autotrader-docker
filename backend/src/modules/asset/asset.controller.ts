@@ -9,7 +9,7 @@ import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
 import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class AssetController extends BaseController implements IController {
@@ -42,7 +42,7 @@ class AssetController extends BaseController implements IController {
     private assetService: IAssetService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private intialiseRoutes(): void {

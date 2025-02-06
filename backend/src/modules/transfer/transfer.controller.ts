@@ -10,7 +10,7 @@ import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class TransferController extends BaseController implements IController {
@@ -55,7 +55,7 @@ class TransferController extends BaseController implements IController {
     private transferService: ITransferService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private intialiseRoutes(): void {

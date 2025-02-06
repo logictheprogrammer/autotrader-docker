@@ -10,7 +10,7 @@ import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class InvestmentController extends BaseController implements IController {
@@ -51,13 +51,6 @@ class InvestmentController extends BaseController implements IController {
     ],
     [
       'patch',
-      `/master${this.path}/refill/:investmentId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.refill),
-      (...params) => this.refill(...params),
-    ],
-    [
-      'patch',
       `/master${this.path}/update-status/:investmentId`,
       routePermission(UserRole.ADMIN),
       schemaValidator(validate.updateStatus),
@@ -88,74 +81,7 @@ class InvestmentController extends BaseController implements IController {
     private investmentService: IInvestmentService
   ) {
     super()
-    this.initialiseRoutes()
-  }
-
-  private intialiseRoutes(): void {
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.LIVE)
-    )
-
-    this.router.post(
-      `${this.path}/create`,
-      routePermission(UserRole.USER),
-      schemaValidator(validate.create),
-      this.create(UserEnvironment.LIVE)
-    )
-
-    this.router.get(
-      `/demo${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false, UserEnvironment.DEMO)
-    )
-
-    this.router.post(
-      `/demo${this.path}/create`,
-      routePermission(UserRole.USER),
-      schemaValidator(validate.createDemo),
-      this.create(UserEnvironment.DEMO)
-    )
-
-    this.router.patch(
-      `/master${this.path}/fund/:investmentId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.fund),
-      this.fund
-    )
-
-    this.router.patch(
-      `/master${this.path}/refill/:investmentId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.refill),
-      this.refill
-    )
-
-    this.router.patch(
-      `/master${this.path}/update-status/:investmentId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.updateStatus),
-      this.updateStatus
-    )
-
-    this.router.delete(
-      `/master${this.path}/delete/:investmentId`,
-      routePermission(UserRole.ADMIN),
-      this.delete
-    )
-
-    this.router.get(
-      `/master/demo${this.path}`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.DEMO)
-    )
-
-    this.router.get(
-      `/master${this.path}`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true, UserEnvironment.LIVE)
-    )
+    this.initializeRoutes()
   }
 
   private fetchAll = (all: boolean, environment: UserEnvironment) =>
@@ -214,18 +140,6 @@ class InvestmentController extends BaseController implements IController {
       amount
     )
     return new SuccessResponse('Investment funded successfully', {
-      investment,
-    }).send(res)
-  })
-
-  private refill = asyncHandler(async (req, res): Promise<Response | void> => {
-    const { gas } = req.body
-    const { investmentId } = req.params
-    const investment = await this.investmentService.refill(
-      { _id: investmentId },
-      gas
-    )
-    return new SuccessResponse('Investment has been refilled successfully', {
       investment,
     }).send(res)
   })

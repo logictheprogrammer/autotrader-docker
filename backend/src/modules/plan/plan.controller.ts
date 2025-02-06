@@ -1,17 +1,17 @@
-import { IPlanService } from '@/modules/plan/plan.interface'
+import { ObjectId } from 'mongoose'
 import { Inject, Service } from 'typedi'
-import { Router, Response } from 'express'
+import { Response } from 'express'
+import { IPlanService } from '@/modules/plan/plan.interface'
 import validate from '@/modules/plan/plan.validation'
 import { UserRole } from '@/modules/user/user.enum'
 import { PlanStatus } from '@/modules/plan/plan.enum'
-import { ObjectId } from 'mongoose'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessCreatedResponse, SuccessResponse } from '@/core/apiResponse'
 import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class PlanController extends BaseController implements IController {
@@ -63,62 +63,17 @@ class PlanController extends BaseController implements IController {
     private planService: IPlanService
   ) {
     super()
-    this.initialiseRoutes()
-  }
-
-  private intialiseRoutes(): void {
-    this.router.get(
-      `${this.path}`,
-      routePermission(UserRole.USER),
-      this.fetchAll(false)
-    )
-
-    this.router.post(
-      `/master${this.path}/create`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.create),
-      this.create
-    )
-
-    this.router.put(
-      `/master${this.path}/update/:planId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.update),
-      this.update
-    )
-
-    this.router.patch(
-      `/master${this.path}/update-status/:planId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(validate.updateStatus),
-      this.updateStatus
-    )
-
-    this.router.delete(
-      `/master${this.path}/delete/:planId`,
-      routePermission(UserRole.ADMIN),
-      this.delete
-    )
-
-    this.router.get(
-      `/master${this.path}`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll(true)
-    )
+    this.initializeRoutes()
   }
 
   private create = asyncHandler(async (req, res): Promise<Response | void> => {
     const {
       name,
       engine,
+      duration,
       minAmount,
       maxAmount,
-      minPercentageProfit,
-      maxPercentageProfit,
-      winRate,
-      tradingDays,
-      dailyForecasts,
-      gas,
+      dailyPercentageProfit,
       description,
       assetType,
     } = req.body
@@ -129,14 +84,10 @@ class PlanController extends BaseController implements IController {
       'icon.png',
       name,
       engine,
+      duration,
       minAmount,
       maxAmount,
-      minPercentageProfit,
-      maxPercentageProfit,
-      winRate,
-      tradingDays,
-      dailyForecasts,
-      gas,
+      dailyPercentageProfit,
       description,
       assetType,
       assets
@@ -150,14 +101,10 @@ class PlanController extends BaseController implements IController {
     const {
       name,
       engine,
+      duration,
       minAmount,
       maxAmount,
-      minPercentageProfit,
-      maxPercentageProfit,
-      winRate,
-      tradingDays,
-      dailyForecasts,
-      gas,
+      dailyPercentageProfit,
       description,
       assetType,
     } = req.body
@@ -171,14 +118,10 @@ class PlanController extends BaseController implements IController {
       'icon.png',
       name,
       engine,
+      duration,
       minAmount,
       maxAmount,
-      minPercentageProfit,
-      maxPercentageProfit,
-      winRate,
-      tradingDays,
-      dailyForecasts,
-      gas,
+      dailyPercentageProfit,
       description,
       assetType,
       assets

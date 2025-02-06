@@ -3,7 +3,7 @@ import type { IPlan } from './plan.interface'
 
 export const usePlanStore = defineStore('plan', () => {
   const httpStore = useHttpStore()
-  const basePath = 'plans'
+  const basePath = 'plan'
   const plans = ref<IPlan[]>([])
   const loaded = ref(false)
 

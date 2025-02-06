@@ -11,7 +11,7 @@ import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class DepositMethodController extends BaseController implements IController {
@@ -77,7 +77,7 @@ class DepositMethodController extends BaseController implements IController {
     private depositMethodService: IDepositMethodService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private fetchAll = (all: boolean) =>

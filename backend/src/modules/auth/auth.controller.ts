@@ -14,7 +14,7 @@ import {
 } from '@/core/apiResponse'
 import schemaValidator from '@/helpers/schemaValidator'
 import routePermission from '@/helpers/routePermission'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class AuthController extends BaseController implements IController {
@@ -76,7 +76,7 @@ class AuthController extends BaseController implements IController {
     @Inject(ServiceToken.AUTH_SERVICE) private authService: IAuthService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private register = asyncHandler(

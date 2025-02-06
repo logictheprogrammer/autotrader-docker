@@ -10,7 +10,7 @@ import ServiceToken from '@/core/serviceToken'
 import { IController, IControllerRoute } from '@/core/utils'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class PairController extends BaseController implements IController {
@@ -43,7 +43,7 @@ class PairController extends BaseController implements IController {
     private pairService: IPairService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private intialiseRoutes(): void {

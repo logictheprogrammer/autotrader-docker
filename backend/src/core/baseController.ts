@@ -5,7 +5,7 @@ export default abstract class BaseController {
   public router = Router()
   public routes: IControllerRoute[] = []
 
-  protected initialiseRoutes() {
+  protected initializeRoutes() {
     this.routes.forEach(([method, path, ...middlewares]) => {
       this.router[method](path, ...middlewares)
     })

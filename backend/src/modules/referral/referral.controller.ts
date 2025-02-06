@@ -7,7 +7,7 @@ import ServiceToken from '@/core/serviceToken'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class ReferralController extends BaseController implements IController {
@@ -56,7 +56,7 @@ class ReferralController extends BaseController implements IController {
     private referralService: IReferralService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private fetchAll = (byAdmin: boolean) =>

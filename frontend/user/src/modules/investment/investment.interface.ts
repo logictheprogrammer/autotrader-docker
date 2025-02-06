@@ -1,34 +1,24 @@
-import type { AssetType } from '../asset/asset.enum'
+import { IBaseObject } from '@/util/interface'
 import type { IPlan } from '../plan/plan.interface'
-import type { UserAccount } from '../user/user.enum'
+import type { UserAccount, UserEnvironment } from '../user/user.enum'
 import type { InvestmentStatus } from './investment.enum'
+import { IUser } from '../user/user.interface'
+import { AssetType } from '../asset/asset.enum'
+import { IAsset } from '../asset/asset.interface'
 
-export interface IInvestment {
-  __v: number
-  _id: string
-  currency: string
-  updatedAt: string
-  createdAt: string
-  planObject: IPlan
-  user: {
-    _id: string
-    username: string
-    isDeleted: boolean
-  }
-  minProfit: number
-  maxProfit: number
-  duration: number
-  gas: number
-  description: string
+export interface IInvestment extends IBaseObject {
+  plan: IPlan
+  user: IUser
   assetType: AssetType
-  assets: string[]
+  assets: IAsset[]
   status: InvestmentStatus
-  dailyTrades: number
   amount: number
   balance: number
-  dateSuspended?: string
   account: UserAccount
-  environment: string
+  environment: UserEnvironment
+  expectedRunTime: number
+  runTime: number
+  resumeTime: Date
 }
 
 export interface ICreateInvestment {

@@ -8,7 +8,7 @@ export enum NotificationTitle {
   WITHDRAWAL_SUCCESSFUL = 'withdrawal successful',
   WITHDRAWAL_FAILED = 'withdrawal failed',
   TRANSFER_SENT = 'transfer sent',
-  TRANSFER_RECIEVED = 'transfer recieved',
+  TRANSFER_RECEIVED = 'transfer received',
   TRANSFER_REVERSED = 'transfer reversed',
   REFERRAL_EARNINGS = 'referral earnings',
   TRADE_STAKE = 'trade stake',
@@ -22,7 +22,7 @@ export enum NotificationTitle {
   INVESTMENT_SUSPENDED = 'investment suspended',
   INVESTMENT_INSUFFICIENT_GAS = 'insufficient gas',
   INVESTMENT_REFILLING = 'investment refilling',
-  INVESTMENT_ON_MAINTANACE = 'plan on maintanace',
+  INVESTMENT_ON_MAINTENANCE = 'plan on maintenance',
   INVESTMENT_AWAITING_TRADE = 'awaiting trade',
   INVESTMENT_PROCESSING_TRADE = 'processing trade',
 }

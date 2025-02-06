@@ -9,7 +9,7 @@ import { SuccessResponse } from '@/core/apiResponse'
 import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class NotificationController extends BaseController implements IController {
@@ -118,7 +118,7 @@ class NotificationController extends BaseController implements IController {
     private notificationService: INotificationService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private fetchAll = (

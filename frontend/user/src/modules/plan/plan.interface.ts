@@ -1,23 +1,17 @@
 import type { AssetType } from '../asset/asset.enum'
 import type { IAsset } from '../asset/asset.interface'
 import type { PlanStatus } from './plan.enum'
+import { IBaseObject } from '@/util/interface'
 
-export interface IPlan {
-  __v: number
-  _id: string
-  currency: string
-  updatedAt: string
-  createdAt: string
+export interface IPlan extends IBaseObject {
   icon: string
   name: string
   engine: string
+  duration: number
   minAmount: number
   maxAmount: number
-  minProfit: number
-  maxProfit: number
-  duration: number
-  dailyTrades: number
-  gas: number
+  dailyPercentageProfit: number
+  potentialPercentageProfit: number
   description: string
   assetType: AssetType
   assets: IAsset[]

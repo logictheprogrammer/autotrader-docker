@@ -9,7 +9,7 @@ import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 export default class TransferSettingsController
@@ -33,7 +33,7 @@ export default class TransferSettingsController
     private transferSettingsService: ITransferSettingsService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private initsialiseRoutes = (): void => {

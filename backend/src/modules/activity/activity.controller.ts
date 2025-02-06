@@ -12,7 +12,7 @@ import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class ActivityController extends BaseController implements IController {
@@ -92,7 +92,7 @@ class ActivityController extends BaseController implements IController {
     private activityService: IActivityService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private fetchAll = (role: UserRole, all: boolean = true) =>

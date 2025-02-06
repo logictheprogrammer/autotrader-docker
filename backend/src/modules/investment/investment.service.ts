@@ -1,4 +1,3 @@
-import { ITradeObject } from '@/modules/trade/trade.interface'
 import { Inject, Service } from 'typedi'
 import {
   IInvestment,
@@ -19,20 +18,15 @@ import {
 import { ReferralTypes } from '@/modules/referral/referral.enum'
 
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
-import { ForecastStatus } from '../forecast/forecast.enum'
 import { FilterQuery, ObjectId } from 'mongoose'
 import { BadRequestError, NotFoundError } from '@/core/apiError'
 import ServiceToken from '@/core/serviceToken'
 import Helpers from '@/utils/helpers'
 import InvestmentModel from '@/modules/investment/investment.model'
-import TradeModel from '../trade/trade.model'
 
 @Service()
 class InvestmentService implements IInvestmentService {
   private investmentModel = InvestmentModel
-  private tradeModel = TradeModel
-
-  public static dailyWaitHour = 6
 
   public constructor(
     @Inject(ServiceToken.PLAN_SERVICE)
@@ -79,18 +73,15 @@ class InvestmentService implements IInvestmentService {
     const investment = await this.investmentModel.create({
       plan,
       user,
-      minRunTime:
-        1000 *
-        60 *
-        60 *
-        (plan.tradingDays * (24 + InvestmentService.dailyWaitHour)),
-      gas: plan.gas,
+      expectedRunTime: 1000 * 60 * 60 * 24 * plan.duration,
       amount,
       balance: amount,
       account,
       environment,
-      status: InvestmentStatus.AWAITING_TRADE,
-      mode: plan.mode,
+      status: InvestmentStatus.RUNNING,
+      resumeTime: new Date(),
+      assetType: plan.assetType,
+      assets: plan.assets,
     })
 
     // Referral Transaction Instance
@@ -136,67 +127,9 @@ class InvestmentService implements IInvestmentService {
       environment
     )
 
-    return (await investment.populate('user')).populate('plan')
-  }
-
-  public async updateTradeDetails(
-    filter: FilterQuery<IInvestment>,
-    tradeObject: ITradeObject | null
-  ): Promise<IInvestmentObject> {
-    const investment = await this.investmentModel
-      .findOne(filter)
-      .populate('user')
-      .populate('plan')
-
-    if (!investment) throw new NotFoundError('Investment not found')
-
-    if (tradeObject) {
-      switch (tradeObject.status) {
-        case ForecastStatus.MARKET_CLOSED:
-        case ForecastStatus.ON_HOLD:
-        case ForecastStatus.SETTLED:
-          investment.status = InvestmentStatus.AWAITING_TRADE
-          break
-        case ForecastStatus.PREPARING:
-          investment.status = InvestmentStatus.PROCESSING_TRADE
-          break
-        case ForecastStatus.RUNNING:
-          investment.status = InvestmentStatus.RUNNING
-          break
-      }
-
-      if (tradeObject.status === ForecastStatus.SETTLED) {
-        if (!tradeObject.profit)
-          throw new BadRequestError(
-            'Percentage profit is required when the forecast is being settled'
-          )
-
-        investment.currentTrade = undefined
-        investment.tradeStatus = undefined
-        investment.tradeTimeStamps = []
-        investment.tradeStartTime = undefined
-        investment.runTime += tradeObject.runTime
-        investment.balance += tradeObject.profit
-
-        if (investment.runTime >= investment.minRunTime) {
-          investment.status = InvestmentStatus.FINALIZING
-        }
-      } else {
-        investment.currentTrade = tradeObject
-        investment.tradeStatus = tradeObject.status
-        investment.tradeTimeStamps = tradeObject.timeStamps.slice()
-        investment.tradeStartTime = tradeObject.startTime
-      }
-    } else {
-      investment.currentTrade = undefined
-      investment.tradeStatus = undefined
-      investment.tradeStartTime = undefined
-      investment.tradeTimeStamps = []
-    }
-
-    await investment.save()
-
-    return investment.populate('currentTrade')
+    return (
+      await (await investment.populate('user')).populate('assets')
+    ).populate('plan')
   }
 
   public async updateStatus(
@@ -209,17 +142,11 @@ class InvestmentService implements IInvestmentService {
       .findOne(filter)
       .populate('user')
       .populate('plan')
+      .populate('assets')
 
     if (!investment) throw new NotFoundError('Investment not found')
 
-    const oldStatus = investment.status
-
-    if (oldStatus === InvestmentStatus.COMPLETED)
-      throw new BadRequestError('Investment plan has already been settled')
-
     investment.status = status
-
-    await investment.save()
 
     let user
     if (status === InvestmentStatus.COMPLETED) {
@@ -253,7 +180,15 @@ class InvestmentService implements IInvestmentService {
           investment.balance - investment.amount
         )
       }
+    } else if (status === InvestmentStatus.SUSPENDED) {
+      const runTime = new Date().getTime() - investment.resumeTime.getTime()
+      investment.runTime += runTime
+      investment.resumeTime = new Date()
+    } else if (status === InvestmentStatus.RUNNING) {
+      investment.resumeTime = new Date()
     }
+
+    await investment.save()
 
     if (sendNotice) {
       let notificationMessage
@@ -270,26 +205,6 @@ class InvestmentService implements IInvestmentService {
         case InvestmentStatus.COMPLETED:
           notificationMessage = 'has been completed'
           notificationTitle = NotificationTitle.INVESTMENT_COMPLETED
-          break
-        case InvestmentStatus.INSUFFICIENT_GAS:
-          notificationMessage = 'has ran out of gas'
-          notificationTitle = NotificationTitle.INVESTMENT_INSUFFICIENT_GAS
-          break
-        case InvestmentStatus.REFILLING:
-          notificationMessage = 'is now filling'
-          notificationTitle = NotificationTitle.INVESTMENT_REFILLING
-          break
-        case InvestmentStatus.ON_MAINTAINACE:
-          notificationMessage = 'is corrently on maintance'
-          notificationTitle = NotificationTitle.INVESTMENT_ON_MAINTANACE
-          break
-        case InvestmentStatus.AWAITING_TRADE:
-          notificationMessage = 'is awaiting the trade'
-          notificationTitle = NotificationTitle.INVESTMENT_AWAITING_TRADE
-          break
-        case InvestmentStatus.PROCESSING_TRADE:
-          notificationMessage = 'is processing the next trade'
-          notificationTitle = NotificationTitle.INVESTMENT_PROCESSING_TRADE
           break
       }
 
@@ -321,28 +236,11 @@ class InvestmentService implements IInvestmentService {
       .findOne(filter)
       .populate('user')
       .populate('plan')
+      .populate('assets')
 
     if (!investment) throw new NotFoundError('Investment not found')
 
     investment.balance += amount
-
-    await investment.save()
-
-    return investment
-  }
-
-  public async refill(
-    filter: FilterQuery<IInvestment>,
-    gas: number
-  ): Promise<IInvestmentObject> {
-    const investment = await this.investmentModel
-      .findOne(filter)
-      .populate('user')
-      .populate('plan')
-
-    if (!investment) throw new NotFoundError('Investment not found')
-
-    investment.gas += gas
 
     await investment.save()
 
@@ -360,7 +258,6 @@ class InvestmentService implements IInvestmentService {
       throw new BadRequestError('Investment has not been settled yet')
 
     await this.investmentModel.deleteOne({ _id: investment._id })
-    await this.tradeModel.deleteMany({ investment: investment._id })
 
     return investment
   }
@@ -372,6 +269,7 @@ class InvestmentService implements IInvestmentService {
       .find(filter)
       .populate('user')
       .populate('plan')
+      .populate('assets')
   }
 
   public async count(filter: FilterQuery<IInvestment>): Promise<number> {

@@ -10,7 +10,7 @@ import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 import ImageFileService from '../imageFile/imageFile.service'
 import { InternalError, NotFoundError } from '@/core/apiError'
 import UserService from './user.service'
@@ -109,7 +109,7 @@ class UserController extends BaseController implements IController {
     @Inject(ServiceToken.USER_SERVICE) private userService: IUserService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private initialisseRoutes = (): void => {

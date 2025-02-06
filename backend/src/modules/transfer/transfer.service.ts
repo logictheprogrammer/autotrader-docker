@@ -117,7 +117,7 @@ class TransferService implements ITransferService {
       // toUser notification instance
       await this.notificationService.create(
         `${fromUser.username} just sent you ${Helpers.toDollar(amount)}.`,
-        NotificationTitle.TRANSFER_RECIEVED,
+        NotificationTitle.TRANSFER_RECEIVED,
         transfer,
         NotificationForWho.USER,
         UserEnvironment.LIVE,
@@ -263,7 +263,7 @@ class TransferService implements ITransferService {
         `${fromUser.username} just sent you ${Helpers.toDollar(
           transfer.amount
         )}.`,
-        NotificationTitle.TRANSFER_RECIEVED,
+        NotificationTitle.TRANSFER_RECEIVED,
         transfer,
         NotificationForWho.USER,
         UserEnvironment.LIVE,

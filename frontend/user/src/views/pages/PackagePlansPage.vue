@@ -15,7 +15,7 @@
       >
         {{
           packagePlan.status === PlanStatus.ON_MAINTENANCE
-            ? 'Engine is on maintainance'
+            ? 'Engine is on maintenance'
             : 'Invest'
         }}
       </button>

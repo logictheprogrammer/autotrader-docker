@@ -58,7 +58,7 @@
           <li class="text-white mb-2">
             Potential Profit:
             <span class="ms-3 fw-bold text-success fs-5">
-              {{ plan.minProfit }} - {{ plan.maxProfit }} percent</span
+              {{ plan.potentialPercentageProfit }} percent</span
             >
           </li>
         </ul>

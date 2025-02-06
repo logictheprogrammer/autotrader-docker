@@ -1,8 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { IPlan } from '@/modules/plan/plan.interface'
-import { PlanMode, PlanStatus } from '@/modules/plan/plan.enum'
+import { PlanStatus } from '@/modules/plan/plan.enum'
 import { Types } from 'mongoose'
-import { ForecastStatus } from '../forecast/forecast.enum'
 
 const PlanSchema = new Schema<IPlan>(
   {
@@ -28,6 +27,10 @@ const PlanSchema = new Schema<IPlan>(
       required: true,
       trim: true,
     },
+    duration: {
+      type: Number,
+      required: true,
+    },
     minAmount: {
       type: Number,
       required: true,
@@ -36,29 +39,11 @@ const PlanSchema = new Schema<IPlan>(
       type: Number,
       required: true,
     },
-    minPercentageProfit: {
+    dailyPercentageProfit: {
       type: Number,
       required: true,
     },
-    maxPercentageProfit: {
-      type: Number,
-      required: true,
-    },
-    winRate: {
-      type: Number,
-      required: true,
-      min: 0.77,
-      max: 0.95,
-    },
-    tradingDays: {
-      type: Number,
-      required: true,
-    },
-    dailyForecasts: {
-      type: Number,
-      required: true,
-    },
-    gas: {
+    potentialPercentageProfit: {
       type: Number,
       required: true,
     },
@@ -78,46 +63,6 @@ const PlanSchema = new Schema<IPlan>(
         ref: 'Asset',
       },
     ],
-    mode: {
-      type: String,
-      required: true,
-      enum: Object.values(PlanMode),
-      default: PlanMode.AUTOMATIC,
-    },
-    investors: [
-      {
-        type: Types.ObjectId,
-        ref: 'Investment',
-      },
-    ],
-    dummyInvestors: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
-    runTime: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
-    forecastStatus: {
-      type: String,
-      enum: Object.values(ForecastStatus),
-      trim: true,
-    },
-    currentForecast: {
-      type: Types.ObjectId,
-      ref: 'Forecast',
-    },
-    forecastTimeStamps: [
-      {
-        type: Number,
-        required: true,
-      },
-    ],
-    forecastStartTime: {
-      type: Date,
-    },
   },
   {
     timestamps: true,

@@ -70,13 +70,7 @@ import PairService from '@/modules/pair/pair.service'
 import PairController from '@/modules/pair/pair.controller'
 import { IMathService, IMathUtility } from '@/modules/math/math.interface'
 import MathService from '@/modules/math/math.service'
-import { ITradeService } from '@/modules/trade/trade.interface'
-import TradeService from '@/modules/trade/trade.service'
-import TradeController from '@/modules/trade/trade.controller'
-import { IForecastService } from '@/modules/forecast/forecast.interface'
-import ForecastService from '@/modules/forecast/forecast.service'
 import MathUtility from '@/modules/math/math.utility'
-import ForecastController from '@/modules/forecast/forecast.controller'
 import { IController } from '@/core/utils'
 
 export const mathUtility = Container.get<IMathUtility>(MathUtility)
@@ -198,12 +192,6 @@ Container.set<IInvestmentService>(
   investmentService
 )
 
-export const tradeService = Container.get<ITradeService>(TradeService)
-Container.set<ITradeService>(ServiceToken.TRADE_SERVICE, tradeService)
-
-export const forecastService = Container.get<IForecastService>(ForecastService)
-Container.set<IForecastService>(ServiceToken.FORECAST_SERVICE, forecastService)
-
 export const authService = Container.get<IAuthService>(AuthService)
 Container.set<IAuthService>(ServiceToken.AUTH_SERVICE, authService)
 
@@ -243,8 +231,6 @@ export const notificationController = Container.get<IController>(
   NotificationController
 )
 export const pairController = Container.get<IController>(PairController)
-export const tradeController = Container.get<IController>(TradeController)
-export const forecastController = Container.get<IController>(ForecastController)
 
 export const controllers: IController[] = [
   referralSettingsController,
@@ -268,6 +254,4 @@ export const controllers: IController[] = [
   investmentController,
   notificationController,
   pairController,
-  tradeController,
-  forecastController,
 ]

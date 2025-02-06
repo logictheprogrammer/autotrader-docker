@@ -4,7 +4,7 @@ import { SiteConstants } from '@/modules/config/config.constants'
 import { IController, IControllerRoute } from '@/core/utils'
 import { SuccessResponse } from '@/core/apiResponse'
 import asyncHandler from '@/helpers/asyncHandler'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 export default class ConfigController
@@ -22,7 +22,7 @@ export default class ConfigController
 
   constructor() {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private getConstants = asyncHandler(

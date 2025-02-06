@@ -1,42 +1,32 @@
 import { InvestmentStatus } from '@/modules/investment/investment.enum'
-import { IPlan, IPlanObject } from '@/modules/plan/plan.interface'
-import { IUser, IUserObject } from '@/modules/user/user.interface'
+import { IPlan } from '@/modules/plan/plan.interface'
+import { IUser } from '@/modules/user/user.interface'
 import { UserAccount, UserEnvironment } from '@/modules/user/user.enum'
-import { ForecastStatus } from '../forecast/forecast.enum'
-import { FilterQuery, ObjectId, Types } from 'mongoose'
-
-import { ITrade, ITradeObject } from '../trade/trade.interface'
+import { FilterQuery, ObjectId } from 'mongoose'
 import baseObjectInterface from '@/core/baseObjectInterface'
 import baseModelInterface from '@/core/baseModelInterface'
-import { PlanMode } from '../plan/plan.enum'
+import { AssetType } from '../asset/asset.enum'
+import { IAsset } from '../asset/asset.interface'
 
 export interface IInvestmentObject extends baseObjectInterface {
-  plan: IPlan['_id']
   user: IUser['_id']
-  minRunTime: number
-  gas: number
+  plan: IPlan['_id']
+  assetType: AssetType
+  assets: IAsset['_id'][]
   status: InvestmentStatus
   amount: number
   balance: number
   account: UserAccount
   environment: UserEnvironment
-  mode: PlanMode
-  currentTrade?: ITrade['_id']
+  expectedRunTime: number
   runTime: number
-  tradeStatus?: ForecastStatus
-  tradeTimeStamps: number[]
-  tradeStartTime?: Date
+  resumeTime: Date
 }
 
 // @ts-ignore
 export interface IInvestment extends baseModelInterface, IInvestmentObject {}
 
 export interface IInvestmentService {
-  updateTradeDetails(
-    filter: FilterQuery<IInvestment>,
-    tradeObject: ITradeObject | null
-  ): Promise<IInvestmentObject>
-
   create(
     planId: ObjectId,
     userId: ObjectId,
@@ -62,10 +52,5 @@ export interface IInvestmentService {
   fund(
     filter: FilterQuery<IInvestment>,
     amount: number
-  ): Promise<IInvestmentObject>
-
-  refill(
-    filter: FilterQuery<IInvestment>,
-    gas: number
   ): Promise<IInvestmentObject>
 }

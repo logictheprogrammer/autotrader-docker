@@ -2,8 +2,6 @@ import { IInvestment } from '@/modules/investment/investment.interface'
 import { Schema, Types, model } from 'mongoose'
 import { UserAccount, UserEnvironment } from '../user/user.enum'
 import { InvestmentStatus } from './investment.enum'
-import { ForecastStatus } from '../forecast/forecast.enum'
-import { PlanMode } from '../plan/plan.enum'
 
 const InvestmentSchema = new Schema<IInvestment>(
   {
@@ -35,14 +33,6 @@ const InvestmentSchema = new Schema<IInvestment>(
       enum: Object.values(InvestmentStatus),
       trim: true,
     },
-    minRunTime: {
-      type: Number,
-      required: true,
-    },
-    gas: {
-      type: Number,
-      required: true,
-    },
     amount: {
       type: Number,
       required: true,
@@ -51,35 +41,30 @@ const InvestmentSchema = new Schema<IInvestment>(
       type: Number,
       required: true,
     },
-    mode: {
-      type: String,
+    expectedRunTime: {
+      type: Number,
       required: true,
-      enum: Object.values(PlanMode),
-      default: PlanMode.AUTOMATIC,
     },
     runTime: {
       type: Number,
       required: true,
       default: 0,
     },
-    tradeStatus: {
-      type: String,
-      enum: Object.values(ForecastStatus),
-      trim: true,
-    },
-    currentTrade: {
-      type: Types.ObjectId,
-      ref: 'Trade',
-    },
-    tradeTimeStamps: [
-      {
-        type: Number,
-        required: true,
-      },
-    ],
-    tradeStartTime: {
+    resumeTime: {
+      required: true,
       type: Date,
     },
+    assetType: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    assets: [
+      {
+        type: Types.ObjectId,
+        ref: 'Asset',
+      },
+    ],
   },
   {
     timestamps: true,

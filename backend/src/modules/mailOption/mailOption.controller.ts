@@ -9,7 +9,7 @@ import ServiceToken from '@/core/serviceToken'
 import { IController, IControllerRoute } from '@/core/utils'
 import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 export default class MailOptionController
@@ -38,7 +38,7 @@ export default class MailOptionController
     private mailOptionService: IMailOptionService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private initialiseRouteas = (): void => {

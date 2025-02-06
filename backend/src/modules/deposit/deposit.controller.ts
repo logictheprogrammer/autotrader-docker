@@ -10,7 +10,7 @@ import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
 import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class DepositController extends BaseController implements IController {
@@ -55,7 +55,7 @@ class DepositController extends BaseController implements IController {
     private depositService: IDepositService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private intialiseRoutes(): void {

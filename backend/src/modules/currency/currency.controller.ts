@@ -9,7 +9,7 @@ import routePermission from '@/helpers/routePermission'
 import schemaValidator from '@/helpers/schemaValidator'
 import { IController, IControllerRoute } from '@/core/utils'
 import ServiceToken from '@/core/serviceToken'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class CurrencyController extends BaseController implements IController {
@@ -35,7 +35,7 @@ class CurrencyController extends BaseController implements IController {
     private currencyService: ICurrencyService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private fetchAll = asyncHandler(

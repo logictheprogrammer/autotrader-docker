@@ -7,7 +7,7 @@ import { IController, IControllerRoute } from '@/core/utils'
 import asyncHandler from '@/helpers/asyncHandler'
 import { SuccessResponse } from '@/core/apiResponse'
 import routePermission from '@/helpers/routePermission'
-import BaseController from '@/core/baseContoller'
+import BaseController from '@/core/baseController'
 
 @Service()
 class TransactionController extends BaseController implements IController {
@@ -50,7 +50,7 @@ class TransactionController extends BaseController implements IController {
     private transactionService: ITransactionService
   ) {
     super()
-    this.initialiseRoutes()
+    this.initializeRoutes()
   }
 
   private intialiseRoutes(): void {
