@@ -53,59 +53,64 @@
           <li class="text-white mb-2">
             Profit Earned:
             <span class="ms-3 fw-bold text-success fs-5">
-              {{ Helpers.toDollar(0.4) }}
+              {{ Helpers.toDollar(profitEarned) }}
             </span>
           </li>
           <li class="text-white mb-2">
             Expected Profit:
             <span class="ms-3 fw-bold text-cyan2 fs-5">
-              {{
-                Helpers.toDollar(
-                  (investment.plan.potentialPercentageProfit *
-                    investment.amount) /
-                    100
-                )
-              }}
+              {{ Helpers.toDollar(expectedProfit) }}
             </span>
           </li>
         </ul>
         <hr class="mt-3 mb-2" />
         <p class="text-center mb-0">Ending In</p>
-        <div class="d-flex gap-2 mt-2">
-          <div
-            class="w-100 d-flex gap-2 flex-column justify-content-center align-items-center"
-          >
-            <a
-              :class="`btn btn-outline-warning px-3 w-100 fw-bold`"
-              title="Days"
+        <vue-countdown :time="timeRemaining" v-slot="{ days, hours, minutes }">
+          <div class="d-flex gap-2 mt-2">
+            <div
+              class="w-100 d-flex gap-2 flex-column justify-content-center align-items-center"
             >
-              121
-            </a>
-            <span class="fw-bold">Days</span>
-          </div>
-          <div
-            class="w-100 d-flex gap-2 flex-column justify-content-center align-items-center"
-          >
-            <a
-              :class="`btn btn-outline-warning px-3 w-100 fw-bold`"
-              title="Hours"
+              <button
+                :disabled="investment.status === 'suspended'"
+                :class="`btn light ${
+                  investment.status === 'suspended' ? ' opacity-50' : ''
+                } btn-dark px-3 w-100 fw-bold`"
+                title="Days"
+              >
+                {{ investment.status === 'running' ? daysLeft : days }}
+              </button>
+              <span class="fw-bold">Days</span>
+            </div>
+            <div
+              class="w-100 d-flex gap-2 flex-column justify-content-center align-items-center"
             >
-              16
-            </a>
-            <span class="fw-bold">Hours</span>
-          </div>
-          <div
-            class="w-100 d-flex gap-2 flex-column justify-content-center align-items-center"
-          >
-            <a
-              :class="`btn btn-outline-warning px-3 w-100 fw-bold`"
-              title="Minutes"
+              <button
+                :disabled="investment.status === 'suspended'"
+                :class="`btn light ${
+                  investment.status === 'suspended' ? ' opacity-50' : ''
+                } btn-dark px-3 w-100 fw-bold`"
+                title="Hours"
+              >
+                {{ investment.status === 'running' ? hours : hoursLeft }}
+              </button>
+              <span class="fw-bold">Hours</span>
+            </div>
+            <div
+              class="w-100 d-flex gap-2 flex-column justify-content-center align-items-center"
             >
-              45
-            </a>
-            <span class="fw-bold">Minutes</span>
+              <button
+                :disabled="investment.status === 'suspended'"
+                :class="`btn light ${
+                  investment.status === 'suspended' ? ' opacity-50' : ''
+                } btn-dark px-3 w-100 fw-bold`"
+                title="Minutes"
+              >
+                {{ investment.status === 'running' ? minutes : minutesLeft }}
+              </button>
+              <span class="fw-bold">Minutes</span>
+            </div>
           </div>
-        </div>
+        </vue-countdown>
       </div>
     </div>
   </div>
@@ -118,22 +123,45 @@ const props = defineProps<{
   investment: IInvestment
 }>()
 
-const timeRemaining = ref(
-  Helpers.timeRemaining(
-    new Date(props.investment.createdAt).getTime() +
-      props.investment.plan.duration
+const expectedProfit = computed(() => {
+  return (
+    (props.investment.plan.potentialPercentageProfit *
+      props.investment.amount) /
+    100
   )
-)
+})
 
-const timeRemainingTimer = setInterval(() => {
-  timeRemaining.value = Helpers.timeRemaining(
-    new Date(props.investment.createdAt).getTime() +
-      props.investment.plan.duration
+const runTime = computed(() => {
+  return (
+    props.investment.runTime +
+    (props.investment.status === 'running'
+      ? new Date().getTime() - new Date(props.investment.resumeTime).getTime()
+      : 0)
   )
-}, 60000)
+})
 
-onBeforeUnmount(() => {
-  clearInterval(timeRemainingTimer)
+const profitEarned = computed(() => {
+  return (
+    (expectedProfit.value * runTime.value) / props.investment.expectedRunTime
+  )
+})
+
+const timeRemaining = computed(() => {
+  return props.investment.expectedRunTime - runTime.value
+})
+
+const daysLeft = computed(() => {
+  return Math.floor(timeRemaining.value / (1000 * 60 * 60 * 24))
+})
+
+const hoursLeft = computed(() => {
+  return Math.floor(
+    (timeRemaining.value % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+  )
+})
+
+const minutesLeft = computed(() => {
+  return Math.floor((timeRemaining.value % (1000 * 60 * 60)) / (1000 * 60))
 })
 </script>
 
