@@ -41,6 +41,11 @@ const InvestmentSchema = new Schema<IInvestment>(
       type: Number,
       required: true,
     },
+    extraProfit: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     expectedRunTime: {
       type: Number,
       required: true,
@@ -56,7 +61,6 @@ const InvestmentSchema = new Schema<IInvestment>(
     },
     assetType: {
       type: String,
-      required: true,
       trim: true,
     },
     assets: [

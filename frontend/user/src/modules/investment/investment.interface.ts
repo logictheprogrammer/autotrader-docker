@@ -14,6 +14,7 @@ export interface IInvestment extends IBaseObject {
   status: InvestmentStatus
   amount: number
   balance: number
+  extraProfit: number
   account: UserAccount
   environment: UserEnvironment
   expectedRunTime: number

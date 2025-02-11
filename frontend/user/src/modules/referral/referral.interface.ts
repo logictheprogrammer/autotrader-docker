@@ -1,22 +1,24 @@
+import { IBaseObject } from '@/util/interface'
+import { IUser } from '../user/user.interface'
 import type { ReferralTypes } from './referral.enum'
 
-export interface IReferral {
-  __v: number
-  _id: string
-  updatedAt: string
-  createdAt: string
+export interface IReferralEarning extends IBaseObject {
   rate: number
   type: ReferralTypes
-  referrer: string
-  user: {
-    _id: string
-    username: string
-    isDeleted: boolean
-  }
+  referrer: IUser
+  user: IUser
   amount: number
 }
 
-export interface IReferralUsers {
+export interface IReferredUser {
+  _id: string
+  username: string
+  name: string
+  country: string
+  createdAt: string
+}
+
+export interface IActiveReferral {
   user: {
     username: string
     _id: string

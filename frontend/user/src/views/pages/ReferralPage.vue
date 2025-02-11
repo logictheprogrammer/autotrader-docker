@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col-xl-4">
       <ReferralDetailsWidget
-        :total-referred="referralUsers.length"
+        :total-referred="referredUsers.length"
         :total-referral-earnings="totalReferralEarnings"
       />
     </div>
@@ -12,12 +12,12 @@
           <h4 class="card-title">Active Referred Users</h4>
         </div>
         <EmptyResourceComponent
-          v-if="referralUsersLoaded && !referralUsers?.length"
+          v-if="activeReferralsLoaded && !activeReferrals?.length"
         >
           No Referral Record Found
         </EmptyResourceComponent>
         <div class="card-body pt-0 px-0" v-else>
-          <TablePreview v-if="!referralUsersLoaded" :rows="8" :cols="6" />
+          <TablePreview v-if="!activeReferralsLoaded" :rows="8" :cols="6" />
           <MyDataTableComponent v-else>
             <thead class="bg-background">
               <tr>
@@ -29,7 +29,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="(referral, i) in referralUsers"
+                v-for="(referral, i) in activeReferrals"
                 :key="referral.user._id"
               >
                 <td class="d-none">{{ i + 1 }}</td>
@@ -48,11 +48,13 @@
         <div class="card-header">
           <h4 class="card-title">Referral Earnings History</h4>
         </div>
-        <EmptyResourceComponent v-if="referralLoaded && !referrals?.length">
+        <EmptyResourceComponent
+          v-if="activeReferralsLoaded && !referralEarnings?.length"
+        >
           No Referral Earnings Record Found
         </EmptyResourceComponent>
         <div class="card-body pt-0 px-0" v-else>
-          <TablePreview v-if="!referralLoaded" :rows="8" :cols="6" />
+          <TablePreview v-if="!activeReferralsLoaded" :rows="8" :cols="6" />
           <MyDataTableComponent v-else>
             <thead class="bg-background">
               <tr>
@@ -65,7 +67,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(referral, i) in referrals" :key="referral._id">
+              <tr v-for="(referral, i) in referralEarnings" :key="referral._id">
                 <td class="d-none">{{ i + 1 }}</td>
                 <td>{{ Helpers.toTitleCase(referral.user.username) }}</td>
                 <td>{{ Helpers.toTitleCase(referral.type) }}</td>
@@ -84,32 +86,34 @@
 <script setup lang="ts">
 const referralStore = useReferralStore()
 
-// Referral Users
-const referralUsers = computed(() => referralStore.referralUsers)
-const referralUsersLoaded = computed(() => referralStore.referralUsersLoaded)
-// fetch referrals if not fetched
-if (!referralUsersLoaded.value) referralStore.fetchAllReferralUsers()
+// Referred Users
+const referredUsers = computed(() => referralStore.referredUsers)
+const referredUsersLoaded = computed(() => referralStore.referredUsersLoaded)
+// fetch referred users if not fetched
+if (!referredUsersLoaded.value) referralStore.fetchAllReferredUsers()
 
 // Referral Earnings
-const referrals = computed(() => referralStore.referrals)
-const referralLoaded = computed(() => referralStore.loaded)
+const referralEarnings = computed(() => referralStore.referralEarnings)
+const referralEarningsLoaded = computed(
+  () => referralStore.referralEarningsLoaded
+)
 // fetch referrals if not fetched
-if (!referralLoaded.value) referralStore.fetchAll()
+if (!referralEarningsLoaded.value) referralStore.fetchAllReferralEarnings()
+
+// Active Referrals
+const activeReferrals = computed(() => referralStore.activeReferrals)
+const activeReferralsLoaded = computed(
+  () => referralStore.activeReferralsLoaded
+)
+// fetch referrals if not fetched
+if (!activeReferralsLoaded.value) referralStore.fetchAllActiveReferrals()
 
 // Referral Balance
-const totalReferralEarnings = ref(0)
-
-if (referralLoaded.value) {
-  totalReferralEarnings.value = referralUsers.value.reduce((acc, ele) => {
+const totalReferralEarnings = computed(() =>
+  activeReferrals.value.reduce((acc, ele) => {
     return acc + ele.earnings
   }, 0)
-}
-
-watch(referralUsersLoaded, () => {
-  totalReferralEarnings.value = referralUsers.value.reduce((acc, ele) => {
-    return acc + ele.earnings
-  }, 0)
-})
+)
 </script>
 
 <style scoped></style>

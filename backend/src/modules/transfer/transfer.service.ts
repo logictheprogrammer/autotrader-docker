@@ -108,7 +108,7 @@ class TransferService implements ITransferService {
       // toUser transaction instance
       await this.transactionService.create(
         toUser,
-        TransactionTitle.TRANSFER_RECIEVED,
+        TransactionTitle.TRANSFER_RECEIVED,
         transfer,
         amount,
         UserEnvironment.LIVE
@@ -252,7 +252,7 @@ class TransferService implements ITransferService {
       // Add toUser transaction instance
       await this.transactionService.create(
         toUser,
-        TransactionTitle.TRANSFER_RECIEVED,
+        TransactionTitle.TRANSFER_RECEIVED,
         transfer,
         transfer.amount,
         UserEnvironment.LIVE

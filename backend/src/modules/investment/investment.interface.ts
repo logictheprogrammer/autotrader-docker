@@ -16,6 +16,7 @@ export interface IInvestmentObject extends baseObjectInterface {
   status: InvestmentStatus
   amount: number
   balance: number
+  extraProfit: number
   account: UserAccount
   environment: UserEnvironment
   expectedRunTime: number
@@ -53,4 +54,6 @@ export interface IInvestmentService {
     filter: FilterQuery<IInvestment>,
     amount: number
   ): Promise<IInvestmentObject>
+
+  autoRun(miniSeconds: number): Promise<void>
 }

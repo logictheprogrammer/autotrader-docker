@@ -28,7 +28,6 @@
         <thead class="bg-background">
           <tr>
             <th class="text-sharp d-none">Sort</th>
-            <th class="text-sharp text-center">Status</th>
             <th class="text-sharp">Type</th>
             <th class="text-sharp">Amount</th>
             <th class="text-sharp">Date</th>
@@ -37,15 +36,7 @@
         <tbody>
           <tr v-for="(transaction, i) in transactions" :key="transaction._id">
             <td class="d-none">{{ i + 1 }}</td>
-            <td class="text-center">
-              <span
-                :class="`badge light badge-${Helpers.toStatus(
-                  transaction.status
-                )}`"
-                >{{ Helpers.toTitleCase(transaction.status) }}
-              </span>
-            </td>
-            <td>{{ transaction.categoryName }}</td>
+            <td>{{ transaction.title }}</td>
             <td>{{ Helpers.toDollar(transaction.amount) }}</td>
             <td>{{ Helpers.toNiceDate(transaction.updatedAt) }}</td>
           </tr>

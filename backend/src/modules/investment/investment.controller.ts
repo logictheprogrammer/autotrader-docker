@@ -82,6 +82,8 @@ class InvestmentController extends BaseController implements IController {
   ) {
     super()
     this.initializeRoutes()
+
+    this.investmentService.autoRun(1000 * 60 * 10)
   }
 
   private fetchAll = (all: boolean, environment: UserEnvironment) =>

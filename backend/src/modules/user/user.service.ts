@@ -95,6 +95,14 @@ class UserService implements IUserService {
     return await this.userModel.find(filter)
   }
 
+  public async fetchAllReferrals(
+    filter: FilterQuery<IUser>
+  ): Promise<IUserObject[]> {
+    return await this.userModel
+      .find(filter)
+      .select('name username country createdAt')
+  }
+
   public async fetch(filter: FilterQuery<IUser>): Promise<IUserObject> {
     const user = await this.userModel.findOne(filter)
 

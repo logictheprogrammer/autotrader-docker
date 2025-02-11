@@ -63,4 +63,20 @@ export default class Helpers {
     }
     return methods
   }
+
+  public static async sleepFor(
+    time: number,
+    unit: 'miniSeconds' | 'seconds' | 'minutes' | 'hours' = 'miniSeconds'
+  ): Promise<void> {
+    const miniSec =
+      unit === 'seconds'
+        ? time * 1000
+        : unit === 'minutes'
+        ? time * 1000 * 60
+        : unit === 'hours'
+        ? time * 1000 * 60 * 60
+        : time
+
+    await new Promise((resolve) => setTimeout(resolve, miniSec))
+  }
 }

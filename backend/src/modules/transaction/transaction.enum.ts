@@ -4,7 +4,7 @@ export enum TransactionTitle {
   WITHDRAWAL_FAILED = 'withdrawal failed',
   WITHDRAWAL_SUCCESSFUL = 'withdrawal successful',
   TRANSFER_SENT = 'transfer sent',
-  TRANSFER_RECIEVED = 'transfer recieved',
+  TRANSFER_RECEIVED = 'transfer received',
   TRANSFER_REVERSED = 'transfer reversed',
   REFERRAL_EARNINGS = 'referral earnings',
   TRADE_STAKE = 'trade stake',

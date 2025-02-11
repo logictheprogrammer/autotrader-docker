@@ -69,7 +69,7 @@
                     </a>
                   </h6>
                   <span class="fs-14"
-                    >{{ Helpers.toTitleCase(notification.categoryName) }}
+                    >{{ Helpers.toTitleCase(notification.title) }}
                   </span>
                 </div>
               </div>

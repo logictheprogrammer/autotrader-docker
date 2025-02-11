@@ -5,7 +5,7 @@ import type { DepositStatus } from './deposit.enum'
 export const useDepositStore = defineStore('deposit', () => {
   const httpStore = useHttpStore()
   const userStore = useUserStore()
-  const basePath = 'deposit'
+  const basePath = '/deposit'
   const deposits = ref<IDeposit[]>([])
   const loaded = ref(false)
 
@@ -31,7 +31,7 @@ export const useDepositStore = defineStore('deposit', () => {
   async function fetchAll() {
     setLoaded(false)
     try {
-      const result = await axios.get(`${basePath}/master`)
+      const result = await axios.get(`/master${basePath}`)
       setDeposits(result.data.data.deposits)
     } catch (error: any) {
       console.error(error)
@@ -43,10 +43,12 @@ export const useDepositStore = defineStore('deposit', () => {
   async function updateStatus(depositId: string, status: DepositStatus) {
     try {
       httpStore.setPost(true)
-      const result = await axios.patch(`${basePath}/update-status`, {
-        status,
-        depositId,
-      })
+      const result = await axios.patch(
+        `/master${basePath}/update-status/${depositId}`,
+        {
+          status,
+        }
+      )
 
       updateById(depositId, result.data.data.deposit)
       userStore.fetchAll()
@@ -60,7 +62,9 @@ export const useDepositStore = defineStore('deposit', () => {
   async function deleteOne(depositId: string) {
     try {
       httpStore.setPost(true)
-      const result = await axios.delete(`${basePath}/delete/${depositId}`)
+      const result = await axios.delete(
+        `/master${basePath}/delete/${depositId}`
+      )
 
       const allDeposits = deposits.value
       if (!allDeposits) return

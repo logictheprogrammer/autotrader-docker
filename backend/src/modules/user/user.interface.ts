@@ -33,6 +33,8 @@ export interface IUserService {
 
   fetchAll(filter: FilterQuery<IUser>): Promise<IUserObject[]>
 
+  fetchAllReferrals(filter: FilterQuery<IUser>): Promise<IUserObject[]>
+
   updateProfile(
     filter: FilterQuery<IUser>,
     name: string,

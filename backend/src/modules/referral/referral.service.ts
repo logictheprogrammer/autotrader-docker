@@ -74,7 +74,7 @@ class ReferralService implements IReferralService {
     let userReferrer
     try {
       userReferrer = await this.userService.fund(
-        userReferrerId,
+        { _id: userReferrerId },
         UserAccount.REFERRAL_BALANCE,
         earn
       )
@@ -84,7 +84,7 @@ class ReferralService implements IReferralService {
 
     if (!userReferrer) return
 
-    const referral = new this.referralModel({
+    const referral = await this.referralModel.create({
       rate,
       type,
       referrer: userReferrer,
@@ -147,17 +147,17 @@ class ReferralService implements IReferralService {
 
     const referralEarnings: IReferralEarnings[] = []
 
-    referralTransactions.forEach((transation) => {
+    referralTransactions.forEach((transaction) => {
       const index = referralEarnings.findIndex(
-        (obj) => obj.user._id.toString() === transation.user._id.toString()
+        (obj) => obj.user._id.toString() === transaction.user._id.toString()
       )
       if (index !== -1) {
-        referralEarnings[index].earnings += transation.amount
+        referralEarnings[index].earnings += transaction.amount
       } else {
         referralEarnings.push({
-          user: transation.user,
-          earnings: transation.amount,
-          referrer: transation.referrer,
+          user: transaction.user,
+          earnings: transaction.amount,
+          referrer: transaction.referrer,
         })
       }
     })
@@ -172,16 +172,16 @@ class ReferralService implements IReferralService {
 
     const referralLeaderboard: IReferralLeaderboard[] = []
 
-    referralTransactions.forEach((transation) => {
+    referralTransactions.forEach((transaction) => {
       const index = referralLeaderboard.findIndex(
-        (obj) => obj.user._id.toString() === transation.referrer._id.toString()
+        (obj) => obj.user._id.toString() === transaction.referrer._id.toString()
       )
       if (index !== -1) {
-        referralLeaderboard[index].earnings += transation.amount
+        referralLeaderboard[index].earnings += transaction.amount
       } else {
         referralLeaderboard.push({
-          user: transation.referrer,
-          earnings: transation.amount,
+          user: transaction.referrer,
+          earnings: transaction.amount,
         })
       }
     })

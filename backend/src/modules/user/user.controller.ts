@@ -112,83 +112,6 @@ class UserController extends BaseController implements IController {
     this.initializeRoutes()
   }
 
-  private initialisseRoutes = (): void => {
-    // Update Profile
-    this.router.put(
-      `${this.path}/update-profile`,
-      routePermission(UserRole.USER),
-      schemaValidator(userValidation.updateProfile),
-      this.updateProfile(false)
-    )
-
-    // Get Referred Users
-    this.router.get(
-      `${this.path}/referred-users`,
-      routePermission(UserRole.USER),
-      this.getReferredUsers(false)
-    )
-
-    // Get Users
-    this.router.get(
-      `/master${this.path}`,
-      routePermission(UserRole.ADMIN),
-      this.fetchAll
-    )
-    // Fund User
-    this.router.patch(
-      `/master${this.path}/fund/:userId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(userValidation.fundUser),
-      this.fundUser
-    )
-
-    // Update User Profile
-    this.router.put(
-      `/master${this.path}/update-profile/:userId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(userValidation.updateProfile),
-      this.updateProfile(true)
-    )
-
-    // Update User Email
-    this.router.patch(
-      `/master${this.path}/update-email/:userId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(userValidation.updateEmail),
-      this.updateEmail(true)
-    )
-
-    // Update User Status
-    this.router.patch(
-      `/master${this.path}/update-status/:userId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(userValidation.updateStatus),
-      this.updateStatus
-    )
-
-    // Delete User
-    this.router.delete(
-      `/master${this.path}/delete/:userId`,
-      routePermission(UserRole.ADMIN),
-      this.deleteUser
-    )
-
-    // Get All Referred Users
-    this.router.get(
-      `/master${this.path}/referred-users`,
-      routePermission(UserRole.ADMIN),
-      this.getReferredUsers(true)
-    )
-
-    // Send Email
-    this.router.post(
-      `/master${this.path}/send-email/:userId`,
-      routePermission(UserRole.ADMIN),
-      schemaValidator(userValidation.sendEmail),
-      this.sendEmail
-    )
-  }
-
   private fetchAll = asyncHandler(
     async (req, res): Promise<void | Response> => {
       const users = await this.userService.fetchAll({})
@@ -294,7 +217,9 @@ class UserController extends BaseController implements IController {
       if (byAdmin) {
         users = await this.userService.fetchAll({})
       } else {
-        users = await this.userService.fetchAll({ referred: req.user._id })
+        users = await this.userService.fetchAllReferrals({
+          referred: req.user._id,
+        })
       }
 
       return new SuccessResponse('Users fetched successfully', { users }).send(

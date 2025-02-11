@@ -69,23 +69,23 @@
                 <td>
                   <div class="d-flex">
                     <img
-                      :src="`/icons/crypto-svg/${deposit.depositMethodObject.logo}`"
+                      :src="`/icons/crypto-svg/${deposit.currency.logo}`"
                       class="me-3"
-                      :alt="deposit.depositMethodObject.name"
+                      :alt="deposit.currency.name"
                       width="24"
                     />
                     <div class="d-flex flex-column">
                       <span class="fw-bold">{{
-                        Helpers.toTitleCase(deposit.depositMethodObject.name)
+                        Helpers.toTitleCase(deposit.currency.name)
                       }}</span>
                       <span class="fs-14"
-                        >{{ deposit.depositMethodObject.symbol.toUpperCase() }}
+                        >{{ deposit.currency.symbol.toUpperCase() }}
                       </span>
                     </div>
                   </div>
                 </td>
                 <td>
-                  {{ deposit.depositMethodObject.network.toUpperCase() }}
+                  {{ deposit.depositMethod.network.toUpperCase() }}
                 </td>
                 <td>
                   {{ Helpers.toNiceDate(deposit.createdAt) }}

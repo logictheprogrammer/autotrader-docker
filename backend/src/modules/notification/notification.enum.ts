@@ -11,20 +11,10 @@ export enum NotificationTitle {
   TRANSFER_RECEIVED = 'transfer received',
   TRANSFER_REVERSED = 'transfer reversed',
   REFERRAL_EARNINGS = 'referral earnings',
-  TRADE_STAKE = 'trade stake',
-  TRADE_SETTLED = 'trade settled',
-  TRADE_RUNNING = 'trade running',
-  TRADE_MARKET_CLOSED = 'market closed',
-  TRADE_ON_HOLD = 'market on hold',
   INVESTMENT_PURCHASED = 'investment purchased',
   INVESTMENT_COMPLETED = 'investment completed',
   INVESTMENT_RUNNING = 'investment running',
   INVESTMENT_SUSPENDED = 'investment suspended',
-  INVESTMENT_INSUFFICIENT_GAS = 'insufficient gas',
-  INVESTMENT_REFILLING = 'investment refilling',
-  INVESTMENT_ON_MAINTENANCE = 'plan on maintenance',
-  INVESTMENT_AWAITING_TRADE = 'awaiting trade',
-  INVESTMENT_PROCESSING_TRADE = 'processing trade',
 }
 
 export enum NotificationForWho {

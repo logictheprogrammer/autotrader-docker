@@ -1,20 +1,14 @@
-import type { DepositStatus } from '../deposit/deposit.enum'
-import type { WithdrawalStatus } from '../withdrawal/withdrawal.enum'
-import type { TransferStatus } from '../transfer/transfer.enum'
-
-export type TransactionStatus =
-  | TransferStatus
-  | DepositStatus
-  | WithdrawalStatus
-// | InvestmentStatus
-// | ReferralStatus
-// | TradeStatus
-
-export enum TransactionCategory {
-  DEPOSIT = 'deposit',
-  WITHDRAWAL = 'withdrawal',
-  TRANSFER = 'transfer',
-  REFERRAL = 'referral',
-  TRADE = 'trade',
-  INVESTMENT = 'investment',
+export enum TransactionTitle {
+  DEPOSIT_FAILED = 'deposit failed',
+  DEPOSIT_SUCCESSFUL = 'deposit successful',
+  WITHDRAWAL_FAILED = 'withdrawal failed',
+  WITHDRAWAL_SUCCESSFUL = 'withdrawal successful',
+  TRANSFER_SENT = 'transfer sent',
+  TRANSFER_RECEIVED = 'transfer received',
+  TRANSFER_REVERSED = 'transfer reversed',
+  REFERRAL_EARNINGS = 'referral earnings',
+  TRADE_STAKE = 'trade stake',
+  TRADE_SETTLED = 'trade settled',
+  INVESTMENT_PURCHASED = 'investment purchased',
+  INVESTMENT_COMPLETED = 'investment completed',
 }

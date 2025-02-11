@@ -69,7 +69,7 @@ export default class Helpers {
       case WithdrawalStatus.CANCELLED:
         return 'danger'
       case InvestmentStatus.COMPLETED:
-        return 'secondary'
+        return 'dark'
 
       default:
         return ''

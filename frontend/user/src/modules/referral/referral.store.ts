@@ -1,60 +1,91 @@
 import { defineStore } from 'pinia'
-import type { IReferral, IReferralUsers } from './referral.interface'
+import type {
+  IReferralEarning,
+  IReferredUser,
+  IActiveReferral,
+} from './referral.interface'
 
 export const useReferralStore = defineStore('referral', () => {
   const httpStore = useHttpStore()
   const basePath = 'referral'
-  const referrals = ref<IReferral[]>([])
-  const loaded = ref(false)
-  const referralUsers = ref<IReferralUsers[]>([])
-  const referralUsersLoaded = ref(false)
+  const activeReferrals = ref<IActiveReferral[]>([])
+  const referredUsers = ref<IReferredUser[]>([])
+  const referralEarnings = ref<IReferralEarning[]>([])
+  const activeReferralsLoaded = ref(false)
+  const referralEarningsLoaded = ref(false)
+  const referredUsersLoaded = ref(false)
 
-  function setReferrals(referralsArr: IReferral[]) {
-    referrals.value = referralsArr
+  function setActiveReferrals(activeReferralsArr: IActiveReferral[]) {
+    activeReferrals.value = activeReferralsArr
   }
 
-  function setLoaded(hasLoaded: boolean) {
-    loaded.value = hasLoaded
+  function setActiveReferralsLoaded(loaded: boolean) {
+    activeReferralsLoaded.value = loaded
   }
 
-  function setReferralUsers(referralsArr: IReferralUsers[]) {
-    referralUsers.value = referralsArr
+  function setReferralEarningsLoaded(loaded: boolean) {
+    referralEarningsLoaded.value = loaded
   }
 
-  function setReferralUsersLoaded(hasLoaded: boolean) {
-    referralUsersLoaded.value = hasLoaded
+  function setReferredUsers(referralsArr: IReferredUser[]) {
+    referredUsers.value = referralsArr
   }
 
-  async function fetchAll() {
-    setLoaded(false)
+  function setReferralEarnings(referralsArr: IReferralEarning[]) {
+    referralEarnings.value = referralsArr
+  }
+
+  function setReferredUsersLoaded(loaded: boolean) {
+    referredUsersLoaded.value = loaded
+  }
+
+  async function fetchAllReferredUsers() {
+    setReferredUsersLoaded(false)
     try {
-      const result = await axios.get(`${basePath}`)
-      setReferrals(result.data.data.referralTransactions)
+      const result = await axios.get(`users/referred-users`)
+      console.log(result.data.data)
+      setReferredUsers(result.data.data.users)
     } catch (error: any) {
       console.error(error)
       httpStore.handlePost(error.response)
     }
-    setLoaded(true)
+    setReferredUsersLoaded(true)
   }
 
-  async function fetchAllReferralUsers() {
-    setReferralUsersLoaded(false)
+  async function fetchAllActiveReferrals() {
+    setActiveReferralsLoaded(false)
     try {
       const result = await axios.get(`${basePath}/earnings`)
-      setReferralUsers(result.data.data.referralEarnings)
+      console.log(result.data.data)
+      setActiveReferrals(result.data.data.referralEarnings)
     } catch (error: any) {
       console.error(error)
       httpStore.handlePost(error.response)
     }
-    setReferralUsersLoaded(true)
+    setActiveReferralsLoaded(true)
+  }
+
+  async function fetchAllReferralEarnings() {
+    setReferralEarningsLoaded(false)
+    try {
+      const result = await axios.get(`${basePath}`)
+      setReferralEarnings(result.data.data.referrals)
+    } catch (error: any) {
+      console.error(error)
+      httpStore.handlePost(error.response)
+    }
+    setReferralEarningsLoaded(true)
   }
 
   return {
-    loaded,
-    referrals,
-    fetchAll,
-    referralUsersLoaded,
-    referralUsers,
-    fetchAllReferralUsers,
+    referralEarningsLoaded,
+    activeReferralsLoaded,
+    referredUsersLoaded,
+    referralEarnings,
+    referredUsers,
+    activeReferrals,
+    fetchAllActiveReferrals,
+    fetchAllReferralEarnings,
+    fetchAllReferredUsers,
   }
 })

@@ -1,17 +1,12 @@
-import type { IDeposit } from '../deposit/deposit.interface'
-import type { ITransfer } from '../transfer/transfer.interface'
-import type { IWithdrawal } from '../withdrawal/withdrawal.interface'
-import type { TransactionCategory, TransactionStatus } from './transaction.enum'
+import { IBaseObject } from '@/util/interface'
+import { IUser } from '../user/user.interface'
+import type { TransactionTitle } from './transaction.enum'
+import { UserEnvironment } from '../user/user.enum'
 
-export interface ITransaction {
-  __v: number
-  _id: string
-  updatedAt: string
-  createdAt: string
-  user: string
-  status: TransactionStatus
-  categoryName: TransactionCategory
-  categoryObject: IDeposit | IWithdrawal | ITransfer
+export interface ITransaction extends IBaseObject {
+  user: IUser
+  title: TransactionTitle
+  object: IBaseObject
   amount: number
-  stake: number
+  environment: UserEnvironment
 }

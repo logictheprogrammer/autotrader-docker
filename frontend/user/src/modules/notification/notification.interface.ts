@@ -1,17 +1,14 @@
-import type {
-  NotificationCategory,
-  NotificationStatus,
-} from './notification.enum'
+import { IBaseObject } from '@/util/interface'
+import type { NotificationForWho, NotificationTitle } from './notification.enum'
+import { IUser } from '../user/user.interface'
+import { UserEnvironment } from '../user/user.enum'
 
-export interface INotification {
-  __v: number
-  _id: string
-  updatedAt: string
-  createdAt: string
-  user: string
+export interface INotification extends IBaseObject {
+  user?: IUser
   message: string
   read: boolean
-  categoryName: NotificationCategory
-  category: string
-  status: NotificationStatus
+  title: NotificationTitle
+  object: IBaseObject
+  forWho: NotificationForWho
+  environment: UserEnvironment
 }
