@@ -176,7 +176,7 @@ class AuthController extends BaseController implements IController {
     async (req, res): Promise<Response | void> => {
       const { key, verifyToken } = req.body
       await this.authService.verifyEmail(key, verifyToken)
-      return new SuccessResponse('Email successfully verifield').send(res)
+      return new SuccessResponse('Email successfully verified').send(res)
     }
   )
 }

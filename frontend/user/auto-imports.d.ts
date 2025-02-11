@@ -8,12 +8,13 @@ declare global {
   const EffectScope: typeof import('vue')['EffectScope']
   const Helpers: typeof import('@/util/helpers')['default']
   const InvestmentStatus: typeof import('./src/modules/investment/investment.enum')['InvestmentStatus']
-  const NotificationCategory: typeof import('./src/modules/notification/notification.enum')['NotificationCategory']
+  const NotificationForWho: typeof import('./src/modules/notification/notification.enum')['NotificationForWho']
+  const NotificationTitle: typeof import('./src/modules/notification/notification.enum')['NotificationTitle']
   const PlanStatus: typeof import('./src/modules/plan/plan.enum')['PlanStatus']
   const ReferralStatus: typeof import('./src/modules/referral/referral.enum')['ReferralStatus']
   const ReferralTypes: typeof import('./src/modules/referral/referral.enum')['ReferralTypes']
   const ResponseStatus: typeof import('./src/modules/http/http.enum')['ResponseStatus']
-  const TransactionCategory: typeof import('./src/modules/transaction/transaction.enum')['TransactionCategory']
+  const TransactionTitle: typeof import('./src/modules/transaction/transaction.enum')['TransactionTitle']
   const TransferStatus: typeof import('./src/modules/transfer/transfer.enum')['TransferStatus']
   const UserAccount: typeof import('./src/modules/user/user.enum')['UserAccount']
   const UserEnvironment: typeof import('./src/modules/user/user.enum')['UserEnvironment']
@@ -111,12 +112,13 @@ declare module 'vue' {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly Helpers: UnwrapRef<typeof import('@/util/helpers')['default']>
     readonly InvestmentStatus: UnwrapRef<typeof import('./src/modules/investment/investment.enum')['InvestmentStatus']>
-    readonly NotificationCategory: UnwrapRef<typeof import('./src/modules/notification/notification.enum')['NotificationCategory']>
+    readonly NotificationForWho: UnwrapRef<typeof import('./src/modules/notification/notification.enum')['NotificationForWho']>
+    readonly NotificationTitle: UnwrapRef<typeof import('./src/modules/notification/notification.enum')['NotificationTitle']>
     readonly PlanStatus: UnwrapRef<typeof import('./src/modules/plan/plan.enum')['PlanStatus']>
     readonly ReferralStatus: UnwrapRef<typeof import('./src/modules/referral/referral.enum')['ReferralStatus']>
     readonly ReferralTypes: UnwrapRef<typeof import('./src/modules/referral/referral.enum')['ReferralTypes']>
     readonly ResponseStatus: UnwrapRef<typeof import('./src/modules/http/http.enum')['ResponseStatus']>
-    readonly TransactionCategory: UnwrapRef<typeof import('./src/modules/transaction/transaction.enum')['TransactionCategory']>
+    readonly TransactionTitle: UnwrapRef<typeof import('./src/modules/transaction/transaction.enum')['TransactionTitle']>
     readonly TransferStatus: UnwrapRef<typeof import('./src/modules/transfer/transfer.enum')['TransferStatus']>
     readonly UserAccount: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserAccount']>
     readonly UserEnvironment: UnwrapRef<typeof import('./src/modules/user/user.enum')['UserEnvironment']>

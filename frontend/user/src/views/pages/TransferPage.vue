@@ -136,7 +136,7 @@
       <div class="card-body">
         <p class="fs-18 text-center mx-auto mb-4" style="max-width: 490px">
           PLEASE CHECK AND CONFIRM THE DETAILS YOU'VE ENTERED ARE CORRECT TO
-          PROCCED, ANY MISSTAKE COULD LEAD TO COIN LOSS WHICH MAY NOT BE
+          PROCEED, ANY MISTAKE COULD LEAD TO COIN LOSS WHICH MAY NOT BE
           REVERSED.
         </p>
         <div class="row">
@@ -207,7 +207,7 @@
                   <th class="text-sharp">Amount</th>
                   <th class="text-sharp">Fee</th>
                   <th class="text-sharp">Sender</th>
-                  <th class="text-sharp">Reciever</th>
+                  <th class="text-sharp">Receiver</th>
                   <th class="text-sharp">Created</th>
                   <th class="text-sharp">Settled</th>
                 </tr>
@@ -229,16 +229,16 @@
                   </td>
                   <td>
                     {{
-                      transfer.fromUser._id === authStore.user?._id
+                      transfer.fromUser?._id === authStore.user?._id
                         ? 'Me'
-                        : transfer.fromUser.username
+                        : transfer.fromUser?.username || 'Unknown'
                     }}
                   </td>
                   <td>
                     {{
-                      transfer.toUser._id === authStore.user?._id
+                      transfer.toUser?._id === authStore.user?._id
                         ? 'Me'
-                        : transfer.toUser.username
+                        : transfer.toUser?.username || 'Unknown'
                     }}
                   </td>
                   <td>
@@ -340,7 +340,7 @@ const makeTransferSchema = yup.object({
   amount: yup
     .number()
     .typeError('amount is required')
-    .min(0, 'amount should not be a nagative value')
+    .min(0, 'amount should not be a negative value')
     .required('amount is required')
     .test(function (value) {
       if (

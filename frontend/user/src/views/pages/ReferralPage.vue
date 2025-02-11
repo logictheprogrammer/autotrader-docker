@@ -30,13 +30,23 @@
             <tbody>
               <tr
                 v-for="(referral, i) in activeReferrals"
-                :key="referral.user._id"
+                :key="referral.user?._id || i"
               >
                 <td class="d-none">{{ i + 1 }}</td>
-                <td>{{ Helpers.toTitleCase(referral.user.username) }}</td>
+                <td>
+                  {{
+                    Helpers.toTitleCase(referral.user?.username || 'Unknown')
+                  }}
+                </td>
 
                 <td>{{ Helpers.toDollar(referral.earnings) }}</td>
-                <td>{{ Helpers.toNiceDate(referral.user.createdAt) }}</td>
+                <td>
+                  {{
+                    referral.user
+                      ? Helpers.toNiceDate(referral.user?.createdAt)
+                      : 'N/A'
+                  }}
+                </td>
               </tr>
             </tbody>
           </MyDataTableComponent>
@@ -69,7 +79,11 @@
             <tbody>
               <tr v-for="(referral, i) in referralEarnings" :key="referral._id">
                 <td class="d-none">{{ i + 1 }}</td>
-                <td>{{ Helpers.toTitleCase(referral.user.username) }}</td>
+                <td>
+                  {{
+                    Helpers.toTitleCase(referral.user?.username || 'Unknown')
+                  }}
+                </td>
                 <td>{{ Helpers.toTitleCase(referral.type) }}</td>
                 <td>{{ referral.rate + '%' }}</td>
                 <td>{{ Helpers.toDollar(referral.amount) }}</td>

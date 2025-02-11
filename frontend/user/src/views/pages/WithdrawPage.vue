@@ -14,15 +14,15 @@
               <div class="row">
                 <div class="col-sm-6 col-xl-12 text-center">
                   <h2 class="text-white fs-36" v-if="authStore.user">
-                    {{ Helpers.toDollar(authStore.user.mainBalance) }}
+                    {{ Helpers.toDollar(authStore.user.profit) }}
                   </h2>
-                  <p class="fs-16">Main Balance</p>
+                  <p class="fs-16">Available Profit</p>
                 </div>
                 <div class="col-sm-6 col-xl-12 text-center">
                   <h2 class="text-white fs-36" v-if="authStore.user">
-                    {{ Helpers.toDollar(authStore.user.referralBalance) }}
+                    {{ Helpers.toDollar(authStore.user.bonusBalance) }}
                   </h2>
-                  <p class="fs-16">Referrals Balance</p>
+                  <p class="fs-16">Bonus Balance</p>
                 </div>
               </div>
             </div>
@@ -50,23 +50,21 @@
                     <label class="form-label">Account</label>
                     <MyFineSelectComponent>
                       <MyFineOptionComponent
-                        @click="() => setUserAccount(UserAccount.MAIN_BALANCE)"
-                        :selected="userAccount === UserAccount.MAIN_BALANCE"
+                        @click="() => setUserAccount(UserAccount.PROFIT)"
+                        :selected="userAccount === UserAccount.PROFIT"
                       >
-                        <span class="d-block">Main Balance</span>
+                        <span class="d-block">Available Profit</span>
                         <h4 class="text-center">
-                          {{ Helpers.toDollar(authStore.user.mainBalance) }}
+                          {{ Helpers.toDollar(authStore.user.profit) }}
                         </h4>
                       </MyFineOptionComponent>
                       <MyFineOptionComponent
-                        :selected="userAccount === UserAccount.REFERRAL_BALANCE"
-                        @click="
-                          () => setUserAccount(UserAccount.REFERRAL_BALANCE)
-                        "
+                        :selected="userAccount === UserAccount.BONUS_BALANCE"
+                        @click="() => setUserAccount(UserAccount.BONUS_BALANCE)"
                       >
-                        <span class="d-block">Referral Balance</span>
+                        <span class="d-block">Bonus Balance</span>
                         <h4 class="text-center">
-                          {{ Helpers.toDollar(authStore.user.referralBalance) }}
+                          {{ Helpers.toDollar(authStore.user.bonusBalance) }}
                         </h4>
                       </MyFineOptionComponent>
                     </MyFineSelectComponent>
@@ -110,7 +108,7 @@
                       <Field
                         name="address"
                         type="text"
-                        placeholder="Your Wallet Addresst"
+                        placeholder="Your Wallet Address"
                         class="form-control"
                         :validate-on-input="true"
                         :value="withdrawal.address"
@@ -174,7 +172,7 @@
       <div class="card-body">
         <p class="fs-18 text-center mx-auto mb-4" style="max-width: 490px">
           PLEASE CHECK AND CONFIRM THE DETAILS YOU'VE ENTERED ARE CORRECT TO
-          PROCCED, ANY MISSTAKE COULD LEAD TO COIN LOSS WHICH MAY NOT BE
+          PROCEED, ANY MISTAKE COULD LEAD TO COIN LOSS WHICH MAY NOT BE
           REVERSED.
         </p>
         <div class="row">
@@ -374,7 +372,7 @@ const setCurrentPage = (page: PAGE) => {
   }, 100)
 }
 
-const userAccount = ref(UserAccount.MAIN_BALANCE)
+const userAccount = ref(UserAccount.PROFIT)
 const setUserAccount = (account: UserAccount) => (userAccount.value = account)
 
 const withdrawal = ref<ICreateWithdrawal>({
@@ -427,7 +425,7 @@ const makeWithdrawalSchema = yup.object({
   amount: yup
     .number()
     .typeError('amount is required')
-    .min(0, 'amount should not be a nagative value')
+    .min(0, 'amount should not be a negative value')
     .required('amount is required')
     .test(function (value) {
       if (

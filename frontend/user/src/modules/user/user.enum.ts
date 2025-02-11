@@ -10,6 +10,7 @@ export enum UserStatus {
 }
 
 export enum UserAccount {
+  PROFIT = 'profit',
   MAIN_BALANCE = 'mainBalance',
   REFERRAL_BALANCE = 'referralBalance',
   DEMO_BALANCE = 'demoBalance',

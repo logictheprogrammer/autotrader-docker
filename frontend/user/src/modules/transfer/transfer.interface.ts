@@ -1,21 +1,11 @@
 import type { TransferStatus } from './transfer.enum'
 import type { UserAccount } from '../user/user.enum'
+import { IUser } from '../user/user.interface'
+import { IBaseObject } from '@/util/interface'
 
-export interface ITransfer {
-  __v: number
-  _id: string
-  updatedAt: string
-  createdAt: string
-  fromUser: {
-    _id: string
-    username: string
-    isDeleted: boolean
-  }
-  toUser: {
-    _id: string
-    username: string
-    isDeleted: boolean
-  }
+export interface ITransfer extends IBaseObject {
+  fromUser?: IUser
+  toUser?: IUser
   account: UserAccount
   status: TransferStatus
   amount: number

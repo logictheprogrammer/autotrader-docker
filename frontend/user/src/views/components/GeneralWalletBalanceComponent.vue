@@ -3,9 +3,21 @@
     <div class="card-body">
       <div class="d-flex">
         <div class="row" style="flex: 1">
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-4 d-none d-md-block">
             <div
               class="py-3 text-center rounded border-bottom border-left border-3 border-dark"
+            >
+              <span class="fs-20 text-sharp font-w500 d-block mb-2"
+                >Available Profit</span
+              >
+              <span class="text-num text-black fs-36 font-w500">{{
+                Helpers.toDollar(profit)
+              }}</span>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div
+              class="py-3 text-center rounded border-bottom border-left border-3 border-danger"
             >
               <span class="fs-20 text-sharp font-w500 d-block mb-2"
                 >Main Balance</span
@@ -15,38 +27,27 @@
               }}</span>
             </div>
           </div>
-          <div class="col-md-6 col-lg-4 d-none d-md-block">
-            <div
-              class="py-3 text-center rounded border-bottom border-left border-3 border-danger"
-            >
-              <span class="fs-20 text-sharp font-w500 d-block mb-2"
-                >Unsettled Balance</span
-              >
-              <span class="text-num text-black fs-36 font-w500">{{
-                Helpers.toDollar(unsettledBalance)
-              }}</span>
-            </div>
-          </div>
           <div class="col-md-6 col-lg-4 d-none d-lg-block">
             <div
               class="py-3 text-center rounded border-bottom border-left border-3 border-dark"
             >
               <span class="fs-20 text-sharp font-w500 d-block mb-2"
-                >Referral Balance</span
+                >Bonus Balance</span
               >
               <span class="text-num text-black fs-36 font-w500">{{
-                Helpers.toDollar(referralBalance)
+                Helpers.toDollar(bonusBalance)
               }}</span>
             </div>
           </div>
         </div>
-        <div class="dropdown mb-auto d-lg-none">
+        <div class="dropdown mb-auto">
           <a
             href="javascript:void(0);"
-            class="btn-link position-absolute"
+            class="btn-link position-absolute bg-background rounded-circle p-1 border shadow"
             data-bs-toggle="dropdown"
             aria-expanded="false"
             style="right: 2px"
+            title="Other Balance"
           >
             <svg
               width="24"
@@ -78,21 +79,32 @@
               ></path>
             </svg>
           </a>
-          <div class="dropdown-menu dropdown-menu-left" style="">
-            <div class="m-3">
-              <span class="fs-18 text-sharp font-w500 d-block"
-                >Unsettled Balance</span
+          <div
+            class="dropdown-menu dropdown-menu-left shadow-md border"
+            style=""
+          >
+            <div class="m-3 d-md-none">
+              <span class="fs-18 text-sharp font-w500 d-block text-nowrap"
+                >Available Profit</span
               >
               <span class="text-num text-black fs-24 font-w500">{{
-                Helpers.toDollar(unsettledBalance)
+                Helpers.toDollar(profit)
+              }}</span>
+            </div>
+            <div class="m-3 d-lg-none">
+              <span class="fs-18 text-sharp font-w500 d-block text-nowrap"
+                >Bonus Balance</span
+              >
+              <span class="text-num text-black fs-24 font-w500">{{
+                Helpers.toDollar(bonusBalance)
               }}</span>
             </div>
             <div class="m-3">
-              <span class="fs-18 text-sharp font-w500 d-block"
+              <span class="fs-18 text-sharp font-w500 d-block text-nowrap"
                 >Referral Balance</span
               >
               <span class="text-num text-black fs-24 font-w500">{{
-                Helpers.toDollar(unsettledBalance)
+                Helpers.toDollar(referralBalance)
               }}</span>
             </div>
           </div>
@@ -106,8 +118,13 @@
 defineProps<{
   mainBalance: number
   referralBalance: number
-  unsettledBalance: number
+  bonusBalance: number
+  profit: number
 }>()
 </script>
 
-<style scoped></style>
+<style scoped>
+.card-body {
+  overflow-x: visible;
+}
+</style>

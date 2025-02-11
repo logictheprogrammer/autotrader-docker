@@ -280,7 +280,7 @@ class TransferService implements ITransferService {
       .populate('toUser')
       .populate('fromUser')
 
-    if (!transfer) throw new NotFoundError('Tranfer not found')
+    if (!transfer) throw new NotFoundError('Transfer not found')
 
     return transfer
   }

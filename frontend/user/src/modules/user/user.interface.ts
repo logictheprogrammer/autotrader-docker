@@ -1,7 +1,7 @@
+import { IBaseObject } from '@/util/interface'
 import type { UserRole, UserStatus } from './user.enum'
 
-export interface IUser {
-  _id: string
+export interface IUser extends IBaseObject {
   key: string
   email: string
   username: string
@@ -9,13 +9,12 @@ export interface IUser {
   country: string
   role: UserRole
   status: UserStatus
-  verifield: Boolean
+  verified: Boolean
   referred: string
   refer: string
+  profit: number
   mainBalance: number
   bonusBalance: number
   referralBalance: number
   demoBalance: number
-  updatedAt: string
-  createdAt: string
 }

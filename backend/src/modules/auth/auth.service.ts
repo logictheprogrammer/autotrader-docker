@@ -140,7 +140,7 @@ class AuthService implements IAuthService {
       )
     }
 
-    if (user.verifield) {
+    if (user.verified) {
       this.activityService.create(
         user,
         ActivityForWho.USER,
@@ -241,7 +241,7 @@ class AuthService implements IAuthService {
 
     if (!user) throw new NotFoundError('User not found')
 
-    user.verifield = true
+    user.verified = true
 
     await user.save()
 
@@ -251,7 +251,7 @@ class AuthService implements IAuthService {
       user,
       ActivityForWho.USER,
       ActivityCategory.PROFILE,
-      'you verifield your email address'
+      'you verified your email address'
     )
 
     return

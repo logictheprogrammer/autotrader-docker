@@ -7,8 +7,8 @@ import { AssetType } from '../asset/asset.enum'
 import { IAsset } from '../asset/asset.interface'
 
 export interface IInvestment extends IBaseObject {
-  plan: IPlan
-  user: IUser
+  plan?: IPlan
+  user?: IUser
   assetType: AssetType
   assets: IAsset[]
   status: InvestmentStatus

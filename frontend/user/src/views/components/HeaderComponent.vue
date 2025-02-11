@@ -20,13 +20,13 @@
                   :to="{ name: 'wallet' }"
                   class="d-flex flex-column px-2"
                 >
-                  <span class="text-sharp gap-2 d-flex align-items-center"
+                  <span class="text-sharp gap-1 d-flex align-items-center"
                     ><img
-                      src="/svg/crypto-icons/usdt.svg"
+                      src="/img/coin.png"
                       alt=""
                       class="avatar-xxs"
                       width="16"
-                    />USDT
+                    />Balance
                   </span>
                   <h4 class="text-white mb-0">
                     {{ Helpers.toDollar(balance || 0) }}
@@ -84,7 +84,9 @@ const onDemo = computed(() => httpStore.onDemo)
 const balance = computed(() =>
   !onDemo.value
     ? (authStore.user?.mainBalance || 0) +
-      (authStore.user?.referralBalance || 0)
+      (authStore.user?.referralBalance || 0) +
+      (authStore.user?.bonusBalance || 0) +
+      (authStore.user?.profit || 0)
     : authStore.user?.demoBalance
 )
 

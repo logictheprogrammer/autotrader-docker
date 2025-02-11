@@ -164,7 +164,7 @@ class InvestmentService implements IInvestmentService {
       const account =
         investment.account === UserAccount.DEMO_BALANCE
           ? UserAccount.DEMO_BALANCE
-          : UserAccount.MAIN_BALANCE
+          : UserAccount.PROFIT
 
       user = await this.userService.fund(
         { _id: investment.user._id },

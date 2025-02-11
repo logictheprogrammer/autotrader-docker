@@ -1,10 +1,7 @@
+import { IBaseObject } from '@/util/interface'
 import type { AssetType } from './asset.enum'
 
-export interface IAsset {
-  __v: number
-  _id: string
-  updatedAt: string
-  createdAt: string
+export interface IAsset extends IBaseObject {
   name: string
   symbol: string
   logo: string

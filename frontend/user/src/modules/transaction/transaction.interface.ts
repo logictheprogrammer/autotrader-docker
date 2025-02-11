@@ -4,9 +4,9 @@ import type { TransactionTitle } from './transaction.enum'
 import { UserEnvironment } from '../user/user.enum'
 
 export interface ITransaction extends IBaseObject {
-  user: IUser
+  user?: IUser
   title: TransactionTitle
-  object: IBaseObject
+  object?: IBaseObject
   amount: number
   environment: UserEnvironment
 }

@@ -5,8 +5,8 @@ import type { ReferralTypes } from './referral.enum'
 export interface IReferralEarning extends IBaseObject {
   rate: number
   type: ReferralTypes
-  referrer: IUser
-  user: IUser
+  referrer?: IUser
+  user?: IUser
   amount: number
 }
 
@@ -19,7 +19,7 @@ export interface IReferredUser {
 }
 
 export interface IActiveReferral {
-  user: {
+  user?: {
     username: string
     _id: string
     createdAt: Date

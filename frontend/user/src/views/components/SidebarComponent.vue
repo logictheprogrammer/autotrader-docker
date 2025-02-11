@@ -2,7 +2,7 @@
   <div class="dlabnav bg-gradient-mine-sm position-fixed">
     <div class="dlabnav-scroll">
       <ul class="metismenu mb-3" id="menu">
-        <li
+        <!-- <li
           class="mb-3 demo-list"
           :class="{ 'mm-active': onDemo }"
           @click="$emit('hideMenu')"
@@ -18,7 +18,7 @@
               @click="() => httpStore.setDemo(!onDemo)"
             />
           </a>
-        </li>
+        </li> -->
         <RouterLink
           :to="{ name: 'settings' }"
           custom

@@ -2,7 +2,8 @@
   <GeneralWalletBalanceComponent
     :main-balance="authStore.user?.mainBalance || 0"
     :referral-balance="authStore.user?.referralBalance || 0"
-    :unsettled-balance="0"
+    :bonus-balance="authStore.user?.bonusBalance || 0"
+    :profit="authStore.user?.profit || 0"
   />
   <div class="d-flex justify-content-center gap-3">
     <RouterLink :to="{ name: 'deposit' }" class="btn btn-success-2"
@@ -36,7 +37,7 @@
         <tbody>
           <tr v-for="(transaction, i) in transactions" :key="transaction._id">
             <td class="d-none">{{ i + 1 }}</td>
-            <td>{{ transaction.title }}</td>
+            <td>{{ Helpers.toTitleCase(transaction.title) }}</td>
             <td>{{ Helpers.toDollar(transaction.amount) }}</td>
             <td>{{ Helpers.toNiceDate(transaction.updatedAt) }}</td>
           </tr>

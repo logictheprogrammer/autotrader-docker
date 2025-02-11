@@ -12,9 +12,10 @@ export interface IUserObject extends baseObjectInterface {
   cover?: string
   role: UserRole
   status: UserStatus
-  verifield: Boolean
+  verified: Boolean
   referred: ObjectId
   refer: string
+  profit: number
   mainBalance: number
   bonusBalance: number
   referralBalance: number

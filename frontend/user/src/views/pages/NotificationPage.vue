@@ -24,7 +24,6 @@
             :key="notification._id"
           >
             <div
-              @click.stop="onDeleteOneHandler"
               :class="`position-absolute delete-backdrop ${
                 selectedNotification?._id === notification._id
                   ? 'bg-danger w-100 h-100 bg-opacity-15'

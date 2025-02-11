@@ -45,7 +45,7 @@ const UserSchema = new Schema<IUser>(
       required: true,
       trim: true,
     },
-    verifield: {
+    verified: {
       type: Boolean,
       required: true,
       default: false,
@@ -68,21 +68,30 @@ const UserSchema = new Schema<IUser>(
       unique: true,
       trim: true,
     },
+    profit: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     mainBalance: {
       type: Number,
       required: true,
+      default: 0,
     },
     bonusBalance: {
       type: Number,
       required: true,
+      default: 0,
     },
     referralBalance: {
       type: Number,
       required: true,
+      default: 0,
     },
     demoBalance: {
       type: Number,
       required: true,
+      default: 0,
     },
   },
   {

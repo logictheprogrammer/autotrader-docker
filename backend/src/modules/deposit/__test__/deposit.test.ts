@@ -251,7 +251,7 @@ describe('deposit', () => {
           .set('Authorization', `Bearer ${token}`)
           .send(payload)
 
-        expect(body.message).toBe('"status" must be one of [verifield, failed]')
+        expect(body.message).toBe('"status" must be one of [verified, failed]')
         expect(statusCode).toBe(400)
         expect(body.status).toBe(StatusCode.DANGER)
       })

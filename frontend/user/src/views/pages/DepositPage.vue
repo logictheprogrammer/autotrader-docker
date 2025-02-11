@@ -16,7 +16,7 @@
                   <h2 class="text-white fs-36" v-if="authStore.user">
                     {{ Helpers.toDollar(authStore.user.mainBalance) }}
                   </h2>
-                  <p class="fs-16">Current Balance</p>
+                  <p class="fs-16">Main Balance</p>
                 </div>
               </div>
             </div>

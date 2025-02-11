@@ -8,9 +8,11 @@
           <img alt="image" width="50" src="/images/avatar/4.jpg" />
         </div>
         <div class="d-flex flex-column justify-content-between">
-          <h2 class="card-title fw-bold">{{ investment.plan.name }}</h2>
+          <h2 class="card-title fw-bold">
+            {{ investment.plan?.name || 'Unknown' }}
+          </h2>
           <div class="d-flex gap-2 align-items-center">
-            <p class="mb-0">{{ investment.plan.engine }}</p>
+            <p class="mb-0">{{ investment.plan?.engine || 'Unknown' }}</p>
             <span
               :class="`badge light badge-${Helpers.toStatus(
                 investment.status
@@ -194,7 +196,7 @@ const props = defineProps<{
 
 const expectedProfit = computed(() => {
   return (
-    (props.investment.plan.potentialPercentageProfit *
+    ((props.investment.plan?.potentialPercentageProfit || 250) *
       props.investment.amount) /
     100
   )

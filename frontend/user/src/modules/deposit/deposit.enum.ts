@@ -1,5 +1,5 @@
 export enum DepositStatus {
   PENDING = 'pending',
-  APPROVED = 'verifield',
+  APPROVED = 'verified',
   CANCELLED = 'failed',
 }

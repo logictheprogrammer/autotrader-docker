@@ -13,7 +13,7 @@ import {
   adminUser,
   existingUser,
   suspendedUser,
-  verifieldUser,
+  verifiedUser,
 } from '../../user/__test__/user.payload'
 import {
   sendEmailVerificationMailMock,
@@ -240,7 +240,7 @@ describe('authentication', () => {
         expect(statusCode).toBe(400)
       })
     })
-    describe('given user email is not verifield', () => {
+    describe('given user email is not verified', () => {
       const userInput = {
         account: existingUser.email,
         password: existingUser.password,
@@ -290,13 +290,13 @@ describe('authentication', () => {
     })
     describe('log user in', () => {
       const userInput = {
-        account: verifieldUser.email,
-        password: verifieldUser.password,
+        account: verifiedUser.email,
+        password: verifiedUser.password,
       }
       it('should return a 200 and an access token', async () => {
         const user = await userModel.create({
-          ...verifieldUser,
-          password: verifieldUser.password,
+          ...verifiedUser,
+          password: verifiedUser.password,
         })
         const { statusCode, body } = await request.post(url).send(userInput)
 
@@ -424,7 +424,7 @@ describe('authentication', () => {
       it('should return a 400', async () => {
         const user = await userModel.create(existingUser)
 
-        const notAdmin = await userModel.create(verifieldUser)
+        const notAdmin = await userModel.create(verifiedUser)
         const token = Cryptograph.createToken(notAdmin)
         const { statusCode, body } = await request
           .patch(url + `/${user._id}`)
@@ -611,7 +611,7 @@ describe('authentication', () => {
       it('should return a 400', async () => {
         const token = userInput.verifyToken
 
-        await userModel.create(verifieldUser)
+        await userModel.create(verifiedUser)
         await resetPasswordModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
@@ -635,7 +635,7 @@ describe('authentication', () => {
 
       it('should return a 400', async () => {
         const token = 'valid token'
-        await userModel.create(verifieldUser)
+        await userModel.create(verifiedUser)
         await resetPasswordModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
@@ -671,7 +671,7 @@ describe('authentication', () => {
 
     describe('given all info are valid', () => {
       const userInput = {
-        key: verifieldUser.key,
+        key: verifiedUser.key,
         verifyToken: 'valid verify token',
         password: '1234567890',
         confirmPassword: '1234567890',
@@ -682,7 +682,7 @@ describe('authentication', () => {
 
       it('should return a 200, update password, delete the token and create an activity', async () => {
         const token = userInput.verifyToken
-        const user = await userModel.create(verifieldUser)
+        const user = await userModel.create(verifiedUser)
         await resetPasswordModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
@@ -744,7 +744,7 @@ describe('authentication', () => {
       const expires = new Date().getTime()
       it('should return a 400', async () => {
         const token = userInput.verifyToken
-        await userModel.create(verifieldUser)
+        await userModel.create(verifiedUser)
         await emailVerificationModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
@@ -766,7 +766,7 @@ describe('authentication', () => {
 
       it('should return a 400', async () => {
         const token = 'valid token'
-        await userModel.create(verifieldUser)
+        await userModel.create(verifiedUser)
         await emailVerificationModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
@@ -800,7 +800,7 @@ describe('authentication', () => {
 
     describe('given all info are valid', () => {
       const userInput = {
-        key: verifieldUser.key,
+        key: verifiedUser.key,
         verifyToken: 'valid verify token',
       }
       const key = userInput.key
@@ -810,13 +810,13 @@ describe('authentication', () => {
       it('should return a 200, send a welcome email and create an activity log', async () => {
         const token = userInput.verifyToken
 
-        const user = await userModel.create(verifieldUser)
+        const user = await userModel.create(verifiedUser)
         await emailVerificationModel.create({ key, token, expires })
 
         const { statusCode, body } = await request.patch(url).send(userInput)
         const userObj = user
 
-        expect(body.message).toBe('Email successfully verifield')
+        expect(body.message).toBe('Email successfully verified')
         expect(statusCode).toBe(200)
         expect(body.status).toBe(StatusCode.SUCCESS)
 
@@ -834,7 +834,7 @@ describe('authentication', () => {
           }),
           ActivityForWho.USER,
           ActivityCategory.PROFILE,
-          'you verifield your email address'
+          'you verified your email address'
         )
       })
     })
